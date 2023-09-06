@@ -14,11 +14,6 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 // contracts
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
-import { HLP } from "@hmx/contracts/HLP.sol";
 
 // interfaces
 import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
@@ -40,7 +35,6 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
    */
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
-  event LogSetMaxExecutionChunk(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogSetDelegate(address indexed mainAccount, address indexed delegateAccount);
   event LogSetOrderExecutor(address executor, bool isAllow);
@@ -334,10 +328,10 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     vars.minPublishTime = _params.minPublishTime;
     vars.encodedVaas = _params.encodedVaas;
 
-    uint256 _totalFeeReceiver;
+    uint256 _totalFeeReceived;
     uint256 length = _params.accounts.length;
     for (uint256 i = 0; i < length; ) {
-      _totalFeeReceiver += _executeOrder(
+      _totalFeeReceived += _executeOrder(
         vars,
         _params.accounts[i],
         _params.subAccountIds[i],
@@ -350,7 +344,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     }
 
     // Pay total collected fees to the executor
-    _transferOutETH(_totalFeeReceiver, _params.feeReceiver);
+    _transferOutETH(_totalFeeReceived, _params.feeReceiver);
   }
 
   /// @notice execute either addLiquidity or removeLiquidity

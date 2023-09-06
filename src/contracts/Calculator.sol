@@ -153,11 +153,9 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _hlpAssetIds = _configStorage.getHlpAssetIds();
     uint256 _len = _hlpAssetIds.length;
 
-    for (uint256 i; i < _len; ) {
-      assetValue += _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
-
-      unchecked {
-        ++i;
+    unchecked {
+      for (uint256 i; i < _len; ++i) {
+        assetValue += _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
       }
     }
   }

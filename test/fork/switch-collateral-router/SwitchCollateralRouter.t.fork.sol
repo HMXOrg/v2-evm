@@ -777,4 +777,34 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.wstEth)), 0);
     assertEq(_sGlpAfter - _sGlpBefore, 21225881318183212057834);
   }
+
+  function testCorrectness_CancelSwitchCollateralOrder() external {
+    // Create switch collateral order from sGLP -> wstETH
+    address[] memory _path = new address[](3);
+    _path[0] = address(ForkEnv.sGlp);
+    _path[1] = address(ForkEnv.weth);
+    _path[2] = address(ForkEnv.wstEth);
+    vm.startPrank(USER);
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
+        data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), _path, 0)
+      })
+    );
+    vm.stopPrank();
+
+    assertEq(ext01Handler.getAllActiveOrders(3, 0).length, 1);
+    // cancel order, should have 0 active, 0 execute.
+    uint256 balanceBefore = USER.balance;
+
+    vm.prank(USER);
+    ext01Handler.cancelOrder(USER, SUB_ACCOUNT_ID, _orderIndex);
+
+    assertEq(USER.balance - balanceBefore, 0.1 * 1e9);
+    assertEq(ext01Handler.getAllActiveOrders(3, 0).length, 0);
+    assertEq(ext01Handler.getAllExecutedOrders(3, 0).length, 0);
+  }
 }

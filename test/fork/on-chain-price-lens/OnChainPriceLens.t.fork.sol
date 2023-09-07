@@ -23,6 +23,7 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.4/interfaces/
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { EcoPythCalldataBuilder } from "@hmx/oracles/EcoPythCalldataBuilder.sol";
+import { UnsafeEcoPythCalldataBuilder } from "@hmx/oracles/UnsafeEcoPythCalldataBuilder.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 
 contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
@@ -30,6 +31,7 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
   GlpPriceAdapter internal glpPriceAdapter;
   OnChainPriceLens internal onChainPriceLens;
   EcoPythCalldataBuilder internal ecoPythCalldataBuilder;
+  UnsafeEcoPythCalldataBuilder internal unsafeEcoPythCalldataBuilder;
   address constant wstEthPriceFeed = 0xb523AE262D20A936BC152e6023996e46FDC2A95D;
   address constant ethUsdPriceFeed = 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612;
 
@@ -54,8 +56,11 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
     onChainPriceLens.setPriceAdapters(priceIds, priceAdapters);
 
     ecoPythCalldataBuilder = new EcoPythCalldataBuilder(ForkEnv.ecoPyth2, onChainPriceLens);
+    unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder(ForkEnv.ecoPyth2, onChainPriceLens);
 
+    vm.startPrank(ForkEnv.multiSig);
     ForkEnv.ecoPyth2.insertAssetId("wstETH");
+    vm.stopPrank();
   }
 
   function testCorrectness_WstEthUsdPriceAdapter() external {
@@ -103,6 +108,6 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
       maxDiffBps: 15000
     });
 
-    ecoPythCalldataBuilder.build(_data);
+    unsafeEcoPythCalldataBuilder.build(_data);
   }
 }

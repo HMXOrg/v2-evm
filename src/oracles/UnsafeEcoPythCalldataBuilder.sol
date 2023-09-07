@@ -20,7 +20,7 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 
-contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
+contract UnsafeEcoPythCalldataBuilder is IEcoPythCalldataBuilder {
   IEcoPyth public ecoPyth;
   OnChainPriceLens public lens;
 

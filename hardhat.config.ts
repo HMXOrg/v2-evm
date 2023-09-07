@@ -11,6 +11,7 @@ import "hardhat-preprocessor";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import "@nomicfoundation/hardhat-verify";
 
 function getRemappings() {
   return fs
@@ -25,10 +26,7 @@ const config: HardhatUserConfig = {
   networks: {
     tenderly: {
       url: process.env.TENDERLY_RPC || "",
-      accounts:
-        process.env.MAINNET_PRIVATE_KEY !== undefined
-          ? [process.env.MAINNET_PRIVATE_KEY]
-          : [],
+      accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
     arbitrum: {
       url: process.env.ARBITRUM_MAINNET_RPC || "",
@@ -37,10 +35,7 @@ const config: HardhatUserConfig = {
     arb_goerli: {
       url: process.env.ARBITRUM_GOERLI_RPC || "",
       chainId: 421613,
-      accounts:
-        process.env.MAINNET_PRIVATE_KEY !== undefined
-          ? [process.env.MAINNET_PRIVATE_KEY]
-          : [],
+      accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
   },
   solidity: {
@@ -65,6 +60,12 @@ const config: HardhatUserConfig = {
     project: process.env.TENDERLY_PROJECT_NAME!,
     username: process.env.TENDERLY_USERNAME!,
     privateVerification: true,
+  },
+  etherscan: {
+    apiKey: {
+      arbitrumOne: process.env.ETHERSCAN_API_KEY!,
+      arbitrumGoerli: process.env.ETHERSCAN_API_KEY!,
+    },
   },
   // This fully resolves paths for imports in the ./lib directory for Hardhat
   preprocess: {

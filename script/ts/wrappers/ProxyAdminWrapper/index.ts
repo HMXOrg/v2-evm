@@ -15,7 +15,7 @@ export default class {
     const config = loadConfig(chainId);
     this.proxyAdmin = new ethers.Contract(config.proxyAdmin, ProxyAdminAbi, signer);
     this.timelockWrapper = new TimelockWrapper(chainId, signer);
-    this.safeWrapper = new SafeWrapper(chainId, signer);
+    this.safeWrapper = new SafeWrapper(chainId, config.safe, signer);
     this.signer = signer;
   }
 

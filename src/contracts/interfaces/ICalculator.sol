@@ -12,6 +12,7 @@ interface ICalculator {
   error ICalculator_InvalidAveragePrice();
   error ICalculator_InvalidPrice();
   error ICalculator_PoolImbalance();
+  error ICalculator_InvalidBorrowingFee();
 
   /**
    * Structs

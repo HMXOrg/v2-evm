@@ -780,10 +780,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               _account: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _positionSizeE30ToDecrease: HMXLib.min(
-                uint256(vars.sizeDelta),
-                uint256(-_existingPosition.positionSizeE30)
-              ),
+              _positionSizeE30ToDecrease: uint256(vars.sizeDelta),
               _tpToken: vars.order.tpToken,
               _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
             });
@@ -828,10 +825,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               _account: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _positionSizeE30ToDecrease: HMXLib.min(
-                uint256(-vars.sizeDelta),
-                uint256(_existingPosition.positionSizeE30)
-              ),
+              _positionSizeE30ToDecrease: uint256(-vars.sizeDelta),
               _tpToken: vars.order.tpToken,
               _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
             });

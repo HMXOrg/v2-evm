@@ -45,7 +45,7 @@ interface IConfigStorage {
 
   struct FundingRate {
     uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
-    uint256 maxFundingRate; // maximum funding rate
+    uint256 maxFundingRate; // The maximum rate per day that the funding rate would change
   }
 
   struct MarketConfig {

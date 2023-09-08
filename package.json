@@ -107,6 +107,7 @@
     "@openzeppelin/hardhat-upgrades": "^1.22.1",
     "@types/lodash": "^4.14.195",
     "json-to-graphql-query": "^2.2.5",
+    "userop": "^0.3.3",
     "wagmi": "^0.12.7"
   }
 }

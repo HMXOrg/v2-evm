@@ -19,7 +19,7 @@ async function main() {
 
   console.log("> LimitTradeHandler: setMinExecutionFee...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  await (await limitTradeHandler.setMinExecutionFee(0)).wait();
+  await (await limitTradeHandler.setMinExecutionFee(300000000000000)).wait();
   console.log("> LimitTradeHandler: setMinExecutionFee success!");
 }
 main().catch((error) => {

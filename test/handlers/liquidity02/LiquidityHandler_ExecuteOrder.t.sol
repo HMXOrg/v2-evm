@@ -467,6 +467,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     assertEq(beforeExecuteOrder.isAdd, true, "Alice Order.isAdd");
     assertEq(beforeExecuteOrder.executionFee, 5 ether, "Alice Order.executionFee");
     assertEq(beforeExecuteOrder.isNativeOut, true, "Alice Order.isNativeOut");
+    vm.stopPrank();
 
     ILiquidityHandler02.ExecuteOrdersParam memory params;
     address[] memory accounts = new address[](1);

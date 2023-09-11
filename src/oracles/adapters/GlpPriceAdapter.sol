@@ -19,7 +19,6 @@ contract GlpPriceAdapter is IPriceAdapter {
 
   /// @notice Return the price of GLP in 18 decimals
   function getPrice() external view returns (uint256 price) {
-    uint256 _midAum = (glpManager.getAum(true) + glpManager.getAum(false)) / 2e12;
-    price = (1e18 * _midAum) / sGlp.totalSupply();
+    price = (glpManager.getPrice(true) + glpManager.getPrice(false)) / 2e12;
   }
 }

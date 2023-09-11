@@ -11,6 +11,8 @@ contract OnChainPriceLens is Ownable {
   error OnChainPriceLens_BadPriceId();
   error OnChainPriceLens_BadLength();
 
+  event LogSetPriceAdapter(bytes32 priceId, address priceAdapter);
+
   mapping(bytes32 priceId => IPriceAdapter priceAdapter) public priceAdapterById;
 
   function setPriceAdapters(bytes32[] calldata priceIds, IPriceAdapter[] calldata priceAdapters) external onlyOwner {
@@ -21,6 +23,8 @@ contract OnChainPriceLens is Ownable {
 
       // Sanity check
       priceAdapters[i].getPrice();
+
+      emit LogSetPriceAdapter(priceIds[i], address(priceAdapters[i]));
 
       unchecked {
         ++i;

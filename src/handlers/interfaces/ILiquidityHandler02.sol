@@ -103,9 +103,8 @@ interface ILiquidityHandler02 {
     uint256 _offset
   ) external view returns (LiquidityOrder[] memory _orders);
 
-  function getLiquidityOrderOfAccountPerIndex(
-    address _mainAccount,
-    uint8 _subAccountId,
+  function liquidityOrders(
+    address _subaccount,
     uint256 _orderIndex
   ) external view returns (LiquidityOrder memory _order);
 

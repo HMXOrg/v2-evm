@@ -83,6 +83,12 @@ interface ILiquidityHandler02 {
 
   function cancelLiquidityOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
+  function getLiquidityOrderOfAccountPerIndex(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external view returns (LiquidityOrder memory _order);
+
   /** Getters */
   function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (LiquidityOrder[] memory _orders);
 

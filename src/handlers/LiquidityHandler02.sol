@@ -651,6 +651,15 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     return _getOrders(_subAccountExecutedOrderPointers[_subAccount], _limit, _offset);
   }
 
+  function getLiquidityOrderOfAccountPerIndex(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external view returns (LiquidityOrder memory _order) {
+    address subAccount = HMXLib.getSubAccount(_mainAccount, _subAccountId);
+    return liquidityOrders[subAccount][_orderIndex];
+  }
+
   /**
    * SETTER
    */

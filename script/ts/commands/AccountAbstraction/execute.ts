@@ -8,7 +8,7 @@ import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
-  const rpcUrl = chains[chainId].rpc;
+  const rpcUrl = `https://api.stackup.sh/v1/node/${process.env.STACKUP_API_KEY}`;
   const provider = chains[chainId].jsonRpcProvider;
   const signer = signers.deployer(chainId);
 
@@ -25,8 +25,8 @@ async function main(chainId: number) {
   const limitTradeHandler = new ethers.Contract(config.handlers.limitTrade, LimitTradeHandler__factory.abi, provider);
 
   const signerAddress = await signer.getAddress();
-  const subAccountId = 2;
-  const marketIndex = 1;
+  const subAccountId = 0;
+  const marketIndex = 0;
   const sizeDelta = ethers.utils.parseUnits("100", 30);
   const triggerPrice = 0;
   const acceptablePrice = ethers.utils.parseUnits("100000000000", 30);
@@ -36,7 +36,7 @@ async function main(chainId: number) {
   const executionFee = await handler.minExecutionFee();
 
   // Create the calls
-  await (await handler.setDelegate(aaAccountAddress)).wait();
+  // await (await handler.setDelegate(aaAccountAddress)).wait();
   const trade = {
     to: config.handlers.limitTrade,
     value: executionFee,
@@ -66,15 +66,9 @@ async function main(chainId: number) {
   const calls = [trade];
 
   const client = await Client.init(rpcUrl);
-  const res = await client.sendUserOperation(
-    builder.executeBatch(
-      calls.map((each) => each.to),
-      calls.map((each) => each.data)
-    ),
-    {
-      onBuild: (op) => console.log("Signed UserOperation:", op),
-    }
-  );
+  const res = await client.sendUserOperation(builder.execute(trade.to, trade.value, trade.data), {
+    onBuild: (op) => console.log("Signed UserOperation:", op),
+  });
 
   console.log(`UserOpHash: ${res.userOpHash}`);
   console.log("Waiting for transaction...");

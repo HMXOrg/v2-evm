@@ -17,16 +17,20 @@ import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { PythLib } from "@hmx/libraries/PythLib.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
-import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
-import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 
 contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
-  IEcoPyth public ecoPyth;
-  OnChainPriceLens public lens;
+  bytes32 internal constant GLP_ASSET_ID = 0x474c500000000000000000000000000000000000000000000000000000000000;
 
-  constructor(IEcoPyth ecoPyth_, OnChainPriceLens lens_) {
+  IEcoPyth public ecoPyth;
+  IERC20 public sGlp;
+  IGmxGlpManager public glpManager;
+
+  event LogSetMaxGlpPriceDiff(uint32 _prevMaxGlpPriceDiff, uint32 _newMaxGlpPriceDiff);
+
+  constructor(IEcoPyth ecoPyth_, IGmxGlpManager glpManager_, IERC20 sGlp_) {
     ecoPyth = ecoPyth_;
-    lens = lens_;
+    sGlp = sGlp_;
+    glpManager = glpManager_;
   }
 
   function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
@@ -54,9 +58,9 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     _minPublishTime = type(uint256).max;
     for (uint _i = 0; _i < _data.length; ) {
       // Check if price vs last price on EcoPyth is not over max diff
-      address priceAdapter = address(lens.priceAdapterById(_data[_i].assetId));
-      if (priceAdapter == address(0)) {
-        // If this is an off-chain price, then check the diff.
+      if (_data[_i].assetId != GLP_ASSET_ID) {
+        // If not GLP, then check the diff.
+        // GLP no need to check diff due to the price will be query from GlpManager.
         require(!isOverMaxDiff(_data[_i].assetId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
       }
 
@@ -74,14 +78,14 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     uint24[] memory _publishTimeDiffs = new uint24[](_data.length);
     for (uint _i = 0; _i < _data.length; ) {
       // Build the price update calldata
-      IPriceAdapter priceAdapter = lens.priceAdapterById(_data[_i].assetId);
-      if (address(priceAdapter) == address(0)) {
+      if (_data[_i].assetId != GLP_ASSET_ID) {
         // If data is not GLP, then make tick rightaway.
         _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, -8, 18)));
       } else {
-        // If price adapter is available, retrieve the price on-chain from price adapter.
-        uint256 priceE18 = priceAdapter.getPrice();
-        _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(priceE18));
+        // If data is GLP, then replace price with the price of GLP on-chain.
+        uint256 _midAum = (glpManager.getAum(true) + glpManager.getAum(false)) / 2e12;
+        uint256 _glpPrice = (1e18 * _midAum) / sGlp.totalSupply();
+        _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(_glpPrice));
       }
       _publishTimeDiffs[_i] = uint24(_data[_i].publishTime - _minPublishTime);
 

@@ -106,7 +106,23 @@ interface ILiquidityHandler02 {
   function liquidityOrders(
     address _subaccount,
     uint256 _orderIndex
-  ) external view returns (LiquidityOrder memory _order);
+  )
+    external
+    view
+    returns (
+      uint256 orderIndex,
+      uint256 amount,
+      uint256 minOut,
+      uint256 actualAmountOut,
+      uint256 executionFee,
+      address payable account,
+      uint48 createdTimestamp,
+      uint48 executedTimestamp,
+      address token,
+      bool isAdd,
+      bool isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      LiquidityOrderStatus status
+    );
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 

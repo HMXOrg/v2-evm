@@ -11,6 +11,8 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { MockAccountAbstraction } from "../../mocks/MockAccountAbstraction.sol";
 import { MockEntryPoint } from "../../mocks/MockEntryPoint.sol";
 
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+
 import "forge-std/console.sol";
 // - revert
 //   - Try directCall executeLiquidity
@@ -54,6 +56,8 @@ struct PriceFeed {
 contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
   bytes32[] internal priceUpdateData;
   bytes32[] internal publishTimeUpdateData;
+
+  address internal subAccount = HMXLib.getSubAccount(ALICE, SUB_ID);
 
   MockEntryPoint entryPoint;
 
@@ -370,21 +374,30 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
       true
     );
 
-    ILiquidityHandler02.LiquidityOrder memory beforeExecuteOrder = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex
-    );
+    (
+      uint256 orderIndex,
+      uint256 amount,
+      uint256 minOut,
+      uint256 actualAmountOut,
+      uint256 executionFee,
+      address payable account,
+      uint48 createdTimestamp,
+      uint48 executedTimestamp,
+      address token,
+      bool isAdd,
+      bool isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      ILiquidityHandler02.LiquidityOrderStatus status
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex);
 
     // 2 Assert LIquidity Order
-    assertEq(beforeExecuteOrder.account, ALICE, "Alice Order.account");
-    assertEq(beforeExecuteOrder.token, address(weth), "Alice Order.token");
-    assertEq(beforeExecuteOrder.amount, 5 ether, "Alice Order.amount");
-    assertEq(beforeExecuteOrder.minOut, 0, "Alice Order.minOut");
-    assertEq(beforeExecuteOrder.actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(beforeExecuteOrder.isAdd, true, "Alice Order.isAdd");
-    assertEq(beforeExecuteOrder.executionFee, 5 ether, "Alice Order.executionFee");
-    assertEq(beforeExecuteOrder.isNativeOut, true, "Alice Order.isNativeOut");
+    assertEq(account, ALICE, "Alice Order.account");
+    assertEq(token, address(weth), "Alice Order.token");
+    assertEq(amount, 5 ether, "Alice Order.amount");
+    assertEq(minOut, 0, "Alice Order.minOut");
+    assertEq(actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(isAdd, true, "Alice Order.isAdd");
+    assertEq(executionFee, 5 ether, "Alice Order.executionFee");
+    assertEq(isNativeOut, true, "Alice Order.isNativeOut");
 
     ILiquidityHandler02.ExecuteOrdersParam memory params;
     address[] memory accounts = new address[](1);
@@ -452,22 +465,31 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
       true
     );
 
-    ILiquidityHandler02.LiquidityOrder memory _beforeExecuteOrder = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex
-    );
+    (
+      uint256 orderIndex,
+      uint256 amount,
+      uint256 minOut,
+      uint256 actualAmountOut,
+      uint256 executionFee,
+      address payable account,
+      uint48 createdTimestamp,
+      uint48 executedTimestamp,
+      address token,
+      bool isAdd,
+      bool isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      ILiquidityHandler02.LiquidityOrderStatus status
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex);
     vm.stopPrank();
 
     // 2 Assert LIquidity Order
-    assertEq(_beforeExecuteOrder.account, ALICE, "Alice Order.account");
-    assertEq(_beforeExecuteOrder.token, address(weth), "Alice Order.token");
-    assertEq(_beforeExecuteOrder.amount, 5 ether, "Alice Order.amount");
-    assertEq(_beforeExecuteOrder.minOut, 0, "Alice Order.minOut");
-    assertEq(_beforeExecuteOrder.actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(_beforeExecuteOrder.isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrder.executionFee, 5 ether, "Alice Order.executionFee");
-    assertEq(_beforeExecuteOrder.isNativeOut, true, "Alice Order.isNativeOut");
+    assertEq(account, ALICE, "Alice Order.account");
+    assertEq(token, address(weth), "Alice Order.token");
+    assertEq(amount, 5 ether, "Alice Order.amount");
+    assertEq(minOut, 0, "Alice Order.minOut");
+    assertEq(actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(isAdd, true, "Alice Order.isAdd");
+    assertEq(executionFee, 5 ether, "Alice Order.executionFee");
+    assertEq(isNativeOut, true, "Alice Order.isNativeOut");
 
     ILiquidityHandler02.ExecuteOrdersParam memory params;
     address[] memory accounts = new address[](1);
@@ -494,18 +516,27 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
     ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
 
-    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex
-    );
+    (
+      orderIndex,
+      amount,
+      minOut,
+      actualAmountOut,
+      executionFee,
+      account,
+      createdTimestamp,
+      executedTimestamp,
+      token,
+      isAdd,
+      isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      status
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex);
     //user have to get refund
     assertEq(activeOrders.length, 0, "Should have none active order");
     assertEq(executedOrders.length, 0, "Should have none executed order");
-    assertEq(order.amount, 0, "Amount in order should be decreased to 0");
+    assertEq(amount, 0, "Amount in order should be decreased to 0");
 
     //alice will get 5 ether from order.amount (Native)
-    assertEq(ALICE.balance, _beforeExecuteOrder.amount, "Alice refund Balance");
+    assertEq(ALICE.balance, amount, "Alice refund Balance");
   }
 
   function test_correctness_cancelOrder02() external {
@@ -519,12 +550,21 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     liquidityHandler.cancelLiquidityOrder(ALICE, SUB_ID, _orderIndex01);
     assertEq(liquidityHandler.getAllActiveOrders(5, 0).length, 2);
 
-    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex01
-    );
-    assertEq(order.account, address(0), "Alice account address");
+    (
+      ,
+      ,
+      ,
+      ,
+      ,
+      address payable account, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      ,
+      ,
+      ,
+      ,
+      ,
+
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex01);
+    assertEq(account, address(0), "Alice account address");
 
     ILiquidityHandler02.ExecuteOrdersParam memory params;
     address[] memory accounts = new address[](2);
@@ -596,19 +636,28 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     ILiquidityHandler02.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getAllActiveOrders(10, 0);
     assertEq(_beforeExecuteOrders.length, _beforeCreateOrders.length + 1, "Order Amount After Created Order");
 
-    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex
-    );
+    (
+      uint256 orderIndex,
+      uint256 amount,
+      uint256 minOut,
+      uint256 actualAmountOut,
+      uint256 executionFee,
+      address payable account,
+      uint48 createdTimestamp,
+      uint48 executedTimestamp,
+      address token,
+      bool isAdd,
+      bool isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      ILiquidityHandler02.LiquidityOrderStatus status
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex);
 
-    assertEq(order.account, ALICE, "Alice Order.account");
-    assertEq(order.token, address(wbtc), "Alice Order.token");
-    assertEq(order.amount, 1 ether, "Alice Order.amount");
-    assertEq(order.minOut, 1 ether, "Alice Order.minOut");
-    assertEq(order.actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(order.isAdd, true, "Alice Order.isAdd");
-    assertEq(order.isNativeOut, false, "Alice Order.isNativeOut");
+    assertEq(account, ALICE, "Alice Order.account");
+    assertEq(token, address(wbtc), "Alice Order.token");
+    assertEq(amount, 1 ether, "Alice Order.amount");
+    assertEq(minOut, 1 ether, "Alice Order.minOut");
+    assertEq(actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(isAdd, true, "Alice Order.isAdd");
+    assertEq(isNativeOut, false, "Alice Order.isNativeOut");
   }
 
   function _createRemoveLiquidityOrder() internal returns (uint256 _orderIndex) {
@@ -632,19 +681,28 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
 
     assertEq(hlp.balanceOf(ALICE), 0, "User HLP Balance");
 
-    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex
-    );
+    (
+      uint256 orderIndex,
+      uint256 amount,
+      uint256 minOut,
+      uint256 actualAmountOut,
+      uint256 executionFee,
+      address payable account,
+      uint48 createdTimestamp,
+      uint48 executedTimestamp,
+      address token,
+      bool isAdd,
+      bool isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      ILiquidityHandler02.LiquidityOrderStatus status
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex);
 
-    assertEq(order.account, ALICE, "Alice Order.account");
-    assertEq(order.token, address(wbtc), "Alice Order.token");
-    assertEq(order.amount, 5 ether, "Alice HLP Order.amount");
-    assertEq(order.minOut, 0, "Alice WBTC Order.minOut");
-    assertEq(order.actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(order.isAdd, false, "Alice Order.isAdd");
-    assertEq(order.isNativeOut, false, "Alice Order.isNativeOut");
+    assertEq(account, ALICE, "Alice Order.account");
+    assertEq(token, address(wbtc), "Alice Order.token");
+    assertEq(amount, 5 ether, "Alice HLP Order.amount");
+    assertEq(minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(isAdd, false, "Alice Order.isAdd");
+    assertEq(isNativeOut, false, "Alice Order.isNativeOut");
   }
 
   function _createRemoveLiquidityNativeOrder() internal returns (uint256 _orderIndex) {
@@ -674,20 +732,29 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     );
     assertEq(hlp.balanceOf(ALICE), 0, "User HLP Balance");
 
-    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
-      ALICE,
-      SUB_ID,
-      _orderIndex
-    );
+    (
+      uint256 orderIndex,
+      uint256 amount,
+      uint256 minOut,
+      uint256 actualAmountOut,
+      uint256 executionFee,
+      address payable account,
+      uint48 createdTimestamp,
+      uint48 executedTimestamp,
+      address token,
+      bool isAdd,
+      bool isNativeOut, // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+      ILiquidityHandler02.LiquidityOrderStatus status
+    ) = liquidityHandler.liquidityOrders(subAccount, _orderIndex);
 
-    assertEq(order.account, ALICE, "Alice Order.account");
-    assertEq(order.token, address(weth), "Alice Order.token");
-    assertEq(order.amount, _amount, "Alice HLP Order.amount");
-    assertEq(order.minOut, 0, "Alice WBTC Order.minOut");
-    assertEq(order.actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(order.isAdd, false, "Alice Order.isAdd");
-    assertEq(order.executionFee, 5 ether, "Alice Execute fee");
-    assertEq(order.isNativeOut, true, "Alice Order.isNativeOut");
+    assertEq(account, ALICE, "Alice Order.account");
+    assertEq(token, address(weth), "Alice Order.token");
+    assertEq(amount, _amount, "Alice HLP Order.amount");
+    assertEq(minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(isAdd, false, "Alice Order.isAdd");
+    assertEq(executionFee, 5 ether, "Alice Execute fee");
+    assertEq(isNativeOut, true, "Alice Order.isNativeOut");
   }
 
   function test_revert_executeOrder_canceledOrder() external {

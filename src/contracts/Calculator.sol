@@ -126,9 +126,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
       // Formula:
       // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
-      _pendingBorrowingFee +=
-        (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
-        _borrowingFeeE30;
+      if (_assetClassState.sumBorrowingFeeE30 > _assetClassState.sumSettledBorrowingFeeE30) {
+        _pendingBorrowingFee +=
+          (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
+          _borrowingFeeE30;
+      } else {
+        if (_assetClassState.sumSettledBorrowingFeeE30 - _assetClassState.sumBorrowingFeeE30 > 1e30) {
+          revert ICalculator_InvalidBorrowingFee();
+        }
+        _pendingBorrowingFee += _borrowingFeeE30;
+      }
 
       unchecked {
         ++i;

@@ -3363,11 +3363,7 @@
           },
           "t_enum(WithdrawOrderStatus)24339": {
             "label": "enum ICrossMarginHandler.WithdrawOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(WithdrawOrder)24364_storage)dyn_storage)": {
@@ -4016,11 +4012,7 @@
           },
           "t_enum(LiquidityOrderStatus)28434": {
             "label": "enum ILiquidityHandler.LiquidityOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(LiquidityOrder)28460_storage)dyn_storage)": {
@@ -4887,11 +4879,7 @@
           },
           "t_enum(LiquidityOrderStatus)28611": {
             "label": "enum ILiquidityHandler.LiquidityOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(LiquidityOrder)28637_storage)dyn_storage)": {
@@ -9303,6 +9291,114 @@
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "64f614c202bc920b2d3957c808241d82a753a0d56006eec981fe1be5c4e5ea37": {
+      "address": "0xf46ec055cADD65BD431deE8e278Ae5732edAe3e1",
+      "txHash": "0xcc585c352111967798afbf188d6b2a7283769f356d263d3f3e018f8c13e9a05a",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "oracle",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:43"
+          },
+          {
+            "label": "vaultStorage",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:44"
+          },
+          {
+            "label": "configStorage",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:45"
+          },
+          {
+            "label": "perpStorage",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:46"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
           },
           "t_uint256": {
             "label": "uint256",

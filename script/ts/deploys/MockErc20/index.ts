@@ -9,7 +9,7 @@ async function main() {
 
   console.log(`Deploying MockErc20 Contract`);
   const MockErc20 = new MockErc20__factory(deployer);
-  const mockErc20 = await MockErc20.deploy("Arbitrum", "ARB", 18);
+  const mockErc20 = await MockErc20.deploy("wstETH", "wstETH", 18);
   await mockErc20.deployed();
   console.log(`Deployed at: ${mockErc20.address}`);
 

@@ -7,18 +7,8 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("DOGE"),
-    pythPriceId: ethers.utils.formatBytes32String("DOGE"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("CAD"),
-    pythPriceId: ethers.utils.formatBytes32String("CAD"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("SGD"),
-    pythPriceId: ethers.utils.formatBytes32String("SGD"),
+    assetId: ethers.utils.formatBytes32String("WSTETH"),
+    pythPriceId: ethers.utils.formatBytes32String("WSTETH"),
     inverse: false,
   },
 ];
@@ -26,7 +16,6 @@ const inputs = [
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
   console.log("[PythAdapter] Setting configs...");

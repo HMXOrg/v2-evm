@@ -11,10 +11,10 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ARB"),
+      assetId: ethers.utils.formatBytes32String("WSTETH"),
       config: {
-        assetId: ethers.utils.formatBytes32String("ARB"),
-        tokenAddress: config.tokens.arb,
+        assetId: ethers.utils.formatBytes32String("WSTETH"),
+        tokenAddress: config.tokens.wstEth,
         decimals: 18,
         isStableCoin: false,
       },

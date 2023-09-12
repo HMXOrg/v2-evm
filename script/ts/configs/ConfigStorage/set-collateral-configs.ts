@@ -13,7 +13,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ARB"),
+      assetId: ethers.utils.formatBytes32String("WSTETH"),
       collateralConfig: {
         collateralFactorBPS: 0.85 * BPS,
         accepted: true,

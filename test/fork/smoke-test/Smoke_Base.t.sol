@@ -99,9 +99,6 @@ contract Smoke_Base is Test {
     _positionManagers[0] = address(this);
 
     vm.stopPrank();
-
-    deal(USDC, address(botHandler), 100 ether);
-    IERC20(USDC).botHandler.injectTokenToHlpLiquidity(USDC, 100 ether);
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {

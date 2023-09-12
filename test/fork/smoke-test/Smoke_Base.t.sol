@@ -75,21 +75,24 @@ contract Smoke_Base is Test {
     perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
     vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
-    // UnsafeEcoPythCalldataBuilder
-    ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F);
+    proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
+    ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
 
     // -- LOAD FORK -- //
+    vm.stopPrank();
 
     // -- UPGRADE -- //
+    vm.startPrank(proxyAdmin.owner());
     Calculator newCalculator = new Calculator();
-    proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
-    vm.prank(proxyAdmin.owner());
-    proxyAdmin.upgrade(TransparentUpgradeableProxy(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006), newCalculator);
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006)),
+      address(newCalculator)
+    );
+
+    // -- LOAD UPGRADE -- //
+    vm.stopPrank();
 
     calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
-    // -- UPGRADE -- //
-
-    vm.stopPrank();
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {

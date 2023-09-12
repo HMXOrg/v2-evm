@@ -30,7 +30,14 @@
     "sglpStakedAdapter": "",
     "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
     "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B",
-    "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9"
+    "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9",
+    "ecoPythCalldataBuilder2": "",
+    "unsafeEcoPythCalldataBuilder2": "",
+    "onChainPriceLens": "",
+    "priceAdapters": {
+      "glp": "",
+      "wstEth": ""
+    }
   },
   "tokens": {
     "hlp": "0x9772cE382D33573850f029c56828dff7717b3282",
@@ -58,6 +65,10 @@
     "curve": {
       "wstEthPool": "",
       "usdcUsdtPool": ""
+    },
+    "chainlink": {
+      "wstEthEthPriceFeed": "0x66765301a65dc76F1eec04494E55d939E23f59Bb",
+      "ethUsdPriceFeed": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08"
     }
   },
   "strategies": {

@@ -33,7 +33,14 @@
     "sglpStakedAdapter": "",
     "middleware": "0x8146fcc39216c1733C7d075398F5F791729Cfb91",
     "ecoPythCalldataBuilder": "0x0622DBf2ee42C531AF2AB8Fe4d802B4546D3119a",
-    "unsafeEcoPythCalldataBuilder": ""
+    "unsafeEcoPythCalldataBuilder": "",
+    "ecoPythCalldataBuilder2": "",
+    "unsafeEcoPythCalldataBuilder2": "",
+    "onChainPriceLens": "",
+    "priceAdapters": {
+      "glp": "",
+      "wstEth": ""
+    }
   },
   "tokens": {
     "hlp": "0x83CC3519fA8F501Cd0C325f4F5e34Ac0B67c22fE",
@@ -61,6 +68,10 @@
     "curve": {
       "wstEthPool": "",
       "usdcUsdtPool": ""
+    },
+    "chainlink": {
+      "wstEthEthPriceFeed": "0x66765301a65dc76F1eec04494E55d939E23f59Bb",
+      "ethUsdPriceFeed": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08"
     }
   },
   "strategies": {

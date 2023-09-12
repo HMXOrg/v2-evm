@@ -33,7 +33,14 @@
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",
     "ecoPythCalldataBuilder": "0x86508504B72aD65d565Fe75516Af2281a64ab664",
-    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f"
+    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f",
+    "ecoPythCalldataBuilder2": "",
+    "unsafeEcoPythCalldataBuilder2": "",
+    "onChainPriceLens": "",
+    "priceAdapters": {
+      "glp": "",
+      "wstEth": ""
+    }
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",

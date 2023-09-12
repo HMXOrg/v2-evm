@@ -26,17 +26,18 @@
   },
   "oracles": {
     "ecoPyth": "0xbDd5809FAc1528491a88d90E4DE8B6782D3dA071",
+    "ecoPyth2": "0xbDd5809FAc1528491a88d90E4DE8B6782D3dA071",
     "pythAdapter": "0x16450238B44856BBb050Fb77611f79b0dB2f1E37",
     "sglpStakedAdapter": "",
     "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
     "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B",
     "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9",
-    "ecoPythCalldataBuilder2": "",
-    "unsafeEcoPythCalldataBuilder2": "",
-    "onChainPriceLens": "",
+    "ecoPythCalldataBuilder2": "0x6703716a0ad2cF6693f91CE3Bada662a35E7Eefe",
+    "unsafeEcoPythCalldataBuilder2": "0xF3CE3fc184aAf2BEAF078cc59D978Aecf9da2dF3",
+    "onChainPriceLens": "0x34F3Ae43A4766e35b2c53FE4D6e53F57Eb451B5A",
     "priceAdapters": {
-      "glp": "",
-      "wstEth": ""
+      "glp": "0x3d110D0982dF0B358EA0B373190d4a3158AC0F55",
+      "wstEth": "0x960a9A6Fc2dd724D0f28f0DDFDd7919CE9C7bD6C"
     }
   },
   "tokens": {

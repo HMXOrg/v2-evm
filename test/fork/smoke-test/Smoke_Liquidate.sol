@@ -74,26 +74,4 @@ contract Smoke_Liquidate is Smoke_Base {
     }
     vm.stopPrank();
   }
-
-  function _setPriceData()
-    internal
-    view
-    returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts)
-  {
-    bytes32[] memory pythRes = ecoPyth.getAssetIds();
-    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
-    assetIds = new bytes32[](len - 1);
-    prices = new uint64[](len - 1);
-    shouldInverts = new bool[](len - 1);
-
-    for (uint i = 1; i < len; i++) {
-      assetIds[i - 1] = pythRes[i];
-      prices[i - 1] = 1 * 1e8;
-      if (i == 4) {
-        shouldInverts[i - 1] = true; // JPY
-      } else {
-        shouldInverts[i - 1] = false;
-      }
-    }
-  }
 }

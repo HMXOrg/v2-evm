@@ -166,7 +166,6 @@ contract Smoke_Base is Test {
 
     for (uint i = 1; i < len; i++) {
       PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(pythRes[i]);
-      console.logInt(_ecoPythPrice.price);
       data[i - 1].assetId = pythRes[i];
       data[i - 1].priceE8 = _ecoPythPrice.price;
       data[i - 1].publishTime = uint160(block.timestamp);

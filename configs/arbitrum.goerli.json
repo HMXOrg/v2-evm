@@ -36,7 +36,7 @@
     "unsafeEcoPythCalldataBuilder2": "0xF3CE3fc184aAf2BEAF078cc59D978Aecf9da2dF3",
     "onChainPriceLens": "0x34F3Ae43A4766e35b2c53FE4D6e53F57Eb451B5A",
     "priceAdapters": {
-      "glp": "0x3d110D0982dF0B358EA0B373190d4a3158AC0F55",
+      "glp": "0xDAa9eF42a073fAE417D9668b9bEbE1Ed8a4922E1",
       "wstEth": "0x960a9A6Fc2dd724D0f28f0DDFDd7919CE9C7bD6C"
     }
   },

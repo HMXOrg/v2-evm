@@ -7,8 +7,9 @@ pragma solidity 0.8.18;
 import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
 
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
@@ -26,11 +27,8 @@ import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { Test } from "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-// import { PositionTester } from "../../testers/PositionTester.sol";
-// import { PositionTester02 } from "../../testers/PositionTester02.sol";
-// import { MarketTester } from "../../testers/MarketTester.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract Smoke_Base is Test {
   ITradeHelper internal tradeHelper;
@@ -38,12 +36,8 @@ contract Smoke_Base is Test {
   ITradeService internal tradeService;
   ILiquidationService internal liquidationService;
   ILiquidationReader internal liquidationReader;
-
-  // PositionTester internal positionTester;
-  // PositionTester02 internal positionTester02;
-  // MarketTester internal globalMarketTester;
-
   IEcoPyth internal ecoPyth;
+
   // storages
   IConfigStorage internal configStorage;
   IPerpStorage internal perpStorage;
@@ -54,6 +48,8 @@ contract Smoke_Base is Test {
   IBotHandler internal botHandler;
 
   IEcoPythCalldataBuilder internal ecoPythBuilder;
+
+  ProxyAdmin internal proxyAdmin;
 
   address internal constant OWNER = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
   address internal constant POS_MANAGER = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E; // set market status;
@@ -66,6 +62,7 @@ contract Smoke_Base is Test {
 
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 130344667);
 
+    // -- LOAD FORK -- //
     vm.startPrank(OWNER);
     ecoPyth = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
     tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
@@ -78,25 +75,19 @@ contract Smoke_Base is Test {
     perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
     vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
-    calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
-
     // UnsafeEcoPythCalldataBuilder
     ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F);
 
-    // positionTester = new PositionTester(perpStorage, vaultStorage, mockOracle);
-    // positionTester02 = new PositionTester02(perpStorage);
-    // globalMarketTester = new MarketTester(perpStorage);
+    // -- LOAD FORK -- //
 
-    // deploy services
-    address[] memory _updaters = new address[](2);
-    _updaters[0] = address(botHandler);
-    _updaters[1] = address(this);
-    bool[] memory _actives = new bool[](2);
-    _actives[0] = true;
-    _actives[1] = true;
+    // -- UPGRADE -- //
+    Calculator newCalculator = new Calculator();
+    proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
+    vm.prank(proxyAdmin.owner());
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006), newCalculator);
 
-    address[] memory _positionManagers = new address[](1);
-    _positionManagers[0] = address(this);
+    calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
+    // -- UPGRADE -- //
 
     vm.stopPrank();
   }

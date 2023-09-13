@@ -623,8 +623,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           0
         );
 
-      // if market status is not 2, means that the market is closed or market status has been defined yet
-      if (_marketConfig.active && _marketStatus != 2) revert ITradeService_MarketIsClosed();
       // check sub account equity is under MMR
       /// @dev no need to derived price on this
       _subAccountHealthCheck(_vars.accountInfo.subAccount, 0, 0);

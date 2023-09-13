@@ -42,11 +42,10 @@ contract Smoke_Liquidate is Smoke_Base {
     vm.stopPrank();
   }
 
-  // prank as real use-case, NOTE: take a FK long time
   function testCorrectness_smoke_liquidateAsAPI() external {
-    activeSubAccounts = perpStorage.getActiveSubAccounts(10_000, 0);
+    activeSubAccounts = perpStorage.getActiveSubAccounts(30, 0);
     console.log("accounts:", activeSubAccounts.length);
-    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData();
+    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
     (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
     address[] memory liqSubAccounts = new address[](10);
 

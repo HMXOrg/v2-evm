@@ -120,11 +120,9 @@ contract Smoke_Base is Test {
     publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
   }
 
-  function _setPriceData()
-    internal
-    view
-    returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts)
-  {
+  function _setPriceData(
+    uint256 _priceE8
+  ) internal view returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) {
     bytes32[] memory pythRes = ecoPyth.getAssetIds();
     uint256 len = pythRes.length; // 35 - 1(index 0) = 34
     assetIds = new bytes32[](len - 1);
@@ -133,7 +131,7 @@ contract Smoke_Base is Test {
 
     for (uint i = 1; i < len; i++) {
       assetIds[i - 1] = pythRes[i];
-      prices[i - 1] = 1 * 1e8;
+      prices[i - 1] = _price * 1e8;
       if (i == 4) {
         shouldInverts[i - 1] = true; // JPY
       } else {

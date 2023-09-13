@@ -27,6 +27,7 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { ICrossMarginHandler02 } from "@hmx/handlers/interfaces/ICrossMarginHandler02.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
@@ -205,6 +206,25 @@ library Deployer {
     return ICrossMarginHandler(payable(_proxy));
   }
 
+  function deployCrossMarginHandler02(
+    address _proxyAdmin,
+    address _crossMarginService,
+    address _pyth,
+    uint256 _executionOrderFee
+  ) internal returns (ICrossMarginHandler02) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/CrossMarginHandler02.sol/CrossMarginHandler02.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _crossMarginService,
+      _pyth,
+      _executionOrderFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ICrossMarginHandler02(payable(_proxy));
+  }
+
   function deployLiquidityHandler(
     address _proxyAdmin,
     address _liquidityService,
@@ -251,18 +271,16 @@ library Deployer {
     address _liquidationService,
     address _liquidityService,
     address _tradeService,
-    address _pyth,
-    uint256 _maxExecutionChuck
+    address _pyth
   ) internal returns (IExt01Handler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Ext01Handler.sol/Ext01Handler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,address,address,address)")),
       _crossMarginService,
       _liquidationService,
       _liquidityService,
       _tradeService,
-      _pyth,
-      _maxExecutionChuck
+      _pyth
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IExt01Handler(payable(_proxy));

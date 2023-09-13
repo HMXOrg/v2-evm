@@ -17,7 +17,7 @@ contract Smoke_Liquidate is Smoke_Base {
 
   // for shorter time
   function testCorrectness_smoke_liquidateFirstTen() external {
-    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData();
+    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
     (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
     address[] memory liqSubAccounts = new address[](10);
 

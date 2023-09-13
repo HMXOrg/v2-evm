@@ -90,8 +90,6 @@ contract Smoke_Liquidate is Smoke_Base {
     }
     botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();
-    console.log("PASSED");
-    return;
   }
 
   function _buildDataForPrice_Deleverage() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {

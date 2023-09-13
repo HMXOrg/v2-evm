@@ -12,7 +12,8 @@
     "bot": "0x4310118114Cb9696C85054905aA07bc4ca971d50",
     "crossMargin": "0x180248C398729Ff41706eD52503E5A9fc3320d86",
     "limitTrade": "0xd3b1A8Bd503f83849FF35d72c6EE0127327a9912",
-    "liquidity": "0x83E5FaA30e05e0e1Df94D1b743583DBD8cC23619"
+    "liquidity": "0x83E5FaA30e05e0e1Df94D1b743583DBD8cC23619",
+    "ext01": "0xAfA0bb774A92230b6b9DBf4CAF3Fc746F0dfb1f7"
   },
   "helpers": {
     "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
@@ -97,9 +98,9 @@
     "liquidation": "0xC53d0ED402829dA090E609fAA47774ffEDB074fa"
   },
   "extension": {
-    "switchCollateralRouter": "",
+    "switchCollateralRouter": "0x707860F2947706ada261efF84bf632707a2bf815",
     "dexter": {
-      "uniswapV3": "",
+      "uniswapV3": "0x773a4deFa1a6ad36b8E1D70e5a408A7D0902a2f9",
       "curve": "",
       "glp": ""
     }

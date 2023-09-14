@@ -198,7 +198,7 @@ contract Smoke_Base is Test {
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _limitPriceE30
-  ) internal returns (bool) {
+  ) internal view returns (bool) {
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
     IConfigStorage.MarketConfig memory config = configStorage.getMarketConfigByIndex(_marketIndex);
 

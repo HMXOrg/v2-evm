@@ -8,7 +8,7 @@ import { Smoke_Base } from "./Smoke_Base.t.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
-import { IPositionReader } from "@hmx/readers/interfaces/IPositionReader.sol";
+
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 import "forge-std/console.sol";
@@ -18,8 +18,6 @@ contract Smoke_MaxProfit is Smoke_Base {
 
   address internal constant USDC = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
   address internal constant TRADE_SERVICE = 0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E;
-
-  IPositionReader internal positionReader = IPositionReader(0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03);
 
   function setUp() public virtual override {
     super.setUp();

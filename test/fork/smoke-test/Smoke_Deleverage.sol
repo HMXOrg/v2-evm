@@ -40,7 +40,7 @@ contract Smoke_Liquidate is Smoke_Base {
     );
   }
 
-  function testCorrectness_Smoke_deleverageFirstTen() external {
+  function testCorrectness_SmokeTest_deleverageFirstTen() external {
     IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice_Deleverage();
     (
       uint256 _minPublishTime,

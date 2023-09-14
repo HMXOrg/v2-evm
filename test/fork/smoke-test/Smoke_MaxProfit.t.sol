@@ -21,7 +21,7 @@ contract Smoke_MaxProfit is Smoke_Base {
     super.setUp();
   }
 
-  function testCorrectness_Smoke_forceCloseMaxProfit() external {
+  function testCorrectness_SmokeTest_forceCloseMaxProfit() external {
     (, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
     (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
 

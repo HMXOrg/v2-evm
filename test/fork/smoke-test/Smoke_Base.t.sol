@@ -165,6 +165,7 @@ contract Smoke_Base is Test {
 
   function _buildDataForPrice() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
     bytes32[] memory pythRes = ecoPyth.getAssetIds();
+
     uint256 len = pythRes.length; // 35 - 1(index 0) = 34
 
     data = new IEcoPythCalldataBuilder.BuildData[](len - 1);

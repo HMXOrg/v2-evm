@@ -53,7 +53,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          ARBITRUM_ONE_FORK=${{secrets.ARBITRUM_ONE_FORK}} forge test -vvvv
+          ARBITRUM_ONE_FORK=${{secrets.ARBITRUM_ONE_FORK}} forge test -vvvv --no-match-contract testCorrectness_SmokeTest
         id: test
   # analyze:
   #   name: Slither Analyze

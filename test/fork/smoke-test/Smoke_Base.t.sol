@@ -14,10 +14,14 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
-import { ILiquidationReader } from "@hmx/readers/interfaces/ILiquidationReader.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
+// Reader
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
+import { ILiquidationReader } from "@hmx/readers/interfaces/ILiquidationReader.sol";
+import { IPositionReader } from "@hmx/readers/interfaces/IPositionReader.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
@@ -35,8 +39,12 @@ contract Smoke_Base is Test {
 
   ITradeService internal tradeService;
   ILiquidationService internal liquidationService;
-  ILiquidationReader internal liquidationReader;
   IEcoPyth internal ecoPyth;
+
+  // readers
+  ILiquidationReader internal liquidationReader;
+  IPositionReader internal positionReader;
+  IOrderReader internal orderReader;
 
   // storages
   IConfigStorage internal configStorage;
@@ -63,18 +71,25 @@ contract Smoke_Base is Test {
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 130344667);
 
     // -- LOAD FORK -- //
-    vm.startPrank(OWNER);
-    ecoPyth = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
-    tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
-    tradeService = ITradeService(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E);
-    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
-    liquidationService = ILiquidationService(0x34E89DEd96340A177856fD822366AfC584438750);
-    liquidationReader = ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);
+    vm.startPrank(OWNER); // in case of setting something..
 
+    // services
+    tradeService = ITradeService(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E);
+    liquidationService = ILiquidationService(0x34E89DEd96340A177856fD822366AfC584438750);
+
+    // readers
+    liquidationReader = ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);
+    positionReader = IPositionReader(0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03);
+    orderReader = IOrderReader(0x0E6be5E7891f0835bb9E2a4F5410698E2aa02614);
+
+    // storage
     configStorage = IConfigStorage(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0);
     perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
     vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
+    ecoPyth = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
+    tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
+    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
     proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
     ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
 

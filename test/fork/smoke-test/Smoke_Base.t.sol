@@ -85,7 +85,7 @@ contract Smoke_Base is Test {
 
     // handler
     botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
-    limitHandler = ILimitTradeHndler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
+    limitHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
 
     // readers
     liquidationReader = ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);

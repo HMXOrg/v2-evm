@@ -4,32 +4,34 @@
 
 pragma solidity 0.8.18;
 
-import { BaseTest } from "@hmx-test/base/BaseTest.sol";
-import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { Test } from "forge-std/Test.sol";
+import { console } from "forge-std/console.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
+
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
+// Storage
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+
+// Service
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
-import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 // Reader
 import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
 import { ILiquidationReader } from "@hmx/readers/interfaces/ILiquidationReader.sol";
 import { IPositionReader } from "@hmx/readers/interfaces/IPositionReader.sol";
 
+// Handler
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
-
-import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
-
-import { Test } from "forge-std/Test.sol";
-import { console } from "forge-std/console.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -38,10 +40,15 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract Smoke_Base is Test {
   ITradeHelper internal tradeHelper;
+  IEcoPyth internal ecoPyth;
 
+  // services
   ITradeService internal tradeService;
   ILiquidationService internal liquidationService;
-  IEcoPyth internal ecoPyth;
+
+  // handlers
+  IBotHandler internal botHandler;
+  ILimitTradeHandler internal limitHandler;
 
   // readers
   ILiquidationReader internal liquidationReader;
@@ -52,10 +59,7 @@ contract Smoke_Base is Test {
   IConfigStorage internal configStorage;
   IPerpStorage internal perpStorage;
   IVaultStorage internal vaultStorage;
-
   ICalculator internal calculator;
-
-  IBotHandler internal botHandler;
 
   IEcoPythCalldataBuilder internal ecoPythBuilder;
 
@@ -79,6 +83,10 @@ contract Smoke_Base is Test {
     tradeService = ITradeService(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E);
     liquidationService = ILiquidationService(0x34E89DEd96340A177856fD822366AfC584438750);
 
+    // handler
+    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
+    limitHandler = ILimitTradeHndler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
+
     // readers
     liquidationReader = ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);
     positionReader = IPositionReader(0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03);
@@ -91,7 +99,6 @@ contract Smoke_Base is Test {
 
     ecoPyth = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
     tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
-    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
     proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
     ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
 
@@ -106,9 +113,8 @@ contract Smoke_Base is Test {
       address(newCalculator)
     );
 
-    // -- LOAD UPGRADE -- //
     vm.stopPrank();
-
+    // -- LOAD UPGRADE -- //
     calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
   }
 

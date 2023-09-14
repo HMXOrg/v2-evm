@@ -41,7 +41,6 @@ contract Smoke_Liquidate is Smoke_Base {
   }
 
   function testCorrectness_Smoke_deleverageFirstTen() external {
-    // (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceMAX();
     IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice_Deleverage();
     (
       uint256 _minPublishTime,
@@ -103,7 +102,6 @@ contract Smoke_Liquidate is Smoke_Base {
   /// @dev: This is for the case, bug as some will be reverted,
   ///       due to equity is under MMR, which should be liquidated instead.
   // function testCorrectness_Smoke_deleverageAsAPI() external {
-  //   // (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceMAX();
   //   IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice();
   //   (
   //     uint256 _minPublishTime,

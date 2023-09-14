@@ -39,42 +39,47 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract Smoke_Base is Test {
-  ITradeHelper internal tradeHelper;
-  IEcoPyth internal ecoPyth;
+  ITradeHelper public tradeHelper;
+  IEcoPyth public ecoPyth;
 
   // services
-  ITradeService internal tradeService;
-  ILiquidationService internal liquidationService;
+  ITradeService public tradeService;
+  ILiquidationService public liquidationService;
 
   // handlers
-  IBotHandler internal botHandler;
-  ILimitTradeHandler internal limitHandler;
+  IBotHandler public botHandler;
+  ILimitTradeHandler public limitHandler;
 
   // readers
-  ILiquidationReader internal liquidationReader;
-  IPositionReader internal positionReader;
-  IOrderReader internal orderReader;
+  ILiquidationReader public liquidationReader;
+  IPositionReader public positionReader;
+  IOrderReader public orderReader;
 
   // storages
-  IConfigStorage internal configStorage;
-  IPerpStorage internal perpStorage;
-  IVaultStorage internal vaultStorage;
-  ICalculator internal calculator;
+  IConfigStorage public configStorage;
+  IPerpStorage public perpStorage;
+  IVaultStorage public vaultStorage;
+  ICalculator public calculator;
 
-  IEcoPythCalldataBuilder internal ecoPythBuilder;
+  IEcoPythCalldataBuilder public ecoPythBuilder;
 
-  ProxyAdmin internal proxyAdmin;
+  ProxyAdmin public proxyAdmin;
 
-  address internal constant OWNER = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
-  address internal constant POS_MANAGER = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E; // set market status;
-  address internal ALICE;
-  address internal BOB;
+  address public constant OWNER = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
+  address public constant POS_MANAGER = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E; // set market status;
+  address public ALICE;
+  address public BOB;
+
+  uint256 private constant _fixedBlock = 18133917;
 
   function setUp() public virtual {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
 
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 18133917);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
+    /// NOTE Current tests work with block: `_fixedBlock`.
+    ///      However, due to unknown reason,
+    ///      When rollFork/assign block.number, it'll be reverted.
 
     // -- LOAD FORK -- //
     vm.startPrank(OWNER); // in case of setting something..

@@ -170,4 +170,19 @@ contract Smoke_Base is Test {
       data[i - 1].maxDiffBps = 15_000;
     }
   }
+
+  function _validateClosedPosition(bytes32 _id) internal {
+    IPerpStorage.Position memory _position = perpStorage.getPositionById(_id);
+    // As the position has been closed, the gotten one should be empty stuct
+    assertEq(_position.primaryAccount, address(0));
+    assertEq(_position.marketIndex, 0);
+    assertEq(_position.avgEntryPriceE30, 0);
+    assertEq(_position.entryBorrowingRate, 0);
+    assertEq(_position.reserveValueE30, 0);
+    assertEq(_position.lastIncreaseTimestamp, 0);
+    assertEq(_position.positionSizeE30, 0);
+    assertEq(_position.realizedPnl, 0);
+    assertEq(_position.lastFundingAccrued, 0);
+    assertEq(_position.subAccountId, 0);
+  }
 }

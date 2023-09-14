@@ -75,18 +75,7 @@ contract Smoke_Liquidate is Smoke_Base {
         keccak256("someEncodedVaas")
       );
 
-      IPerpStorage.Position memory _position = perpStorage.getPositionById(positionId);
-      // As the position has been closed, the gotten one should be empty stuct
-      assertEq(_position.primaryAccount, address(0));
-      assertEq(_position.marketIndex, 0);
-      assertEq(_position.avgEntryPriceE30, 0);
-      assertEq(_position.entryBorrowingRate, 0);
-      assertEq(_position.reserveValueE30, 0);
-      assertEq(_position.lastIncreaseTimestamp, 0);
-      assertEq(_position.positionSizeE30, 0);
-      assertEq(_position.realizedPnl, 0);
-      assertEq(_position.lastFundingAccrued, 0);
-      assertEq(_position.subAccountId, 0);
+      _validateClosedPosition(positionId);
     }
     botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();
@@ -110,6 +99,7 @@ contract Smoke_Liquidate is Smoke_Base {
       }
     }
   }
+\
 
   /// @dev: This is for the case, bug as some will be reverted,
   ///       due to equity is under MMR, which should be liquidated instead.

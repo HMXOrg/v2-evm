@@ -212,4 +212,25 @@ interface ILimitTradeHandler {
   ) external view returns (LimitOrder[] memory _orders);
 
   function setLimitTradeHelper(address _limitTradeHelper) external;
+
+  function limitOrders(
+    address _subAccount,
+    uint256 _index
+  )
+    external
+    view
+    returns (
+      address account,
+      address tpToken,
+      bool triggerAboveThreshold,
+      bool reduceOnly,
+      int256 sizeDelta,
+      uint8 subAccountId,
+      uint256 orderIndex,
+      uint256 marketIndex,
+      uint256 triggerPrice,
+      uint256 acceptablePrice,
+      uint256 executionFee,
+      uint256 createdTimestamp
+    );
 }

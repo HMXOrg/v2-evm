@@ -99,7 +99,6 @@ contract Smoke_Liquidate is Smoke_Base {
       }
     }
   }
-\
 
   /// @dev: This is for the case, bug as some will be reverted,
   ///       due to equity is under MMR, which should be liquidated instead.

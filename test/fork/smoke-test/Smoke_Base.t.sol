@@ -140,22 +140,6 @@ contract Smoke_Base is Test {
     }
   }
 
-  function _setTickPriceMAX()
-    internal
-    view
-    returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
-  {
-    int24[] memory tickPrices = new int24[](34);
-    uint24[] memory publishTimeDiffs = new uint24[](34);
-    for (uint i = 0; i < 34; i++) {
-      tickPrices[i] = 10000;
-      publishTimeDiffs[i] = 0;
-    }
-
-    priceUpdateData = ecoPyth.buildPriceUpdateData(tickPrices);
-    publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
-  }
-
   function _buildDataForPrice() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
     bytes32[] memory pythRes = ecoPyth.getAssetIds();
     uint256 len = pythRes.length; // 35 - 1(index 0) = 34

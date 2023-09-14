@@ -13,6 +13,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
 import "forge-std/console.sol";
+import "forge-std/console2.sol";
 
 contract Smoke_TriggerOrder is Smoke_Base {
   address internal constant EXECUTOR = 0xB75ca1CC0B01B6519Bc879756eC431a95DC37882;
@@ -25,14 +26,30 @@ contract Smoke_TriggerOrder is Smoke_Base {
     super.setUp();
   }
 
+  function testCheck_SmokeTrigger() external view {
+    console2.logBytes(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+  }
+
   function testCorrectness_SmokeTest_ExecuteTriggerOrder() external {
-    (, , bool[] memory shouldInverts) = _setPriceData(100);
-    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice();
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice_Trigger();
 
-    uint64[] memory prices = new uint64[](30);
-    prices = _buildPrice_Triger();
+    for (uint chunk = 0; chunk < 100; chunk++) {
+      ILimitTradeHandler.LimitOrder[] memory orders = limitHandler.getAllActiveOrders(5, chunk);
 
-    ILimitTradeHandler.LimitOrder[] memory orders = orderReader.getExecutableOrders(100, 0, prices, shouldInverts);
+      for (uint i = 0; i < orders.length; i++) {
+        if (
+          orders[i].account == address(0) ||
+          !orders[i].triggerAboveThreshold ||
+          orders[i].sizeDelta == type(int256).max || // TP
+          orders[i].sizeDelta == type(int256).min // SL
+        ) continue;
+        accounts.push(orders[i].account);
+        subAccountIds.push(orders[i].subAccountId);
+        orderIndexes.push(orders[i].orderIndex);
+      }
+
+      if (accounts.length > 0) break;
+    }
 
     (
       uint256 _minPublishTime,
@@ -40,18 +57,18 @@ contract Smoke_TriggerOrder is Smoke_Base {
       bytes32[] memory _publishTimeUpdateCalldata
     ) = ecoPythBuilder.build(data);
 
-    for (uint i = 0; i < orders.length; i++) {
-      if (orders[i].account == address(0)) continue;
-      console.log("triggerPrice:", orders[i].triggerPrice);
-      console.log("triggerAboveThreshold:", orders[i].triggerAboveThreshold);
-      console.log("marketIndex:", orders[i].marketIndex);
-      console.log("----------------");
-      accounts.push(orders[i].account);
-      subAccountIds.push(orders[i].subAccountId);
-      orderIndexes.push(orders[i].orderIndex);
-    }
+    vm.prank(address(botHandler));
+    ecoPyth.updatePriceFeeds(
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
-    console.log("Valid Orders:", accounts.length);
+    PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(
+      0x444f474500000000000000000000000000000000000000000000000000000000
+    );
+
     vm.prank(EXECUTOR);
     limitHandler.executeOrders(
       accounts,
@@ -62,7 +79,7 @@ contract Smoke_TriggerOrder is Smoke_Base {
       _publishTimeUpdateCalldata,
       _minPublishTime,
       keccak256("someEncodedVaas"),
-      false
+      true
     );
 
     _validateExecutedOrder();
@@ -76,46 +93,25 @@ contract Smoke_TriggerOrder is Smoke_Base {
       (address account, , , , , , , , , , , ) = limitHandler.limitOrders(subAccount, orderIndexes[i]);
       assertEq(account, address(0));
     }
+    console.log("validated");
   }
 
-  function _buildPrice_Triger() internal view returns (uint64[] memory prices) {
-    bytes32[] memory tokenIndexes = new bytes32[](30);
-    prices = new uint64[](30);
+  function _buildDataForPrice_Trigger() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
+    bytes32[] memory pythRes = ecoPyth.getAssetIds();
 
-    tokenIndexes[0] = 0x4554480000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[1] = 0x4254430000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[2] = 0x4141504c00000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[3] = 0x4a50590000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[4] = 0x5841550000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[5] = 0x414d5a4e00000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[6] = 0x4d53465400000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[7] = 0x54534c4100000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[8] = 0x4555520000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[9] = 0x5841470000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[10] = 0x4155440000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[11] = 0x4742500000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[12] = 0x4144410000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[13] = 0x4d41544943000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[14] = 0x5355490000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[15] = 0x4152420000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[16] = 0x4f50000000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[17] = 0x4c54430000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[18] = 0x434f494e00000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[19] = 0x474f4f4700000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[20] = 0x424e420000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[21] = 0x534f4c0000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[22] = 0x5151510000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[23] = 0x5852500000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[24] = 0x4e56444100000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[25] = 0x4c494e4b00000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[26] = 0x4348460000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[27] = 0x444f474500000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[28] = 0x4341440000000000000000000000000000000000000000000000000000000000;
-    tokenIndexes[29] = 0x5347440000000000000000000000000000000000000000000000000000000000;
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
 
-    for (uint i = 0; i < 30; i++) {
-      PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(tokenIndexes[i]);
-      prices[i] = uint64(_ecoPythPrice.price);
+    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
+
+    for (uint i = 1; i < len; i++) {
+      PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(pythRes[i]);
+      data[i - 1].assetId = pythRes[i];
+      if (pythRes[i] == 0x444f474500000000000000000000000000000000000000000000000000000000) {
+        data[i - 1].priceE8 = 6300591; // DOGE, approx to 0.063$; valid for order
+        console.log(uint64(data[i - 1].priceE8));
+      } else data[i - 1].priceE8 = _ecoPythPrice.price;
+      data[i - 1].publishTime = uint160(block.timestamp);
+      data[i - 1].maxDiffBps = 15_000;
     }
   }
 }

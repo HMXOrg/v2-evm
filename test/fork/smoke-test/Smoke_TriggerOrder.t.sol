@@ -65,10 +65,6 @@ contract Smoke_TriggerOrder is Smoke_Base {
       keccak256("someEncodedVaas")
     );
 
-    PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(
-      0x444f474500000000000000000000000000000000000000000000000000000000
-    );
-
     vm.prank(EXECUTOR);
     limitHandler.executeOrders(
       accounts,

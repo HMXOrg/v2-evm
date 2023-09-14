@@ -9,8 +9,6 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 
-import { HMXLib } from "@hmx/libraries/HMXLib.sol";
-
 import "forge-std/console.sol";
 
 contract Smoke_MaxProfit is Smoke_Base {
@@ -43,14 +41,14 @@ contract Smoke_MaxProfit is Smoke_Base {
       IPerpStorage.Position memory _position = perpStorage.getPositionById(positionIds[i]);
       if (_position.primaryAccount == address(0)) continue;
 
-      {
-        address _subAccount = HMXLib.getSubAccount(_position.primaryAccount, _position.subAccountId);
-        IConfigStorage.MarketConfig memory config = configStorage.getMarketConfigByIndex(_position.marketIndex);
-
-        int256 _subAccountEquity = calculator.getEquity(_subAccount, _position.avgEntryPriceE30, config.assetId);
-        uint256 _mmr = calculator.getMMR(_subAccount);
-        if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) continue;
-      }
+      if (
+        _checkIsUnderMMR(
+          _position.primaryAccount,
+          _position.subAccountId,
+          _position.marketIndex,
+          _position.avgEntryPriceE30
+        )
+      ) continue;
 
       botHandler.forceTakeMaxProfit(
         _position.primaryAccount,

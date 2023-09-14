@@ -34,6 +34,8 @@ import { console } from "forge-std/console.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+
 contract Smoke_Base is Test {
   ITradeHelper internal tradeHelper;
 
@@ -183,5 +185,20 @@ contract Smoke_Base is Test {
     assertEq(_position.realizedPnl, 0);
     assertEq(_position.lastFundingAccrued, 0);
     assertEq(_position.subAccountId, 0);
+  }
+
+  function _checkIsUnderMMR(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _limitPriceE30
+  ) internal returns (bool) {
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
+    IConfigStorage.MarketConfig memory config = configStorage.getMarketConfigByIndex(_marketIndex);
+
+    int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, config.assetId);
+    uint256 _mmr = calculator.getMMR(_subAccount);
+    if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) return true;
+    return false;
   }
 }

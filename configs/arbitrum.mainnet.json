@@ -39,7 +39,8 @@
     "onChainPriceLens": "",
     "priceAdapters": {
       "glp": "",
-      "wstEth": ""
+      "wstEth": "",
+      "hlp": ""
     }
   },
   "tokens": {

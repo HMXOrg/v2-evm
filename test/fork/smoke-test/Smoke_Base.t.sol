@@ -31,6 +31,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 // Storage
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -40,6 +41,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 // Service
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 // Reader
 import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
@@ -62,6 +64,7 @@ contract Smoke_Base is Test {
   IHLP public hlp;
 
   // services
+  ICrossMarginService public crossMarginService;
   ITradeService public tradeService;
   ILiquidationService public liquidationService;
 
@@ -84,6 +87,8 @@ contract Smoke_Base is Test {
 
   ProxyAdmin public proxyAdmin;
 
+  IOracleMiddleware public oracleMiddleware = IOracleMiddleware(0x9c83e1046dA4727F05C6764c017C6E1757596592);
+
   address public constant OWNER = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
   address public constant POS_MANAGER = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E; // set market status;
   address public ALICE;
@@ -99,34 +104,6 @@ contract Smoke_Base is Test {
     /// NOTE Current tests work with block: `_fixedBlock`.
     ///      However, due to unknown reason,
     ///      When rollFork/assign block.number, it'll be reverted.
-
-    // -- LOAD FORK -- //
-    vm.startPrank(OWNER); // in case of setting something..
-
-    // services
-    tradeService = ITradeService(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E);
-    liquidationService = ILiquidationService(0x34E89DEd96340A177856fD822366AfC584438750);
-
-    // handler
-    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
-    limitHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
-
-    // readers
-    liquidationReader = ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);
-    positionReader = IPositionReader(0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03);
-    orderReader = IOrderReader(0x0E6be5E7891f0835bb9E2a4F5410698E2aa02614);
-
-    // storage
-    configStorage = IConfigStorage(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0);
-    perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
-    vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
-
-    ecoPyth = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
-    tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
-    proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
-    ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
-
-    vm.stopPrank();
 
     // -- UPGRADE -- //
     vm.startPrank(proxyAdmin.owner());
@@ -154,6 +131,54 @@ contract Smoke_Base is Test {
       address(newLimitHandler)
     );
 
+    TraderService newTradeService = new TradeService();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E)),
+      address(newTradeService)
+    );
+
+    CrossMarginService newCrossMarginService = new CrossMarginService();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A)),
+      address(newCrossMarginService)
+    );
+
+    TradeHelper newTradeHelper = new TradeHelper();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
+      address(newTradeHelper)
+    );
+
+    ConfigStorage newConfigStorage = new ConfigStorage();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0)),
+      address(newConfigStorage)
+    );
+
+    TraderLoyaltyCredit newTradeLoyaltyCredit = new TraderLoyaltyCredit();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x1fDcB022daECA9326a37A318f143A0feD61abba6)),
+      address(newTradeLoyaltyCredit)
+    );
+
+    // load contract
+    configStorage = IConfigStorage(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0);
+    perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
+    vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
+    limitHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
+
+    OrderReader newOrderReader = new OrderReader(
+      address(configStorage),
+      address(perpStorage),
+      address(oracleMiddleware),
+      address(limitHandler)
+    );
+
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
+      address(newOrderReader)
+    );
+
     // Has not been deployed yet
     // Ext01Handler newExt01Handler = new Ext01Handler();
     // proxyAdmin.upgrade(
@@ -162,11 +187,31 @@ contract Smoke_Base is Test {
     // );
 
     vm.stopPrank();
-    // -- LOAD UPGRADE -- //
+
+    // -- LOAD FORK & UPGRADED -- //
+    vm.startPrank(OWNER); // in case of setting something..
     calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
     hlp = IHLP(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb);
+
+    // services
+    crossMarginService = ICrossMarginService(0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A);
+    tradeService = ITradeService(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E);
+    liquidationService = ILiquidationService(0x34E89DEd96340A177856fD822366AfC584438750);
+
+    // handler
     botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
-    limitHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
+
+    // readers
+    liquidationReader = ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);
+    positionReader = IPositionReader(0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03);
+    orderReader = IOrderReader(0x0E6be5E7891f0835bb9E2a4F5410698E2aa02614);
+
+    ecoPyth = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
+    tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
+    proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
+    ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
+
+    vm.stopPrank();
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {

@@ -107,7 +107,7 @@ contract Smoke_Trade is Smoke_Base {
                 _isRevert: true
             });
 
-            assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 1, "User must have 1 market position");
+            assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 1, "User must have 1 market position, LONG");
             
             _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
 
@@ -124,8 +124,6 @@ contract Smoke_Trade is Smoke_Base {
                 _tpToken: address(usdc_e)
             });
 
-            accounts[0] = ALICE;
-            subAccountIds[0] = SUB_ACCOUNT_NO;
             orderIndexes[0] = _orderIndex;
 
             // Close Long Position
@@ -142,7 +140,73 @@ contract Smoke_Trade is Smoke_Base {
                 _isRevert: true
             });
 
-            assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 0, "User must have 0 market position after close");
+            assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 0, "User must have 0 market position after close, LONG");
+
+            _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
+
+            vm.prank(ALICE);
+            limitTradeHandler.createOrder{ value: 0.1 ether }({
+                _subAccountId: SUB_ACCOUNT_NO,
+                _marketIndex: ARRAY_MARKET_INDEX[i],
+                _sizeDelta: -1000 * 1e30,
+                _triggerPrice: 0,
+                _acceptablePrice: 0,
+                _triggerAboveThreshold: false,
+                _executionFee: 0.1 ether,
+                _reduceOnly: false,
+                _tpToken: address(usdc_e)
+            });
+
+
+            orderIndexes[0] = _orderIndex;
+
+            // Open Short Position
+            vm.prank(0xB75ca1CC0B01B6519Bc879756eC431a95DC37882);
+            limitTradeHandler.executeOrders({
+                _accounts: accounts,
+                _subAccountIds: subAccountIds,
+                _orderIndexes: orderIndexes,
+                _feeReceiver: payable(BOB),
+                _priceData: _priceUpdateCalldata,
+                _publishTimeData: _publishTimeUpdateCalldata,
+                _minPublishTime: _minPublishTime,
+                _encodedVaas: keccak256("someEncodedVaas"),
+                _isRevert: true
+            });
+
+            assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 1, "User must have 1 market position, SHORT");
+            _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
+
+            vm.prank(ALICE);
+            limitTradeHandler.createOrder{ value: 0.1 ether }({
+                _subAccountId: SUB_ACCOUNT_NO,
+                _marketIndex: ARRAY_MARKET_INDEX[i],
+                _sizeDelta: 1000 * 1e30,
+                _triggerPrice: 0,
+                _acceptablePrice: type(uint256).max,
+                _triggerAboveThreshold: false,
+                _executionFee: 0.1 ether,
+                _reduceOnly: true,
+                _tpToken: address(usdc_e)
+            });
+
+            orderIndexes[0] = _orderIndex;
+
+            // Close Short Position
+            vm.prank(0xB75ca1CC0B01B6519Bc879756eC431a95DC37882);
+            limitTradeHandler.executeOrders({
+                _accounts: accounts,
+                _subAccountIds: subAccountIds,
+                _orderIndexes: orderIndexes,
+                _feeReceiver: payable(BOB),
+                _priceData: _priceUpdateCalldata,
+                _publishTimeData: _publishTimeUpdateCalldata,
+                _minPublishTime: _minPublishTime,
+                _encodedVaas: keccak256("someEncodedVaas"),
+                _isRevert: true
+            });
+
+            assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 0, "User must have 0 market position after close, SHORT");
         }
 
     }

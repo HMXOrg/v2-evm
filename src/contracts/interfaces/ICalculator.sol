@@ -51,7 +51,7 @@ interface ICalculator {
    * Functions
    */
 
-  function getAUME30(bool isMaxPrice) external returns (uint256);
+  function getAUME30(bool isMaxPrice) external view returns (uint256);
 
   function getGlobalPNLE30() external view returns (int256);
 

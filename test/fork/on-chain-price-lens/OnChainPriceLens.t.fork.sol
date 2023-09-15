@@ -24,7 +24,7 @@ import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { EcoPythCalldataBuilder2 } from "@hmx/oracles/EcoPythCalldataBuilder2.sol";
 import { UnsafeEcoPythCalldataBuilder2 } from "@hmx/oracles/UnsafeEcoPythCalldataBuilder2.sol";
-import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { IEcoPythCalldataBuilder2 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder2.sol";
 
 contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
   WstEthUsdPriceAdapter internal wstEthUsdPriceAdapter;
@@ -82,26 +82,26 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
   }
 
   function testCorrectness_EcoPythCalldataBuilder_build() external view {
-    IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](4);
-    _data[0] = IEcoPythCalldataBuilder.BuildData({
+    IEcoPythCalldataBuilder2.BuildData[] memory _data = new IEcoPythCalldataBuilder2.BuildData[](4);
+    _data[0] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "ETH",
       priceE8: 1633.61 * 1e8,
       publishTime: uint160(block.timestamp),
       maxDiffBps: 15000
     });
-    _data[1] = IEcoPythCalldataBuilder.BuildData({
+    _data[1] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "GLP",
       priceE8: 0,
       publishTime: uint160(block.timestamp),
       maxDiffBps: 15000
     });
-    _data[2] = IEcoPythCalldataBuilder.BuildData({
+    _data[2] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "BTC",
       priceE8: 25794.75 * 1e8,
       publishTime: uint160(block.timestamp),
       maxDiffBps: 15000
     });
-    _data[3] = IEcoPythCalldataBuilder.BuildData({
+    _data[3] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "wstETH",
       priceE8: 0,
       publishTime: uint160(block.timestamp),

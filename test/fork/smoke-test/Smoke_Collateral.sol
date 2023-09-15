@@ -13,28 +13,19 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import "forge-std/console.sol";
 
 contract Smoke_Collateral is Smoke_Base {
-
-    CrossMarginHandler crossMarginHandler = CrossMarginHandler(payable(0xB189532c581afB4Fbe69aF6dC3CD36769525d446));
     uint8 internal SUB_ACCOUNT_NO = 1;
     IERC20[] private collateralToken = new IERC20[](7);
 
 
     function setUp() public virtual override {
         super.setUp();
-        // "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
-        // "weth": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
-        // "wbtc": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
-        // "usdt": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
-        // "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
-        // "arb": "0x912CE59144191C1204E64559FE8253a0e49E6548",
-        // "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
-        collateralToken[0] = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
-        collateralToken[1] = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
-        collateralToken[2] = IERC20(0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f);
-        collateralToken[3] = IERC20(0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9);
-        collateralToken[4] = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
-        collateralToken[5] = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
-        collateralToken[6] = IERC20(0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf);
+        collateralToken[0] = IERC20(address(ForkEnv.usdc_e));
+        collateralToken[1] = IERC20(address(ForkEnv.weth));
+        collateralToken[2] = IERC20(address(ForkEnv.wbtc));
+        collateralToken[3] = IERC20(address(ForkEnv.usdt));
+        collateralToken[4] = IERC20(address(ForkEnv.dai));
+        collateralToken[5] = IERC20(address(ForkEnv.arb));
+        collateralToken[6] = IERC20(address(ForkEnv.sglp));
 
     }
 
@@ -60,8 +51,8 @@ contract Smoke_Collateral is Smoke_Base {
                 deal(address(collateralToken[i]), ALICE, 10 * (10 ** tokenDecimal));
             }
             vm.startPrank(ALICE);
-            collateralToken[i].approve(address(crossMarginHandler), type(uint256).max);
-            crossMarginHandler.depositCollateral(
+            collateralToken[i].approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
+            ForkEnv.crossMarginHandler.depositCollateral(
                 SUB_ACCOUNT_NO,
                 address(collateralToken[i]), 
                 10 * (10 ** tokenDecimal), 
@@ -72,14 +63,13 @@ contract Smoke_Collateral is Smoke_Base {
             10 * (10 ** tokenDecimal),
             vaultStorage.traderBalances(subAccount, address(collateralToken[i])),
             0.01 ether,
-            "User Deposit Collateral"
+            "User must have 10 token in collateral"
             );
         }
     }
 
     function _withdrawCollateral() internal {
-        uint256 minExecutionFee = crossMarginHandler.minExecutionOrderFee();
-        address subAccount = _getSubAccount(ALICE, SUB_ACCOUNT_NO);
+        uint256 minExecutionFee = ForkEnv.crossMarginHandler.minExecutionOrderFee();
         IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice();
         (
         uint256 _minPublishTime,
@@ -90,7 +80,7 @@ contract Smoke_Collateral is Smoke_Base {
             uint8 tokenDecimal = collateralToken[i].decimals();
             deal(ALICE, minExecutionFee);
             vm.prank(ALICE);
-            uint256 _latestOrderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: minExecutionFee }(
+            uint256 _latestOrderIndex = ForkEnv.crossMarginHandler.createWithdrawCollateralOrder{ value: minExecutionFee }(
                 SUB_ACCOUNT_NO,
                 address(collateralToken[i]),
                 10 * (10 ** tokenDecimal),
@@ -100,7 +90,7 @@ contract Smoke_Collateral is Smoke_Base {
 
         
             vm.prank(0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E);
-            crossMarginHandler.executeOrder(
+            ForkEnv.crossMarginHandler.executeOrder(
                 _latestOrderIndex, 
                 payable(ALICE), 
                 _priceUpdateCalldata, 
@@ -112,7 +102,7 @@ contract Smoke_Collateral is Smoke_Base {
             10 * (10 ** tokenDecimal),
             collateralToken[i].balanceOf(ALICE),
             0.01 ether,
-            "User Withdraw Collateral"
+            "User must have 10 token in their wallet"
             );
         }
     }

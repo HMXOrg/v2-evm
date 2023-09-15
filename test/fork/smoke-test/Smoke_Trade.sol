@@ -21,14 +21,12 @@ import { console2 } from "forge-std/console2.sol";
 
 contract Smoke_Trade is Smoke_Base {
     using SafeCastUpgradeable for int64;
-    CrossMarginHandler crossMarginHandler = CrossMarginHandler(payable(0xB189532c581afB4Fbe69aF6dC3CD36769525d446));
-    LimitTradeHandler limitTradeHandler = LimitTradeHandler(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6));
     uint8 internal SUB_ACCOUNT_NO = 0;
     uint256 internal MARKET_INDEX = 1;
     // eth | jpy | xag | sol | chf
     uint256[] internal ARRAY_MARKET_INDEX = [0, 3, 9, 21, 26];
 
-    IERC20 usdc_e = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
+    IERC20 usdc_e = IERC20(address(ForkEnv.usdc_e));
 
     function setUp() public virtual override {
         super.setUp();
@@ -48,8 +46,8 @@ contract Smoke_Trade is Smoke_Base {
         uint8 tokenDecimal = usdc_e.decimals();
         deal(address(usdc_e), ALICE, 100 * (10 ** tokenDecimal));
         vm.startPrank(ALICE);
-        usdc_e.approve(address(crossMarginHandler), type(uint256).max);
-        crossMarginHandler.depositCollateral(
+        usdc_e.approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
+        ForkEnv.crossMarginHandler.depositCollateral(
             SUB_ACCOUNT_NO,
             address(usdc_e), 
             100 * (10 ** tokenDecimal), 
@@ -64,10 +62,10 @@ contract Smoke_Trade is Smoke_Base {
             address subAccount = _getSubAccount(ALICE, SUB_ACCOUNT_NO);
             deal(ALICE, 1 ether);
 
-            uint256 _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
+            uint256 _orderIndex = ForkEnv.limitTradeHandler.limitOrdersIndex(subAccount);
 
             vm.prank(ALICE);
-            limitTradeHandler.createOrder{ value: 0.1 ether }({
+            ForkEnv.limitTradeHandler.createOrder{ value: 0.1 ether }({
                 _subAccountId: SUB_ACCOUNT_NO,
                 _marketIndex: ARRAY_MARKET_INDEX[i],
                 _sizeDelta: 1000 * 1e30,
@@ -95,7 +93,7 @@ contract Smoke_Trade is Smoke_Base {
 
             // Execute Long Increase Order
             vm.prank(0xB75ca1CC0B01B6519Bc879756eC431a95DC37882);
-            limitTradeHandler.executeOrders({
+            ForkEnv.limitTradeHandler.executeOrders({
                 _accounts: accounts,
                 _subAccountIds: subAccountIds,
                 _orderIndexes: orderIndexes,
@@ -109,10 +107,10 @@ contract Smoke_Trade is Smoke_Base {
 
             assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 1, "User must have 1 market position, LONG");
             
-            _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
+            _orderIndex = ForkEnv.limitTradeHandler.limitOrdersIndex(subAccount);
 
             vm.prank(ALICE);
-            limitTradeHandler.createOrder{ value: 0.1 ether }({
+            ForkEnv.limitTradeHandler.createOrder{ value: 0.1 ether }({
                 _subAccountId: SUB_ACCOUNT_NO,
                 _marketIndex: ARRAY_MARKET_INDEX[i],
                 _sizeDelta: -1000 * 1e30,
@@ -128,7 +126,7 @@ contract Smoke_Trade is Smoke_Base {
 
             // Close Long Position
             vm.prank(0xB75ca1CC0B01B6519Bc879756eC431a95DC37882);
-            limitTradeHandler.executeOrders({
+            ForkEnv.limitTradeHandler.executeOrders({
                 _accounts: accounts,
                 _subAccountIds: subAccountIds,
                 _orderIndexes: orderIndexes,
@@ -142,10 +140,10 @@ contract Smoke_Trade is Smoke_Base {
 
             assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 0, "User must have 0 market position after close, LONG");
 
-            _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
+            _orderIndex = ForkEnv.limitTradeHandler.limitOrdersIndex(subAccount);
 
             vm.prank(ALICE);
-            limitTradeHandler.createOrder{ value: 0.1 ether }({
+            ForkEnv.limitTradeHandler.createOrder{ value: 0.1 ether }({
                 _subAccountId: SUB_ACCOUNT_NO,
                 _marketIndex: ARRAY_MARKET_INDEX[i],
                 _sizeDelta: -1000 * 1e30,
@@ -162,7 +160,7 @@ contract Smoke_Trade is Smoke_Base {
 
             // Open Short Position
             vm.prank(0xB75ca1CC0B01B6519Bc879756eC431a95DC37882);
-            limitTradeHandler.executeOrders({
+            ForkEnv.limitTradeHandler.executeOrders({
                 _accounts: accounts,
                 _subAccountIds: subAccountIds,
                 _orderIndexes: orderIndexes,
@@ -175,10 +173,10 @@ contract Smoke_Trade is Smoke_Base {
             });
 
             assertEq(perpStorage.getNumberOfSubAccountPosition(subAccount), 1, "User must have 1 market position, SHORT");
-            _orderIndex = limitTradeHandler.limitOrdersIndex(subAccount);
+            _orderIndex = ForkEnv.limitTradeHandler.limitOrdersIndex(subAccount);
 
             vm.prank(ALICE);
-            limitTradeHandler.createOrder{ value: 0.1 ether }({
+            ForkEnv.limitTradeHandler.createOrder{ value: 0.1 ether }({
                 _subAccountId: SUB_ACCOUNT_NO,
                 _marketIndex: ARRAY_MARKET_INDEX[i],
                 _sizeDelta: 1000 * 1e30,
@@ -194,7 +192,7 @@ contract Smoke_Trade is Smoke_Base {
 
             // Close Short Position
             vm.prank(0xB75ca1CC0B01B6519Bc879756eC431a95DC37882);
-            limitTradeHandler.executeOrders({
+            ForkEnv.limitTradeHandler.executeOrders({
                 _accounts: accounts,
                 _subAccountIds: subAccountIds,
                 _orderIndexes: orderIndexes,

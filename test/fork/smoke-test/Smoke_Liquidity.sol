@@ -15,8 +15,6 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Liquidity is Smoke_Base {
-  IERC20 internal constant hlp = IERC20(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb);
-  LiquidityHandler internal liquidityHandler = LiquidityHandler(payable(0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6));
   ITradingStaking internal hlpStaking = ITradingStaking(0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C);
 
   function setUp() public virtual override {
@@ -35,15 +33,15 @@ contract Smoke_Liquidity is Smoke_Base {
   function _createAddLiquidityOrder() internal {
     deal(address(ForkEnv.usdc_e), ALICE, 10 * 1e6);
     deal(ALICE, 10 ether);
-    deal(address(liquidityHandler), 100 ether);
+    deal(address(ForkEnv.liquidityHandler), 100 ether);
 
     vm.startPrank(ALICE);
 
-    ForkEnv.usdc_e.approve(address(liquidityHandler), type(uint256).max);
+    ForkEnv.usdc_e.approve(address(ForkEnv.liquidityHandler), type(uint256).max);
 
-    uint256 minExecutionFee = liquidityHandler.minExecutionOrderFee();
+    uint256 minExecutionFee = ForkEnv.liquidityHandler.minExecutionOrderFee();
 
-    uint256 _latestOrderIndex = liquidityHandler.createAddLiquidityOrder{ value: minExecutionFee }(
+    uint256 _latestOrderIndex = ForkEnv.liquidityHandler.createAddLiquidityOrder{ value: minExecutionFee }(
       address(ForkEnv.usdc_e),
       10 * 1e6,
       0 ether,
@@ -60,11 +58,11 @@ contract Smoke_Liquidity is Smoke_Base {
     ) = ecoPythBuilder.build(data);
 
     vm.prank(address(0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E));
-    liquidityHandler.executeOrder(_latestOrderIndex, payable(ALICE), _priceUpdateCalldata, _publishTimeUpdateCalldata, _minPublishTime, keccak256("someEncodedVaas"));
+    ForkEnv.liquidityHandler.executeOrder(_latestOrderIndex, payable(ALICE), _priceUpdateCalldata, _publishTimeUpdateCalldata, _minPublishTime, keccak256("someEncodedVaas"));
 
     assertApproxEqRel(
       hlpStaking.calculateShare(address(this), address(ALICE)),
-      10 * hlp.totalSupply() * 1e30 / calculator.getAUME30(false),
+      10 * ForkEnv.hlp.totalSupply() * 1e30 / calculator.getAUME30(false),
       0.01 ether,
        "User HLP Balance in Staking"
     );
@@ -72,17 +70,17 @@ contract Smoke_Liquidity is Smoke_Base {
   }
 
   function _createRemoveLiquidityOrder() internal {
-    deal(address(hlp), ALICE, 10 * 1e18);
+    deal(address(ForkEnv.hlp), ALICE, 10 * 1e18);
     deal(ALICE, 10 ether);
-    deal(address(liquidityHandler), 100 ether);
+    deal(address(ForkEnv.liquidityHandler), 100 ether);
 
     vm.startPrank(ALICE);
 
-    hlp.approve(address(liquidityHandler), type(uint256).max);
+    ForkEnv.hlp.approve(address(ForkEnv.liquidityHandler), type(uint256).max);
 
-    uint256 minExecutionFee = liquidityHandler.minExecutionOrderFee();
+    uint256 minExecutionFee = ForkEnv.liquidityHandler.minExecutionOrderFee();
 
-    uint256 _latestOrderIndex = liquidityHandler.createRemoveLiquidityOrder{ value: minExecutionFee }(
+    uint256 _latestOrderIndex = ForkEnv.liquidityHandler.createRemoveLiquidityOrder{ value: minExecutionFee }(
       address(ForkEnv.usdc_e),
       10 * 1e18,
       0 ether,
@@ -99,14 +97,14 @@ contract Smoke_Liquidity is Smoke_Base {
     ) = ecoPythBuilder.build(data);
 
     vm.prank(address(0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E));
-    liquidityHandler.executeOrder(_latestOrderIndex, payable(ALICE), _priceUpdateCalldata, _publishTimeUpdateCalldata, _minPublishTime, keccak256("someEncodedVaas"));
+    ForkEnv.liquidityHandler.executeOrder(_latestOrderIndex, payable(ALICE), _priceUpdateCalldata, _publishTimeUpdateCalldata, _minPublishTime, keccak256("someEncodedVaas"));
     
     assertApproxEqRel(
       ForkEnv.usdc_e.balanceOf(ALICE),
-      10 * calculator.getAUME30(false) * 1e18 * 1e6 / 1e30 / hlp.totalSupply(),
+      10 * calculator.getAUME30(false) * 1e18 * 1e6 / 1e30 / ForkEnv.hlp.totalSupply(),
       0.01 ether,
        "User USDC.e Balance"
     );
-    assertEq(hlp.balanceOf(ALICE), 0, "User HLP Balance");
+    assertEq(ForkEnv.hlp.balanceOf(ALICE), 0, "User HLP Balance");
   }
 }

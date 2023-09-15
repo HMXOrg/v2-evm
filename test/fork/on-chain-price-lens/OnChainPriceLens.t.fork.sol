@@ -19,16 +19,18 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 /// HMX
 import { WstEthUsdPriceAdapter } from "@hmx/oracles/adapters/WstEthUsdPriceAdapter.sol";
 import { GlpPriceAdapter } from "src/oracles/adapters/GlpPriceAdapter.sol";
+import { HlpPriceAdapter } from "src/oracles/adapters/HlpPriceAdapter.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.4/interfaces/AggregatorV3Interface.sol";
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { EcoPythCalldataBuilder2 } from "@hmx/oracles/EcoPythCalldataBuilder2.sol";
 import { UnsafeEcoPythCalldataBuilder2 } from "@hmx/oracles/UnsafeEcoPythCalldataBuilder2.sol";
-import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { IEcoPythCalldataBuilder2 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder2.sol";
 
 contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
   WstEthUsdPriceAdapter internal wstEthUsdPriceAdapter;
   GlpPriceAdapter internal glpPriceAdapter;
+  HlpPriceAdapter internal hlpPriceAdapter;
   OnChainPriceLens internal onChainPriceLens;
   EcoPythCalldataBuilder2 internal ecoPythCalldataBuilder;
   UnsafeEcoPythCalldataBuilder2 internal unsafeEcoPythCalldataBuilder;
@@ -44,6 +46,7 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
     );
 
     glpPriceAdapter = new GlpPriceAdapter(ForkEnv.sGlp, ForkEnv.glpManager);
+    hlpPriceAdapter = new HlpPriceAdapter(ForkEnv.hlp, ForkEnv.calculator);
 
     onChainPriceLens = new OnChainPriceLens();
 
@@ -73,6 +76,11 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
     assertEq(glpPrice, 0.948534563693319704 ether);
   }
 
+  function testCorrectness_HlpPriceAdapter() external {
+    uint256 hlpPrice = hlpPriceAdapter.getPrice();
+    assertEq(hlpPrice, 0.934904146758552845 ether);
+  }
+
   function testCorrectness_OnChainPriceLens_getPrice() external {
     uint256 wstEthUsdPrice = onChainPriceLens.getPrice("wstETH");
     assertEq(wstEthUsdPrice, 1857.620239758899083350 ether);
@@ -82,26 +90,26 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
   }
 
   function testCorrectness_EcoPythCalldataBuilder_build() external view {
-    IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](4);
-    _data[0] = IEcoPythCalldataBuilder.BuildData({
+    IEcoPythCalldataBuilder2.BuildData[] memory _data = new IEcoPythCalldataBuilder2.BuildData[](4);
+    _data[0] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "ETH",
       priceE8: 1633.61 * 1e8,
       publishTime: uint160(block.timestamp),
       maxDiffBps: 15000
     });
-    _data[1] = IEcoPythCalldataBuilder.BuildData({
+    _data[1] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "GLP",
       priceE8: 0,
       publishTime: uint160(block.timestamp),
       maxDiffBps: 15000
     });
-    _data[2] = IEcoPythCalldataBuilder.BuildData({
+    _data[2] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "BTC",
       priceE8: 25794.75 * 1e8,
       publishTime: uint160(block.timestamp),
       maxDiffBps: 15000
     });
-    _data[3] = IEcoPythCalldataBuilder.BuildData({
+    _data[3] = IEcoPythCalldataBuilder2.BuildData({
       assetId: "wstETH",
       priceE8: 0,
       publishTime: uint160(block.timestamp),

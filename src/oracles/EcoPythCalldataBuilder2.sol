@@ -9,7 +9,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
 // interfaces
-import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { IEcoPythCalldataBuilder2 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder2.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // libs
@@ -20,7 +20,7 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 
-contract EcoPythCalldataBuilder2 is IEcoPythCalldataBuilder {
+contract EcoPythCalldataBuilder2 is IEcoPythCalldataBuilder2 {
   IEcoPyth public ecoPyth;
   OnChainPriceLens public lens;
 
@@ -48,7 +48,8 @@ contract EcoPythCalldataBuilder2 is IEcoPythCalldataBuilder {
     returns (
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
-      bytes32[] memory _publishTimeUpdateCalldata
+      bytes32[] memory _publishTimeUpdateCalldata,
+      uint256 blockNumber
     )
   {
     _minPublishTime = type(uint256).max;
@@ -94,5 +95,6 @@ contract EcoPythCalldataBuilder2 is IEcoPythCalldataBuilder {
     _priceUpdateCalldata = ecoPyth.buildPriceUpdateData(_ticks);
     // Build the publishTimeUpdateCalldata
     _publishTimeUpdateCalldata = ecoPyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    blockNumber = block.number;
   }
 }

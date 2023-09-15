@@ -29,11 +29,11 @@ contract Smoke_Collateral is Smoke_Base {
 
     }
 
-    function test_deposit_collateral_fork() external {
+    function testCorrectness_SmokeTest_depositCollateral() external {
         _depositCollateral();
     }
 
-    function test_withdraw_collateral_fork() external {
+    function testCorrectness_SmokeTest_withdrawCollateral() external {
         _depositCollateral();
         _withdrawCollateral();
     }

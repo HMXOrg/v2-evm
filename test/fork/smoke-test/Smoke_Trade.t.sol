@@ -37,7 +37,7 @@ contract Smoke_Trade is Smoke_Base {
         ARRAY_MARKET_INDEX[4] = 26;
     }
 
-    function test_open_close_position() external {
+    function testCorrectness_SmokeTest_openClosePosition() external {
         _depositCollateral();
         _createMarketOrder();
     }

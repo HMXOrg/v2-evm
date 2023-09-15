@@ -22,11 +22,11 @@ contract Smoke_Liquidity is Smoke_Base {
 
   }
 
-  function test_add_liquidity_fork() external {
+  function testCorrectness_SmokeTest_addLiquidity() external {
     _createAddLiquidityOrder();
   }
 
-  function test_remove_liquidity_fork() external {
+  function testCorrectness_SmokeTest_removeLiquidity() external {
     _createRemoveLiquidityOrder();
   }
 

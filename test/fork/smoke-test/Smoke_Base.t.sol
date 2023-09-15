@@ -70,7 +70,12 @@ contract Smoke_Base is Test {
   address public ALICE;
   address public BOB;
 
-  uint256 private constant _fixedBlock = 18133917;
+  uint256 internal constant BPS = 10_000;
+
+  address internal constant USDC = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
+  address internal constant TRADE_SERVICE = 0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E;
+  address internal constant EXECUTOR = 0xB75ca1CC0B01B6519Bc879756eC431a95DC37882;
+  uint256 private constant _fixedBlock = 130344667;
 
   function setUp() public virtual {
     ALICE = makeAddr("Alice");

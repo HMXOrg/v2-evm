@@ -12,11 +12,6 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import "forge-std/console.sol";
 
 contract Smoke_MaxProfit is Smoke_Base {
-  uint256 internal constant BPS = 10_000;
-
-  address internal constant USDC = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
-  address internal constant TRADE_SERVICE = 0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E;
-
   function setUp() public virtual override {
     super.setUp();
   }
@@ -39,9 +34,8 @@ contract Smoke_MaxProfit is Smoke_Base {
     botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < positionIds.length; i++) {
       IPerpStorage.Position memory _position = perpStorage.getPositionById(positionIds[i]);
-      if (_position.primaryAccount == address(0)) continue;
-
       if (
+        _position.primaryAccount == address(0) ||
         _checkIsUnderMMR(
           _position.primaryAccount,
           _position.subAccountId,

@@ -7,12 +7,29 @@ pragma solidity 0.8.18;
 import { Test } from "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
 
+// to-upgrade contract
+import { HLP } from "@hmx/contracts/HLP.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
+
+import { BotHandler } from "@hmx/handlers/BotHandler.sol";
+import { Ext01Handler } from "@hmx/handlers/Ext01Handler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
+
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
+import { OrderReader } from "@hmx/readers/OrderReader.sol";
+
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
+
+// interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
-
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 // Storage
@@ -41,6 +58,8 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 contract Smoke_Base is Test {
   ITradeHelper public tradeHelper;
   IEcoPyth public ecoPyth;
+
+  IHLP public hlp;
 
   // services
   ITradeService public tradeService;
@@ -107,7 +126,6 @@ contract Smoke_Base is Test {
     proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
     ecoPythBuilder = IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
 
-    // -- LOAD FORK -- //
     vm.stopPrank();
 
     // -- UPGRADE -- //
@@ -118,9 +136,37 @@ contract Smoke_Base is Test {
       address(newCalculator)
     );
 
+    HLP newHlp = new HLP();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb)),
+      address(newHlp)
+    );
+
+    BotHandler newBotHandler = new BotHandler();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671)),
+      address(newBotHandler)
+    );
+
+    LimitTradeHandler newLimitHandler = new LimitTradeHandler();
+    proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6)),
+      address(newLimitHandler)
+    );
+
+    // Has not been deployed yet
+    // Ext01Handler newExt01Handler = new Ext01Handler();
+    // proxyAdmin.upgrade(
+    //   TransparentUpgradeableProxy(payable(xxx)),
+    //   address(newExt01Handler)
+    // );
+
     vm.stopPrank();
     // -- LOAD UPGRADE -- //
     calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
+    hlp = IHLP(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb);
+    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
+    limitHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {

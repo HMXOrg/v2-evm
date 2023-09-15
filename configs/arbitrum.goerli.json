@@ -33,8 +33,8 @@
     "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
     "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B",
     "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9",
-    "ecoPythCalldataBuilder2": "0x6703716a0ad2cF6693f91CE3Bada662a35E7Eefe",
-    "unsafeEcoPythCalldataBuilder2": "0xF3CE3fc184aAf2BEAF078cc59D978Aecf9da2dF3",
+    "ecoPythCalldataBuilder2": "0xB701b1Ed32D2dB8795b68c97c47C7b1174326953",
+    "unsafeEcoPythCalldataBuilder2": "0x3298fbe99beB0AEcc7DBb54017d4b79ca9774CFa",
     "onChainPriceLens": "0x34F3Ae43A4766e35b2c53FE4D6e53F57Eb451B5A",
     "priceAdapters": {
       "glp": "0xDAa9eF42a073fAE417D9668b9bEbE1Ed8a4922E1",

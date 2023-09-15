@@ -19,6 +19,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 /// HMX
 import { WstEthUsdPriceAdapter } from "@hmx/oracles/adapters/WstEthUsdPriceAdapter.sol";
 import { GlpPriceAdapter } from "src/oracles/adapters/GlpPriceAdapter.sol";
+import { HlpPriceAdapter } from "src/oracles/adapters/HlpPriceAdapter.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.4/interfaces/AggregatorV3Interface.sol";
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
@@ -29,6 +30,7 @@ import { IEcoPythCalldataBuilder2 } from "@hmx/oracles/interfaces/IEcoPythCallda
 contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
   WstEthUsdPriceAdapter internal wstEthUsdPriceAdapter;
   GlpPriceAdapter internal glpPriceAdapter;
+  HlpPriceAdapter internal hlpPriceAdapter;
   OnChainPriceLens internal onChainPriceLens;
   EcoPythCalldataBuilder2 internal ecoPythCalldataBuilder;
   UnsafeEcoPythCalldataBuilder2 internal unsafeEcoPythCalldataBuilder;
@@ -44,6 +46,7 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
     );
 
     glpPriceAdapter = new GlpPriceAdapter(ForkEnv.sGlp, ForkEnv.glpManager);
+    hlpPriceAdapter = new HlpPriceAdapter(ForkEnv.hlp, ForkEnv.calculator);
 
     onChainPriceLens = new OnChainPriceLens();
 
@@ -71,6 +74,11 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
   function testCorrectness_GlpPriceAdapter() external {
     uint256 glpPrice = glpPriceAdapter.getPrice();
     assertEq(glpPrice, 0.948534563693319704 ether);
+  }
+
+  function testCorrectness_HlpPriceAdapter() external {
+    uint256 hlpPrice = hlpPriceAdapter.getPrice();
+    assertEq(hlpPrice, 0.934904146758552845 ether);
   }
 
   function testCorrectness_OnChainPriceLens_getPrice() external {

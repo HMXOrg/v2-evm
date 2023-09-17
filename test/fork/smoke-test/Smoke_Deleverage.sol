@@ -16,7 +16,6 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import "forge-std/console.sol";
-import "forge-std/console2.sol";
 
 contract Smoke_Liquidate is Smoke_Base {
   error Smoke_Liquidate_NoPosition();
@@ -51,7 +50,14 @@ contract Smoke_Liquidate is Smoke_Base {
       bytes32[] memory _publishTimeUpdateCalldata
     ) = ForkEnv.ecoPythBuilder.build(data);
 
-    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(3, 0);
+    vm.prank(address(ForkEnv.botHandler));
+    ForkEnv.ecoPyth2.updatePriceFeeds(
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
+    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(5, 0);
 
     if (positions.length == 0) {
       revert Smoke_Liquidate_NoPosition();
@@ -60,14 +66,6 @@ contract Smoke_Liquidate is Smoke_Base {
     vm.startPrank(address(ForkEnv.tradeService));
     ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
     vm.stopPrank();
-
-    vm.prank(address(ForkEnv.botHandler));
-    ForkEnv.ecoPyth2.updatePriceFeeds(
-      _priceUpdateCalldata,
-      _publishTimeUpdateCalldata,
-      _minPublishTime,
-      keccak256("someEncodedVaas")
-    );
 
     for (uint i = 0; i < positions.length; i++) {
       if (
@@ -81,11 +79,11 @@ contract Smoke_Liquidate is Smoke_Base {
         positions[i].marketIndex != 1 // NOTE on test, focus for ETH pos only, avoid price conflict
       ) continue;
       filteredPositions.push(positions[i]);
-
-      vm.startPrank(address(ForkEnv.tradeService));
-      ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
-      vm.stopPrank();
     }
+
+    vm.startPrank(address(ForkEnv.tradeService));
+    ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
+    vm.stopPrank();
 
     if (positions.length == 0) {
       revert Smoke_Liquidate_NoFilteredPosition();
@@ -97,6 +95,7 @@ contract Smoke_Liquidate is Smoke_Base {
       address subAccount = HMXLib.getSubAccount(filteredPositions[i].primaryAccount, filteredPositions[i].subAccountId);
       bytes32 positionId = HMXLib.getPositionId(subAccount, filteredPositions[i].marketIndex);
 
+      console.log("Start delevaraging...");
       ForkEnv.botHandler.deleverage(
         filteredPositions[i].primaryAccount,
         filteredPositions[i].subAccountId,
@@ -107,6 +106,7 @@ contract Smoke_Liquidate is Smoke_Base {
         _minPublishTime,
         keccak256("someEncodedVaas")
       );
+      console.log("done");
 
       _validateClosedPosition(positionId);
     }
@@ -127,7 +127,7 @@ contract Smoke_Liquidate is Smoke_Base {
       data[i - 1].maxDiffBps = 20_000;
       if (i == 1) {
         // ETH
-        data[i - 1].priceE8 = (_ecoPythPrice.price * 15) / 10;
+        data[i - 1].priceE8 = _ecoPythPrice.price * 2;
       } else {
         data[i - 1].priceE8 = _ecoPythPrice.price;
       }

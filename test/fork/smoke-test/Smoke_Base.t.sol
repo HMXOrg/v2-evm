@@ -66,7 +66,7 @@ contract Smoke_Base is Test {
 
   function _setTickPriceZero()
     internal
-    view
+    pure
     returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
   {
     int24[] memory tickPrices = new int24[](34);

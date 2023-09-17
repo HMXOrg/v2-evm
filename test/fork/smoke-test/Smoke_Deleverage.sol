@@ -96,6 +96,8 @@ contract Smoke_Liquidate is Smoke_Base {
       bytes32 positionId = HMXLib.getPositionId(subAccount, filteredPositions[i].marketIndex);
 
       console.log("Start delevaraging...");
+
+      // NOTE: Reverted on HLP Healthy
       ForkEnv.botHandler.deleverage(
         filteredPositions[i].primaryAccount,
         filteredPositions[i].subAccountId,

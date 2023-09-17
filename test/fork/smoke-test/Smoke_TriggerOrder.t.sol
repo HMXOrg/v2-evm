@@ -10,6 +10,7 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
@@ -40,7 +41,7 @@ contract Smoke_TriggerOrder is Smoke_Base {
 
     ILimitTradeHandler.LimitOrder memory _order;
 
-    ILimitTradeHandler.LimitOrder[] memory activeOrders = limitHandler.getAllActiveOrders(10, 0);
+    ILimitTradeHandler.LimitOrder[] memory activeOrders = ForkEnv.limitTradeHandler.getAllActiveOrders(10, 0);
 
     for (uint i = 0; i < activeOrders.length; i++) {
       if (
@@ -64,7 +65,12 @@ contract Smoke_TriggerOrder is Smoke_Base {
 
     uint64[] memory prices = new uint64[](30);
     prices = _buildPrice_Trigger(_order.marketIndex, _order.triggerPrice, _order.triggerAboveThreshold);
-    ILimitTradeHandler.LimitOrder[] memory readerOrders = orderReader.getExecutableOrders(10, 0, prices, shouldInverts);
+    ILimitTradeHandler.LimitOrder[] memory readerOrders = ForkEnv.orderReader.getExecutableOrders(
+      10,
+      0,
+      prices,
+      shouldInverts
+    );
 
     IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice_Trigger(
       _order.marketIndex,
@@ -76,7 +82,7 @@ contract Smoke_TriggerOrder is Smoke_Base {
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
       bytes32[] memory _publishTimeUpdateCalldata
-    ) = ecoPythBuilder.build(data);
+    ) = ForkEnv.ecoPythBuilder.build(data);
 
     for (uint i = 0; i < readerOrders.length; i++) {
       if (readerOrders[i].account == address(0)) continue;
@@ -85,8 +91,8 @@ contract Smoke_TriggerOrder is Smoke_Base {
       executeOrderIndexes.push(readerOrders[i].orderIndex);
     }
 
-    vm.prank(address(botHandler));
-    ecoPyth.updatePriceFeeds(
+    vm.prank(address(ForkEnv.botHandler));
+    ForkEnv.ecoPyth2.updatePriceFeeds(
       _priceUpdateCalldata,
       _publishTimeUpdateCalldata,
       block.timestamp,
@@ -94,7 +100,7 @@ contract Smoke_TriggerOrder is Smoke_Base {
     );
 
     vm.prank(EXECUTOR);
-    limitHandler.executeOrders(
+    ForkEnv.limitTradeHandler.executeOrders(
       executeAccounts,
       executeSubAccountIds,
       executeOrderIndexes,
@@ -118,7 +124,7 @@ contract Smoke_TriggerOrder is Smoke_Base {
       address subAccount = HMXLib.getSubAccount(accounts[i], _subAccountIds[i]);
 
       // order should be deleted
-      (address account, , , , , , , , , , , ) = limitHandler.limitOrders(subAccount, _orderIndexes[i]);
+      (address account, , , , , , , , , , , ) = ForkEnv.limitTradeHandler.limitOrders(subAccount, _orderIndexes[i]);
       assertEq(account, address(0));
     }
     console.log("validated");
@@ -129,15 +135,15 @@ contract Smoke_TriggerOrder is Smoke_Base {
     uint256 _triggerPrice,
     bool _above
   ) internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
-    bytes32[] memory pythRes = ecoPyth.getAssetIds();
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
 
     uint256 len = pythRes.length; // 35 - 1(index 0) = 34
 
     data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
 
     for (uint i = 1; i < len; i++) {
-      PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(pythRes[i]);
-      IConfigStorage.MarketConfig memory marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
+      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
+      IConfigStorage.MarketConfig memory marketConfig = ForkEnv.configStorage.getMarketConfigByIndex(_marketIndex);
 
       if (marketConfig.assetId == pythRes[i]) {
         if (_above) {
@@ -192,8 +198,8 @@ contract Smoke_TriggerOrder is Smoke_Base {
     tokenIndexes[29] = 0x5347440000000000000000000000000000000000000000000000000000000000;
 
     for (uint i = 0; i < 30; i++) {
-      PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(tokenIndexes[i]);
-      IConfigStorage.MarketConfig memory marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
+      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(tokenIndexes[i]);
+      IConfigStorage.MarketConfig memory marketConfig = ForkEnv.configStorage.getMarketConfigByIndex(_marketIndex);
       if (marketConfig.assetId == tokenIndexes[i]) {
         if (_above) {
           prices[i] = uint64(((_triggerPrice * 10001) / 10000) / 1e22); // 100.01% of trigger

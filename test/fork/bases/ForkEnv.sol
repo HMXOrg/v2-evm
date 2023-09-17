@@ -12,11 +12,18 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
+import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+
+/// Readers
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
+import { ILiquidationReader } from "@hmx/readers/interfaces/ILiquidationReader.sol";
+import { IPositionReader } from "@hmx/readers/interfaces/IPositionReader.sol";
 
 /// Handlers
 import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
+import { BotHandler } from "@hmx/handlers/BotHandler.sol";
 
 /// Services
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -40,6 +47,8 @@ import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
 /// Curve
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
 library ForkEnv {
   /// Account
   address internal constant deployer = 0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872;
@@ -51,6 +60,8 @@ library ForkEnv {
   /// Protocol
   /// Oracles
   IEcoPyth internal constant ecoPyth2 = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
+  IEcoPythCalldataBuilder internal constant ecoPythBuilder =
+    IEcoPythCalldataBuilder(0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F); // UnsafeEcoPythCalldataBuilder
   IPythAdapter internal constant pythAdapter = IPythAdapter(0x34338314236df25220b55F90F7E8Fc30B620D242);
   IOracleMiddleware internal constant oracleMiddleware = IOracleMiddleware(0x9c83e1046dA4727F05C6764c017C6E1757596592);
   /// Handlers
@@ -60,6 +71,12 @@ library ForkEnv {
     LimitTradeHandler(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6));
   LiquidityHandler internal constant liquidityHandler =
     LiquidityHandler(payable(0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6));
+  BotHandler internal constant botHandler = BotHandler(payable(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671));
+  // readers
+  ILiquidationReader internal constant liquidationReader =
+    ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);
+  IPositionReader internal constant positionReader = IPositionReader(0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03);
+  IOrderReader internal constant orderReader = IOrderReader(0x0E6be5E7891f0835bb9E2a4F5410698E2aa02614);
   /// Services
   CrossMarginService internal constant crossMarginService =
     CrossMarginService(0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A);
@@ -85,6 +102,8 @@ library ForkEnv {
   IGmxVault internal constant gmxVault = IGmxVault(0x489ee077994B6658eAfA855C308275EAd8097C4A);
   /// Curve
   IStableSwap internal constant curveWstEthPool = IStableSwap(0x6eB2dc694eB516B16Dc9FBc678C60052BbdD7d80);
+
+  ITradeHelper internal constant tradeHelper = ITradeHelper(0x963Cbe4cFcDC58795869be74b80A328b022DE00C);
 
   /// Tokens
   IERC20 internal constant usdc_e = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);

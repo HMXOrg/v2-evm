@@ -5,6 +5,7 @@
 pragma solidity 0.8.18;
 
 import { Smoke_Base } from "./Smoke_Base.t.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import "forge-std/console.sol";
 
@@ -22,13 +23,13 @@ contract Smoke_Liquidate is Smoke_Base {
     address[] memory liqSubAccounts = new address[](10);
 
     // NOTE: MUST ignore when it's address(0), filtering is needed.
-    liqSubAccounts = liquidationReader.getLiquidatableSubAccount(10, 0, assetIds, prices, shouldInverts);
+    liqSubAccounts = ForkEnv.liquidationReader.getLiquidatableSubAccount(10, 0, assetIds, prices, shouldInverts);
 
     vm.startPrank(POS_MANAGER);
-    botHandler.updateLiquidityEnabled(false);
+    ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < 10; i++) {
       if (liqSubAccounts[i] == address(0)) continue;
-      botHandler.liquidate(
+      ForkEnv.botHandler.liquidate(
         liqSubAccounts[i],
         priceUpdateData,
         publishTimeUpdateData,
@@ -36,9 +37,9 @@ contract Smoke_Liquidate is Smoke_Base {
         keccak256("someEncodedVaas")
       );
       // Liquidated, no pos left.
-      assertEq(perpStorage.getNumberOfSubAccountPosition(liqSubAccounts[i]), 0);
+      assertEq(ForkEnv.perpStorage.getNumberOfSubAccountPosition(liqSubAccounts[i]), 0);
     }
-    botHandler.updateLiquidityEnabled(true);
+    ForkEnv.botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();
   }
 }

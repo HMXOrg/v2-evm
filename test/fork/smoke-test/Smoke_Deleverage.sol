@@ -11,7 +11,9 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
+
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import "forge-std/console.sol";
 import "forge-std/console2.sol";
@@ -26,7 +28,7 @@ contract Smoke_Liquidate is Smoke_Base {
     super.setUp();
 
     vm.prank(OWNER);
-    configStorage.setLiquidityConfig(
+    ForkEnv.configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
         depositFeeRateBPS: 30, // 0.3%
         withdrawFeeRateBPS: 30, // 0.3%
@@ -41,30 +43,26 @@ contract Smoke_Liquidate is Smoke_Base {
     );
   }
 
-  function testBOOM_TEST() external {
-    console2.logBytes(abi.encodeWithSignature("IVaultStorage_NotWhiteListed()"));
-  }
-
   function testCorrectness_SmokeTest_deleverage() external {
     IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice_Deleverage();
     (
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
       bytes32[] memory _publishTimeUpdateCalldata
-    ) = ecoPythBuilder.build(data);
+    ) = ForkEnv.ecoPythBuilder.build(data);
 
-    IPerpStorage.Position[] memory positions = perpStorage.getActivePositions(3, 0);
+    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(3, 0);
 
     if (positions.length == 0) {
       revert Smoke_Liquidate_NoPosition();
     }
 
-    vm.startPrank(address(tradeService));
-    vaultStorage.removeHlpLiquidityDebtUSDE30(vaultStorage.hlpLiquidityDebtUSDE30());
+    vm.startPrank(address(ForkEnv.tradeService));
+    ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
     vm.stopPrank();
 
-    vm.prank(address(botHandler));
-    ecoPyth.updatePriceFeeds(
+    vm.prank(address(ForkEnv.botHandler));
+    ForkEnv.ecoPyth2.updatePriceFeeds(
       _priceUpdateCalldata,
       _publishTimeUpdateCalldata,
       _minPublishTime,
@@ -84,8 +82,8 @@ contract Smoke_Liquidate is Smoke_Base {
       ) continue;
       filteredPositions.push(positions[i]);
 
-      vm.startPrank(address(tradeService));
-      vaultStorage.removeHlpLiquidityDebtUSDE30(vaultStorage.hlpLiquidityDebtUSDE30());
+      vm.startPrank(address(ForkEnv.tradeService));
+      ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
       vm.stopPrank();
     }
 
@@ -94,12 +92,12 @@ contract Smoke_Liquidate is Smoke_Base {
     }
 
     vm.startPrank(POS_MANAGER);
-    botHandler.updateLiquidityEnabled(false);
+    ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < filteredPositions.length; i++) {
       address subAccount = HMXLib.getSubAccount(filteredPositions[i].primaryAccount, filteredPositions[i].subAccountId);
       bytes32 positionId = HMXLib.getPositionId(subAccount, filteredPositions[i].marketIndex);
 
-      botHandler.deleverage(
+      ForkEnv.botHandler.deleverage(
         filteredPositions[i].primaryAccount,
         filteredPositions[i].subAccountId,
         filteredPositions[i].marketIndex,
@@ -112,18 +110,18 @@ contract Smoke_Liquidate is Smoke_Base {
 
       _validateClosedPosition(positionId);
     }
-    botHandler.updateLiquidityEnabled(true);
+    ForkEnv.botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();
   }
 
   function _buildDataForPrice_Deleverage() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
-    bytes32[] memory pythRes = ecoPyth.getAssetIds();
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
     uint256 len = pythRes.length; // 35 - 1(index 0) = 34
 
     data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
 
     for (uint i = 1; i < len; i++) {
-      PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(pythRes[i]);
+      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
       data[i - 1].assetId = pythRes[i];
       data[i - 1].publishTime = uint160(block.timestamp);
       data[i - 1].maxDiffBps = 20_000;

@@ -82,9 +82,6 @@ contract Smoke_Base is Test {
     BOB = makeAddr("BOB");
 
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
-    /// NOTE Current tests work with block: `_fixedBlock`.
-    ///      However, due to unknown reason,
-    ///      When rollFork/assign block.number, it'll be reverted.
 
     // -- LOAD FORK -- //
     vm.startPrank(OWNER); // in case of setting something..

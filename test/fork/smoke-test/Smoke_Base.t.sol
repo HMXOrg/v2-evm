@@ -12,9 +12,23 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
+// to-upgrade contract
+import { HLP } from "@hmx/contracts/HLP.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+
+import { BotHandler } from "@hmx/handlers/BotHandler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
+
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
+import { OrderReader } from "@hmx/readers/OrderReader.sol";
+
 // Storage
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -48,6 +62,60 @@ contract Smoke_Base is Test {
     ForkEnv.proxyAdmin.upgrade(
       TransparentUpgradeableProxy(payable(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006)),
       address(newCalculator)
+    );
+
+    HLP newHlp = new HLP();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb)),
+      address(newHlp)
+    );
+
+    BotHandler newBotHandler = new BotHandler();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671)),
+      address(newBotHandler)
+    );
+
+    LimitTradeHandler newLimitHandler = new LimitTradeHandler();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6)),
+      address(newLimitHandler)
+    );
+
+    TradeService newTradeService = new TradeService();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E)),
+      address(newTradeService)
+    );
+
+    CrossMarginService newCrossMarginService = new CrossMarginService();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A)),
+      address(newCrossMarginService)
+    );
+
+    TradeHelper newTradeHelper = new TradeHelper();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
+      address(newTradeHelper)
+    );
+
+    ConfigStorage newConfigStorage = new ConfigStorage();
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0)),
+      address(newConfigStorage)
+    );
+
+    OrderReader newOrderReader = new OrderReader(
+      address(ForkEnv.configStorage),
+      address(ForkEnv.perpStorage),
+      address(ForkEnv.oracleMiddleware),
+      address(ForkEnv.limitTradeHandler)
+    );
+
+    ForkEnv.proxyAdmin.upgrade(
+      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
+      address(newOrderReader)
     );
 
     vm.stopPrank();

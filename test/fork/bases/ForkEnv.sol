@@ -23,7 +23,7 @@ import { IPositionReader } from "@hmx/readers/interfaces/IPositionReader.sol";
 import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
-import { BotHandler } from "@hmx/handlers/BotHandler.sol";
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 /// Services
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -71,7 +71,7 @@ library ForkEnv {
     LimitTradeHandler(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6));
   LiquidityHandler internal constant liquidityHandler =
     LiquidityHandler(payable(0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6));
-  BotHandler internal constant botHandler = BotHandler(payable(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671));
+  IBotHandler internal constant botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
   // readers
   ILiquidationReader internal constant liquidationReader =
     ILiquidationReader(0x9f13335e769208a2545047aCb0ea386Cce7F5f8F);

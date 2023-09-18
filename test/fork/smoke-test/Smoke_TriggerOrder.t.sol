@@ -65,7 +65,7 @@ contract Smoke_TriggerOrder is Smoke_Base {
 
     uint64[] memory prices = new uint64[](30);
     prices = _buildPrice_Trigger(_order.marketIndex, _order.triggerPrice, _order.triggerAboveThreshold);
-    ILimitTradeHandler.LimitOrder[] memory readerOrders = ForkEnv.orderReader.getExecutableOrders(
+    ILimitTradeHandler.LimitOrder[] memory readerOrders = newOrderReader.getExecutableOrders(
       10,
       0,
       prices,

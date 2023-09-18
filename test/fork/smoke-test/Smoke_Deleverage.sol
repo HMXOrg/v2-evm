@@ -48,8 +48,7 @@ contract Smoke_Liquidate is Smoke_Base {
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
       bytes32[] memory _publishTimeUpdateCalldata
-    ) = ForkEnv.ecoPythBuilder.build(data);
-
+    ) = uncheckedBuilder.build(data);
     vm.prank(address(ForkEnv.botHandler));
     ForkEnv.ecoPyth2.updatePriceFeeds(
       _priceUpdateCalldata,
@@ -58,14 +57,11 @@ contract Smoke_Liquidate is Smoke_Base {
       keccak256("someEncodedVaas")
     );
     IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(5, 0);
-
     if (positions.length == 0) {
       revert Smoke_Liquidate_NoPosition();
     }
 
-    vm.startPrank(address(ForkEnv.tradeService));
-    ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
-    vm.stopPrank();
+    ForkEnv.tradeService.validateDeleverage();
 
     for (uint i = 0; i < positions.length; i++) {
       if (
@@ -81,22 +77,14 @@ contract Smoke_Liquidate is Smoke_Base {
       filteredPositions.push(positions[i]);
     }
 
-    vm.startPrank(address(ForkEnv.tradeService));
-    ForkEnv.vaultStorage.removeHlpLiquidityDebtUSDE30(ForkEnv.vaultStorage.hlpLiquidityDebtUSDE30());
-    vm.stopPrank();
-
-    if (positions.length == 0) {
+    if (filteredPositions.length == 0) {
       revert Smoke_Liquidate_NoFilteredPosition();
     }
-
     vm.startPrank(POS_MANAGER);
     ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < filteredPositions.length; i++) {
       address subAccount = HMXLib.getSubAccount(filteredPositions[i].primaryAccount, filteredPositions[i].subAccountId);
       bytes32 positionId = HMXLib.getPositionId(subAccount, filteredPositions[i].marketIndex);
-
-      console.log("Start delevaraging...");
-
       // NOTE: Reverted on HLP Healthy
       ForkEnv.botHandler.deleverage(
         filteredPositions[i].primaryAccount,
@@ -108,8 +96,6 @@ contract Smoke_Liquidate is Smoke_Base {
         _minPublishTime,
         keccak256("someEncodedVaas")
       );
-      console.log("done");
-
       _validateClosedPosition(positionId);
     }
     ForkEnv.botHandler.updateLiquidityEnabled(true);
@@ -118,21 +104,15 @@ contract Smoke_Liquidate is Smoke_Base {
 
   function _buildDataForPrice_Deleverage() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
     bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
-    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+    uint256 len = pythRes.length;
 
-    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
+    data = new IEcoPythCalldataBuilder.BuildData[](len - 1); // index 0 is not used
 
     for (uint i = 1; i < len; i++) {
-      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
       data[i - 1].assetId = pythRes[i];
       data[i - 1].publishTime = uint160(block.timestamp);
       data[i - 1].maxDiffBps = 20_000;
-      if (i == 1) {
-        // ETH
-        data[i - 1].priceE8 = _ecoPythPrice.price * 2;
-      } else {
-        data[i - 1].priceE8 = _ecoPythPrice.price;
-      }
+      data[i - 1].priceE8 = 1e8; // Override price of every asset to be 1 USD
     }
   }
 }

@@ -34,6 +34,7 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
+import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 
 contract Smoke_Base is Test {
   ICalculator public calculator;
@@ -50,11 +51,16 @@ contract Smoke_Base is Test {
   address internal constant EXECUTOR = 0xB75ca1CC0B01B6519Bc879756eC431a95DC37882;
   uint256 private constant _fixedBlock = 130344667;
 
+  UncheckedEcoPythCalldataBuilder uncheckedBuilder;
+  OrderReader newOrderReader;
+
   function setUp() public virtual {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
 
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
+
+    uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sGlp);
 
     // -- UPGRADE -- //
     vm.startPrank(ForkEnv.proxyAdmin.owner());
@@ -106,16 +112,11 @@ contract Smoke_Base is Test {
       address(newConfigStorage)
     );
 
-    OrderReader newOrderReader = new OrderReader(
+    newOrderReader = new OrderReader(
       address(ForkEnv.configStorage),
       address(ForkEnv.perpStorage),
       address(ForkEnv.oracleMiddleware),
       address(ForkEnv.limitTradeHandler)
-    );
-
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
-      address(newOrderReader)
     );
 
     vm.stopPrank();

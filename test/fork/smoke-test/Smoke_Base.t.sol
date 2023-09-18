@@ -33,11 +33,11 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
-import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv2.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-contract Smoke_Base is Test {
+contract Smoke_Base is ForkEnv {
   address public ALICE;
   address public BOB;
 
@@ -86,7 +86,7 @@ contract Smoke_Base is Test {
 
   function _setTickPriceZero()
     internal
-    pure
+    view
     returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
   {
     int24[] memory tickPrices = new int24[](34);

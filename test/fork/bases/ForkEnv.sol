@@ -36,6 +36,8 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
+import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
+
 /// Vendors
 /// Uniswap
 import { IPermit2 } from "@hmx/interfaces/uniswap/IPermit2.sol";
@@ -53,6 +55,9 @@ library ForkEnv {
   /// Account
   address internal constant deployer = 0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872;
   address internal constant multiSig = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
+  address internal constant glpWhale = 0x97bb6679ae5a6c66fFb105bA427B07E2F7fB561e;
+  address internal constant liquidityOrderExecutor = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
+  address internal constant limitOrderExecutor = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;
 
   /// Proxy
   ProxyAdmin internal constant proxyAdmin = ProxyAdmin(0x2E7983f9A1D08c57989eEA20adC9242321dA6589);
@@ -89,6 +94,8 @@ library ForkEnv {
   PerpStorage internal constant perpStorage = PerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
   VaultStorage internal constant vaultStorage = VaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
+  ITradingStaking internal constant hlpStaking = ITradingStaking(0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C);
+
   /// Vendors
   /// Uniswap
   IUniversalRouter internal constant uniswapUniversalRouter =
@@ -113,5 +120,9 @@ library ForkEnv {
   IERC20 internal constant dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
   IERC20 internal constant pendle = IERC20(0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8);
   IERC20 internal constant arb = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
+  IERC20 internal constant sglp = IERC20(0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf);
   IERC20 internal constant wstEth = IERC20(0x5979D7b546E38E414F7E9822514be443A4800529);
+
+
+  IERC20 internal constant hlp = IERC20(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb);
 }

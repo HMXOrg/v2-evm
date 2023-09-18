@@ -19,14 +19,18 @@ import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
+import { ArbSys } from "@hmx/interfaces/arbitrum/ArbSys.sol";
 
 contract EcoPythCalldataBuilder2 is IEcoPythCalldataBuilder2 {
+  address constant ARBSYS_ADDR = address(0x0000000000000000000000000000000000000064);
   IEcoPyth public ecoPyth;
   OnChainPriceLens public lens;
+  bool private l2BlockNumber;
 
-  constructor(IEcoPyth ecoPyth_, OnChainPriceLens lens_) {
+  constructor(IEcoPyth ecoPyth_, OnChainPriceLens lens_, bool l2BlockNumber_) {
     ecoPyth = ecoPyth_;
     lens = lens_;
+    l2BlockNumber = l2BlockNumber_;
   }
 
   function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
@@ -95,6 +99,10 @@ contract EcoPythCalldataBuilder2 is IEcoPythCalldataBuilder2 {
     _priceUpdateCalldata = ecoPyth.buildPriceUpdateData(_ticks);
     // Build the publishTimeUpdateCalldata
     _publishTimeUpdateCalldata = ecoPyth.buildPublishTimeUpdateData(_publishTimeDiffs);
-    blockNumber = block.number;
+    if (l2BlockNumber) {
+      blockNumber = ArbSys(ARBSYS_ADDR).arbBlockNumber();
+    } else {
+      blockNumber = block.number;
+    }
   }
 }

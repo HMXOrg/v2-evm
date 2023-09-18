@@ -60,7 +60,7 @@ contract Smoke_Base is Test {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
 
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 130344667);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
 
     // -- LOAD FORK -- //
     vm.startPrank(OWNER);

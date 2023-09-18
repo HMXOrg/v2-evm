@@ -41,7 +41,7 @@ contract Smoke_MaxProfit is Smoke_Base {
       keccak256("someEncodedVaas")
     );
 
-    vm.startPrank(POS_MANAGER);
+    vm.startPrank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < positionIds.length; i++) {
       IPerpStorage.Position memory _position = ForkEnv.perpStorage.getPositionById(positionIds[i]);
@@ -59,7 +59,7 @@ contract Smoke_MaxProfit is Smoke_Base {
         _position.primaryAccount,
         _position.subAccountId,
         _position.marketIndex,
-        USDC,
+        address(ForkEnv.usdc_e),
         priceUpdateData,
         publishTimeUpdateData,
         block.timestamp,

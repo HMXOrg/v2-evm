@@ -35,21 +35,13 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract Smoke_Base is Test {
-  ICalculator public calculator;
-
-  address public constant OWNER = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
-  address public constant POS_MANAGER = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E; // set market status;
   address public ALICE;
   address public BOB;
 
   uint256 internal constant BPS = 10_000;
-
-  address internal constant USDC = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
-  address internal constant TRADE_SERVICE = 0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E;
-  address internal constant EXECUTOR = 0xB75ca1CC0B01B6519Bc879756eC431a95DC37882;
-  uint256 private constant _fixedBlock = 130344667;
 
   UncheckedEcoPythCalldataBuilder uncheckedBuilder;
   OrderReader newOrderReader;
@@ -60,57 +52,18 @@ contract Smoke_Base is Test {
 
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
 
-    uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sGlp);
+    uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);
 
     // -- UPGRADE -- //
     vm.startPrank(ForkEnv.proxyAdmin.owner());
-    Calculator newCalculator = new Calculator();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006)),
-      address(newCalculator)
-    );
-
-    HLP newHlp = new HLP();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb)),
-      address(newHlp)
-    );
-
-    BotHandler newBotHandler = new BotHandler();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671)),
-      address(newBotHandler)
-    );
-
-    LimitTradeHandler newLimitHandler = new LimitTradeHandler();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6)),
-      address(newLimitHandler)
-    );
-
-    TradeService newTradeService = new TradeService();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E)),
-      address(newTradeService)
-    );
-
-    CrossMarginService newCrossMarginService = new CrossMarginService();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A)),
-      address(newCrossMarginService)
-    );
-
-    TradeHelper newTradeHelper = new TradeHelper();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
-      address(newTradeHelper)
-    );
-
-    ConfigStorage newConfigStorage = new ConfigStorage();
-    ForkEnv.proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0)),
-      address(newConfigStorage)
-    );
+    Deployer.upgrade("Calculator", address(ForkEnv.proxyAdmin), address(ForkEnv.calculator));
+    Deployer.upgrade("HLP", address(ForkEnv.proxyAdmin), address(ForkEnv.hlp));
+    Deployer.upgrade("BotHandler", address(ForkEnv.proxyAdmin), address(ForkEnv.botHandler));
+    Deployer.upgrade("LimitTradeHandler", address(ForkEnv.proxyAdmin), address(ForkEnv.limitTradeHandler));
+    Deployer.upgrade("TradeService", address(ForkEnv.proxyAdmin), address(ForkEnv.tradeService));
+    Deployer.upgrade("CrossMarginService", address(ForkEnv.proxyAdmin), address(ForkEnv.crossMarginService));
+    Deployer.upgrade("TradeHelper", address(ForkEnv.proxyAdmin), address(ForkEnv.tradeHelper));
+    Deployer.upgrade("ConfigStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.configStorage));
 
     newOrderReader = new OrderReader(
       address(ForkEnv.configStorage),
@@ -120,8 +73,6 @@ contract Smoke_Base is Test {
     );
 
     vm.stopPrank();
-    // -- LOAD UPGRADE -- //
-    calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
@@ -209,8 +160,8 @@ contract Smoke_Base is Test {
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
     IConfigStorage.MarketConfig memory config = ForkEnv.configStorage.getMarketConfigByIndex(_marketIndex);
 
-    int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, config.assetId);
-    uint256 _mmr = calculator.getMMR(_subAccount);
+    int256 _subAccountEquity = ForkEnv.calculator.getEquity(_subAccount, _limitPriceE30, config.assetId);
+    uint256 _mmr = ForkEnv.calculator.getMMR(_subAccount);
     if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) return true;
     return false;
   }

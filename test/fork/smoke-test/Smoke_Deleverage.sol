@@ -26,7 +26,7 @@ contract Smoke_Liquidate is Smoke_Base {
   function setUp() public virtual override {
     super.setUp();
 
-    vm.prank(OWNER);
+    vm.prank(ForkEnv.configStorage.owner());
     ForkEnv.configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
         depositFeeRateBPS: 30, // 0.3%
@@ -80,7 +80,7 @@ contract Smoke_Liquidate is Smoke_Base {
     if (filteredPositions.length == 0) {
       revert Smoke_Liquidate_NoFilteredPosition();
     }
-    vm.startPrank(POS_MANAGER);
+    vm.startPrank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < filteredPositions.length; i++) {
       address subAccount = HMXLib.getSubAccount(filteredPositions[i].primaryAccount, filteredPositions[i].subAccountId);
@@ -90,7 +90,7 @@ contract Smoke_Liquidate is Smoke_Base {
         filteredPositions[i].primaryAccount,
         filteredPositions[i].subAccountId,
         filteredPositions[i].marketIndex,
-        USDC,
+        address(ForkEnv.usdc_e),
         _priceUpdateCalldata,
         _publishTimeUpdateCalldata,
         _minPublishTime,

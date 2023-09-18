@@ -14,10 +14,8 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Liquidity is Smoke_Base {
-
   function setUp() public virtual override {
     super.setUp();
-
   }
 
   function testCorrectness_SmokeTest_addLiquidity() external {
@@ -53,20 +51,27 @@ contract Smoke_Liquidity is Smoke_Base {
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
       bytes32[] memory _publishTimeUpdateCalldata
-    ) = ecoPythBuilder.build(data);
+    ) = ForkEnv.ecoPythBuilder.build(data);
 
     // hlp price = aum / total supply
-    uint256 _hlpPriceE30 = calculator.getAUME30(false) * 1e18 / ForkEnv.hlp.totalSupply();
-    uint256 _estimatedHlpReceived = 10 * 1e18 * 1e30 / _hlpPriceE30;
+    uint256 _hlpPriceE30 = (ForkEnv.calculator.getAUME30(false) * 1e18) / ForkEnv.hlp.totalSupply();
+    uint256 _estimatedHlpReceived = (10 * 1e18 * 1e30) / _hlpPriceE30;
 
     vm.prank(ForkEnv.liquidityOrderExecutor);
-    ForkEnv.liquidityHandler.executeOrder(_latestOrderIndex, payable(ALICE), _priceUpdateCalldata, _publishTimeUpdateCalldata, _minPublishTime, keccak256("someEncodedVaas"));
+    ForkEnv.liquidityHandler.executeOrder(
+      _latestOrderIndex,
+      payable(ALICE),
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
 
     assertApproxEqRel(
       ForkEnv.hlpStaking.calculateShare(address(this), address(ALICE)),
       _estimatedHlpReceived,
       0.01 ether,
-       "User HLP Balance in Staking"
+      "User HLP Balance in Staking"
     );
     assertEq(ForkEnv.usdc_e.balanceOf(ALICE), 0, "User USDC.e Balance");
   }
@@ -96,28 +101,24 @@ contract Smoke_Liquidity is Smoke_Base {
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
       bytes32[] memory _publishTimeUpdateCalldata
-    ) = ecoPythBuilder.build(data);
+    ) = ForkEnv.ecoPythBuilder.build(data);
 
     // hlpPrice = aumE30 / totalSupply
-    uint256 _hlpPriceE30 = calculator.getAUME30(false) * 1e18 / ForkEnv.hlp.totalSupply();
+    uint256 _hlpPriceE30 = (ForkEnv.calculator.getAUME30(false) * 1e18) / ForkEnv.hlp.totalSupply();
     // convert hlp e30 to usdc e6
-    uint256 _estimatedUsdcReceivedE6 = 10 * 1e6 * _hlpPriceE30 / 1e30;
+    uint256 _estimatedUsdcReceivedE6 = (10 * 1e6 * _hlpPriceE30) / 1e30;
 
     vm.prank(ForkEnv.liquidityOrderExecutor);
     ForkEnv.liquidityHandler.executeOrder(
-      _latestOrderIndex, payable(ALICE),
+      _latestOrderIndex,
+      payable(ALICE),
       _priceUpdateCalldata,
       _publishTimeUpdateCalldata,
       _minPublishTime,
       keccak256("someEncodedVaas")
     );
-    
-    assertApproxEqRel(
-      ForkEnv.usdc_e.balanceOf(ALICE),
-      _estimatedUsdcReceivedE6,
-      0.01 ether,
-       "User USDC.e Balance"
-    );
+
+    assertApproxEqRel(ForkEnv.usdc_e.balanceOf(ALICE), _estimatedUsdcReceivedE6, 0.01 ether, "User USDC.e Balance");
     assertEq(ForkEnv.hlp.balanceOf(ALICE), 0, "User HLP Balance");
   }
 }

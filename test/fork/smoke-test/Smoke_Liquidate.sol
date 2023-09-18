@@ -25,7 +25,7 @@ contract Smoke_Liquidate is Smoke_Base {
     // NOTE: MUST ignore when it's address(0), filtering is needed.
     liqSubAccounts = ForkEnv.liquidationReader.getLiquidatableSubAccount(10, 0, assetIds, prices, shouldInverts);
 
-    vm.startPrank(POS_MANAGER);
+    vm.startPrank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < 10; i++) {
       if (liqSubAccounts[i] == address(0)) continue;

@@ -366,7 +366,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(
         Deployer.deployGlpDexter(
           address(ForkEnv.weth),
-          address(ForkEnv.sGlp),
+          address(ForkEnv.sglp),
           address(ForkEnv.glpManager),
           address(ForkEnv.gmxVault),
           address(ForkEnv.gmxRewardRouterV2)
@@ -376,8 +376,8 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
     // Deploy SwitchCollateralRouter
     switchCollateralRouter = SwitchCollateralRouter(address(Deployer.deploySwitchCollateralRouter()));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.sGlp), address(ForkEnv.weth), address(glpDexter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.sGlp), address(glpDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.sglp), address(ForkEnv.weth), address(glpDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.sglp), address(glpDexter));
     switchCollateralRouter.setDexterOf(address(ForkEnv.arb), address(ForkEnv.weth), address(uniswapDexter));
     switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.arb), address(uniswapDexter));
     switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(curveDexter));

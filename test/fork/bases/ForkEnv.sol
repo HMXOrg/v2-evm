@@ -50,6 +50,7 @@ import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 library ForkEnv {
   /// Account
@@ -57,6 +58,7 @@ library ForkEnv {
   address internal constant multiSig = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
   address internal constant glpWhale = 0x97bb6679ae5a6c66fFb105bA427B07E2F7fB561e;
   address internal constant liquidityOrderExecutor = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
+  address internal constant positionManager = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
   address internal constant limitOrderExecutor = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;
 
   /// Proxy
@@ -94,6 +96,8 @@ library ForkEnv {
   PerpStorage internal constant perpStorage = PerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
   VaultStorage internal constant vaultStorage = VaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
+  ICalculator internal constant calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
+
   ITradingStaking internal constant hlpStaking = ITradingStaking(0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C);
 
   /// Vendors
@@ -102,7 +106,6 @@ library ForkEnv {
     IUniversalRouter(0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD);
   IPermit2 internal constant uniswapPermit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
   /// GMX
-  IERC20 internal constant sGlp = IERC20(0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf);
   IGmxGlpManager internal constant glpManager = IGmxGlpManager(0x3963FfC9dff443c2A94f21b129D429891E32ec18);
   IGmxRewardRouterV2 internal constant gmxRewardRouterV2 =
     IGmxRewardRouterV2(0xB95DB5B167D75e6d04227CfFFA61069348d271F5);
@@ -122,7 +125,6 @@ library ForkEnv {
   IERC20 internal constant arb = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
   IERC20 internal constant sglp = IERC20(0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf);
   IERC20 internal constant wstEth = IERC20(0x5979D7b546E38E414F7E9822514be443A4800529);
-
 
   IERC20 internal constant hlp = IERC20(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb);
 }

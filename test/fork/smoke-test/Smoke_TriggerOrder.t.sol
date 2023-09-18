@@ -99,12 +99,12 @@ contract Smoke_TriggerOrder is Smoke_Base {
       keccak256("someEncodedVaas")
     );
 
-    vm.prank(EXECUTOR);
+    vm.prank(ForkEnv.limitOrderExecutor);
     ForkEnv.limitTradeHandler.executeOrders(
       executeAccounts,
       executeSubAccountIds,
       executeOrderIndexes,
-      payable(EXECUTOR),
+      payable(ForkEnv.limitOrderExecutor),
       _priceUpdateCalldata,
       _publishTimeUpdateCalldata,
       _minPublishTime,

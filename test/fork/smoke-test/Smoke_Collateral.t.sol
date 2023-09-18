@@ -45,7 +45,7 @@ contract Smoke_Collateral is Smoke_Base {
             uint8 tokenDecimal = collateralToken[i].decimals();
             // cannot deal sglp => transfer from whale instead
             if (i == 6) {
-                vm.prank(0x97bb6679ae5a6c66fFb105bA427B07E2F7fB561e);
+                vm.prank(ForkEnv.glpWhale);
                 collateralToken[i].transfer(ALICE, 10 * (10 ** tokenDecimal));
             } else {
                 deal(address(collateralToken[i]), ALICE, 10 * (10 ** tokenDecimal));
@@ -89,7 +89,7 @@ contract Smoke_Collateral is Smoke_Base {
             );
 
         
-            vm.prank(0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E);
+            vm.prank(ForkEnv.liquidityOrderExecutor);
             ForkEnv.crossMarginHandler.executeOrder(
                 _latestOrderIndex, 
                 payable(ALICE), 

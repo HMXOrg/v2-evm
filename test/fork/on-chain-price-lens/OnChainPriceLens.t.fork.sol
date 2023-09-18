@@ -58,8 +58,8 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
     priceAdapters[1] = wstEthUsdPriceAdapter;
     onChainPriceLens.setPriceAdapters(priceIds, priceAdapters);
 
-    ecoPythCalldataBuilder = new EcoPythCalldataBuilder2(ForkEnv.ecoPyth2, onChainPriceLens);
-    unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder2(ForkEnv.ecoPyth2, onChainPriceLens);
+    ecoPythCalldataBuilder = new EcoPythCalldataBuilder2(ForkEnv.ecoPyth2, onChainPriceLens, false);
+    unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder2(ForkEnv.ecoPyth2, onChainPriceLens, false);
 
     vm.startPrank(ForkEnv.multiSig);
     ForkEnv.ecoPyth2.insertAssetId("wstETH");

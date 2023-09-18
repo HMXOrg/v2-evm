@@ -25,24 +25,13 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
-contract ReserveValueEnhancement_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
+contract ReserveValueEnhancement_ForkTest is ForkEnv {
   address internal constant USER = 0xC2f76d705Aaf6b4706d305f2e58F1e2e2c3950e9;
   address internal constant ORDER_EXECUTOR = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;
   uint256 internal constant MARKET_INDEX = 0;
 
-  TradeService newTradeServiceImpl;
-  IPerpStorage perpStorage;
-  ILimitTradeHandler limitTradeHandler;
-  IConfigStorage configStorage;
-  IBotHandler botHandler;
-
   function setUp() external {
     vm.createSelectFork(vm.rpcUrl("arbitrum_fork"), 125699672);
-
-    perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
-    limitTradeHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
-    configStorage = IConfigStorage(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0);
-    botHandler = IBotHandler(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671);
 
     vm.startPrank(0x6409ba830719cd0fE27ccB3051DF1b399C90df4a);
     configStorage.setMarketConfig(

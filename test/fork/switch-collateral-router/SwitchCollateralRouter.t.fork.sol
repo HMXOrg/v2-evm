@@ -24,7 +24,7 @@ import { GlpDexter } from "@hmx/extensions/dexters/GlpDexter.sol";
 import { UniswapDexter } from "@hmx/extensions/dexters/UniswapDexter.sol";
 import { CurveDexter } from "@hmx/extensions/dexters/CurveDexter.sol";
 
-contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
+contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
   uint256 constant V3_SWAP_EXACT_IN = 0x00;
 
   address internal constant EXT01_EXECUTOR = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;

@@ -5,7 +5,7 @@
 pragma solidity 0.8.18;
 
 import { Smoke_Base } from "./Smoke_Base.t.sol";
-import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv2.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";

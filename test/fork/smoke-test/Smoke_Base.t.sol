@@ -33,23 +33,17 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
-import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv2.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract Smoke_Base is ForkEnv {
-  address public ALICE;
-  address public BOB;
-
   uint256 internal constant BPS = 10_000;
 
   UncheckedEcoPythCalldataBuilder uncheckedBuilder;
   OrderReader newOrderReader;
 
   function setUp() public virtual {
-    ALICE = makeAddr("Alice");
-    BOB = makeAddr("BOB");
-
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
 
     uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);

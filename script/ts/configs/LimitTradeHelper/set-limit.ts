@@ -8,21 +8,21 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 12,
-      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
+      marketIndex: 1,
+      tradeSizeLimit: ethers.utils.parseUnits("0", 30),
+      positionSizeLimit: ethers.utils.parseUnits("0", 30),
     },
     {
-      marketIndex: 13,
-      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
+      marketIndex: 0,
+      tradeSizeLimit: ethers.utils.parseUnits("0", 30),
+      positionSizeLimit: ethers.utils.parseUnits("0", 30),
     },
   ];
 
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade, deployer);
 
   console.log(`[configs/LimitTradeHelper] Set Limit By Market Index...`);

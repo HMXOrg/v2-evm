@@ -13,6 +13,8 @@ import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import "forge-std/console.sol";
 
 contract Smoke_MaxProfit is Smoke_Base {
+  error Smoke_MaxProfit_NoPosition();
+
   function setUp() public virtual override {
     super.setUp();
   }
@@ -29,8 +31,7 @@ contract Smoke_MaxProfit is Smoke_Base {
     );
 
     if (positionIds.length == 0) {
-      console.log("No position to be deleveraged");
-      return;
+      revert Smoke_MaxProfit_NoPosition();
     }
 
     vm.prank(address(ForkEnv.botHandler));

@@ -44,7 +44,7 @@ contract Smoke_Base is ForkEnv {
   OrderReader newOrderReader;
 
   function setUp() public virtual {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 132436832);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
 
     uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);
 
@@ -149,7 +149,7 @@ contract Smoke_Base is ForkEnv {
     address _primaryAccount,
     uint8 _subAccountId,
     uint256 _marketIndex,
-    uint256 _limitPriceE30
+    uint256
   ) internal view returns (bool) {
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
     IConfigStorage.MarketConfig memory config = ForkEnv.configStorage.getMarketConfigByIndex(_marketIndex);

@@ -57,6 +57,9 @@ contract Smoke_Liquidity is Smoke_Base {
     uint256 _hlpPriceE30 = (ForkEnv.calculator.getAUME30(false) * 1e18) / ForkEnv.hlp.totalSupply();
     uint256 _estimatedHlpReceived = (10 * 1e18 * 1e30) / _hlpPriceE30;
 
+    vm.prank(ForkEnv.positionManager);
+    ForkEnv.botHandler.updateLiquidityEnabled(true);
+
     vm.prank(ForkEnv.liquidityOrderExecutor);
     ForkEnv.liquidityHandler.executeOrder(
       _latestOrderIndex,
@@ -107,6 +110,9 @@ contract Smoke_Liquidity is Smoke_Base {
     uint256 _hlpPriceE30 = (ForkEnv.calculator.getAUME30(false) * 1e18) / ForkEnv.hlp.totalSupply();
     // convert hlp e30 to usdc e6
     uint256 _estimatedUsdcReceivedE6 = (10 * 1e6 * _hlpPriceE30) / 1e30;
+
+    vm.prank(ForkEnv.positionManager);
+    ForkEnv.botHandler.updateLiquidityEnabled(true);
 
     vm.prank(ForkEnv.liquidityOrderExecutor);
     ForkEnv.liquidityHandler.executeOrder(

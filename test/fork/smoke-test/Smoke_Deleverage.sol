@@ -84,7 +84,6 @@ contract Smoke_Liquidate is Smoke_Base {
     for (uint i = 0; i < filteredPositions.length; i++) {
       address subAccount = HMXLib.getSubAccount(filteredPositions[i].primaryAccount, filteredPositions[i].subAccountId);
       bytes32 positionId = HMXLib.getPositionId(subAccount, filteredPositions[i].marketIndex);
-      // NOTE: Reverted on HLP Healthy
       ForkEnv.botHandler.deleverage(
         filteredPositions[i].primaryAccount,
         filteredPositions[i].subAccountId,

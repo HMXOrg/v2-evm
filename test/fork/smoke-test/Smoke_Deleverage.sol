@@ -56,7 +56,7 @@ contract Smoke_Liquidate is Smoke_Base {
       _minPublishTime,
       keccak256("someEncodedVaas")
     );
-    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(5, 0);
+    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(10, 0);
     if (positions.length == 0) {
       revert Smoke_Liquidate_NoPosition();
     }
@@ -71,8 +71,7 @@ contract Smoke_Liquidate is Smoke_Base {
           positions[i].subAccountId,
           positions[i].marketIndex,
           positions[i].avgEntryPriceE30
-        ) ||
-        positions[i].marketIndex != 1 // NOTE on test, focus for ETH pos only, avoid price conflict
+        )
       ) continue;
       filteredPositions.push(positions[i]);
     }

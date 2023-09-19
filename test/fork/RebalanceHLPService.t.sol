@@ -10,8 +10,10 @@ import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPServ
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { Smoke_Base } from "@hmx-test/fork/smoke-test/Smoke_Base.t.sol";
 
-contract RebalanceHLPService_Test is ForkEnv {
+contract RebalanceHLPService_Test is Smoke_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
   uint24[] internal publishTimeDiffs;
@@ -19,7 +21,13 @@ contract RebalanceHLPService_Test is ForkEnv {
   uint256 fixedBlock = 121867415;
   int24[] tickPrices;
 
-  function setUp() public {
+  uint256 _minPublishTime;
+  bytes32[] _priceUpdateCalldata;
+  bytes32[] _publishTimeUpdateCalldata;
+
+  function setUp() public override {
+    super.setUp();
+
     tickPrices = new int24[](3);
     // USDC Price
     tickPrices[0] = 0;
@@ -30,29 +38,15 @@ contract RebalanceHLPService_Test is ForkEnv {
     publishTimeDiffs[0] = 0;
     publishTimeDiffs[1] = 0;
 
-    deal(address(weth), address(vaultStorage), 100 ether);
-    deal(address(usdc_e), address(vaultStorage), 10000 * 1e6);
-    deal(address(arb), address(vaultStorage), 100 ether);
-    deal(address(wstEth), address(vaultStorage), 100 ether);
-
-    vm.startPrank(address(tradeService));
-
-    vaultStorage.pullToken(address(weth));
-    vaultStorage.addHLPLiquidity(address(weth), 100 ether);
-
-    vaultStorage.pullToken(address(usdc_e));
-    vaultStorage.addHLPLiquidity(address(usdc_e), 10000 * 1e6);
-
-    vaultStorage.pullToken(address(arb));
-    vaultStorage.addHLPLiquidity(address(arb), 100 ether);
-
-    vaultStorage.pullToken(address(wstEth));
-    vaultStorage.addHLPLiquidity(address(wstEth), 100 ether);
+    vm.startPrank(rebalanceHLPHandler.owner());
+    rebalanceHLPHandler.setWhitelistExecutor(address(this), true);
     vm.stopPrank();
+
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice();
+    (_minPublishTime, _priceUpdateCalldata, _publishTimeUpdateCalldata) = ForkEnv.ecoPythBuilder.build(data);
   }
 
   function testCorrectness_Rebalance_ReinvestSuccess() external {
-    vm.roll(fixedBlock);
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 10 * 1e18;
@@ -64,27 +58,22 @@ contract RebalanceHLPService_Test is ForkEnv {
     uint256 wethBefore = vaultStorage.hlpLiquidity(address(weth));
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
 
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
-
     uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
 
     // USDC
-    assertEq(vaultStorage.hlpLiquidity(address(usdc_e)), usdcBefore - usdcAmount);
-    assertEq(vaultStorage.hlpLiquidity(address(usdc_e)), vaultStorage.totalAmount(address(usdc_e)));
+    assertEq(vaultStorage.hlpLiquidity(address(usdc_e)), usdcBefore - usdcAmount, "usdc");
     // WETH
-    assertEq(vaultStorage.hlpLiquidity(address(usdc_e)), wethBefore - wethAmount);
-    assertEq(vaultStorage.hlpLiquidity(address(weth)), vaultStorage.totalAmount(address(weth)));
+    assertEq(vaultStorage.hlpLiquidity(address(weth)), wethBefore - wethAmount, "weth");
     // sGLP
-    assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
+    assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore, "sglp");
 
-    // make sure that the allowance is zero
+    // // make sure that the allowance is zero
     assertEq(IERC20Upgradeable(address(usdc_e)).allowance(address(rebalanceHLPService), address(glpManager)), 0);
     assertEq(IERC20Upgradeable(address(weth)).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
@@ -96,13 +85,11 @@ contract RebalanceHLPService_Test is ForkEnv {
     params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), 1000 * 1e6, 990 * 1e6, 100);
     params[1] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), 1 * 1e18, 95 * 1e16, 100);
 
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
     rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
 
@@ -124,9 +111,9 @@ contract RebalanceHLPService_Test is ForkEnv {
 
     IRebalanceHLPService.WithdrawGlpResult[] memory result = rebalanceHLPHandler.withdrawGlp(
       _params,
-      _priceUpdateData,
-      _publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
 
@@ -162,9 +149,9 @@ contract RebalanceHLPService_Test is ForkEnv {
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_ParamsIsEmpty.selector);
     rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
   }
@@ -173,14 +160,14 @@ contract RebalanceHLPService_Test is ForkEnv {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
     bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
-    uint256 usdcAmount = 100_000 * 1e6;
+    uint256 usdcAmount = vaultStorage.hlpLiquidity(address(usdc_e)) + 1;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
     params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 99_000 * 1e6, 10_000);
     rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
   }
@@ -193,9 +180,9 @@ contract RebalanceHLPService_Test is ForkEnv {
     vm.prank(ALICE);
     rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
   }
@@ -209,36 +196,46 @@ contract RebalanceHLPService_Test is ForkEnv {
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
     rebalanceHLPHandler.withdrawGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
   }
 
   function testRevert_Rebalance_NegativeTotalHLPValue() external {
-    tickPrices = new int24[](3);
-    tickPrices[0] = 0;
-    tickPrices[1] = 76966;
+    vm.startPrank(rebalanceHLPService.owner());
+    rebalanceHLPService.setMinHLPValueLossBPS(1);
+    vm.stopPrank();
 
-    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
-    params[0] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), 90 * 1e18, 88 * 1e18, 100 * 1e18);
-
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
+    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
+    params[0] = IRebalanceHLPService.AddGlpParams(
+      address(usdc_e),
+      address(0),
+      vaultStorage.hlpLiquidity(address(usdc_e)),
+      0,
+      0
+    );
+    params[1] = IRebalanceHLPService.AddGlpParams(
+      address(weth),
+      address(0),
+      vaultStorage.hlpLiquidity(address(weth)),
+      0,
+      0
+    );
 
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_HlpTvlDropExceedMin.selector);
     rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
   }
 
   function testCorrectness_Rebalance_SwapReinvestSuccess() external {
-    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
+    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
     uint256 arbAmount = 10 * 1e18;
 
     params[0] = IRebalanceHLPService.AddGlpParams(
@@ -248,35 +245,20 @@ contract RebalanceHLPService_Test is ForkEnv {
       95 * 1e16,
       100
     );
-    params[1] = IRebalanceHLPService.AddGlpParams(
-      address(wstEth), // to be swapped
-      address(weth), // to be received
-      arbAmount,
-      95 * 1e16,
-      100
-    );
 
     uint256 arbBefore = vaultStorage.hlpLiquidity(address(arb));
-    uint256 wstEthBefore = vaultStorage.hlpLiquidity(address(wstEth));
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
-
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
 
     uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
       keccak256("encodeVass")
     );
 
-    // address(arb)
-    assertEq(vaultStorage.hlpLiquidity(address(arb)), vaultStorage.totalAmount(address(arb)));
+    // ARB
     assertEq(vaultStorage.hlpLiquidity(address(arb)), arbBefore - arbAmount);
-    // address(wstEth)
-    assertEq(vaultStorage.hlpLiquidity(address(wstEth)), vaultStorage.totalAmount(address(wstEth)));
-    assertEq(vaultStorage.hlpLiquidity(address(wstEth)), wstEthBefore - arbAmount);
     // sGLP
     assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
 

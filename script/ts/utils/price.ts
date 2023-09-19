@@ -36,13 +36,13 @@ export async function getUpdatePriceData(
     logger: console,
   });
 
-  const prices = await connection.getLatestPriceFeeds(priceIds.filter((each) => each !== "GLP"));
+  const prices = await connection.getLatestPriceFeeds(priceIds.filter((each) => each !== "GLP" && each !== "WSTETH"));
   if (!prices) {
     throw new Error("Failed to get prices from Pyth");
   }
   const buildData = [];
   for (let i = 0; i < priceIds.length; i++) {
-    if (priceIds[i] === "GLP") {
+    if (priceIds[i] === "GLP" || priceIds[i] === "WSTETH") {
       // If the asset is GLP, use the GLP price from the contract
       buildData.push({
         assetId: ecoPythAssetIdByIndex[i],
@@ -73,7 +73,7 @@ export async function getUpdatePriceData(
       price: ethers.utils.formatUnits(_priceToPriceE8(priceInfo.price, priceInfo.expo), 8),
     });
   }
-  const vaas = await connection.getPriceFeedsUpdateData(priceIds.filter((each) => each !== "GLP"));
+  const vaas = await connection.getPriceFeedsUpdateData(priceIds.filter((each) => each !== "GLP" && each !== "WSTETH"));
   hashedVaas = ethers.utils.keccak256(
     "0x" +
       vaas
@@ -83,7 +83,7 @@ export async function getUpdatePriceData(
         .join("")
   );
   const ecoPythCalldataBuilder = EcoPythCalldataBuilder__factory.connect(
-    config.oracles.unsafeEcoPythCalldataBuilder,
+    config.oracles.unsafeEcoPythCalldataBuilder2,
     provider
   );
   const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData] = await ecoPythCalldataBuilder.build(buildData);

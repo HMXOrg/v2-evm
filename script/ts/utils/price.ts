@@ -36,17 +36,13 @@ export async function getUpdatePriceData(
     logger: console,
   });
 
-  const prices = await connection.getLatestPriceFeeds(
-    priceIds.filter((each) => {
-      return each !== "GLP" && each !== "WSTETH";
-    })
-  );
+  const prices = await connection.getLatestPriceFeeds(priceIds.filter((each) => each !== "GLP" && each !== "wstETH"));
   if (!prices) {
     throw new Error("Failed to get prices from Pyth");
   }
   const buildData = [];
   for (let i = 0; i < priceIds.length; i++) {
-    if (priceIds[i] === "GLP" || priceIds[i] === "WSTETH") {
+    if (priceIds[i] === "GLP" || priceIds[i] === "wstETH") {
       // If the asset is GLP, use the GLP price from the contract
       buildData.push({
         assetId: ecoPythAssetIdByIndex[i],
@@ -77,7 +73,7 @@ export async function getUpdatePriceData(
       price: ethers.utils.formatUnits(_priceToPriceE8(priceInfo.price, priceInfo.expo), 8),
     });
   }
-  const vaas = await connection.getPriceFeedsUpdateData(priceIds.filter((each) => each !== "GLP" && each !== "WSTETH"));
+  const vaas = await connection.getPriceFeedsUpdateData(priceIds.filter((each) => each !== "GLP" && each !== "wstETH"));
   hashedVaas = ethers.utils.keccak256(
     "0x" +
       vaas

@@ -17,6 +17,7 @@ async function main(chainId: number) {
   ];
 
   const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
   console.log("[OracleMiddleware] Setting asset price configs...");

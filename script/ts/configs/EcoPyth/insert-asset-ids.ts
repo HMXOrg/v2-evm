@@ -5,11 +5,12 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("CNH"), ethers.utils.formatBytes32String("HKD")];
+const ASSET_IDS = [ethers.utils.formatBytes32String("WSTETH")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const config = loadConfig(chainId);
+  const safeWrappar = new SafeWrapper(chainId, config.safe, deployer);
 
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
   console.log("[EcoPyth] Inserting asset IDs...");

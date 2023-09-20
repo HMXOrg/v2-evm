@@ -14,7 +14,7 @@ async function main(chainId: number) {
       adapter: config.oracles.priceAdapters.glp,
     },
     {
-      priceId: ethers.utils.formatBytes32String("WSTETH"),
+      priceId: ethers.utils.formatBytes32String("wstETH"),
       adapter: config.oracles.priceAdapters.wstEth,
     },
   ];

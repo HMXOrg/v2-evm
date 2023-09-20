@@ -7,12 +7,10 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
   const config = loadConfig(chainId);
-  const safeWrappar = new SafeWrapper(chainId, deployer);
 
-  const index = 32;
-  const ecoPythPriceId = ethers.utils.formatBytes32String("DOGE");
+  const index = 35;
+  const ecoPythPriceId = ethers.utils.formatBytes32String("wstETH");
 
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
   console.log("[EcoPyth] Setting asset IDs...");

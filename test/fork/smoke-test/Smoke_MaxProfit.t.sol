@@ -9,6 +9,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 
 contract Smoke_MaxProfit is Smoke_Base {
@@ -65,7 +66,11 @@ contract Smoke_MaxProfit is Smoke_Base {
       keccak256("someEncodedVaas")
     );
 
-    // _validateClosedPosition(positionIds[i]);
+    bytes32 positionId = HMXLib.getPositionId(
+      HMXLib.getSubAccount(position.primaryAccount, position.subAccountId),
+      position.marketIndex
+    );
+    _validateClosedPosition(positionId);
 
     ForkEnv.botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();

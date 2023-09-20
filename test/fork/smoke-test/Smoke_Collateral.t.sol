@@ -80,6 +80,9 @@ contract Smoke_Collateral is Smoke_Base {
         false
       );
 
+      vm.warp(block.timestamp + 30);
+      vm.roll(block.number + 30);
+
       vm.prank(ForkEnv.liquidityOrderExecutor);
       ForkEnv.crossMarginHandler.executeOrder(
         _latestOrderIndex,

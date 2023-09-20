@@ -60,6 +60,9 @@ contract Smoke_Liquidity is Smoke_Base {
     vm.prank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(true);
 
+    vm.warp(block.timestamp + 30);
+    vm.roll(block.number + 30);
+
     vm.prank(ForkEnv.liquidityOrderExecutor);
     ForkEnv.liquidityHandler.executeOrder(
       _latestOrderIndex,
@@ -113,6 +116,9 @@ contract Smoke_Liquidity is Smoke_Base {
 
     vm.prank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(true);
+
+    vm.warp(block.timestamp + 30);
+    vm.roll(block.number + 30);
 
     vm.prank(ForkEnv.liquidityOrderExecutor);
     ForkEnv.liquidityHandler.executeOrder(

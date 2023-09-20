@@ -14,6 +14,7 @@ import "forge-std/console.sol";
 
 contract Smoke_MaxProfit is Smoke_Base {
   error Smoke_MaxProfit_NoPosition();
+  error Smoke_MaxProfit_NoFilteredPosition();
 
   function setUp() public virtual override {
     super.setUp();
@@ -44,6 +45,7 @@ contract Smoke_MaxProfit is Smoke_Base {
 
     vm.startPrank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(false);
+    uint256 maxProfitPositionCount = 0;
     for (uint i = 0; i < positionIds.length; i++) {
       IPerpStorage.Position memory _position = ForkEnv.perpStorage.getPositionById(positionIds[i]);
       if (
@@ -68,6 +70,12 @@ contract Smoke_MaxProfit is Smoke_Base {
       );
 
       _validateClosedPosition(positionIds[i]);
+
+      maxProfitPositionCount++;
+    }
+
+    if (maxProfitPositionCount == 0) {
+      revert Smoke_MaxProfit_NoFilteredPosition();
     }
 
     ForkEnv.botHandler.updateLiquidityEnabled(true);

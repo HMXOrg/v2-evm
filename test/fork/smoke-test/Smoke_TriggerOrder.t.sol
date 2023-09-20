@@ -14,9 +14,6 @@ import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
-import "forge-std/console.sol";
-import "forge-std/console2.sol";
-
 contract Smoke_TriggerOrder is Smoke_Base {
   error Smoke_TriggerOrder_NoOrder();
 
@@ -55,7 +52,6 @@ contract Smoke_TriggerOrder is Smoke_Base {
     }
 
     if (accounts.length == 0) {
-      console.log("No order to be triggered");
       revert Smoke_TriggerOrder_NoOrder();
     }
 
@@ -123,7 +119,6 @@ contract Smoke_TriggerOrder is Smoke_Base {
       (address account, , , , , , , , , , , ) = ForkEnv.limitTradeHandler.limitOrders(subAccount, _orderIndexes[i]);
       assertEq(account, address(0));
     }
-    console.log("validated");
   }
 
   function _buildDataForPrice_Trigger(

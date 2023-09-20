@@ -15,7 +15,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("WSTETH"),
+      assetId: ethers.utils.formatBytes32String("wstETH"),
       collateralConfig: {
         collateralFactorBPS: 0.8 * BPS,
         accepted: true,
@@ -25,16 +25,15 @@ async function main(chainId: number) {
   ];
 
   console.log("[configs/ConfigStorage] Set Collateral Configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    configStorage.address,
-    0,
-    configStorage.interface.encodeFunctionData("setCollateralTokenConfigs", [
+
+  await (
+    await configStorage.setCollateralTokenConfigs(
       inputs.map((each) => each.assetId),
-      inputs.map((each) => each.collateralConfig),
-    ])
-  );
-  console.log(`[configs/ConfigStorage] Tx: ${tx}`);
-  console.log("[configs/ConfigStorage] Set Collateral Configs success!");
+      inputs.map((each) => each.collateralConfig)
+    )
+  ).wait();
+  // console.log(`[configs/ConfigStorage] Tx: ${tx}`);
+  // console.log("[configs/ConfigStorage] Set Collateral Configs success!");
 }
 
 const prog = new Command();

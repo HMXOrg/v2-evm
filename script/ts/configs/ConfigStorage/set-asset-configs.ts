@@ -13,9 +13,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("WSTETH"),
+      assetId: ethers.utils.formatBytes32String("wstETH"),
       config: {
-        assetId: ethers.utils.formatBytes32String("WSTETH"),
+        assetId: ethers.utils.formatBytes32String("wstETH"),
         tokenAddress: config.tokens.wstEth,
         decimals: 18,
         isStableCoin: false,
@@ -24,17 +24,15 @@ async function main(chainId: number) {
   ];
 
   console.log("[configs/ConfigStorage] Set Asset Configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    configStorage.address,
-    0,
-    configStorage.interface.encodeFunctionData("setAssetConfigs", [
+  await (
+    await configStorage.setAssetConfigs(
       inputs.map((each) => each.assetId),
-      inputs.map((each) => each.config),
-    ])
-  );
-  console.log(`[configs/ConfigStorage] Tx: ${tx}`);
-  console.log("[configs/ConfigStorage] Finished");
-  console.log("[configs/ConfigStorage] Set Asset Configs success!");
+      inputs.map((each) => each.config)
+    )
+  ).wait();
+  // console.log(`[configs/ConfigStorage] Tx: ${tx}`);
+  // console.log("[configs/ConfigStorage] Finished");
+  // console.log("[configs/ConfigStorage] Set Asset Configs success!");
 }
 
 const prog = new Command();

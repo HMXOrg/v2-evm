@@ -2,6 +2,7 @@ import { EcoPyth__factory } from "../../../../typechain";
 import signers from "../../entities/signers";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
+import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
@@ -10,6 +11,7 @@ async function main(chainId: number) {
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
 
   console.log(await ecoPyth.getAssetIds());
+  console.log(ethers.utils.formatBytes32String("wstETH"));
 }
 
 const program = new Command();

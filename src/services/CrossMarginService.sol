@@ -49,6 +49,13 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 amount,
     address receiver
   );
+  event LogTransferCollateralSubAccount(
+    address indexed primaryAccount,
+    address indexed subAccountFrom,
+    address indexed subAccountTo,
+    address token,
+    uint256 amount
+  );
   event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
   event LogConvertSGlpCollateral(
     address primaryAccount,
@@ -209,6 +216,49 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _vaultStorage.pushToken(_token, _receiver, _amount);
 
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
+  }
+
+  /// @notice Calculate new trader balance after withdraw collateral token.
+  /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
+  /// @param _primaryAccount Trader's primary address from trader's wallet.
+  /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
+  /// @param _subAccountIdTo Trader's Sub-Account Id to deposit to.
+  /// @param _token Token that's withdrawn as collateral.
+  /// @param _amount Token withdrawing amount.
+  function transferCollateralSubAccount(
+    address _primaryAccount,
+    uint8 _subAccountIdFrom,
+    uint8 _subAccountIdTo,
+    address _token,
+    uint256 _amount
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
+     // SLOAD
+    Calculator _calculator = Calculator(calculator);
+
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+
+    // Get trader's sub-account address to withdraw from
+    address _subAccountFrom = HMXLib.getSubAccount(_primaryAccount, _subAccountIdFrom);
+    // Get trader's sub-account address to deposit to
+    address _subAccountTo = HMXLib.getSubAccount(_primaryAccount, _subAccountIdTo);
+
+    // Get current collateral token balance of trader's subaccount
+    // and deduct with new token withdrawing amount
+    uint256 _oldBalance = _vaultStorage.traderBalances(_subAccountFrom, _token);
+    if (_amount > _oldBalance) revert ICrossMarginService_InsufficientBalance();
+
+    // Decrease collateral token balance
+    _vaultStorage.decreaseTraderBalance(_subAccountFrom, _token, _amount);
+
+    // Calculate validation for if new Equity is below IMR or not
+    int256 equity = _calculator.getEquity(_subAccountFrom, 0, 0);
+    if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccountFrom))
+      revert ICrossMarginService_WithdrawBalanceBelowIMR();
+
+    // Increase collateral token balance
+    _vaultStorage.increaseTraderBalance(_subAccountTo, _token, _amount);
+
+    emit LogTransferCollateralSubAccount(_primaryAccount, _subAccountFrom, _subAccountTo, _token, _amount);
   }
 
   /// @notice Check funding fee surplus and transfer to HLP

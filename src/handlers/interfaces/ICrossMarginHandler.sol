@@ -75,6 +75,14 @@ interface ICrossMarginHandler {
     bytes32 _encodedVaas
   ) external;
 
+  function transferCollateralSubAccount(
+    address _primaryAccount,
+    uint8 _subAccountIdFrom,
+    uint8 _subAccountIdTo,
+    address _token,
+    uint256 _amount
+    ) external;
+
   function setCrossMarginService(address _address) external;
 
   function setPyth(address _address) external;

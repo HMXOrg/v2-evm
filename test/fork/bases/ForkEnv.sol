@@ -127,6 +127,8 @@ abstract contract ForkEnv is Test {
 
   ITradeHelper internal tradeHelper = ITradeHelper(getAddress(".helpers.trade"));
 
+  ICalculator internal constant calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
+
   /// Tokens
   IERC20 internal usdc_e = IERC20(getAddress(".tokens.usdc"));
   IERC20 internal weth = IERC20(getAddress(".tokens.weth"));

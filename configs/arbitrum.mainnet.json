@@ -34,7 +34,15 @@
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",
     "ecoPythCalldataBuilder": "0x86508504B72aD65d565Fe75516Af2281a64ab664",
-    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f"
+    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f",
+    "ecoPythCalldataBuilder2": "",
+    "unsafeEcoPythCalldataBuilder2": "",
+    "onChainPriceLens": "",
+    "priceAdapters": {
+      "glp": "",
+      "wstEth": "",
+      "hlp": ""
+    }
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
@@ -62,6 +70,10 @@
     "curve": {
       "wstEthEthPool": "0x6eb2dc694eb516b16dc9fbc678c60052bbdd7d80",
       "usdcUsdtPool": "0x7f90122bf0700f9e7e1f688fe926940e8839f353"
+    },
+    "chainlink": {
+      "wstEthEthPriceFeed": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+      "ethUsdPriceFeed": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
     }
   },
   "strategies": {

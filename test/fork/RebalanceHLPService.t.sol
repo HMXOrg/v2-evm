@@ -106,9 +106,6 @@ contract RebalanceHLPService_Test is Smoke_Base {
     uint256 usdcHlpBefore = vaultStorage.hlpLiquidity(address(usdc_e));
     uint256 wethHlpBefore = vaultStorage.hlpLiquidity(address(weth));
 
-    bytes32[] memory _priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory _publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
-
     IRebalanceHLPService.WithdrawGlpResult[] memory result = rebalanceHLPHandler.withdrawGlp(
       _params,
       _priceUpdateCalldata,
@@ -144,8 +141,6 @@ contract RebalanceHLPService_Test is Smoke_Base {
 
   function testRevert_Rebalance_EmptyParams() external {
     IRebalanceHLPService.AddGlpParams[] memory params;
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_ParamsIsEmpty.selector);
     rebalanceHLPHandler.addGlp(
       params,
@@ -158,8 +153,6 @@ contract RebalanceHLPService_Test is Smoke_Base {
 
   function testRevert_Rebalance_OverAmount() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
     uint256 usdcAmount = vaultStorage.hlpLiquidity(address(usdc_e)) + 1;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
     params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 99_000 * 1e6, 10_000);
@@ -174,8 +167,6 @@ contract RebalanceHLPService_Test is Smoke_Base {
 
   function testRevert_Rebalance_NotWhitelisted() external {
     IRebalanceHLPService.AddGlpParams[] memory params;
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_NotWhiteListed.selector);
     vm.prank(ALICE);
     rebalanceHLPHandler.addGlp(
@@ -190,8 +181,6 @@ contract RebalanceHLPService_Test is Smoke_Base {
   function testRevert_Rebalance_WithdrawExceedingAmount() external {
     IRebalanceHLPService.WithdrawGlpParams[] memory params = new IRebalanceHLPService.WithdrawGlpParams[](1);
     params[0] = IRebalanceHLPService.WithdrawGlpParams(address(usdc_e), 1e30, 0);
-    bytes32[] memory priceUpdateData = ecoPyth2.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
 
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
     rebalanceHLPHandler.withdrawGlp(

@@ -56,12 +56,7 @@ contract Smoke_Collateral is Smoke_Base {
         false
       );
       vm.stopPrank();
-      assertApproxEqRel(
-        10 * (10 ** tokenDecimal),
-        ForkEnv.vaultStorage.traderBalances(subAccount, address(collateralToken[i])),
-        0.01 ether,
-        "User must have 10 token in collateral"
-      );
+      assertEq(10 * (10 ** tokenDecimal), ForkEnv.vaultStorage.traderBalances(subAccount, address(collateralToken[i])));
     }
   }
 
@@ -94,12 +89,7 @@ contract Smoke_Collateral is Smoke_Base {
         _minPublishTime,
         keccak256("someEncodedVaas")
       );
-      assertApproxEqRel(
-        10 * (10 ** tokenDecimal),
-        collateralToken[i].balanceOf(ALICE),
-        0.01 ether,
-        "User must have 10 token in their wallet"
-      );
+      assertEq(10 * (10 ** tokenDecimal), collateralToken[i].balanceOf(ALICE));
     }
   }
 }

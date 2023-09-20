@@ -122,6 +122,27 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
   }
 
+  /**
+   * Cross Margin
+   */
+  /// @notice Helper function to deposit weth as collateral via handler
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token to deposit
+  /// @param _depositAmount amount to deposit
+  function depositCollateral(
+    address _account,
+    uint8 _subAccountId,
+    ERC20 _collateralToken,
+    uint256 _depositAmount,
+    bool _shouldWrap
+  ) internal {
+    vm.startPrank(_account);
+    _collateralToken.approve(address(crossMarginHandler), _depositAmount);
+    crossMarginHandler.depositCollateral{value: _depositAmount}(_subAccountId, address(_collateralToken), _depositAmount, _shouldWrap);
+    vm.stopPrank();
+  }
+
   /// @notice Helper function to withdraw collateral via handler
   /// @param _account Trader's address
   /// @param _subAccountId Trader's sub-account ID
@@ -156,6 +177,27 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
       _minPublishTime: block.timestamp,
       _encodedVaas: keccak256("someEncodedVaas")
     });
+  }
+
+  /**
+   * Cross Margin
+   */
+  /// @notice Helper function to transfer collateral between subAccount via handler
+  /// @param _account Trader's address
+  /// @param _subAccountIdFrom Trader's sub-account to withdraw from
+  /// @param _subAccountIdTo Trader's sub-account to transfer to
+  /// @param _collateralToken Collateral token to deposit
+  /// @param _depositAmount amount to deposit
+  function transferCollateralSubAccount(
+    address _account,
+    uint8 _subAccountIdFrom,
+    uint8 _subAccountIdTo,
+    ERC20 _collateralToken,
+    uint256 _depositAmount
+  ) internal {
+    vm.startPrank(_account);
+    crossMarginHandler.transferCollateralSubAccount(_account, _subAccountIdFrom, _subAccountIdTo, address(_collateralToken), _depositAmount);
+    vm.stopPrank();
   }
 
   /**

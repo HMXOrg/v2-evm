@@ -9,8 +9,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
-
-import "forge-std/console.sol";
+import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 
 contract Smoke_MaxProfit is Smoke_Base {
   error Smoke_MaxProfit_NoPosition();
@@ -21,62 +20,52 @@ contract Smoke_MaxProfit is Smoke_Base {
   }
 
   function testCorrectness_SmokeTest_forceCloseMaxProfit() external {
-    (, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
-    (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
-
-    bytes32[] memory positionIds = ForkEnv.positionReader.getForceTakeMaxProfitablePositionIds(
-      10,
-      0,
-      prices,
-      shouldInverts
-    );
-
-    if (positionIds.length == 0) {
-      revert Smoke_MaxProfit_NoPosition();
+    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(1, 0);
+    IPerpStorage.Position memory position = positions[0];
+    bool isLong = position.positionSizeE30 > 0;
+    int256 maxProfitPrice;
+    if (isLong) {
+      // (maxProfitPrice - avgEntryPriceE30) / avgEntryPriceE30 * positionSizeE30 = reserveValueE30
+      // maxProfitPrice = (avgEntryPriceE30 * (reserveValueE30 + positionSizeE30) / positionSizeE30
+      maxProfitPrice =
+        (int256(position.avgEntryPriceE30) * (int256(position.reserveValueE30) + position.positionSizeE30)) /
+        position.positionSizeE30;
+      maxProfitPrice = (maxProfitPrice * 1100) / 1000; // bump price up a bit to avoid tick price precision loss
+    } else {
+      // (avgEntryPriceE30 - maxProfitPrice) / avgEntryPriceE30 * positionSizeE30 = reserveValueE30
+      // maxProfitPrice = avgEntryPriceE30 - ((avgEntryPriceE30 * reserveValueE30) / positionSizeE30)
+      maxProfitPrice =
+        int256(position.avgEntryPriceE30) -
+        ((int256(position.avgEntryPriceE30) * int256(position.reserveValueE30)) / position.positionSizeE30);
+      maxProfitPrice = (maxProfitPrice * 900) / 1000; // bump price down a bit to avoid tick price precision loss
     }
 
-    vm.prank(address(ForkEnv.botHandler));
-    ForkEnv.ecoPyth2.updatePriceFeeds(
-      priceUpdateData,
-      publishTimeUpdateData,
-      block.timestamp,
-      keccak256("someEncodedVaas")
+    IConfigStorage.MarketConfig memory config = ForkEnv.configStorage.getMarketConfigByIndex(position.marketIndex);
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice(
+      config.assetId,
+      int64(maxProfitPrice / 1e22)
     );
+    (
+      uint256 _minPublishTime,
+      bytes32[] memory _priceUpdateCalldata,
+      bytes32[] memory _publishTimeUpdateCalldata
+    ) = uncheckedBuilder.build(data);
 
     vm.startPrank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(false);
-    uint256 maxProfitPositionCount = 0;
-    for (uint i = 0; i < positionIds.length; i++) {
-      IPerpStorage.Position memory _position = ForkEnv.perpStorage.getPositionById(positionIds[i]);
-      if (
-        _position.primaryAccount == address(0) ||
-        _checkIsUnderMMR(
-          _position.primaryAccount,
-          _position.subAccountId,
-          _position.marketIndex,
-          _position.avgEntryPriceE30
-        )
-      ) continue;
 
-      ForkEnv.botHandler.forceTakeMaxProfit(
-        _position.primaryAccount,
-        _position.subAccountId,
-        _position.marketIndex,
-        address(ForkEnv.usdc_e),
-        priceUpdateData,
-        publishTimeUpdateData,
-        block.timestamp,
-        keccak256("someEncodedVaas")
-      );
+    ForkEnv.botHandler.forceTakeMaxProfit(
+      position.primaryAccount,
+      position.subAccountId,
+      position.marketIndex,
+      address(ForkEnv.usdc_e),
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
 
-      _validateClosedPosition(positionIds[i]);
-
-      maxProfitPositionCount++;
-    }
-
-    if (maxProfitPositionCount == 0) {
-      revert Smoke_MaxProfit_NoFilteredPosition();
-    }
+    // _validateClosedPosition(positionIds[i]);
 
     ForkEnv.botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();

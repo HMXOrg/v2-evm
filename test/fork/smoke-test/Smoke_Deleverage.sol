@@ -43,7 +43,7 @@ contract Smoke_Liquidate is Smoke_Base {
   }
 
   function testCorrectness_SmokeTest_deleverage() external {
-    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice_Deleverage();
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice("BTC", 1000 * 1e8);
     (
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,

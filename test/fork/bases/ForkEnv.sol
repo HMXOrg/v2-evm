@@ -40,6 +40,8 @@ import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
 /// Curve
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+
 library ForkEnv {
   /// Account
   address internal constant deployer = 0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872;
@@ -86,6 +88,8 @@ library ForkEnv {
   /// Curve
   IStableSwap internal constant curveWstEthPool = IStableSwap(0x6eB2dc694eB516B16Dc9FBc678C60052BbdD7d80);
 
+  ICalculator internal constant calculator = ICalculator(0x0FdE910552977041Dc8c7ef652b5a07B40B9e006);
+
   /// Tokens
   IERC20 internal constant usdc_e = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
   IERC20 internal constant weth = IERC20(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
@@ -95,4 +99,5 @@ library ForkEnv {
   IERC20 internal constant pendle = IERC20(0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8);
   IERC20 internal constant arb = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
   IERC20 internal constant wstEth = IERC20(0x5979D7b546E38E414F7E9822514be443A4800529);
+  IERC20 internal constant hlp = IERC20(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb);
 }

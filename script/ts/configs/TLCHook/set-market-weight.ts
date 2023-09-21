@@ -19,15 +19,11 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 27, // DOGEUSD
-      weightBPS: 7 * BPS,
-    },
-    {
-      marketIndex: 28, // USDCAD
+      marketIndex: 30, // USDCNH
       weightBPS: 1 * BPS,
     },
     {
-      marketIndex: 29, // USDSGD
+      marketIndex: 31, // USDHKD
       weightBPS: 1 * BPS,
     },
   ];

@@ -32,8 +32,8 @@ async function main(chainId: number) {
       return;
   }
 
-  // console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
-  // await hmxApi.refreshAssetIds();
+  console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
+  await hmxApi.refreshAssetIds();
   console.log("[cmds/EcoPyth] Success!");
   console.log("[cmds/EcoPyth] Feed Price...");
   const tx = await (

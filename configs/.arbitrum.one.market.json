@@ -251,6 +251,26 @@
       "assetSymbol": "FX.SGD",
       "quotedAssetSymbol": "FX.USD",
       "sortIndex": 2004
+    },
+    {
+      "index": 30,
+      "name": "USDCNH",
+      "assetId": "0x434e480000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-cnh",
+      "assetSymbol": "FX.CNH",
+      "quotedAssetSymbol": "FX.CNH",
+      "sortIndex": 2004
+    },
+    {
+      "index": 31,
+      "name": "USDHKD",
+      "assetId": "0x484b440000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-hkd",
+      "assetSymbol": "FX.HKD",
+      "quotedAssetSymbol": "FX.HKD",
+      "sortIndex": 2004
     }
   ],
   "assets": {

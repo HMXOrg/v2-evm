@@ -39,8 +39,9 @@ interface ICrossMarginService {
     address _receiver
   ) external;
 
-  function transferCollateralSubAccount(
-    address _primaryAccount,
+  function transferCollateral(
+    address _primaryAccountFrom,
+    address _primaryAccountTo,
     uint8 _subAccountIdFrom,
     uint8 _subAccountIdTo,
     address _token,

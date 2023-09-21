@@ -309,7 +309,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 
-    _crossMarginService.transferCollateralSubAccount(_primaryAccount, _subAccountIdFrom, _subAccountIdTo, _token, _amount);
+    _crossMarginService.transferCollateral(_primaryAccount, _primaryAccount, _subAccountIdFrom, _subAccountIdTo, _token, _amount);
 
     emit LogTransferCollateralSubAccount(_primaryAccount, _subAccountIdFrom, _subAccountIdTo, _token, _amount);
   }

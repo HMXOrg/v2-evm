@@ -49,10 +49,11 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 amount,
     address receiver
   );
-  event LogTransferCollateralSubAccount(
-    address indexed primaryAccount,
-    address indexed subAccountFrom,
-    address indexed subAccountTo,
+  event LogTransferCollateral(
+    address indexed primaryAccountFrom,
+    address indexed primaryAccountTo,
+    address subAccountFrom,
+    address subAccountTo,
     address token,
     uint256 amount
   );
@@ -220,13 +221,15 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
   /// @notice Calculate new trader balance after transfer collateral token.
   /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
-  /// @param _primaryAccount Trader's primary address from trader's wallet.
+  /// @param _primaryAccountFrom Trader's primary address from trader's wallet to withdraw from.
+  /// @param _primaryAccountTo Trader's primary address from trader's wallet to transfer to.
   /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
-  /// @param _subAccountIdTo Trader's Sub-Account Id to deposit to.
+  /// @param _subAccountIdTo Trader's Sub-Account Id to transfer to.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
-  function transferCollateralSubAccount(
-    address _primaryAccount,
+  function transferCollateral(
+    address _primaryAccountFrom,
+    address _primaryAccountTo,
     uint8 _subAccountIdFrom,
     uint8 _subAccountIdTo,
     address _token,
@@ -238,9 +241,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address to withdraw from
-    address _subAccountFrom = HMXLib.getSubAccount(_primaryAccount, _subAccountIdFrom);
+    address _subAccountFrom = HMXLib.getSubAccount(_primaryAccountFrom, _subAccountIdFrom);
     // Get trader's sub-account address to deposit to
-    address _subAccountTo = HMXLib.getSubAccount(_primaryAccount, _subAccountIdTo);
+    address _subAccountTo = HMXLib.getSubAccount(_primaryAccountTo, _subAccountIdTo);
 
     // Get current collateral token balance of trader's subaccount
     // and deduct with new token withdrawing amount
@@ -258,7 +261,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Increase collateral token balance on target subaccount
     _vaultStorage.increaseTraderBalance(_subAccountTo, _token, _amount);
 
-    emit LogTransferCollateralSubAccount(_primaryAccount, _subAccountFrom, _subAccountTo, _token, _amount);
+    emit LogTransferCollateral(_primaryAccountFrom, _primaryAccountTo, _subAccountFrom, _subAccountTo, _token, _amount);
   }
 
   /// @notice Check funding fee surplus and transfer to HLP

@@ -131,7 +131,7 @@ contract Smoke_Base is Test {
       address(newLimitHandler)
     );
 
-    TraderService newTradeService = new TradeService();
+    TradeService newTradeService = new TradeService();
     proxyAdmin.upgrade(
       TransparentUpgradeableProxy(payable(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E)),
       address(newTradeService)

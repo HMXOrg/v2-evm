@@ -140,4 +140,21 @@ interface ICalculator {
   function setPerpStorage(address _address) external;
 
   function proportionalElapsedInDay(uint256 _marketIndex) external view returns (uint256 elapsed);
+
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _hlpTVL
+  ) external view returns (uint256 _nextBorrowingRate);
+
+  function getFundingFee(
+    int256 _size,
+    int256 _currentFundingAccrued,
+    int256 _lastFundingAccrued
+  ) external view returns (int256 fundingFee);
+
+  function getBorrowingFee(
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) external view returns (uint256 borrowingFee);
 }

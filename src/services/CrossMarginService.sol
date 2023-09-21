@@ -239,13 +239,15 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       // Update funding rate of the market to the latest value
       if (tradeHelper != address(0)) TradeHelper(tradeHelper).updateFundingRate(i);
 
-      if (_market.accumFundingLong < 0)
+      if (_market.accumFundingLong < 0) {
         // Only sum up the negative funding fee,
         // (negative funding fee means trader will receive funding fee)
         // we only care about negative funding fee here because
         // we would like to know how much the protocol owed the traders,
         // so that we will not withdraw too much funding fee surplus to the point that we can't pay the traders
         _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
+      }
+
       if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
       unchecked {

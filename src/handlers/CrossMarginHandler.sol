@@ -290,8 +290,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     return _orderId;
   }
 
-  /// @notice Calculate new trader balance after withdraw collateral token.
-  /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
+  /// @notice Calculate new trader balance after transfer collateral token.
+  /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
   /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
   /// @param _subAccountIdTo Trader's Sub-Account Id to deposit to.
@@ -305,6 +305,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _amount
   ) external nonReentrant onlyAcceptedToken(_token) {
     if (_amount == 0) revert ICrossMarginHandler_BadAmount();
+    if (_subAccountIdFrom == _subAccountIdTo) revert ICrossMarginHandler_SelfTransfer();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 

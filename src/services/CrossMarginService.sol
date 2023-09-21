@@ -218,8 +218,8 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
 
-  /// @notice Calculate new trader balance after withdraw collateral token.
-  /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
+  /// @notice Calculate new trader balance after transfer collateral token.
+  /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
   /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
   /// @param _subAccountIdTo Trader's Sub-Account Id to deposit to.
@@ -247,7 +247,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _oldBalance = _vaultStorage.traderBalances(_subAccountFrom, _token);
     if (_amount > _oldBalance) revert ICrossMarginService_InsufficientBalance();
 
-    // Decrease collateral token balance
+    // Decrease collateral token balance of current subaccount
     _vaultStorage.decreaseTraderBalance(_subAccountFrom, _token, _amount);
 
     // Calculate validation for if new Equity is below IMR or not
@@ -255,7 +255,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccountFrom))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
-    // Increase collateral token balance
+    // Increase collateral token balance on target subaccount
     _vaultStorage.increaseTraderBalance(_subAccountTo, _token, _amount);
 
     emit LogTransferCollateralSubAccount(_primaryAccount, _subAccountFrom, _subAccountTo, _token, _amount);

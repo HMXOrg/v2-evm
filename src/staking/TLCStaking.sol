@@ -8,7 +8,6 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
 
 import { EpochFeedableRewarder } from "./EpochFeedableRewarder.sol";
 
@@ -17,17 +16,14 @@ import { ITLCStaking } from "./interfaces/ITLCStaking.sol";
 contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
-  error TLCStaking_UnknownStakingToken();
   error TLCStaking_InsufficientTokenAmount();
   error TLCStaking_NotRewarder();
   error TLCStaking_NotCompounder();
-  error TLCStaking_BadDecimals();
-  error TLCStaking_DuplicateStakingToken();
   error TLCStaking_Forbidden();
 
-  mapping(uint256 => mapping(address => uint256)) public userTokenAmount;
-  mapping(uint256 => uint256) public totalTokenAmount;
-  mapping(address => bool) public isRewarder;
+  mapping(uint256 epochTimestamp => mapping(address user => uint256 amount)) public userTokenAmount;
+  mapping(uint256 epochTimestamp => uint256 amount) public totalTokenAmount;
+  mapping(address rewarder => bool isRewarder) public isRewarder;
   address public stakingToken;
   address[] public rewarders;
   address public compounder;
@@ -67,6 +63,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   function removeRewarder(uint256 removeRewarderIndex) external onlyOwner {
     address removedRewarder = rewarders[removeRewarderIndex];
     rewarders[removeRewarderIndex] = rewarders[rewarders.length - 1];
+    rewarders[rewarders.length - 1] = removedRewarder;
     rewarders.pop();
     isRewarder[removedRewarder] = false;
   }
@@ -81,7 +78,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
 
   function isDuplicatedRewarder(address rewarder) internal view returns (bool) {
     uint256 length = rewarders.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (rewarders[i] == rewarder) {
         return true;
       }
@@ -103,10 +100,10 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     totalTokenAmount[epochTimestamp] += amount;
 
     uint256 length = rewarders.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       address rewarder = rewarders[i];
 
-      EpochFeedableRewarder(rewarder).onDeposit(getCurrentEpochTimestamp(), to, amount);
+      EpochFeedableRewarder(rewarder).onDeposit(epochTimestamp, to, amount);
 
       unchecked {
         ++i;
@@ -132,20 +129,16 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
 
   function _withdraw(address to, uint256 amount) internal {
     uint256 epochTimestamp = getCurrentEpochTimestamp();
-    if (userTokenAmount[getCurrentEpochTimestamp()][to] < amount) revert TLCStaking_InsufficientTokenAmount();
+    if (userTokenAmount[epochTimestamp][to] < amount) revert TLCStaking_InsufficientTokenAmount();
 
     userTokenAmount[epochTimestamp][to] -= amount;
     totalTokenAmount[epochTimestamp] -= amount;
 
     uint256 length = rewarders.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       address rewarder = rewarders[i];
 
-      EpochFeedableRewarder(rewarder).onWithdraw(
-        EpochFeedableRewarder(rewarder).getCurrentEpochTimestamp(),
-        to,
-        amount
-      );
+      EpochFeedableRewarder(rewarder).onWithdraw(epochTimestamp, to, amount);
 
       unchecked {
         ++i;
@@ -157,18 +150,16 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     emit LogWithdraw(epochTimestamp, to, amount);
   }
 
-  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] calldata _rewarders) external {
-    // SLOAD
-    uint256 _epochLength = epochLength;
-    uint256 epochTimestamp = (startEpochTimestamp / _epochLength) * _epochLength;
-    for (uint256 i = 0; i < noOfEpochs; ) {
+  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] memory _rewarders) external {
+    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
+    for (uint256 i; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
-      if (epochTimestamp + _epochLength > block.timestamp) break;
+      if (epochTimestamp + epochLength > block.timestamp) break;
 
-      _harvestFor(_epochLength, epochTimestamp, msg.sender, msg.sender, _rewarders);
+      _harvestFor(epochTimestamp, msg.sender, msg.sender, _rewarders);
 
       // Increment epoch timestamp
-      epochTimestamp += _epochLength;
+      epochTimestamp += epochLength;
 
       unchecked {
         ++i;
@@ -180,21 +171,18 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     address user,
     uint256 startEpochTimestamp,
     uint256 noOfEpochs,
-    address[] calldata _rewarders
+    address[] memory _rewarders
   ) external {
-    // SLOAD
-    uint256 _epochLength = epochLength;
-    address _compounder = compounder;
-    if (_compounder != msg.sender) revert TLCStaking_NotCompounder();
-    uint256 epochTimestamp = (startEpochTimestamp / _epochLength) * _epochLength;
-    for (uint256 i = 0; i < noOfEpochs; ) {
+    if (compounder != msg.sender) revert TLCStaking_NotCompounder();
+    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
+    for (uint256 i; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
-      if (epochTimestamp + _epochLength > block.timestamp) break;
+      if (epochTimestamp + epochLength > block.timestamp) break;
 
-      _harvestFor(_epochLength, epochTimestamp, user, _compounder, _rewarders);
+      _harvestFor(epochTimestamp, user, compounder, _rewarders);
 
       // Increment epoch timestamp
-      epochTimestamp += _epochLength;
+      epochTimestamp += epochLength;
 
       unchecked {
         ++i;
@@ -202,18 +190,12 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     }
   }
 
-  function _harvestFor(
-    uint256 _epochLength,
-    uint256 epochTimestamp,
-    address user,
-    address receiver,
-    address[] calldata _rewarders
-  ) internal {
+  function _harvestFor(uint256 epochTimestamp, address user, address receiver, address[] memory _rewarders) internal {
     // Floor down the timestamp, in case it is incorrectly formatted
-    epochTimestamp = (epochTimestamp / _epochLength) * _epochLength;
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
 
     uint256 length = _rewarders.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (!isRewarder[_rewarders[i]]) {
         revert TLCStaking_NotRewarder();
       }
@@ -235,7 +217,13 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   }
 
   function getCurrentEpochTimestamp() public view returns (uint256 epochTimestamp) {
-    return (block.timestamp / epochLength) * epochLength;
+    unchecked {
+      epochTimestamp = (block.timestamp / epochLength) * epochLength;
+    }
+  }
+
+  function getRewarders() external view returns (address[] memory) {
+    return rewarders;
   }
 
   /// @dev Set the address of an account authorized to modify balances in CrossMarginTrading.sol contract

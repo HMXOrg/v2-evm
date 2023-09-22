@@ -196,7 +196,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _depositAmount
   ) internal {
     vm.startPrank(_account);
-    crossMarginHandler.transferCollateralSubAccount(_account, _subAccountIdFrom, _subAccountIdTo, address(_collateralToken), _depositAmount);
+    crossMarginHandler.transferCollateralSubAccount(_subAccountIdFrom, _subAccountIdTo, address(_collateralToken), _depositAmount);
     vm.stopPrank();
   }
 

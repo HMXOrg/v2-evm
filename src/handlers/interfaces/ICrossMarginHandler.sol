@@ -77,7 +77,6 @@ interface ICrossMarginHandler {
   ) external;
 
   function transferCollateralSubAccount(
-    address _primaryAccount,
     uint8 _subAccountIdFrom,
     uint8 _subAccountIdTo,
     address _token,

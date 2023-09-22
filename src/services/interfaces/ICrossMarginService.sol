@@ -41,8 +41,8 @@ interface ICrossMarginService {
 
   function transferCollateral(
     address _primaryAccountFrom,
-    address _primaryAccountTo,
     uint8 _subAccountIdFrom,
+    address _primaryAccountTo,
     uint8 _subAccountIdTo,
     address _token,
     uint256 _amount

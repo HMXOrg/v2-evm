@@ -51,9 +51,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   );
   event LogTransferCollateral(
     address indexed primaryAccountFrom,
+    uint8 subAccountIdFrom,
     address indexed primaryAccountTo,
-    address subAccountFrom,
-    address subAccountTo,
+    uint8 subAccountIdTo,
     address token,
     uint256 amount
   );
@@ -222,15 +222,15 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @notice Calculate new trader balance after transfer collateral token.
   /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
   /// @param _primaryAccountFrom Trader's primary address from trader's wallet to withdraw from.
-  /// @param _primaryAccountTo Trader's primary address from trader's wallet to transfer to.
   /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
+  /// @param _primaryAccountTo Trader's primary address from trader's wallet to transfer to.
   /// @param _subAccountIdTo Trader's Sub-Account Id to transfer to.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
   function transferCollateral(
     address _primaryAccountFrom,
-    address _primaryAccountTo,
     uint8 _subAccountIdFrom,
+    address _primaryAccountTo,
     uint8 _subAccountIdTo,
     address _token,
     uint256 _amount
@@ -261,7 +261,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Increase collateral token balance on target subaccount
     _vaultStorage.increaseTraderBalance(_subAccountTo, _token, _amount);
 
-    emit LogTransferCollateral(_primaryAccountFrom, _primaryAccountTo, _subAccountFrom, _subAccountTo, _token, _amount);
+    emit LogTransferCollateral(_primaryAccountFrom, _subAccountIdFrom, _primaryAccountTo, _subAccountIdTo, _token, _amount);
   }
 
   /// @notice Check funding fee surplus and transfer to HLP

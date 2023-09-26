@@ -25,7 +25,6 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 /// Libs
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
-import "forge-std/console.sol";
 
 /// @title Ext01Handler - Handler for extended actions which not related to core functionality.
 contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01Handler {

@@ -36,6 +36,7 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c", // DOGEUSD
   "0x3112b03a41c910ed446852aacf67118cb1bec67b2cd0b9a214c58cc0eaa2ecca", // USDCAD
   "0x396a969a9c1480fa15ed50bc59149e2c0075a72fe8f458ed941ddec48bdb4918", // USDSGD
+  "wstETH",
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -72,6 +73,7 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("DOGE"),
   ethers.utils.formatBytes32String("CAD"),
   ethers.utils.formatBytes32String("SGD"),
+  ethers.utils.formatBytes32String("wstETH"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -108,4 +110,5 @@ export const ecoPythHoomanReadableByIndex = [
   "DOGE",
   "CAD",
   "SGD",
+  "wstETH",
 ];

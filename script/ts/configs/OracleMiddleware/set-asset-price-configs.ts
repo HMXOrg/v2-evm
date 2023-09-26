@@ -9,30 +9,18 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("DOGE"),
+      assetId: ethers.utils.formatBytes32String("wstETH"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("CAD"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("SGD"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
   ];
 
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
-  console.log("[OracleMiddleware] Setting asset price configs...");
+  console.log("[configs/OracleMiddleware] Setting asset price configs...");
   const tx = await safeWrapper.proposeTransaction(
     oracle.address,
     0,
@@ -43,8 +31,8 @@ async function main(chainId: number) {
       assetConfigs.map((each) => each.adapter),
     ])
   );
-  console.log(`[OracleMiddleware] Tx: ${tx}`);
-  console.log("[OracleMiddleware] Finished");
+  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
+  console.log("[configs/OracleMiddleware] Finished");
 }
 
 const prog = new Command();

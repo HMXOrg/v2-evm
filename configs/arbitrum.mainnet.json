@@ -13,7 +13,8 @@
     "crossMargin": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
-    "rebalanceHLP": "0x3b2AC5d307595726f9fDa14B319fd1497Ac853cc"
+    "rebalanceHLP": "0x3b2AC5d307595726f9fDa14B319fd1497Ac853cc",
+    "ext01": ""
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
@@ -33,7 +34,15 @@
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",
     "ecoPythCalldataBuilder": "0x86508504B72aD65d565Fe75516Af2281a64ab664",
-    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f"
+    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f",
+    "ecoPythCalldataBuilder2": "0x7dbf13AD71da2405D73c9bda64B4769620EFfdd6",
+    "unsafeEcoPythCalldataBuilder2": "0xCF43C575359D25280672c606E4F7F50bc668a813",
+    "onChainPriceLens": "0x7D8eAa8dF02526c711F4ff1f97F6c5324212DBBa",
+    "priceAdapters": {
+      "glp": "0x9934d2Cc22E9905B511E13E35148B9eF9aDa6Cd0",
+      "wstEth": "0x9eD51928Ec61c4e5dc0D48b38C828f89687467E6",
+      "hlp": "0x0266868d1c144a7534513F38B816c1aadE4030A2"
+    }
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
@@ -61,6 +70,10 @@
     "curve": {
       "wstEthEthPool": "0x6eb2dc694eb516b16dc9fbc678c60052bbdd7d80",
       "usdcUsdtPool": "0x7f90122bf0700f9e7e1f688fe926940e8839f353"
+    },
+    "chainlink": {
+      "wstEthEthPriceFeed": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+      "ethUsdPriceFeed": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
     }
   },
   "strategies": {
@@ -84,8 +97,8 @@
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
   "reader": {
     "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E",
-    "position": "",
-    "liquidation": ""
+    "position": "0x64706D5f177B892b1cEebe49cd9F02B90BB6FF03",
+    "liquidation": "0x9f13335e769208a2545047aCb0ea386Cce7F5f8F"
   },
   "extension": {
     "switchCollateralRouter": "0x004d72A192db408B9a7c647c6a3c888dFEBC6A9B",

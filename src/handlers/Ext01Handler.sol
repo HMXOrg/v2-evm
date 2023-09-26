@@ -197,7 +197,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     if (_params.orderType == 0) revert IExt01Handler_BadOrderType();
     uint128 _minExecutionFee = minExecutionOrderOf[_params.orderType];
     if (_params.executionFee < _minExecutionFee) revert IExt01Handler_InsufficientExecutionFee();
-    if (msg.value != _minExecutionFee) revert IExt01Handler_InCorrectValueTransfer();
+    if (msg.value != _params.executionFee) revert IExt01Handler_InCorrectValueTransfer();
 
     // Convert native to wrapped native.
     // This should just only a executionFee

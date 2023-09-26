@@ -19,15 +19,18 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
-  console.log("[PythAdapter] Setting configs...");
-  await (
-    await pythAdapter.setConfigs(
+  console.log("[configs/PythAdapter] Setting configs...");
+  const tx = await safeWrapper.proposeTransaction(
+    pythAdapter.address,
+    0,
+    pythAdapter.interface.encodeFunctionData("setConfigs", [
       inputs.map((each) => each.assetId),
       inputs.map((each) => each.pythPriceId),
-      inputs.map((each) => each.inverse)
-    )
-  ).wait();
-  console.log("[PythAdapter] Finished");
+      inputs.map((each) => each.inverse),
+    ])
+  );
+  console.log(`[configs/PythAdapter] Tx: ${tx}`);
+  console.log("[configs/PythAdapter] Finished");
 }
 
 const program = new Command();

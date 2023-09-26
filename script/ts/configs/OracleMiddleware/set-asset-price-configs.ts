@@ -20,16 +20,19 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
-  console.log("[OracleMiddleware] Setting asset price configs...");
-  await (
-    await oracle.setAssetPriceConfigs(
+  console.log("[configs/OracleMiddleware] Setting asset price configs...");
+  const tx = await safeWrapper.proposeTransaction(
+    oracle.address,
+    0,
+    oracle.interface.encodeFunctionData("setAssetPriceConfigs", [
       assetConfigs.map((each) => each.assetId),
       assetConfigs.map((each) => each.confidenceThreshold),
       assetConfigs.map((each) => each.trustPriceAge),
-      assetConfigs.map((each) => each.adapter)
-    )
-  ).wait();
-  console.log("[OracleMiddleware] Finished");
+      assetConfigs.map((each) => each.adapter),
+    ])
+  );
+  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
+  console.log("[configs/OracleMiddleware] Finished");
 }
 
 const prog = new Command();

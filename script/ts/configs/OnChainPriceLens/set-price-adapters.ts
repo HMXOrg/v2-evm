@@ -24,7 +24,7 @@ async function main(chainId: number) {
   const lens = OnChainPriceLens__factory.connect(config.oracles.onChainPriceLens, deployer);
   const owner = await lens.owner();
 
-  console.log("[OnChainPriceLens] Setting price adapters...");
+  console.log("[configs/OnChainPriceLens] Setting price adapters...");
   if (compareAddress(owner, config.safe)) {
     const tx = await safeWrapper.proposeTransaction(
       lens.address,
@@ -34,16 +34,16 @@ async function main(chainId: number) {
         priceAdapters.map((each) => each.adapter),
       ])
     );
-    console.log(`[OnChainPriceLens] Tx: ${tx}`);
+    console.log(`[configs/OnChainPriceLens] Tx: ${tx}`);
   } else {
     const tx = await lens.setPriceAdapters(
       priceAdapters.map((each) => each.priceId),
       priceAdapters.map((each) => each.adapter)
     );
-    console.log(`[OnChainPriceLens] Tx: ${tx.hash}`);
+    console.log(`[configs/OnChainPriceLens] Tx: ${tx.hash}`);
   }
 
-  console.log("[OnChainPriceLens] Finished");
+  console.log("[configs/OnChainPriceLens] Finished");
 }
 
 const prog = new Command();

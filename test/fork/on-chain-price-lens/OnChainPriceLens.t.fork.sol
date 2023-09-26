@@ -27,7 +27,7 @@ import { EcoPythCalldataBuilder2 } from "@hmx/oracles/EcoPythCalldataBuilder2.so
 import { UnsafeEcoPythCalldataBuilder2 } from "@hmx/oracles/UnsafeEcoPythCalldataBuilder2.sol";
 import { IEcoPythCalldataBuilder2 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder2.sol";
 
-contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
+contract OnChainPriceLens_ForkTest is ForkEnv, Cheats {
   WstEthUsdPriceAdapter internal wstEthUsdPriceAdapter;
   GlpPriceAdapter internal glpPriceAdapter;
   HlpPriceAdapter internal hlpPriceAdapter;
@@ -45,7 +45,7 @@ contract OnChainPriceLens_ForkTest is TestBase, Cheats, StdAssertions, StdCheats
       AggregatorV3Interface(ethUsdPriceFeed)
     );
 
-    glpPriceAdapter = new GlpPriceAdapter(ForkEnv.sGlp, ForkEnv.glpManager);
+    glpPriceAdapter = new GlpPriceAdapter(ForkEnv.sglp, ForkEnv.glpManager);
     hlpPriceAdapter = new HlpPriceAdapter(ForkEnv.hlp, ForkEnv.calculator);
 
     onChainPriceLens = new OnChainPriceLens();

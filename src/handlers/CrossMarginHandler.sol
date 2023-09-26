@@ -40,6 +40,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address token,
     uint256 amount
   );
+  event LogTransferCollateralSubAccount(
+    address indexed primaryAccount,
+    uint256 indexed subAccountFrom,
+    uint256 indexed subAccountTo,
+    address token,
+    uint256 amount
+  );
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
@@ -281,6 +288,28 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     emit LogCreateWithdrawOrder(msg.sender, _subAccountId, _orderId, _token, _amount, _executionFee, _shouldUnwrap);
     return _orderId;
+  }
+
+  /// @notice Calculate new trader balance after transfer collateral token.
+  /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
+  /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
+  /// @param _subAccountIdTo Trader's Sub-Account Id to deposit to.
+  /// @param _token Token that's withdrawn as collateral.
+  /// @param _amount Token withdrawing amount.
+  function transferCollateralSubAccount(
+    uint8 _subAccountIdFrom,
+    uint8 _subAccountIdTo,
+    address _token,
+    uint256 _amount
+  ) external nonReentrant onlyAcceptedToken(_token) {
+    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
+    if (_subAccountIdFrom == _subAccountIdTo) revert ICrossMarginHandler_SelfTransfer();
+    // SLOAD
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+
+    _crossMarginService.transferCollateral(msg.sender, _subAccountIdFrom, msg.sender, _subAccountIdTo, _token, _amount);
+
+    emit LogTransferCollateralSubAccount(msg.sender, _subAccountIdFrom, _subAccountIdTo, _token, _amount);
   }
 
   /// @notice Executes a batch of pending withdraw orders.

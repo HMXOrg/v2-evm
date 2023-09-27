@@ -86,7 +86,7 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
     // y = 0.0007 + (1)^3.87005578 * 0.05
     // y = 0.0007 + 1 * 0.05
     // y = 0.0507 = 5.07%
-    // in BPS = 0.0507 * 1e4 = 507
+    // in BPS = 0.0507 * 1e4 = 507 -> max at 500
     feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
       400_000 * 1e8,
       400_000 * 1e8,
@@ -96,7 +96,7 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
       7,
       500
     );
-    assertEq(feeBps, 506); // 1 wei precision loss
+    assertEq(feeBps, 500);
   }
 
   function testOverFlow() external {

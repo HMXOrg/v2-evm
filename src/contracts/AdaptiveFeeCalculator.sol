@@ -5,6 +5,7 @@
 pragma solidity 0.8.18;
 
 import { ABDKMath64x64 } from "@hmx/libraries/ABDKMath64x64.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract AdaptiveFeeCalculator {
   using ABDKMath64x64 for int128;
@@ -34,7 +35,7 @@ contract AdaptiveFeeCalculator {
     int128 B = _min(A, ABDKMath64x64.fromUInt(1));
     int128 C = B.pow(g);
     int128 y = _convertE8To64x64(baseFeeBps * 1e4).add(C.mul(_convertE8To64x64(maxFeeBps * 1e4)));
-    return ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64));
+    return HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), uint256(maxFeeBps));
   }
 
   function findG(int128 c) public pure returns (int128 g) {

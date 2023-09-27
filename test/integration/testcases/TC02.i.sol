@@ -127,6 +127,7 @@ contract TC02 is BaseIntTest_WithActions {
     //     Then Alice should has Long Position in WETH market
     // initialPriceFeedDatas is from
     marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 300 * 1e30);
     {
       // When Alice Buy WETH Market
       // And Alice has no position
@@ -255,6 +256,7 @@ contract TC02 is BaseIntTest_WithActions {
     // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8, 0);
     tickPrices[0] = 73623;
     marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 150 * 1e30);
     {
       // When Alice Sell WETH Market
       // And Alice has Long position
@@ -465,6 +467,7 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T7: Alice Sell JPY Market for 6000 USD with same Sub-account
     marketSell(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochOI(false, jpyMarketIndex), 6_000 * 1e30);
     {
       // When Alice Sell JPY Market
       // And Alice has no position
@@ -591,6 +594,7 @@ contract TC02 is BaseIntTest_WithActions {
     tickPrices[1] = 99039;
     tickPrices[6] = 86999;
     marketBuy(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochOI(false, jpyMarketIndex), 0 * 1e30);
     {
       // When Alice Buy JPY Market
       // And Alice has Short position
@@ -821,6 +825,7 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochOI(true, wbtcMarketIndex), 0);
 
     // T12: Btc Price has changed to 17,500 USD
     //      Execute Bob order index 0
@@ -1055,6 +1060,7 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochOI(true, wbtcMarketIndex), 0);
     {
       // When Limit order index 1 has executed
       // Then Bob Btc Long position would decreased by 3000 USD at price 18,900 USD
@@ -1272,6 +1278,7 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochOI(false, wbtcMarketIndex), 3000 * 1e30);
     {
       // When Limit order index 2 has executed
       // Then Bob would has Btc Short position size 3000 USD at price 21,000 USD
@@ -1492,6 +1499,7 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochOI(false, wbtcMarketIndex), 0);
 
     skip(60);
     {

@@ -25,6 +25,8 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
 
     _setUpPnlFactor();
     _setMinimumPositionSize();
+
+    perpStorage.setEpochLengthForOI(15 minutes);
   }
 
   function _setLiquidityConfig() private {

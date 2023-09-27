@@ -17,47 +17,8 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
     adaptiveFeeCalculator = new AdaptiveFeeCalculator();
   }
 
-  function test_exponential_fraction() external {
-    // console2.log(ABDKMath64x64.exp_2(0x20000000000000000));
-    // console2.log(ABDKMath64x64.fromUInt(1 * 10 ** 16));
-    // console2.log(ABDKMath64x64.toInt(ABDKMath64x64.fromUInt(11.1 * 10 ** 16)));
-
-    uint256 s = 0.9 * 1e8;
-    uint256 p = 0.5372 * 1e8;
-    uint256 size = 100_000 * 1e8;
-    uint256 depth = 1_000_000 * 1e8;
-    int128 baseFee = ABDKMath64x64.div(ABDKMath64x64.fromUInt(0.0007 * 1e8), RATE_PRECISION_64x64);
-
-    int128 c = ABDKMath64x64.div(ABDKMath64x64.fromUInt(s), ABDKMath64x64.fromUInt(p)); // 0.9 / 0.5372 = 1.67535369
-    humanReadable(c);
-    int128 expo_of_g = ABDKMath64x64.sub(ABDKMath64x64.fromUInt(2), ABDKMath64x64.div(c, ABDKMath64x64.fromUInt(100))); // 2 - (c/100)
-    int128 g = ABDKMath64x64.exp_2(expo_of_g);
-    humanReadable(g);
-
-    int128 sizeOverDepth = ABDKMath64x64.div(
-      ABDKMath64x64.fromUInt(HMXLib.min((size * 1e8) / depth, 1e8)),
-      RATE_PRECISION_64x64
-    );
-    humanReadable(
-      ABDKMath64x64.mul(
-        ABDKMath64x64.pow(sizeOverDepth, g),
-        ABDKMath64x64.div(ABDKMath64x64.fromUInt(0.9993 * 1e8), RATE_PRECISION_64x64)
-      )
-    );
-
-    int128 fee_64x64 = ABDKMath64x64.add(
-      baseFee,
-      ABDKMath64x64.mul(
-        ABDKMath64x64.pow(sizeOverDepth, g),
-        ABDKMath64x64.div(ABDKMath64x64.fromUInt(0.9993 * 1e8), RATE_PRECISION_64x64)
-      )
-    );
-    humanReadable(fee_64x64);
-  }
-
-  function humanReadable(int128 x) internal view returns (uint256 result) {
+  function convert64x64ToE8(int128 x) internal view returns (uint256 result) {
     result = ABDKMath64x64.toUInt(ABDKMath64x64.mul(x, RATE_PRECISION_64x64));
-    console2.log(result);
   }
 
   function testCorrectness() external {
@@ -65,14 +26,14 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
     uint256 averagePriceE8 = 0.5372 * 1e8;
     // 0.9 / 0.4372 = 1.67535368
     int128 c = adaptiveFeeCalculator.findC(standardDeviationE8, averagePriceE8);
-    assertEq(humanReadable(c), 167535368);
+    assertEq(convert64x64ToE8(c), 167535368);
 
     // g = 2^(2 - min(1, c/100))
     // g = 2^(2 - min(1, 0.01675354))
     // g = 2^(2 - 0.01675354)
     // g = 2^(1.98324646) = 3.95381799
     int128 g = adaptiveFeeCalculator.findG(c);
-    assertEq(humanReadable(g), 395381799);
+    assertEq(convert64x64ToE8(g), 395381799);
 
     // c = sd / p
     // c = 2.56 / 0.5373 = 4.76456356
@@ -120,21 +81,44 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
     // c = 2.56 / 0.5373 = 4.76456356
     // g = 2^(2 - min(1, c/100))
     // g = 2^(2 - min(1, 4.76456356/100)) = 3.87005578
-    // y = 0.0007 + ((min(400_000/500_000, 1))^g) * 0.05
-    // y = 0.0007 + ((min(400_000/500_000, 1))^3.87005578) * 0.05
-    // y = 0.0007 + (0.8)^3.87005578) * 0.05
-    // y = 0.0007 + 0.42165072 * 0.05
-    // y = 0.02178254 = 2.178254%
-    // in BPS = 0.02178254 * 1e4 = 217 BPS
+    // y = 0.0007 + ((min(800_000/500_000, 1))^g) * 0.05
+    // y = 0.0007 + ((min(1.6, 1))^3.87005578) * 0.05
+    // y = 0.0007 + (1)^3.87005578 * 0.05
+    // y = 0.0007 + 1 * 0.05
+    // y = 0.0507 = 5.07%
+    // in BPS = 0.0507 * 1e4 = 507
     feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
       400_000 * 1e8,
-      0 * 1e8,
+      400_000 * 1e8,
       500_000 * 1e8,
       2.56 * 1e8,
       0.5373 * 1e8,
       7,
       500
     );
-    assertEq(feeBps, 217);
+    assertEq(feeBps, 506); // 1 wei precision loss
+  }
+
+  function testOverFlow() external {
+    // c = sd / p
+    // c = 0.0028231 / 138456 = 0.00000002
+    // g = 2^(2 - min(1, c/100))
+    // g = 2^(2 - min(1, 0.00000002/100)) = 4
+    // y = 0.0007 + ((min(410_000_000/950_500_000, 1))^g) * 0.05
+    // y = 0.0007 + ((min(0.43135192, 1))^4) * 0.05
+    // y = 0.0007 + (0.43135192)^4) * 0.05
+    // y = 0.0007 + 0.03461999 * 0.05
+    // y = 0.002431 = 0.2431%
+    // in BPS = 0.002431 * 1e4 = 24 BPS
+    uint256 feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
+      400_000_000 * 1e8,
+      10_000_000 * 1e8,
+      950_500_000 * 1e8,
+      0.0028231 * 1e8,
+      138456 * 1e8,
+      7,
+      500
+    );
+    assertEq(feeBps, 24);
   }
 }

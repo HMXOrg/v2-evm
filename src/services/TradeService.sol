@@ -428,31 +428,37 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // update counter trade states
     {
       if (_vars.isNewPosition) {
-        _vars.isLong
-          ? _vars.perpStorage.updateGlobalLongMarketById(
+        if (_vars.isLong) {
+          _vars.perpStorage.updateGlobalLongMarketById(
             _marketIndex,
             _market.longPositionSize + _vars.absSizeDelta,
             _market.longAccumSE + _vars.absSizeDelta.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             _market.longAccumS2E + _vars.absSizeDelta.mulDiv(_vars.absSizeDelta, _vars.position.avgEntryPriceE30)
-          )
-          : _vars.perpStorage.updateGlobalShortMarketById(
+          );
+          _vars.perpStorage.increaseEpochOI(true, _marketIndex, _vars.absSizeDelta);
+        } else {
+          _vars.perpStorage.updateGlobalShortMarketById(
             _marketIndex,
             _market.shortPositionSize + _vars.absSizeDelta,
             _market.shortAccumSE + _vars.absSizeDelta.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             _market.shortAccumS2E + _vars.absSizeDelta.mulDiv(_vars.absSizeDelta, _vars.position.avgEntryPriceE30)
           );
+          _vars.perpStorage.increaseEpochOI(false, _marketIndex, _vars.absSizeDelta);
+        }
       } else {
         uint256 absNewPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
-        _vars.isLong
-          ? _vars.perpStorage.updateGlobalLongMarketById(
+        if (_vars.isLong) {
+          _vars.perpStorage.updateGlobalLongMarketById(
             _marketIndex,
             _market.longPositionSize + _vars.absSizeDelta,
             (_market.longAccumSE - _vars.oldSumSe) +
               absNewPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             (_market.longAccumS2E - _vars.oldSumS2e) +
               absNewPositionSizeE30.mulDiv(absNewPositionSizeE30, _vars.position.avgEntryPriceE30)
-          )
-          : _vars.perpStorage.updateGlobalShortMarketById(
+          );
+          _vars.perpStorage.increaseEpochOI(true, _marketIndex, _vars.absSizeDelta);
+        } else {
+          _vars.perpStorage.updateGlobalShortMarketById(
             _marketIndex,
             _market.shortPositionSize + _vars.absSizeDelta,
             (_market.shortAccumSE - _vars.oldSumSe) +
@@ -460,6 +466,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
             (_market.shortAccumS2E - _vars.oldSumS2e) +
               absNewPositionSizeE30.mulDiv(absNewPositionSizeE30, _vars.position.avgEntryPriceE30)
           );
+          _vars.perpStorage.increaseEpochOI(false, _marketIndex, _vars.absSizeDelta);
+        }
       }
     }
 
@@ -888,8 +896,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
       // update counter trade states
       {
-        _vars.isLongPosition
-          ? _vars.perpStorage.updateGlobalLongMarketById(
+        if (_vars.isLongPosition) {
+          _vars.perpStorage.updateGlobalLongMarketById(
             _vars.marketIndex,
             _vars.market.longPositionSize - _vars.positionSizeE30ToDecrease,
             _vars.position.avgEntryPriceE30 > 0
@@ -900,8 +908,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
               ? (_vars.market.longAccumS2E - _vars.oldSumS2e) +
                 _temp.newAbsPositionSizeE30.mulDiv(_temp.newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
               : 0
-          )
-          : _vars.perpStorage.updateGlobalShortMarketById(
+          );
+          _vars.perpStorage.decreaseEpochOI(true, _vars.marketIndex, _vars.positionSizeE30ToDecrease);
+        } else {
+          _vars.perpStorage.updateGlobalShortMarketById(
             _vars.marketIndex,
             _vars.market.shortPositionSize - _vars.positionSizeE30ToDecrease,
             _vars.position.avgEntryPriceE30 > 0
@@ -913,6 +923,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
                 _temp.newAbsPositionSizeE30.mulDiv(_temp.newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
               : 0
           );
+          _vars.perpStorage.decreaseEpochOI(false, _vars.marketIndex, _vars.positionSizeE30ToDecrease);
+        }
       }
     }
 

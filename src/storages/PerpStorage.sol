@@ -28,6 +28,7 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
    * Events
    */
   event LogSetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
+  event LogSetEpochLengthForOI(uint256 oldEpochLengthForOI, uint256 newEpochLengthForOI);
 
   /**
    * States
@@ -43,6 +44,10 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
 
   EnumerableSet.Bytes32Set private activePositionIds;
   EnumerableSet.AddressSet private activeSubAccounts;
+
+  mapping(uint256 marketIndex => mapping(uint256 timestamp => uint256 openInterestUsd)) public epochLongOI;
+  mapping(uint256 marketIndex => mapping(uint256 timestamp => uint256 openInterestUsd)) public epochShortOI;
+  uint256 public epochLengthForOI;
 
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -181,6 +186,11 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
     }
   }
 
+  function setEpochLengthForOI(uint256 epochLength) external onlyOwner {
+    emit LogSetEpochLengthForOI(epochLengthForOI, epochLength);
+    epochLengthForOI = epochLength;
+  }
+
   function _setServiceExecutor(address _executorAddress, bool _isServiceExecutor) internal {
     serviceExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
@@ -284,6 +294,45 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
     } else {
       markets[_marketIndex].shortPositionSize -= _size;
     }
+  }
+
+  function increaseEpochOI(bool isLong, uint256 marketIndex, uint256 absSizeDelta) external onlyWhitelistedExecutor {
+    uint256 epochTimestamp = _getCurrentEpochOITimestamp();
+    if (isLong) {
+      epochLongOI[marketIndex][epochTimestamp] += absSizeDelta;
+    } else {
+      epochShortOI[marketIndex][epochTimestamp] += absSizeDelta;
+    }
+  }
+
+  function decreaseEpochOI(bool isLong, uint256 marketIndex, uint256 absSizeDelta) external onlyWhitelistedExecutor {
+    uint256 epochTimestamp = _getCurrentEpochOITimestamp();
+    if (isLong) {
+      if (absSizeDelta <= epochLongOI[marketIndex][epochTimestamp]) {
+        epochLongOI[marketIndex][epochTimestamp] -= absSizeDelta;
+      } else {
+        epochLongOI[marketIndex][epochTimestamp] = 0;
+      }
+    } else {
+      if (absSizeDelta <= epochShortOI[marketIndex][epochTimestamp]) {
+        epochShortOI[marketIndex][epochTimestamp] -= absSizeDelta;
+      } else {
+        epochShortOI[marketIndex][epochTimestamp] = 0;
+      }
+    }
+  }
+
+  function getEpochOI(bool isLong, uint256 marketIndex) external view returns (uint256 epochOI) {
+    uint256 epochTimestamp = _getCurrentEpochOITimestamp();
+    if (isLong) {
+      epochOI = epochLongOI[marketIndex][epochTimestamp];
+    } else {
+      epochOI = epochShortOI[marketIndex][epochTimestamp];
+    }
+  }
+
+  function _getCurrentEpochOITimestamp() internal view returns (uint256 epochTimestamp) {
+    return epochLengthForOI > 0 ? (block.timestamp / epochLengthForOI) * epochLengthForOI : block.timestamp;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

@@ -18,6 +18,7 @@ interface ICrossMarginHandler {
   error ICrossMarginHandler_NotWNativeToken();
   error ICrossMarginHandler_Unauthorized();
   error ICrossMarginHandler_BadAmount();
+  error ICrossMarginHandler_SelfTransfer();
 
   /**
    * Structs
@@ -74,6 +75,13 @@ interface ICrossMarginHandler {
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external;
+
+  function transferCollateralSubAccount(
+    uint8 _subAccountIdFrom,
+    uint8 _subAccountIdTo,
+    address _token,
+    uint256 _amount
+    ) external;
 
   function setCrossMarginService(address _address) external;
 

@@ -13,9 +13,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("WSTETH"),
+      assetId: ethers.utils.formatBytes32String("wstETH"),
       config: {
-        assetId: ethers.utils.formatBytes32String("WSTETH"),
+        assetId: ethers.utils.formatBytes32String("wstETH"),
         tokenAddress: config.tokens.wstEth,
         decimals: 18,
         isStableCoin: false,

@@ -26,7 +26,7 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
-  console.log("[OracleMiddleware] Setting asset price configs...");
+  console.log("[configs/OracleMiddleware] Setting asset price configs...");
   const tx = await safeWrapper.proposeTransaction(
     oracle.address,
     0,
@@ -37,8 +37,8 @@ async function main(chainId: number) {
       assetConfigs.map((each) => each.adapter),
     ])
   );
-  console.log(`[OracleMiddleware] Tx: ${tx}`);
-  console.log("[OracleMiddleware] Finished");
+  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
+  console.log("[configs/OracleMiddleware] Finished");
 }
 
 const prog = new Command();

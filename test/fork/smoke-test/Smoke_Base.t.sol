@@ -9,21 +9,6 @@ import { console } from "forge-std/console.sol";
 
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-
-import { BotHandler } from "@hmx/handlers/BotHandler.sol";
-import { Ext01Handler } from "@hmx/handlers/Ext01Handler.sol";
-import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
-
-import { TradeService } from "@hmx/services/TradeService.sol";
-import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
-
-import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
-
-import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
-
-// interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
@@ -80,79 +65,6 @@ contract Smoke_Base is ForkEnv {
       address(ForkEnv.oracleMiddleware),
       address(ForkEnv.limitTradeHandler)
     );
-
-    HLP newHlp = new HLP();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb)),
-      address(newHlp)
-    );
-
-    BotHandler newBotHandler = new BotHandler();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671)),
-      address(newBotHandler)
-    );
-
-    LimitTradeHandler newLimitHandler = new LimitTradeHandler();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6)),
-      address(newLimitHandler)
-    );
-
-    TradeService newTradeService = new TradeService();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E)),
-      address(newTradeService)
-    );
-
-    CrossMarginService newCrossMarginService = new CrossMarginService();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A)),
-      address(newCrossMarginService)
-    );
-
-    TradeHelper newTradeHelper = new TradeHelper();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
-      address(newTradeHelper)
-    );
-
-    ConfigStorage newConfigStorage = new ConfigStorage();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0)),
-      address(newConfigStorage)
-    );
-
-    TraderLoyaltyCredit newTradeLoyaltyCredit = new TraderLoyaltyCredit();
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x1fDcB022daECA9326a37A318f143A0feD61abba6)),
-      address(newTradeLoyaltyCredit)
-    );
-
-    // load contract
-    configStorage = IConfigStorage(0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0);
-    perpStorage = IPerpStorage(0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303);
-    vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
-    limitHandler = ILimitTradeHandler(0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6);
-
-    OrderReader newOrderReader = new OrderReader(
-      address(configStorage),
-      address(perpStorage),
-      address(oracleMiddleware),
-      address(limitHandler)
-    );
-
-    proxyAdmin.upgrade(
-      TransparentUpgradeableProxy(payable(0x963Cbe4cFcDC58795869be74b80A328b022DE00C)),
-      address(newOrderReader)
-    );
-
-    // Has not been deployed yet
-    // Ext01Handler newExt01Handler = new Ext01Handler();
-    // proxyAdmin.upgrade(
-    //   TransparentUpgradeableProxy(payable(xxx)),
-    //   address(newExt01Handler)
-    // );
 
     vm.stopPrank();
   }

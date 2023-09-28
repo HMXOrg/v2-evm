@@ -675,8 +675,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     uint256 _tvl = _calculator.getHLPValueE30(false);
 
     // check hlp safety buffer
-    if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().hlpSafetyBufferBPS) * _tvl)
-      revert ITradeService_HlpHealthy();
+    if (
+      (_tvl < _aum) ||
+      ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().hlpSafetyBufferBPS) * _tvl)
+    ) revert ITradeService_HlpHealthy();
   }
 
   /// @notice Reloads the configuration for the contract.

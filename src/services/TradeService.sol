@@ -374,7 +374,12 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       // in order to avoid bypassing the maximum profit cap.
       // Additionally, if the minimum profit duration is active, increasing the position is not allowed.
       // This is checked by comparing _delta to 0, as it is virtually impossible for _delta to be 0 if the position is active without a minimum profit duration.
-      if (_isProfit && (_delta >= _vars.position.reserveValueE30 || _delta == 0)) {
+      uint256 minProfitDuration = _vars.configStorage.minProfitDurations(_marketIndex);
+      if (
+        _isProfit &&
+        (_delta >= _vars.position.reserveValueE30 ||
+          (block.timestamp < _vars.position.lastIncreaseTimestamp + minProfitDuration))
+      ) {
         revert ITradeService_NotAllowIncrease();
       }
 
@@ -828,6 +833,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       if (isProfit && delta >= _vars.position.reserveValueE30) {
         delta = _vars.position.reserveValueE30;
         _isMaxProfit = true;
+      }
+
+      uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
+      if (isProfit && block.timestamp < (_vars.position.lastIncreaseTimestamp + minProfitDuration)) {
+        revert ITradeService_NotAllowDecrease();
       }
 
       _vars.toRealizedPnl = (delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30;

@@ -15,7 +15,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("WSTETH"),
+      assetId: ethers.utils.formatBytes32String("wstETH"),
       collateralConfig: {
         collateralFactorBPS: 0.8 * BPS,
         accepted: true,

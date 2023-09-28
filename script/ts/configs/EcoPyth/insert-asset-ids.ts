@@ -5,7 +5,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("WSTETH")];
+const ASSET_IDS = [ethers.utils.formatBytes32String("CNH"), ethers.utils.formatBytes32String("HKD")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
@@ -13,14 +13,14 @@ async function main(chainId: number) {
   const safeWrappar = new SafeWrapper(chainId, config.safe, deployer);
 
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
-  console.log("[EcoPyth] Inserting asset IDs...");
+  console.log("[configs/EcoPyth] Inserting asset IDs...");
   const tx = await safeWrappar.proposeTransaction(
     ecoPyth.address,
     0,
     ecoPyth.interface.encodeFunctionData("insertAssetIds", [ASSET_IDS])
   );
-  console.log(`[EcoPyth] Tx: ${tx}`);
-  console.log("[EcoPyth] Finished");
+  console.log(`[configs/EcoPyth] Tx: ${tx}`);
+  console.log("[configs/EcoPyth] Finished");
 }
 
 const program = new Command();

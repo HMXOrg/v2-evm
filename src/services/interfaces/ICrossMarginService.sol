@@ -47,6 +47,15 @@ interface ICrossMarginService {
     address _receiver
   ) external;
 
+  function transferCollateral(
+    address _primaryAccountFrom,
+    uint8 _subAccountIdFrom,
+    address _primaryAccountTo,
+    uint8 _subAccountIdTo,
+    address _token,
+    uint256 _amount
+    ) external;
+
   function withdrawFundingFeeSurplus(address _stableToken) external;
 
   function switchCollateral(SwitchCollateralParams calldata _params) external returns (uint256 _toAmount);

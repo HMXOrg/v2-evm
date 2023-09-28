@@ -21,11 +21,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-contract GetAumWithFundingFeeDebt_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
-  address constant calculatorAddress = 0x0FdE910552977041Dc8c7ef652b5a07B40B9e006;
-  ICalculator calculator = ICalculator(calculatorAddress);
-  IVaultStorage vaultStorage = IVaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
-
+contract GetAumWithFundingFeeDebt_ForkTest is ForkEnv {
   function setUp() external {
     vm.createSelectFork(vm.rpcUrl("arbitrum_fork"), 125699672);
   }
@@ -34,7 +30,7 @@ contract GetAumWithFundingFeeDebt_ForkTest is TestBase, Cheats, StdAssertions, S
     uint256 aumBefore = calculator.getAUME30(true);
 
     vm.startPrank(ForkEnv.multiSig);
-    Deployer.upgrade("Calculator", address(ForkEnv.proxyAdmin), address(calculatorAddress));
+    Deployer.upgrade("Calculator", address(ForkEnv.proxyAdmin), address(calculator));
     vm.stopPrank();
 
     uint256 aumAfter = calculator.getAUME30(true);

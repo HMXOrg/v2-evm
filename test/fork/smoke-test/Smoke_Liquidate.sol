@@ -5,6 +5,7 @@
 pragma solidity 0.8.18;
 
 import { Smoke_Base } from "./Smoke_Base.t.sol";
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import "forge-std/console.sol";
 
@@ -16,61 +17,29 @@ contract Smoke_Liquidate is Smoke_Base {
   }
 
   // for shorter time
-  function testCorrectness_SmokeTest_liquidateFirstTen() external {
+  function testCorrectness_SmokeTest_liquidate() external {
     (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
     (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
     address[] memory liqSubAccounts = new address[](10);
 
     // NOTE: MUST ignore when it's address(0), filtering is needed.
-    liqSubAccounts = liquidationReader.getLiquidatableSubAccount(10, 0, assetIds, prices, shouldInverts);
+    liqSubAccounts = ForkEnv.liquidationReader.getLiquidatableSubAccount(10, 0, assetIds, prices, shouldInverts);
 
-    vm.startPrank(POS_MANAGER);
+    vm.startPrank(ForkEnv.positionManager);
+    ForkEnv.botHandler.updateLiquidityEnabled(false);
     for (uint i = 0; i < 10; i++) {
       if (liqSubAccounts[i] == address(0)) continue;
-      botHandler.updateLiquidityEnabled(false);
-      botHandler.liquidate(
+      ForkEnv.botHandler.liquidate(
         liqSubAccounts[i],
         priceUpdateData,
         publishTimeUpdateData,
         block.timestamp,
         keccak256("someEncodedVaas")
       );
-      botHandler.updateLiquidityEnabled(true);
       // Liquidated, no pos left.
-      assertEq(perpStorage.getNumberOfSubAccountPosition(liqSubAccounts[i]), 0);
+      assertEq(ForkEnv.perpStorage.getNumberOfSubAccountPosition(liqSubAccounts[i]), 0);
     }
-    vm.stopPrank();
-  }
-
-  function testCorrectness_SmokeTest_liquidateAsAPI() external {
-    activeSubAccounts = perpStorage.getActiveSubAccounts(30, 0);
-    console.log("accounts:", activeSubAccounts.length);
-    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
-    (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
-    address[] memory liqSubAccounts = new address[](10);
-
-    // Liquidate 10 accounts per chunk, length / 10, + 1 for rounding up
-    for (uint chunk = 0; chunk < (activeSubAccounts.length / 10) + 1; chunk++) {
-      console.log("Chunk:", chunk);
-      // NOTE: MUST ignore when it's address(0), filtering is needed.
-      liqSubAccounts = liquidationReader.getLiquidatableSubAccount(10, 0, assetIds, prices, shouldInverts);
-
-      vm.startPrank(POS_MANAGER);
-      for (uint i = 0; i < 10; i++) {
-        if (liqSubAccounts[i] == address(0)) continue;
-        botHandler.updateLiquidityEnabled(false);
-        botHandler.liquidate(
-          liqSubAccounts[i],
-          priceUpdateData,
-          publishTimeUpdateData,
-          block.timestamp,
-          keccak256("someEncodedVaas")
-        );
-        botHandler.updateLiquidityEnabled(true);
-        // Liquidated, no pos left.
-        assertEq(perpStorage.getNumberOfSubAccountPosition(liqSubAccounts[i]), 0);
-      }
-    }
+    ForkEnv.botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();
   }
 }

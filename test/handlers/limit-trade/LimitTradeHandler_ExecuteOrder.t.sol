@@ -393,7 +393,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -579,7 +580,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -695,7 +697,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -827,7 +830,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -959,7 +963,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -1085,7 +1090,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -1211,7 +1217,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 
@@ -1337,7 +1344,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreasePositionSize: 0
       })
     );
 

@@ -17,25 +17,28 @@ contract AdaptiveFeeCalculator {
     uint256 positionSize,
     uint256 epochOI,
     uint256 orderbookDepth,
-    uint256 standardDeviationE8,
-    uint256 averagePriceE8,
+    uint256 coeffVariant,
     uint256 baseFeeBps,
     uint256 maxFeeBps
-  ) external view returns (uint256 feeBps) {
+  ) external view returns (uint32 feeBps) {
     // Normalize the formula for easier coding
     // y = 0.0007 + ((min(x/d, 1))^g) * 0.05
     // y = 0.0007 + ((min(A, 1))^g) * 0.05
     // y = 0.0007 + (B^g) * 0.05
     // y = 0.0007 + C * 0.05
-    int128 x = _convertE8To64x64(positionSize + epochOI);
+    // Sell = bid
+    // Buy = ask
+
+    // x = positionSize + epochOI * 1.5
+    int128 x = _convertE8To64x64(positionSize + ((epochOI * 15) / 10));
     int128 d = _convertE8To64x64(orderbookDepth);
     int128 A = x.div(d);
 
-    int128 g = findG(findC(standardDeviationE8, averagePriceE8));
+    int128 g = findG(_convertE8To64x64(coeffVariant));
     int128 B = _min(A, ABDKMath64x64.fromUInt(1));
     int128 C = B.pow(g);
     int128 y = _convertE8To64x64(baseFeeBps * 1e4).add(C.mul(_convertE8To64x64(maxFeeBps * 1e4)));
-    return HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), uint256(maxFeeBps));
+    return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), uint256(maxFeeBps)));
   }
 
   function findG(int128 c) public pure returns (int128 g) {

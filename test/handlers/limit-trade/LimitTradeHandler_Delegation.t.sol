@@ -73,7 +73,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 }),
+        isAdaptiveFeeEnabled: false
       })
     );
 
@@ -90,7 +91,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 }),
+        isAdaptiveFeeEnabled: false
       })
     );
 
@@ -107,7 +109,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 }),
+        isAdaptiveFeeEnabled: false
       })
     );
   }

@@ -61,6 +61,7 @@ interface IConfigStorage {
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     FundingRate fundingRate;
+    bool isAdaptiveFeeEnabled; // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
   }
 
   struct AssetClassConfig {

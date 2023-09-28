@@ -59,7 +59,8 @@ contract TradeService_IncreasePosition is TradeService_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 }),
+        isAdaptiveFeeEnabled: false
       })
     );
 

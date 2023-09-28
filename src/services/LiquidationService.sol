@@ -321,10 +321,11 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.positionId,
           _subAccount,
           _vars.position,
-          HMXLib.abs(_vars.position.positionSizeE30),
+          -_vars.position.positionSizeE30,
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
-          _vars.position.marketIndex
+          _vars.position.marketIndex,
+          _vars.marketConfig.isAdaptiveFeeEnabled
         );
         tradingFee += _vars.tradingFee;
         borrowingFee += _vars.borrowingFee;

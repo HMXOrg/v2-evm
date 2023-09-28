@@ -25,7 +25,7 @@ interface ITradeHelper {
   function settleAllFees(
     bytes32 _positionId,
     PerpStorage.Position memory position,
-    uint256 _absSizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex
   ) external;

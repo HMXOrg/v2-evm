@@ -16,6 +16,8 @@ import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/m
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeCastUpgradeable for uint256;
@@ -167,6 +169,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   address public vaultStorage;
   address public configStorage;
   Calculator public calculator; // cache this from configStorage
+  OrderbookOracle public orderbookOracle;
+  AdaptiveFeeCalculator public adaptiveFeeCalculator;
 
   /// @notice Initializes the contract by setting the addresses for PerpStorage, VaultStorage, and ConfigStorage.
   /// @dev This function must be called after the contract is deployed and before it can be used.
@@ -294,13 +298,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   /// @notice Settles all fees for a given position and updates the fee states.
   /// @param _positionId The ID of the position to settle fees for.
   /// @param _position The Position object for the position to settle fees for.
-  /// @param _absSizeDelta The absolute value of the size delta for the position.
+  /// @param _sizeDelta The value of the size delta for the position.
   /// @param _positionFeeBPS The position fee basis points for the position.
   /// @param _assetClassIndex The index of the asset class for the position.
   function settleAllFees(
     bytes32 _positionId,
     PerpStorage.Position memory _position,
-    uint256 _absSizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex
   ) external nonReentrant onlyWhitelistedExecutor {
@@ -312,10 +316,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _positionId,
       _vars.subAccount,
       _position,
-      _absSizeDelta,
+      _sizeDelta,
       _positionFeeBPS,
       _assetClassIndex,
-      _position.marketIndex
+      _position.marketIndex,
+      ConfigStorage(configStorage).getMarketConfigByIndex(_position.marketIndex).isAdaptiveFeeEnabled
     );
 
     // increase collateral
@@ -339,10 +344,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     bytes32 _positionId,
     address _subAccount,
     PerpStorage.Position memory _position,
-    uint256 _sizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool isAdaptiveFee
   )
     external
     nonReentrant
@@ -356,7 +362,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _sizeDelta,
       _positionFeeBPS,
       _assetClassIndex,
-      _marketIndex
+      _marketIndex,
+      isAdaptiveFee
     );
   }
 
@@ -414,16 +421,27 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     bytes32 /*_positionId*/,
     address /*_subAccount*/,
     PerpStorage.Position memory _position,
-    uint256 _sizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool _isAdaptiveFee
   ) internal returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
     // SLOAD
     Calculator _calculator = calculator;
+    uint256 _absSizeDelta = HMXLib.abs(_sizeDelta);
 
     // Calculate the trading fee
-    _tradingFee = (_sizeDelta * _positionFeeBPS) / BPS;
+    if (_isAdaptiveFee) {
+      _positionFeeBPS = _getAdaptiveFeeBps(
+        _position.positionSizeE30 > 0,
+        _sizeDelta,
+        _position.marketIndex,
+        _positionFeeBPS
+      );
+    }
+
+    _tradingFee = (_absSizeDelta * _positionFeeBPS) / BPS;
 
     // Calculate the borrowing fee
     _borrowingFee = _calculator.getBorrowingFee(
@@ -991,6 +1009,25 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  function _getAdaptiveFeeBps(
+    bool _isLong,
+    int256 _sizeDelta,
+    uint256 _marketIndex,
+    uint32 _baseFeeBps
+  ) internal view returns (uint32 feeBps) {
+    (uint256 askDepth, uint256 bidDepth, uint256 coeffVariants) = orderbookOracle.getData(_marketIndex);
+    uint256 epochOI = PerpStorage(perpStorage).getEpochOI(_isLong, _marketIndex);
+    bool isBuy = _sizeDelta > 0;
+    feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
+      HMXLib.abs(_sizeDelta) / 1e22,
+      epochOI / 1e22,
+      isBuy ? askDepth : bidDepth,
+      coeffVariants,
+      _baseFeeBps,
+      500
+    );
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

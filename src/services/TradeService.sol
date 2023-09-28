@@ -343,7 +343,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.tradeHelper.settleAllFees(
         _vars.positionId,
         _vars.position,
-        _vars.absSizeDelta,
+        _sizeDelta,
         _marketConfig.increasePositionFeeRateBPS,
         _marketConfig.assetClass
       );
@@ -783,10 +783,13 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.positionId,
         _vars.accountInfo.subAccount,
         _vars.position,
-        _vars.positionSizeE30ToDecrease,
+        _vars.position.positionSizeE30 > 0
+          ? -_vars.positionSizeE30ToDecrease.toInt256()
+          : _vars.positionSizeE30ToDecrease.toInt256(),
         _marketConfig.increasePositionFeeRateBPS,
         _marketConfig.assetClass,
-        _vars.marketIndex
+        _vars.marketIndex,
+        _marketConfig.isAdaptiveFeeEnabled
       );
     }
     _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);

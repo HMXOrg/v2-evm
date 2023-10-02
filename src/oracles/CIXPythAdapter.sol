@@ -26,7 +26,6 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
 
   // state variables
   IReadablePyth public pyth;
-  // mapping of our asset id to Pyth's price id
   mapping(bytes32 assetId => ICIXPythAdapter.CIXPythPriceConfig config) public configs;
 
   // events
@@ -180,34 +179,40 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     uint256[] memory _weightsE8
   ) external onlyOwner {
     ICIXPythAdapter.CIXPythPriceConfig memory _config;
-    uint256 _weightSum;
 
-    // 0. Validate params
+    // 1. Validate params
+
     uint256 _len = _pythPriceIds.length;
-    if (_len != _weightsE8.length) revert CIXPythAdapter_BadParams();
-    if (_cE8 == 0) revert CIXPythAdapter_BadParams();
-
-    // 1. Assign c
-    _config.cE8 = _cE8;
-
-    // 2. Assign weight config
-    // _config.weightConfigs = new WeightConfig[](_len);
-    for (uint256 i = 0; i < _len; ) {
-      // Assign each field on weight config
-      _config.pythPriceIds[i] = _pythPriceIds[i];
-      _config.weightsE8[i] = _weightsE8[i];
-
-      // Accum weight sum for later check
-      _weightSum += _weightsE8[i];
-      unchecked {
-        ++i;
-      }
+    // Validate length
+    {
+      if (_len != _weightsE8.length) revert CIXPythAdapter_BadParams();
+      if (_cE8 == 0) revert CIXPythAdapter_BadParams();
     }
 
-    // 3. Validate weight sum
-    if (_weightSum != 1e8) revert CIXPythAdapter_BadWeightSum();
+    // Validate weight and price id
+    {
+      uint256 _weightSum;
+      for (uint256 i = 0; i < _len; ) {
+        // Accum weight sum
+        _weightSum += _weightsE8[i];
 
-    // 4. Save to storage
+        // Sanity check for price id
+        // pyth.getPriceUnsafe(_pythPriceIds[i]);
+
+        unchecked {
+          ++i;
+        }
+      }
+
+      if (_weightSum != 1e8) revert CIXPythAdapter_BadWeightSum();
+    }
+
+    // 2. Assign configs
+    _config.cE8 = _cE8;
+    _config.pythPriceIds = _pythPriceIds;
+    _config.weightsE8 = _weightsE8;
+
+    // 3. Save to storage
     configs[_assetId] = _config;
     emit LogSetConfig(_assetId, _cE8, _pythPriceIds, _weightsE8);
   }

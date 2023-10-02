@@ -16,8 +16,6 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
   error TradingStaking_InsufficientTokenAmount();
   error TradingStaking_NotRewarder();
   error TradingStaking_NotCompounder();
-  error TradingStaking_BadDecimals();
-  error TradingStaking_DuplicateStakingToken();
   error TradingStaking_Forbidden();
 
   /**
@@ -62,7 +60,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     uint256 length = _newRewarders.length;
 
     //Executing an iteration over each of the rewarders passed as parameter to add them to the pool
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       //Updating the pool data for this rewarder address and the new markey index provided
       _updatePool(_newMarketIndex, _newRewarders[i]);
 
@@ -84,18 +82,18 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     //Obtaining the length of the market index array to process each one of them on the loop
     uint256 length = _newMarketIndex.length;
     //Iterating over provided market indexes to set new rewarder
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       //Updating the pool data for this rewarder and the corresponding market index provided
       _updatePool(_newMarketIndex[i], _newRewarder);
+
+      //Emitting LogAddRewarder event
+      emit LogAddRewarder(_newRewarder, _newMarketIndex);
 
       //Incrementing iterator inside 'unchecked' block
       unchecked {
         ++i;
       }
     }
-
-    //Emitting LogAddRewarder event
-    emit LogAddRewarder(_newRewarder, _newMarketIndex);
   }
 
   /// @dev Removes a rewarder address from a market index by its corresponding index. The function deletes the removed rewarder from the
@@ -111,7 +109,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     marketIndexRewarders[_marketIndex].pop();
 
     uint256 rewarderLength = rewarderMarketIndex[removedRewarder].length;
-    for (uint256 i = 0; i < rewarderLength; ) {
+    for (uint256 i; i < rewarderLength; ) {
       if (rewarderMarketIndex[removedRewarder][i] == _marketIndex) {
         rewarderMarketIndex[removedRewarder][i] = rewarderMarketIndex[removedRewarder][rewarderLength - 1];
         rewarderMarketIndex[removedRewarder].pop();
@@ -148,7 +146,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
   /// @return bool value indicating if duplicate entry has been found
   function isDuplicatedRewarder(uint256 _marketIndex, address _rewarder) internal view returns (bool) {
     uint256 length = marketIndexRewarders[_marketIndex].length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (marketIndexRewarders[_marketIndex][i] == _rewarder) {
         return true;
       }
@@ -165,7 +163,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
   /// @return bool indicating whether the staking token was found or not
   function isDuplicatedStakingToken(uint256 _marketIndex, address _rewarder) internal view returns (bool) {
     uint256 length = rewarderMarketIndex[_rewarder].length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (rewarderMarketIndex[_rewarder][i] == _marketIndex) {
         return true;
       }
@@ -211,7 +209,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
 
     uint256 length = marketIndexRewarders[_marketIndex].length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       address rewarder = marketIndexRewarders[_marketIndex][i];
 
       IRewarder(rewarder).onDeposit(_to, _amount);
@@ -235,6 +233,10 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     return marketIndexRewarders[_marketIndex];
   }
 
+  function getRewarderMarketIndex(address rewarder) external view returns (uint256[] memory) {
+    return rewarderMarketIndex[rewarder];
+  }
+
   function withdraw(address _to, uint256 _marketIndex, uint256 _amount) external onlyWhitelistedCaller {
     _withdraw(_to, _marketIndex, _amount);
   }
@@ -253,7 +255,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     if (userTokenAmount[_marketIndex][_to] < _amount) revert TradingStaking_InsufficientTokenAmount();
 
     uint256 length = marketIndexRewarders[_marketIndex].length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       address rewarder = marketIndexRewarders[_marketIndex][i];
 
       IRewarder(rewarder).onWithdraw(_to, _amount);
@@ -295,7 +297,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
   */
   function _harvestFor(address _user, address _receiver, address[] memory _rewarders) internal {
     uint256 length = _rewarders.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (!isRewarder[_rewarders[i]]) {
         revert TradingStaking_NotRewarder();
       }
@@ -312,7 +314,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     uint256[] memory marketIndices = rewarderMarketIndex[_rewarder];
     uint256 share = 0;
     uint256 length = marketIndices.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       share += userTokenAmount[marketIndices[i]][_user];
 
       unchecked {
@@ -326,7 +328,7 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
     uint256[] memory marketIndices = rewarderMarketIndex[_rewarder];
     uint256 totalShare = 0;
     uint256 length = marketIndices.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       totalShare += totalShares[marketIndices[i]];
 
       unchecked {

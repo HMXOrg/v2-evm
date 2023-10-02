@@ -489,7 +489,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     IncreaseCollateralVars memory _vars;
     // SLOAD
     _vars.vaultStorage = VaultStorage(vaultStorage);
-    _vars.vaultStorage = VaultStorage(vaultStorage);
     _vars.configStorage = ConfigStorage(configStorage);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 

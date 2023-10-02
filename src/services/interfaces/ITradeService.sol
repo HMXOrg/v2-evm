@@ -14,6 +14,7 @@ interface ITradeService {
   error ITradeService_BadSubAccountId();
   error ITradeService_BadSizeDelta();
   error ITradeService_NotAllowIncrease();
+  error ITradeService_NotAllowDecrease();
   error ITradeService_BadNumberOfPosition();
   error ITradeService_BadExposure();
   error ITradeService_InvalidAveragePrice();

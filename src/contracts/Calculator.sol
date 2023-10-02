@@ -655,7 +655,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           _var.priceE30,
           _var.position.avgEntryPriceE30,
           _var.position.lastIncreaseTimestamp,
-          _var.position.marketIndex
+          _var.position.marketIndex,
+          false
         );
 
         if (_var.isProfit) {
@@ -1107,7 +1108,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _lastIncreaseTimestamp,
     uint256 _marketIndex
   ) external view returns (bool, uint256) {
-    return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
+    return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex, true);
   }
 
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
@@ -1123,7 +1124,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _markPrice,
     uint256 _averagePrice,
     uint256 _lastIncreaseTimestamp,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool _useMinProfitDuration
   ) internal view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) return (false, 0);
@@ -1148,7 +1150,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // In case of profit, we need to check the current timestamp against minProfitDuration
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
-    if (isProfit) {
+    if (isProfit && _useMinProfitDuration) {
       uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
       if (block.timestamp < _lastIncreaseTimestamp + minProfitDuration) {
         return (isProfit, 0);

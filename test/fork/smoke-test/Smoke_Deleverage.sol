@@ -17,9 +17,9 @@ import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import "forge-std/console.sol";
 
-contract Smoke_Liquidate is Smoke_Base {
-  error Smoke_Liquidate_NoPosition();
-  error Smoke_Liquidate_NoFilteredPosition();
+contract Smoke_Deleverage is Smoke_Base {
+  error Smoke_Deleverage_NoPosition();
+  error Smoke_Deleverage_NoFilteredPosition();
 
   IPerpStorage.Position[] internal filteredPositions;
 
@@ -43,7 +43,7 @@ contract Smoke_Liquidate is Smoke_Base {
   }
 
   function testCorrectness_SmokeTest_deleverage() external {
-    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice("BTC", 1000 * 1e8);
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice("BTC", 1 * 1e8);
     (
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,
@@ -58,7 +58,7 @@ contract Smoke_Liquidate is Smoke_Base {
     );
     IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(10, 0);
     if (positions.length == 0) {
-      revert Smoke_Liquidate_NoPosition();
+      revert Smoke_Deleverage_NoPosition();
     }
 
     ForkEnv.tradeService.validateDeleverage();
@@ -77,7 +77,7 @@ contract Smoke_Liquidate is Smoke_Base {
     }
 
     if (filteredPositions.length == 0) {
-      revert Smoke_Liquidate_NoFilteredPosition();
+      revert Smoke_Deleverage_NoFilteredPosition();
     }
     vm.startPrank(ForkEnv.positionManager);
     ForkEnv.botHandler.updateLiquidityEnabled(false);

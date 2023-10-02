@@ -13,6 +13,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 /// Services
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -25,7 +26,6 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 /// Libs
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
-import "forge-std/console.sol";
 
 /// @title Ext01Handler - Handler for extended actions which not related to core functionality.
 contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01Handler {
@@ -197,7 +197,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     if (_params.orderType == 0) revert IExt01Handler_BadOrderType();
     uint128 _minExecutionFee = minExecutionOrderOf[_params.orderType];
     if (_params.executionFee < _minExecutionFee) revert IExt01Handler_InsufficientExecutionFee();
-    if (msg.value != _minExecutionFee) revert IExt01Handler_InCorrectValueTransfer();
+    if (msg.value != _params.executionFee) revert IExt01Handler_InCorrectValueTransfer();
 
     // Convert native to wrapped native.
     // This should just only a executionFee
@@ -396,7 +396,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   function _executeSwitchCollateralOrder(SwitchCollateralOrder memory _order) internal {
     // Call service to switch collateral
     uint256 _toAmount = _order.crossMarginService.switchCollateral(
-      CrossMarginService.SwitchCollateralParams(
+      ICrossMarginService.SwitchCollateralParams(
         _order.primaryAccount,
         _order.subAccountId,
         _order.amount,

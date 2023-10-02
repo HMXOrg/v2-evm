@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
@@ -39,13 +38,13 @@ interface ICalculator {
   /**
    * States
    */
-  function oracle() external returns (address _address);
+  function oracle() external view returns (address _address);
 
-  function vaultStorage() external returns (address _address);
+  function vaultStorage() external view returns (address _address);
 
-  function configStorage() external returns (address _address);
+  function configStorage() external view returns (address _address);
 
-  function perpStorage() external returns (address _address);
+  function perpStorage() external view returns (address _address);
 
   /**
    * Functions
@@ -63,7 +62,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _freeCollateral);
 
-  function getHLPPrice(uint256 aum, uint256 supply) external returns (uint256);
+  function getHLPPrice(uint256 aum, uint256 supply) external view returns (uint256);
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);
 
@@ -71,13 +70,13 @@ interface ICalculator {
     address _token,
     uint256 _tokenValue,
     ConfigStorage _configStorage
-  ) external returns (uint32);
+  ) external view returns (uint32);
 
   function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external returns (uint32);
+  ) external view returns (uint32);
 
   function getEquity(
     address _subAccount,
@@ -101,7 +100,7 @@ interface ICalculator {
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external view returns (uint256);
 
   function getCollateralValue(
     address _subAccount,
@@ -141,4 +140,21 @@ interface ICalculator {
   function setPerpStorage(address _address) external;
 
   function proportionalElapsedInDay(uint256 _marketIndex) external view returns (uint256 elapsed);
+
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _hlpTVL
+  ) external view returns (uint256 _nextBorrowingRate);
+
+  function getFundingFee(
+    int256 _size,
+    int256 _currentFundingAccrued,
+    int256 _lastFundingAccrued
+  ) external view returns (int256 fundingFee);
+
+  function getBorrowingFee(
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) external view returns (uint256 borrowingFee);
 }

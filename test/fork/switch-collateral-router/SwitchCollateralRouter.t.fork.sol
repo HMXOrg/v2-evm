@@ -336,7 +336,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp)), 5000000000000000000);
   }
 
-  function testCorrectness_WhenSwitchCollateralFromSglpToTokenInGlpVault() external {
+  function testCorrectness_WhenSwitchCollateralFromsglpToTokenInGlpVault() external {
     vm.startPrank(USER);
     address[] memory _path = new address[](2);
     _path[0] = address(ForkEnv.sglp);
@@ -394,12 +394,12 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     assertEq(_wethAfter - _wethBefore, 2652487522183760);
   }
 
-  function testCorrectness_WhenSwitchCollateralFromTokenInGlpVaultToSglp() external {
+  function testCorrectness_WhenSwitchCollateralFromTokenInGlpVaultTosglp() external {
     vm.startPrank(USER);
     address[] memory _path = new address[](2);
     _path[0] = address(ForkEnv.weth);
     _path[1] = address(ForkEnv.sglp);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
@@ -412,7 +412,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
 
     vm.startPrank(EXT01_EXECUTOR);
     // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
-    uint256 _sGlpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    uint256 _sglpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
     bytes32[] memory _priceData = new bytes32[](3);
     _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
     _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
@@ -440,16 +440,21 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       false
     );
     vm.stopPrank();
-    uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    uint256 _sglpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    IExt01Handler.GenericOrder[] memory orders = ext01Handler.getAllExecutedOrders(10, 0);
+
+    assertEq(orders[0].executedTimestamp, expectExecutedTime);
+    assertEq(ext01Handler.getAllActiveOrders(10, 0).length, 0);
+    assertEq(ext01Handler.getAllExecutedOrders(10, 0).length, 1);
 
     // Trader balance should be the same
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.weth)), 0);
-    assertEq(_sGlpAfter - _sGlpBefore, 74640579149339718);
+    assertEq(_sglpAfter - _sglpBefore, 74640579149339718);
   }
 
-  function testCorrectness_WhenSwitchCollateralFromSglpToBareErc20() external {
+  function testCorrectness_WhenSwitchCollateralFromsglpToBareErc20() external {
     vm.startPrank(USER);
-    // Create switch collateral order from sGLP -> ARB
+    // Create switch collateral order from sglp -> ARB
     address[] memory _path = new address[](3);
     _path[0] = address(ForkEnv.sglp);
     _path[1] = address(ForkEnv.weth);
@@ -458,6 +463,8 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp)), _path, 0)
       })
     );
@@ -509,7 +516,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     assertEq(_arbAfter - _arbBefore, 3970232321595248857);
   }
 
-  function testCorrectness_WhenSwitchCollateralFromBareErc20ToSglp() external {
+  function testCorrectness_WhenSwitchCollateralFromBareErc20Tosglp() external {
     // Motherload ARB for USER
     motherload(address(ForkEnv.arb), USER, 1000 * 1e18);
 
@@ -517,12 +524,12 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     // Deposit ARB to the cross margin account
     ForkEnv.arb.approve(address(ForkEnv.crossMarginHandler), 1000 * 1e18);
     ForkEnv.crossMarginHandler.depositCollateral(SUB_ACCOUNT_ID, address(ForkEnv.arb), 1000 * 1e18, false);
-    // Create switch collateral order from ARB -> sGLP
+    // Create switch collateral order from ARB -> sglp
     address[] memory _path = new address[](3);
     _path[0] = address(ForkEnv.arb);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.sglp);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
@@ -535,7 +542,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
 
     vm.startPrank(EXT01_EXECUTOR);
     // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
-    uint256 _sGlpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    uint256 _sglpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
     bytes32[] memory _priceData = new bytes32[](3);
     _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
     _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
@@ -564,16 +571,21 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       false
     );
     vm.stopPrank();
-    uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    uint256 _sglpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    IExt01Handler.GenericOrder[] memory orders = ext01Handler.getAllExecutedOrders(10, 0);
+
+    assertEq(orders[0].executedTimestamp, expectExecutedTime);
+    assertEq(ext01Handler.getAllActiveOrders(10, 0).length, 0);
+    assertEq(ext01Handler.getAllExecutedOrders(10, 0).length, 1);
 
     // Trader balance should be the same
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb)), 0);
-    assertEq(_sGlpAfter - _sGlpBefore, 1251816487838549309485);
+    assertEq(_sglpAfter - _sglpBefore, 1251816487838549309485);
   }
 
-  function testCorrectness_WhenSwitchCollateralFromSglpToWstEth() external {
+  function testCorrectness_WhenSwitchCollateralFromsglpToWstEth() external {
     vm.startPrank(USER);
-    // Create switch collateral order from sGLP -> wstETH
+    // Create switch collateral order from sglp -> wstETH
     address[] memory _path = new address[](3);
     _path[0] = address(ForkEnv.sglp);
     _path[1] = address(ForkEnv.weth);
@@ -582,6 +594,8 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp)), _path, 0)
       })
     );
@@ -629,7 +643,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     assertEq(_wstEthAfter - _wstEthBefore, 2341647970371989);
   }
 
-  function testCorrectness_WhenSwitchCollateralFromWstEthToSglp() external {
+  function testCorrectness_WhenSwitchCollateralFromWstEthTosglp() external {
     // Motherload wstETH for USER
     motherload(address(ForkEnv.wstEth), USER, 10 * 1e18);
 
@@ -641,7 +655,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     _path[0] = address(ForkEnv.wstEth);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.sglp);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
@@ -655,7 +669,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     vm.startPrank(EXT01_EXECUTOR);
     // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
     // Add 012bb4 => 76724 tick for wstETH price
-    uint256 _sGlpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    uint256 _sglpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
     bytes32[] memory _priceData = new bytes32[](3);
     _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
     _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
@@ -683,10 +697,15 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       false
     );
     vm.stopPrank();
-    uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    uint256 _sglpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
+    IExt01Handler.GenericOrder[] memory orders = ext01Handler.getAllExecutedOrders(10, 0);
+
+    assertEq(orders[0].executedTimestamp, expectExecutedTime);
+    assertEq(ext01Handler.getAllActiveOrders(10, 0).length, 0);
+    assertEq(ext01Handler.getAllExecutedOrders(10, 0).length, 1);
 
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.wstEth)), 0);
-    assertEq(_sGlpAfter - _sGlpBefore, 21225881318183212057834);
+    assertEq(_sglpAfter - _sglpBefore, 21225881318183212057834);
   }
 
   function testCorrectness_ExecuteViaDelegate() external {
@@ -707,7 +726,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     address[] memory _path = new address[](3);
     _path[0] = address(ForkEnv.wstEth);
     _path[1] = address(ForkEnv.weth);
-    _path[2] = address(ForkEnv.sGlp);
+    _path[2] = address(ForkEnv.sglp);
     uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
@@ -720,7 +739,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     vm.stopPrank();
 
     vm.startPrank(EXT01_EXECUTOR);
-    uint256 _sGlpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
+    uint256 _sglpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
     bytes32[] memory _priceData = new bytes32[](3);
     _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
     _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
@@ -748,7 +767,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       false
     );
     vm.stopPrank();
-    uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
+    uint256 _sglpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp));
     IExt01Handler.GenericOrder[] memory orders = ext01Handler.getAllExecutedOrders(10, 0);
 
     assertEq(orders[0].executedTimestamp, expectExecutedTime);
@@ -756,13 +775,13 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     assertEq(ext01Handler.getAllExecutedOrders(10, 0).length, 1);
 
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.wstEth)), 0);
-    assertEq(_sGlpAfter - _sGlpBefore, 21225881318183212057834);
+    assertEq(_sglpAfter - _sglpBefore, 21225881318183212057834);
   }
 
   function testCorrectness_CancelSwitchCollateralOrder() external {
-    // Create switch collateral order from sGLP -> wstETH
+    // Create switch collateral order from sglp -> wstETH
     address[] memory _path = new address[](3);
-    _path[0] = address(ForkEnv.sGlp);
+    _path[0] = address(ForkEnv.sglp);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.wstEth);
     vm.startPrank(USER);
@@ -772,7 +791,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
         executionFee: 0.1 * 1e9,
         mainAccount: USER,
         subAccountId: SUB_ACCOUNT_ID,
-        data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), _path, 0)
+        data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp)), _path, 0)
       })
     );
     vm.stopPrank();
@@ -791,9 +810,9 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
 
   function testRevert_ExecuteCanceledOrder() external {
     vm.startPrank(USER);
-    // Create switch collateral order from sGLP -> wstETH
+    // Create switch collateral order from sglp -> wstETH
     address[] memory _path = new address[](3);
-    _path[0] = address(ForkEnv.sGlp);
+    _path[0] = address(ForkEnv.sglp);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.wstEth);
     uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
@@ -802,7 +821,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
         executionFee: 0.1 * 1e9,
         mainAccount: USER,
         subAccountId: SUB_ACCOUNT_ID,
-        data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), _path, 0)
+        data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sglp)), _path, 0)
       })
     );
     vm.stopPrank();

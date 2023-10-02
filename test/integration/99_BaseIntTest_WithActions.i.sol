@@ -7,6 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
 contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /**
@@ -192,12 +193,23 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     address _account,
     uint8 _subAccountIdFrom,
     uint8 _subAccountIdTo,
-    ERC20 _collateralToken,
+    address _collateralToken,
     uint256 _depositAmount
-  ) internal {
+  ) internal returns (uint256[] memory _orderIndexes) {
     vm.startPrank(_account);
-    crossMarginHandler.transferCollateralSubAccount(_subAccountIdFrom, _subAccountIdTo, address(_collateralToken), _depositAmount);
+    uint256[] memory orderIndexes = new uint256[](1);
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 2,
+        executionFee: 0.1 * 1e9,
+        mainAccount: _account,
+        subAccountId: _subAccountIdFrom,
+        data: abi.encode(_subAccountIdFrom, _subAccountIdTo, _collateralToken, _depositAmount)
+      })
+    );
     vm.stopPrank();
+    orderIndexes[0] = _orderIndex;
+    _orderIndexes = orderIndexes;
   }
 
   /**

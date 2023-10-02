@@ -219,22 +219,35 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
 
+  struct TransferCollateralParams {
+    address primaryAccountFrom;
+    uint8 subAccountIdFrom;
+    address primaryAccountTo;
+    uint8 subAccountIdTo;
+    address token;
+    uint256 amount;
+  }
+
   /// @notice Calculate new trader balance after transfer collateral token.
-  /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
-  /// @param _primaryAccountFrom Trader's primary address from trader's wallet to withdraw from.
-  /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
-  /// @param _primaryAccountTo Trader's primary address from trader's wallet to transfer to.
-  /// @param _subAccountIdTo Trader's Sub-Account Id to transfer to.
-  /// @param _token Token that's withdrawn as collateral.
-  /// @param _amount Token withdrawing amount.
+  /// @param _params The parameters for the switch.
   function transferCollateral(
-    address _primaryAccountFrom,
-    uint8 _subAccountIdFrom,
-    address _primaryAccountTo,
-    uint8 _subAccountIdTo,
-    address _token,
-    uint256 _amount
-  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
+    TransferCollateralParams calldata _params
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_params.token) {
+    (
+      address _primaryAccountFrom,
+      uint8 _subAccountIdFrom,
+      address _primaryAccountTo,
+      uint8 _subAccountIdTo,
+      address _token,
+      uint256 _amount
+    ) = (
+      _params.primaryAccountFrom,
+      _params.subAccountIdFrom,
+      _params.primaryAccountTo,
+      _params.subAccountIdTo,
+      _params.token,
+      _params.amount
+    );
      // SLOAD
     Calculator _calculator = Calculator(calculator);
 

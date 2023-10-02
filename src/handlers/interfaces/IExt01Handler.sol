@@ -17,6 +17,7 @@ interface IExt01Handler {
   error IExt01Handler_InvalidArraySize();
   error IExt01Handler_NonExistentOrder();
   error IExt01Handler_NotOrderOwner();
+  error IExt01Handler_SelfTransfer();
 
   /**
    * Structs
@@ -42,10 +43,21 @@ interface IExt01Handler {
     uint8 subAccountId;
     uint256 orderIndex;
     uint248 amount;
+    address fromToken;
+    address toToken;
     address[] path;
     uint256 minToAmount;
     CrossMarginService crossMarginService;
   }
+
+ struct TransferCollateralOrder {
+    address primaryAccount;
+    uint8 subAccountIdFrom;
+    uint8 subAccountIdTo;
+    address token;
+    uint256 amount;
+    CrossMarginService crossMarginService;
+ }
 
   struct CreateExtOrderParams {
     uint24 orderType;

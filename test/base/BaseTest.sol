@@ -38,6 +38,7 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { ICIXPythAdapter } from "@hmx/oracles/interfaces/ICIXPythAdapter.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
@@ -70,6 +71,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // oracle
   IPythAdapter pythAdapter;
+  ICIXPythAdapter cixPythAdapter;
   IOracleMiddleware oracleMiddleware;
   IEcoPyth internal ecoPyth;
 
@@ -112,6 +114,13 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
+  bytes32 internal constant eurPriceId = 0x0000000000000000000000000000000000000000000000000000000000000102;
+  bytes32 internal constant gbpPriceId = 0x0000000000000000000000000000000000000000000000000000000000000103;
+  bytes32 internal constant cadPriceId = 0x0000000000000000000000000000000000000000000000000000000000000104;
+  bytes32 internal constant sekPriceId = 0x0000000000000000000000000000000000000000000000000000000000000105;
+  bytes32 internal constant chfPriceId = 0x0000000000000000000000000000000000000000000000000000000000000106;
+  // CIX
+  bytes32 internal constant cix1PriceId = 0x0000000000000000000000000000000000000000000000000000000000000201;
 
   bytes32 internal constant wethAssetId = "WETH";
   bytes32 internal constant wbtcAssetId = "WBTC";
@@ -120,6 +129,12 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant usdtAssetId = "USDT";
   bytes32 internal constant sglpAssetId = "SGLP";
   bytes32 internal constant jpyAssetId = "JPY";
+  bytes32 internal constant eurAssetId = "EUR";
+  bytes32 internal constant gbpAssetId = "GBP";
+  bytes32 internal constant cadAssetId = "CAD";
+  bytes32 internal constant sekAssetId = "SEK";
+  bytes32 internal constant chfAssetId = "CHF";
+  bytes32 internal constant cix1AssetId = "CIX1";
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -167,6 +182,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
+    cixPythAdapter = Deployer.deployCIXPythAdapter(address(proxyAdmin), address(mockPyth));
     oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), 365 days);
 
     convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(

@@ -19,6 +19,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { ICIXPythAdapter } from "@hmx/oracles/interfaces/ICIXPythAdapter.sol";
 import { ILeanPyth } from "@hmx/oracles/interfaces/ILeanPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
@@ -124,6 +125,13 @@ library Deployer {
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pyth);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IPythAdapter(payable(_proxy));
+  }
+
+  function deployCIXPythAdapter(address _proxyAdmin, address _pyth) internal returns (ICIXPythAdapter) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/CIXPythAdapter.sol/CIXPythAdapter.json"));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pyth);
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ICIXPythAdapter(payable(_proxy));
   }
 
   function deployStakedGlpOracleAdapter(

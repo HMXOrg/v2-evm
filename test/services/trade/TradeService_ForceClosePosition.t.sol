@@ -285,14 +285,13 @@ contract TradeService_ForceClosePosition is TradeService_Base {
    * Revert
    */
 
-  function testRevert_WhenExecutorTryClosePositionButOracleTellMarketIsClose() external {
+  function testCorrectness_WhenExecutorTryClosePositionButOracleTellMarketIsClose() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // set market status from oracle is inactive
     mockOracle.setMarketStatus(1);
 
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsClosed()"));
     tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
   }
 

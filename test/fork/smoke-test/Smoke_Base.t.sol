@@ -44,7 +44,7 @@ contract Smoke_Base is ForkEnv {
   OrderReader newOrderReader;
 
   function setUp() public virtual {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 135653578);
 
     uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);
 

@@ -15,14 +15,22 @@ interface ICrossMarginService {
   error ICrossMarginService_InvalidPath();
   error ICrossMarginService_Slippage();
 
+  struct SwitchCollateralParams {
+    address primaryAccount;
+    uint8 subAccountId;
+    uint248 amount;
+    address[] path;
+    uint256 minToAmount;
+  }
+
   /**
    * States
    */
-  function calculator() external returns (address);
+  function calculator() external view returns (address);
 
-  function configStorage() external returns (address _configStorage);
+  function configStorage() external view returns (address _configStorage);
 
-  function vaultStorage() external returns (address _vaultStorage);
+  function vaultStorage() external view returns (address _vaultStorage);
 
   /**
    * Functions
@@ -49,6 +57,8 @@ interface ICrossMarginService {
     ) external;
 
   function withdrawFundingFeeSurplus(address _stableToken) external;
+
+  function switchCollateral(SwitchCollateralParams calldata _params) external returns (uint256 _toAmount);
 
   function setConfigStorage(address _configStorage) external;
 

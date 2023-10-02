@@ -1104,10 +1104,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         : _markPrice - position.avgEntryPriceE30;
     }
 
-    uint256 _size = HMXLib.abs(position.positionSizeE30);
-
     // Calculate the delta, adjusted for the size of the order.
-    uint256 delta = (_size * priceDelta) / position.avgEntryPriceE30;
+    uint256 delta = (HMXLib.abs(position.positionSizeE30) * priceDelta) / position.avgEntryPriceE30;
 
     // Determine if the position is profitable or not based on the averagePrice and the mark price.
     bool isProfit;

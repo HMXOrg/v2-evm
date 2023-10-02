@@ -53,7 +53,6 @@ interface IPerpStorage {
     int256 realizedPnl;
     int256 lastFundingAccrued;
     uint8 subAccountId;
-    int256 lastIncreasePositionSize; // the position size before the last increase
   }
 
   /**

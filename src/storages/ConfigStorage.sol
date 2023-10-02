@@ -7,7 +7,6 @@ pragma solidity 0.8.18;
 // Base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // Interfaces
@@ -19,7 +18,6 @@ import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/inter
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
-  using SafeERC20Upgradeable for ERC20Upgradeable;
   using AddressUpgradeable for address;
 
   /**
@@ -333,7 +331,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bool[] calldata _isServiceExecutors
   ) external onlyOwner {
     if (
-      _contractAddresses.length != _executorAddresses.length && _executorAddresses.length != _isServiceExecutors.length
+      _contractAddresses.length != _executorAddresses.length || _executorAddresses.length != _isServiceExecutors.length
     ) revert IConfigStorage_BadArgs();
 
     for (uint256 i = 0; i < _contractAddresses.length; ) {

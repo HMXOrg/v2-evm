@@ -5,6 +5,7 @@
 pragma solidity 0.8.18;
 
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 contract MockTradeService is ITradeService {
   struct IncreasePositionInputs {
@@ -25,6 +26,7 @@ contract MockTradeService is ITradeService {
     uint256 _limitPriceE30;
   }
 
+  ICalculator public calculator;
   address public configStorage;
   address public perpStorage;
   address public vaultStorage;

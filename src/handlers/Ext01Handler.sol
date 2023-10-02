@@ -13,6 +13,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 /// Services
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -475,7 +476,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     // Call service to switch collateral
     (address _fromToken, address _toToken) = (_order.path[0], _order.path[_order.path.length - 1]);
     uint256 _toAmount = _order.crossMarginService.switchCollateral(
-      CrossMarginService.SwitchCollateralParams(
+      ICrossMarginService.SwitchCollateralParams(
         _order.primaryAccount,
         _order.subAccountId,
         _order.amount,

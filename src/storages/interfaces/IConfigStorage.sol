@@ -45,7 +45,7 @@ interface IConfigStorage {
 
   struct FundingRate {
     uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
-    uint256 maxFundingRate; // maximum funding rate
+    uint256 maxFundingRate; // The maximum rate per day that the funding rate would change
   }
 
   struct MarketConfig {
@@ -233,4 +233,8 @@ interface IConfigStorage {
   function minProfitDurations(uint256 marketIndex) external returns (uint256 minProfitDuration);
 
   function setMinProfitDurations(uint256[] calldata _marketIndexs, uint256[] calldata _minProfitDurations) external;
+
+  function minimumPositionSize() external view returns (uint256);
+
+  function getAssetClassConfigsLength() external view returns (uint256);
 }

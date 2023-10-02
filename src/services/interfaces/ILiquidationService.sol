@@ -16,4 +16,6 @@ interface ILiquidationService {
   function liquidate(address subAccount, address _liquidator) external;
 
   function perpStorage() external view returns (address);
+
+  function vaultStorage() external view returns (address);
 }

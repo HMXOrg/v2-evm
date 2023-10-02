@@ -73,7 +73,8 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
   function _calculateGeometricAveragePriceE30(
     uint256 _cE8,
     uint256[] memory _pricesE8,
-    uint256[] memory _weightsE8
+    uint256[] memory _weightsE8,
+    bool[] memory _usdQuoteds
   ) private view returns (uint256 _avgE30) {
     // Declare _accum as c
     int128 _accum = _convertE8To64x64(_cE8);
@@ -83,6 +84,8 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     for (uint256 i = 0; i < _len; ) {
       int128 _price = _convertE8To64x64(_pricesE8[i]);
       int128 _weight = _convertE8To64x64(_weightsE8[i]);
+
+      if (_usdQuoteds[i]) _weight = _weight.neg();
 
       _accum = _accum.mul(_price.pow(_weight));
 
@@ -126,6 +129,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     // 2. Prepare the parameters, map them into arrays
     uint256[] memory _pricesE8 = new uint256[](_len);
     uint256[] memory _weightsE8 = new uint256[](_len);
+    bool[] memory _usdQuoteds = new bool[](_len);
 
     for (uint256 i = 0; i < _len; ) {
       // Get price
@@ -134,6 +138,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
       // Store params in array for average calculation
       _pricesE8[i] = _convertToUint256(_price, 8);
       _weightsE8[i] = _config.weightsE8[i];
+      _usdQuoteds[i] = _config.usdQuoteds[i];
 
       // Update publish time, with minimum _price.publishTime
       if (i == 0) {
@@ -148,7 +153,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     }
 
     // 3. Calculate the price with geometric weighted average
-    _price30 = _calculateGeometricAveragePriceE30(_config.cE8, _pricesE8, _weightsE8);
+    _price30 = _calculateGeometricAveragePriceE30(_config.cE8, _pricesE8, _weightsE8, _usdQuoteds);
 
     return (_price30, _publishTime);
   }
@@ -176,7 +181,8 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     bytes32 _assetId,
     uint256 _cE8,
     bytes32[] memory _pythPriceIds,
-    uint256[] memory _weightsE8
+    uint256[] memory _weightsE8,
+    bool[] memory _usdQuoteds
   ) external onlyOwner {
     ICIXPythAdapter.CIXPythPriceConfig memory _config;
 
@@ -211,6 +217,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     _config.cE8 = _cE8;
     _config.pythPriceIds = _pythPriceIds;
     _config.weightsE8 = _weightsE8;
+    _config.usdQuoteds = _usdQuoteds;
 
     // 3. Save to storage
     configs[_assetId] = _config;

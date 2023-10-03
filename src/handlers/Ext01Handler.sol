@@ -242,6 +242,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         _localVars.minToAmount
       );
     } else if (_params.orderType == 2) {
+      // OrderType 1 = Create transfer collateral order
       CreateTransferCollateralOrderParams memory _localVars;
       (_localVars.fromSubAccountId, _localVars.toSubAccountId, _localVars.token, _localVars.amount) = abi.decode(
         _params.data,
@@ -253,7 +254,8 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         _localVars.token,
         _localVars.amount
       );
-
+    }
+    
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _params.subAccountId);
     _orderIndex = genericOrdersIndex[_subAccount];
 
@@ -268,7 +270,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     });
 
     _addOrder(order, _subAccount, _orderIndex);
-    }
   }
 
   function executeOrders(

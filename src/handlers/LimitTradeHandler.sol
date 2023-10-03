@@ -695,6 +695,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         vars.order.sizeDelta,
         true
       );
+
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 

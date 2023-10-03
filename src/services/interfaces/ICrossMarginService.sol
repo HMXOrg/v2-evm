@@ -57,7 +57,7 @@ interface ICrossMarginService {
     address _receiver
   ) external;
 
-   function transferCollateral(TransferCollateralParams calldata _params) external;
+  function transferCollateral(TransferCollateralParams calldata _params) external;
 
   function withdrawFundingFeeSurplus(address _stableToken) external;
 

@@ -224,7 +224,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   /// @notice Calculate new trader balance after transfer collateral token.
-  /// @param _params The parameters to transfer.
+  /// @param _params The parameters to transfer collateral.
   function transferCollateral(
     TransferCollateralParams calldata _params
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_params.token) {

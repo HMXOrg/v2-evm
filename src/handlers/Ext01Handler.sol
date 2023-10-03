@@ -35,6 +35,8 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     address indexed primaryAccount,
     uint256 indexed subAccountId,
     address[] path,
+    address fromToken,
+    address toToken,
     uint256 fromAmount,
     uint256 toAmount
   );
@@ -46,12 +48,26 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     address[] path,
     uint256 executionFee
   );
+  event LogTransferCollateral(
+    address indexed primaryAccount,
+    uint256 indexed fromSubAccountId,
+    uint256 indexed toSubAccountId,
+    address token,
+    uint256 amount
+  );
   event LogCreateSwitchCollateralOrder(
     address indexed primaryAccount,
     uint8 indexed subAccountId,
     uint248 amount,
     address[] path,
     uint256 minToAmount
+  );
+  event LogCreateTransferCollateralOrder(
+    address indexed primaryAccount,
+    uint8 indexed fromSubAccountId,
+    uint8 indexed toSubAccountId,
+    address token,
+    uint256 amount
   );
   event LogSetCrossMarginService(
     CrossMarginService indexed prevCrossMarginService,
@@ -181,6 +197,13 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     uint256 minToAmount;
   }
 
+  struct CreateTransferCollateralOrderParams {
+    uint8 fromSubAccountId;
+    uint8 toSubAccountId;
+    address token;
+    uint256 amount;
+  }
+
   /**
    * Main routines
    */
@@ -218,8 +241,21 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         _localVars.path,
         _localVars.minToAmount
       );
+    } else if (_params.orderType == 2) {
+      // OrderType 1 = Create transfer collateral order
+      CreateTransferCollateralOrderParams memory _localVars;
+      (_localVars.fromSubAccountId, _localVars.toSubAccountId, _localVars.token, _localVars.amount) = abi.decode(
+        _params.data,
+        (uint8, uint8, address, uint256)
+      );
+      _rawOrder = _createTransferCollateralOrder(
+        _localVars.fromSubAccountId,
+        _localVars.toSubAccountId,
+        _localVars.token,
+        _localVars.amount
+      );
     }
-
+    
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _params.subAccountId);
     _orderIndex = genericOrdersIndex[_subAccount];
 
@@ -282,6 +318,10 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       // Check if this order still exists
       if (_switchCollateralOrder.primaryAccount == address(0)) revert IExt01Handler_NonExistentOrder();
       _executeSwitchCollateralOrder(_switchCollateralOrder);
+    } else if (_order.orderType == 2) {
+      // OrderType 2 == Transfer collateral order
+      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));
+      _executeTransferCollateralOrder(_transferCollateralOrder);
     }
   }
 
@@ -353,6 +393,8 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       subAccountId: _subAccountId,
       orderIndex: _orderIndex,
       amount: _amount,
+      fromToken: _fromToken,
+      toToken: _toToken,
       path: _path,
       minToAmount: _minToAmount,
       crossMarginService: crossMarginService
@@ -393,8 +435,45 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     }
   }
 
+
+  /**
+   * Transfer Collateral
+   */
+
+  /// @notice Calculate new trader balance after transfer collateral token.
+  /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
+  /// @param _fromSubAccountId Trader's Sub-Account Id to withdraw from.
+  /// @param _toSubAccountId Trader's Sub-Account Id to deposit to.
+  /// @param _token Token that's withdrawn as collateral.
+  /// @param _amount Token withdrawing amount.
+  function _createTransferCollateralOrder(
+    uint8 _fromSubAccountId,
+    uint8 _toSubAccountId,
+    address _token,
+    uint256 _amount
+  ) internal returns (bytes memory _rawOrder) {
+    // Check
+    // _revertOnNotAcceptedCollateral(_token);
+    if (_amount == 0) revert IExt01Handler_BadAmount();
+    if (_fromSubAccountId == _toSubAccountId) revert IExt01Handler_SelfTransfer();
+
+    emit LogCreateTransferCollateralOrder(msg.sender, _fromSubAccountId, _toSubAccountId, _token, _amount);
+
+    _rawOrder = abi.encode(
+      TransferCollateralOrder({
+        primaryAccount: msg.sender,
+        fromSubAccountId: _fromSubAccountId,
+        toSubAccountId: _toSubAccountId,
+        token: _token,
+        amount: _amount,
+        crossMarginService: crossMarginService
+      })
+    );
+  }
+
   function _executeSwitchCollateralOrder(SwitchCollateralOrder memory _order) internal {
     // Call service to switch collateral
+    (address _fromToken, address _toToken) = (_order.path[0], _order.path[_order.path.length - 1]);
     uint256 _toAmount = _order.crossMarginService.switchCollateral(
       ICrossMarginService.SwitchCollateralParams(
         _order.primaryAccount,
@@ -405,7 +484,29 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       )
     );
 
-    emit LogSwitchCollateral(_order.primaryAccount, _order.subAccountId, _order.path, _order.amount, _toAmount);
+    emit LogSwitchCollateral(_order.primaryAccount, _order.subAccountId, _order.path, _fromToken, _toToken, _order.amount, _toAmount);
+  }
+
+    function _executeTransferCollateralOrder(TransferCollateralOrder memory _order) internal {
+    // Call service to transfer collateral
+    _order.crossMarginService.transferCollateral(
+      ICrossMarginService.TransferCollateralParams(
+        _order.primaryAccount,
+        _order.fromSubAccountId,
+        _order.primaryAccount,
+        _order.toSubAccountId,
+        _order.token,
+        _order.amount
+      )
+    );
+
+    emit LogTransferCollateral( 
+      _order.primaryAccount,
+      _order.fromSubAccountId,
+      _order.toSubAccountId,
+      _order.token,
+      _order.amount
+    );
   }
 
   function _cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) internal {

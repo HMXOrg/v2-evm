@@ -61,7 +61,6 @@ interface IConfigStorage {
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     FundingRate fundingRate;
-    bool isAdaptiveFeeEnabled; // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
   }
 
   struct AssetClassConfig {
@@ -193,7 +192,8 @@ interface IConfigStorage {
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig calldata _newConfig
+    MarketConfig calldata _newConfig,
+    bool isAdaptiveFeeEnabled
   ) external returns (MarketConfig memory _marketConfig);
 
   function setHlpTokenConfig(
@@ -238,4 +238,6 @@ interface IConfigStorage {
   function minimumPositionSize() external view returns (uint256);
 
   function getAssetClassConfigsLength() external view returns (uint256);
+
+  function isAdaptiveFeeEnabledByMarketIndex(uint256 marketIndex) external view returns (bool);
 }

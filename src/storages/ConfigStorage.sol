@@ -97,6 +97,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   address public switchCollateralRouter;
   // Min Profit Duration by Market
   mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
+  mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex; // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
 
   /**
    * Modifiers
@@ -366,7 +367,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig calldata _newConfig
+    MarketConfig calldata _newConfig,
+    bool _isAdaptiveFeeEnabled
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
@@ -376,6 +378,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
+    isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
     return _newConfig;
   }
 

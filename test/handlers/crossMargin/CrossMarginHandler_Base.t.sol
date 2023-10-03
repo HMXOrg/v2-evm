@@ -115,9 +115,9 @@ contract CrossMarginHandler_Base is BaseTest {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 }),
-        isAdaptiveFeeEnabled: false
-      })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
+      }),
+      false
     );
 
     // Mock gas for handler used for update Pyth's prices

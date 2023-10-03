@@ -139,7 +139,12 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   ) internal {
     vm.startPrank(_account);
     _collateralToken.approve(address(crossMarginHandler), _depositAmount);
-    crossMarginHandler.depositCollateral{value: _depositAmount}(_subAccountId, address(_collateralToken), _depositAmount, _shouldWrap);
+    crossMarginHandler.depositCollateral{ value: _depositAmount }(
+      _subAccountId,
+      address(_collateralToken),
+      _depositAmount,
+      _shouldWrap
+    );
     vm.stopPrank();
   }
 
@@ -196,7 +201,12 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _depositAmount
   ) internal {
     vm.startPrank(_account);
-    crossMarginHandler.transferCollateralSubAccount(_subAccountIdFrom, _subAccountIdTo, address(_collateralToken), _depositAmount);
+    crossMarginHandler.transferCollateralSubAccount(
+      _subAccountIdFrom,
+      _subAccountIdTo,
+      address(_collateralToken),
+      _depositAmount
+    );
     vm.stopPrank();
   }
 
@@ -583,7 +593,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   function toggleMarket(uint256 _marketIndex) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
     _marketConfig.active = !_marketConfig.active;
-    configStorage.setMarketConfig(_marketIndex, _marketConfig);
+    configStorage.setMarketConfig(_marketIndex, _marketConfig, false);
   }
 
   function isStringNotEmpty(string memory str) public pure returns (bool) {

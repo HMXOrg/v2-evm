@@ -254,8 +254,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 }),
-      isAdaptiveFeeEnabled: false
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
@@ -270,8 +269,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 }),
-      isAdaptiveFeeEnabled: false
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     ethMarketIndex = configStorage.addMarketConfig(_ethConfig);

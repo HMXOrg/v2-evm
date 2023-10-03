@@ -794,7 +794,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _marketConfig.increasePositionFeeRateBPS,
         _marketConfig.assetClass,
         _vars.marketIndex,
-        _marketConfig.isAdaptiveFeeEnabled
+        ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_vars.marketIndex)
       );
     }
     _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);

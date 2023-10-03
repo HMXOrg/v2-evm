@@ -325,7 +325,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
           _vars.position.marketIndex,
-          _vars.marketConfig.isAdaptiveFeeEnabled
+          _vars.configStorage.isAdaptiveFeeEnabledByMarketIndex(_vars.position.marketIndex)
         );
         tradingFee += _vars.tradingFee;
         borrowingFee += _vars.borrowingFee;

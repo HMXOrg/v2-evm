@@ -18,6 +18,7 @@ import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeCastUpgradeable for uint256;
@@ -320,7 +321,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _positionFeeBPS,
       _assetClassIndex,
       _position.marketIndex,
-      ConfigStorage(configStorage).getMarketConfigByIndex(_position.marketIndex).isAdaptiveFeeEnabled
+      ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_position.marketIndex)
     );
 
     // increase collateral
@@ -343,7 +344,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   function updateFeeStates(
     bytes32 _positionId,
     address _subAccount,
-    PerpStorage.Position memory _position,
+    IPerpStorage.Position memory _position,
     int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,

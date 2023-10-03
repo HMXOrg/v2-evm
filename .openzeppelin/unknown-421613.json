@@ -30892,7 +30892,7 @@
             "label": "crossMarginService",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(CrossMarginService)48797",
+            "type": "t_contract(CrossMarginService)49691",
             "contract": "Ext01Handler",
             "src": "src/handlers/Ext01Handler.sol:96"
           },
@@ -30900,7 +30900,7 @@
             "label": "liquidationService",
             "offset": 0,
             "slot": "152",
-            "type": "t_contract(LiquidationService)50087",
+            "type": "t_contract(LiquidationService)50981",
             "contract": "Ext01Handler",
             "src": "src/handlers/Ext01Handler.sol:97"
           },
@@ -30908,7 +30908,7 @@
             "label": "liquidityService",
             "offset": 0,
             "slot": "153",
-            "type": "t_contract(LiquidityService)51245",
+            "type": "t_contract(LiquidityService)52139",
             "contract": "Ext01Handler",
             "src": "src/handlers/Ext01Handler.sol:98"
           },
@@ -30916,7 +30916,7 @@
             "label": "tradeService",
             "offset": 0,
             "slot": "154",
-            "type": "t_contract(TradeService)55314",
+            "type": "t_contract(TradeService)56214",
             "contract": "Ext01Handler",
             "src": "src/handlers/Ext01Handler.sol:99"
           },
@@ -30924,7 +30924,7 @@
             "label": "pyth",
             "offset": 0,
             "slot": "155",
-            "type": "t_contract(IEcoPyth)45909",
+            "type": "t_contract(IEcoPyth)46577",
             "contract": "Ext01Handler",
             "src": "src/handlers/Ext01Handler.sol:100"
           },
@@ -30948,7 +30948,7 @@
             "label": "genericOrders",
             "offset": 0,
             "slot": "158",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(GenericOrder)35126_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(GenericOrder)35212_storage))",
             "contract": "Ext01Handler",
             "src": "src/handlers/Ext01Handler.sol:108"
           },
@@ -31038,27 +31038,27 @@
             "label": "bytes",
             "numberOfBytes": "32"
           },
-          "t_contract(CrossMarginService)48797": {
+          "t_contract(CrossMarginService)49691": {
             "label": "contract CrossMarginService",
             "numberOfBytes": "20"
           },
-          "t_contract(IEcoPyth)45909": {
+          "t_contract(IEcoPyth)46577": {
             "label": "contract IEcoPyth",
             "numberOfBytes": "20"
           },
-          "t_contract(LiquidationService)50087": {
+          "t_contract(LiquidationService)50981": {
             "label": "contract LiquidationService",
             "numberOfBytes": "20"
           },
-          "t_contract(LiquidityService)51245": {
+          "t_contract(LiquidityService)52139": {
             "label": "contract LiquidityService",
             "numberOfBytes": "20"
           },
-          "t_contract(TradeService)55314": {
+          "t_contract(TradeService)56214": {
             "label": "contract TradeService",
             "numberOfBytes": "20"
           },
-          "t_enum(OrderStatus)35110": {
+          "t_enum(OrderStatus)35196": {
             "label": "enum IExt01Handler.OrderStatus",
             "members": [
               "PENDING",
@@ -31075,7 +31075,7 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(GenericOrder)35126_storage))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(GenericOrder)35212_storage))": {
             "label": "mapping(address => mapping(uint256 => struct IExt01Handler.GenericOrder))",
             "numberOfBytes": "32"
           },
@@ -31095,11 +31095,11 @@
             "label": "mapping(uint24 => uint128)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(GenericOrder)35126_storage)": {
+          "t_mapping(t_uint256,t_struct(GenericOrder)35212_storage)": {
             "label": "mapping(uint256 => struct IExt01Handler.GenericOrder)",
             "numberOfBytes": "32"
           },
-          "t_struct(GenericOrder)35126_storage": {
+          "t_struct(GenericOrder)35212_storage": {
             "label": "struct IExt01Handler.GenericOrder",
             "members": [
               {
@@ -31110,7 +31110,7 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(OrderStatus)35110",
+                "type": "t_enum(OrderStatus)35196",
                 "offset": 31,
                 "slot": "0"
               },
@@ -32995,6 +32995,525 @@
             "type": "t_address",
             "contract": "CrossMarginService",
             "src": "src/services/CrossMarginService.sol:95"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "780a50ada0bb5d33a84545aa7e250d14966af8aac3ed3a838e8eeb04765336d2": {
+      "address": "0xB8F6B232E70Fd4cC5615A1cbb574da29A3AB4691",
+      "txHash": "0x2d361bacad6809cb1111815c487fa615224fe97030913b5d6feda4f3ebe963c4",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "crossMarginService",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(CrossMarginService)44378",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:112"
+          },
+          {
+            "label": "liquidationService",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(LiquidationService)45668",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:113"
+          },
+          {
+            "label": "liquidityService",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_contract(LiquidityService)46826",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:114"
+          },
+          {
+            "label": "tradeService",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_contract(TradeService)50930",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:115"
+          },
+          {
+            "label": "pyth",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_contract(IEcoPyth)41207",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:116"
+          },
+          {
+            "label": "_senderOverride",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_address",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:121"
+          },
+          {
+            "label": "minExecutionOrderOf",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_uint24,t_uint128)",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:123"
+          },
+          {
+            "label": "genericOrders",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(GenericOrder)29518_storage))",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:124"
+          },
+          {
+            "label": "genericOrdersIndex",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:125"
+          },
+          {
+            "label": "delegations",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:126"
+          },
+          {
+            "label": "_activeOrderPointers",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_struct(UintSet)6814_storage",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:129"
+          },
+          {
+            "label": "_executedOrderPointers",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_struct(UintSet)6814_storage",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:130"
+          },
+          {
+            "label": "_subAccountActiveOrderPointers",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_mapping(t_address,t_struct(UintSet)6814_storage)",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:131"
+          },
+          {
+            "label": "_subAccountExecutedOrderPointers",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_mapping(t_address,t_struct(UintSet)6814_storage)",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:132"
+          },
+          {
+            "label": "orderExecutors",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "Ext01Handler",
+            "src": "src/handlers/Ext01Handler.sol:134"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_bytes_storage": {
+            "label": "bytes",
+            "numberOfBytes": "32"
+          },
+          "t_contract(CrossMarginService)44378": {
+            "label": "contract CrossMarginService",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IEcoPyth)41207": {
+            "label": "contract IEcoPyth",
+            "numberOfBytes": "20"
+          },
+          "t_contract(LiquidationService)45668": {
+            "label": "contract LiquidationService",
+            "numberOfBytes": "20"
+          },
+          "t_contract(LiquidityService)46826": {
+            "label": "contract LiquidityService",
+            "numberOfBytes": "20"
+          },
+          "t_contract(TradeService)50930": {
+            "label": "contract TradeService",
+            "numberOfBytes": "20"
+          },
+          "t_enum(OrderStatus)29502": {
+            "label": "enum IExt01Handler.OrderStatus",
+            "members": [
+              "PENDING",
+              "SUCCESS",
+              "FAIL"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(GenericOrder)29518_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct IExt01Handler.GenericOrder))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(UintSet)6814_storage)": {
+            "label": "mapping(address => struct EnumerableSet.UintSet)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint24,t_uint128)": {
+            "label": "mapping(uint24 => uint128)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(GenericOrder)29518_storage)": {
+            "label": "mapping(uint256 => struct IExt01Handler.GenericOrder)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(GenericOrder)29518_storage": {
+            "label": "struct IExt01Handler.GenericOrder",
+            "members": [
+              {
+                "label": "orderIndex",
+                "type": "t_uint248",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(OrderStatus)29502",
+                "offset": 31,
+                "slot": "0"
+              },
+              {
+                "label": "createdTimestamp",
+                "type": "t_uint48",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "executedTimestamp",
+                "type": "t_uint48",
+                "offset": 6,
+                "slot": "1"
+              },
+              {
+                "label": "orderType",
+                "type": "t_uint24",
+                "offset": 12,
+                "slot": "1"
+              },
+              {
+                "label": "executionFee",
+                "type": "t_uint128",
+                "offset": 15,
+                "slot": "1"
+              },
+              {
+                "label": "rawOrder",
+                "type": "t_bytes_storage",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(Set)6342_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)6814_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)6342_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint24": {
+            "label": "uint24",
+            "numberOfBytes": "3"
+          },
+          "t_uint248": {
+            "label": "uint248",
+            "numberOfBytes": "31"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint48": {
+            "label": "uint48",
+            "numberOfBytes": "6"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "6eaea59daf753abeb523cee849ba343c6f46081816415b9e3687a3e56b579ee5": {
+      "address": "0x1A1c7aADB01380445AE3b59b5bE273730BF88eb2",
+      "txHash": "0xf895f14e0df2aff39a5cc9d96d7d242f544b28b244a1a16584b2446c50e08b17",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "configStorage",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "CrossMarginService",
+            "src": "src/services/CrossMarginService.sol:90"
+          },
+          {
+            "label": "vaultStorage",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_address",
+            "contract": "CrossMarginService",
+            "src": "src/services/CrossMarginService.sol:91"
+          },
+          {
+            "label": "calculator",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_address",
+            "contract": "CrossMarginService",
+            "src": "src/services/CrossMarginService.sol:92"
+          },
+          {
+            "label": "perpStorage",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_address",
+            "contract": "CrossMarginService",
+            "src": "src/services/CrossMarginService.sol:93"
+          },
+          {
+            "label": "convertedSglpStrategy",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "CrossMarginService",
+            "src": "src/services/CrossMarginService.sol:95"
+          },
+          {
+            "label": "tradeHelper",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_address",
+            "contract": "CrossMarginService",
+            "src": "src/services/CrossMarginService.sol:96"
           }
         ],
         "types": {

@@ -23,6 +23,16 @@ interface ICrossMarginService {
     uint256 minToAmount;
   }
 
+
+  struct TransferCollateralParams {
+    address fromPrimaryAccount;
+    uint8 fromSubAccountId;
+    address toPrimaryAccount;
+    uint8 toSubAccountId;
+    address token;
+    uint256 amount;
+  }
+
   /**
    * States
    */
@@ -46,6 +56,8 @@ interface ICrossMarginService {
     uint256 _amount,
     address _receiver
   ) external;
+
+   function transferCollateral(TransferCollateralParams calldata _params) external;
 
   function withdrawFundingFeeSurplus(address _stableToken) external;
 

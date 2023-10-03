@@ -52,8 +52,8 @@ interface IExt01Handler {
 
  struct TransferCollateralOrder {
     address primaryAccount;
-    uint8 subAccountIdFrom;
-    uint8 subAccountIdTo;
+    uint8 fromSubAccountId;
+    uint8 toSubAccountId;
     address token;
     uint256 amount;
     CrossMarginService crossMarginService;

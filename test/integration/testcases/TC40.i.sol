@@ -25,17 +25,19 @@ contract TC40 is BaseIntTest_WithActions {
 
     address _tokenAddress = address(weth);
 
-    bytes32[] memory _priceData = new bytes32[](3);
-    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
-    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
-    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f720000000000000000000000000000;
+    vm.startPrank(EXT01_EXECUTOR);
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    tickPrices[2] = 0; // USDC tick price $1
+    tickPrices[6] = 48285; // JPY tick price $125
     bytes32[] memory _publishTimeData = new bytes32[](3);
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
+    bytes32[] memory _priceData = pyth.buildPriceUpdateData(tickPrices);
     address[] memory accounts = new address[](1);
     accounts[0] = ALICE;
     uint8[] memory subAccountIds = new uint8[](1);
+    vm.stopPrank();
 
     // T0: Initialized state
     {
@@ -44,29 +46,25 @@ contract TC40 is BaseIntTest_WithActions {
       vm.deal(BOT, 10 ether);
 
       // Mint liquidity for BOB
-      usdc.mint(BOB, 100_000 * 1e6);
+      usdc.mint(BOB, 10_000_000 * 1e6);
 
       // Mint collateral and gas for ALICE
       vm.deal(ALICE, 20 ether);
     }
 
-    vm.warp(block.timestamp + 1);
     // BOB add liquidity
-    addLiquidity(BOB, usdc, 100_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
+    addLiquidity(BOB, usdc, 10_000_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
-    // Deposit Collateral  
-    vm.warp(block.timestamp + 1); 
+    // Deposit Collateral   
     depositCollateral(ALICE, 0, ERC20(_tokenAddress), 10 ether, true);
 
-    // Try transfer bad amount (0)
-    vm.warp(block.timestamp + 1); 
+    // Try transfer bad amount (0) 
     {
       vm.expectRevert(abi.encodeWithSignature("IExt01Handler_BadAmount()"));
       transferCollateralSubAccount(ALICE, 0, 1, _tokenAddress, 0);
     }
 
-    // Try transfer too much amount
-    vm.warp(block.timestamp + 1); 
+    // Try transfer too much amount 
     {
       uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 0, 1, _tokenAddress, 30 ether);
       vm.startPrank(EXT01_EXECUTOR);
@@ -88,14 +86,12 @@ contract TC40 is BaseIntTest_WithActions {
     }
 
     // Try transfer to self
-    vm.warp(block.timestamp + 1);
     {
       vm.expectRevert(abi.encodeWithSignature("IExt01Handler_SelfTransfer()"));
       transferCollateralSubAccount(ALICE, 0, 0, _tokenAddress, 10 ether);
     } 
 
-    // Try transfer collateral btw. subAccount
-    vm.warp(block.timestamp + 1); 
+    // Try transfer collateral btw. subAccount 
     {
       address _aliceSubAccount0 = getSubAccount(ALICE, 0);
       address _aliceSubAccount1 = getSubAccount(ALICE, 1);
@@ -119,18 +115,11 @@ contract TC40 is BaseIntTest_WithActions {
     }
 
     // Market order long
-    vm.warp(block.timestamp + 1);
     {
-      updatePriceData = new bytes[](3);
-      tickPrices[1] = 99039; // WBTC tick price $20,000
-      tickPrices[2] = 0; // USDC tick price $1
-      tickPrices[6] = 48285; // JPY tick price $125
-
-      marketBuy(ALICE, 1, wethMarketIndex, 100_000 * 1e30, _tokenAddress, tickPrices, publishTimeDiff, block.timestamp); 
+      marketBuy(ALICE, 1, wethMarketIndex, 10_000 * 1e30, _tokenAddress, tickPrices, publishTimeDiff, block.timestamp); 
     }
 
     // Try transfer collteral
-    vm.warp(block.timestamp + 1);
     {
       uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _tokenAddress, 5 ether);
       vm.startPrank(EXT01_EXECUTOR);
@@ -150,9 +139,8 @@ contract TC40 is BaseIntTest_WithActions {
     }
 
     // Try transfer collateral exceeds IMR
-    vm.warp(block.timestamp + 1);
     {
-      uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _tokenAddress, 4.5 ether);
+      uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _tokenAddress, 4.9 ether);
       vm.startPrank(EXT01_EXECUTOR);
       subAccountIds[0] = 1;
       // Expect Revert from withdraw balance below IMR
@@ -166,21 +154,19 @@ contract TC40 is BaseIntTest_WithActions {
         _publishTimeData,
         block.timestamp,
         "",
-        false
+        true
       );
       vm.stopPrank();
     }
 
     // Close current position
-    vm.warp(block.timestamp + 1);
     {
-      marketSell(ALICE, 1, wethMarketIndex, 100_000 * 1e30, _tokenAddress, tickPrices, publishTimeDiff, block.timestamp);
+      marketSell(ALICE, 1, wethMarketIndex, 10_000 * 1e30, _tokenAddress, tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // Transfer leftover collateral to subAccount 0
-    vm.warp(block.timestamp + 1);
     {
-      uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _tokenAddress, 4.5 ether);
+      uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _tokenAddress, 4.9 ether);
       vm.startPrank(EXT01_EXECUTOR);
       subAccountIds[0] = 1;
       ext01Handler.executeOrders(
@@ -199,11 +185,11 @@ contract TC40 is BaseIntTest_WithActions {
   }
   function testCorrectness_TC40_TransferCollateralSubAccount_WBTC() external {
     wbtc.mint(ALICE, 0.5 * 1e8);
-    _testTransferCollateralSubAccountERC20Helper(address(wbtc), 0.5 * 1e8, 100_000 * 1e30, 0.25 * 1e8, 0.2 * 1e8);
+    _testTransferCollateralSubAccountERC20Helper(address(wbtc), 0.5 * 1e8, 100_000 * 1e30, 0.25 * 1e8, 0.23 * 1e8);
   }
   function testCorrectness_TC40_TransferCollateralSubAccount_USDC() external {
     usdc.mint(ALICE, 10_000 * 1e6);
-    _testTransferCollateralSubAccountERC20Helper(address(usdc), 10_000 * 1e6, 100_000 * 1e30, 5_000 * 1e6, 4_000 * 1e6);
+    _testTransferCollateralSubAccountERC20Helper(address(usdc), 10_000 * 1e6, 100_000 * 1e30, 5_000 * 1e6, 4_500 * 1e6);
   }
 
   function _testTransferCollateralSubAccountERC20Helper(
@@ -214,14 +200,14 @@ contract TC40 is BaseIntTest_WithActions {
     uint256 _transfer2
   ) internal {
 
-    bytes32[] memory _priceData = new bytes32[](3);
-    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
-    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
-    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f720000000000000000000000000000;
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    tickPrices[2] = 0; // USDC tick price $1
+    tickPrices[6] = 48285; // JPY tick price $125
     bytes32[] memory _publishTimeData = new bytes32[](3);
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
+    bytes32[] memory _priceData = pyth.buildPriceUpdateData(tickPrices);
     address[] memory accounts = new address[](1);
     accounts[0] = ALICE;
     uint8[] memory subAccountIds = new uint8[](1);
@@ -239,25 +225,21 @@ contract TC40 is BaseIntTest_WithActions {
       vm.deal(ALICE, 10 ether);
     }
 
-    vm.warp(block.timestamp + 1);
     // BOB add liquidity
     addLiquidity(BOB, usdc, 1_000_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     
 
-    // Deposit Collateral  
-    vm.warp(block.timestamp + 1); 
+    // Deposit Collateral   
     depositCollateral(ALICE, 0, ERC20(_token), _deltAmount);
 
-    // Try transfer bad amount (0)
-    vm.warp(block.timestamp + 1); 
+    // Try transfer bad amount (0) 
     {
       vm.expectRevert(abi.encodeWithSignature("IExt01Handler_BadAmount()"));
       transferCollateralSubAccount(ALICE, 0, 1, _token, 0);
     }
 
-    // Try transfer too much amount
-    vm.warp(block.timestamp + 1); 
+    // Try transfer too much amount 
     {
       uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 0, 1, _token, 1e30);
       vm.startPrank(EXT01_EXECUTOR);
@@ -279,14 +261,12 @@ contract TC40 is BaseIntTest_WithActions {
     }
 
     // Try transfer to self
-    vm.warp(block.timestamp + 1);
     {
       vm.expectRevert(abi.encodeWithSignature("IExt01Handler_SelfTransfer()"));
       transferCollateralSubAccount(ALICE, 0, 0, _token, _deltAmount);
     } 
 
-    // Try transfer collateral btw. subAccount
-    vm.warp(block.timestamp + 1); 
+    // Try transfer collateral btw. subAccount 
     {
       // Get SubAccount address
       address _aliceSubAccount0 = getSubAccount(ALICE, 0);
@@ -311,18 +291,11 @@ contract TC40 is BaseIntTest_WithActions {
     }
 
     // Market order long
-    vm.warp(block.timestamp + 1);
     {
-      updatePriceData = new bytes[](3);
-      tickPrices[1] = 99039; // WBTC tick price $20,000
-      tickPrices[2] = 0; // USDC tick price $1
-      tickPrices[6] = 48285; // JPY tick price $125
-
       marketBuy(ALICE, 1, wethMarketIndex, _sizeDelta, _token, tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // Try transfer collteral
-    vm.warp(block.timestamp + 1);
     {
       uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _token, _transfer1);
       vm.startPrank(EXT01_EXECUTOR);
@@ -342,7 +315,6 @@ contract TC40 is BaseIntTest_WithActions {
     }
 
     // Try transfer collateral exceeds IMR
-    vm.warp(block.timestamp + 1);
     {
       uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _token, _transfer2);
       vm.startPrank(EXT01_EXECUTOR);
@@ -361,17 +333,16 @@ contract TC40 is BaseIntTest_WithActions {
         false
       );
       vm.stopPrank();
+      // console.log(vaultStorage.traderBalances(_aliceSubAccount1, _token));
     }
 
     // Close current position
-    vm.warp(block.timestamp + 1);
     {
       marketSell(ALICE, 1, wethMarketIndex, _sizeDelta, _token, tickPrices, publishTimeDiff, block.timestamp);
 
     }
 
     // Transfer leftover collateral to subAccount 0
-    vm.warp(block.timestamp + 1);
     {
       uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 1, 0, _token, _transfer2);
       vm.startPrank(EXT01_EXECUTOR);

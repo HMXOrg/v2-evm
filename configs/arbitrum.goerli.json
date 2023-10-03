@@ -16,7 +16,7 @@
     "ext01": "0xAfA0bb774A92230b6b9DBf4CAF3Fc746F0dfb1f7"
   },
   "helpers": {
-    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
+    "trade": "0x845cbf46aa4c4d1f0090c949c46294103aef4519",
     "limitTrade": "0xc55eDcf390B58F79fCFF16bb9349714473e057a3"
   },
   "services": {

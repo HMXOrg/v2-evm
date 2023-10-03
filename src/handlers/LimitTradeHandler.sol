@@ -23,7 +23,6 @@ import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
-import { console2 } from "forge-std/console2.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
@@ -683,13 +682,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Retrieve existing position
     vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
-    console2.log("0");
     PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
       vars.positionId
     );
-    console2.log("_existingPosition");
 
-    console2.log("limitTradeHelper", address(limitTradeHelper));
     if (address(limitTradeHelper) != address(0))
       limitTradeHelper.validate(
         vars.order.account,
@@ -699,12 +695,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         vars.order.sizeDelta,
         true
       );
-    console2.log("1");
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
     // Validate if the current price is valid for the execution of this order
-    console2.log("2");
     // Handle the sizeDelta in case it is sent with max int 256
     vars.sizeDelta = vars.order.sizeDelta;
     if (vars.order.sizeDelta == type(int256).max || vars.order.sizeDelta == type(int256).min) {
@@ -715,7 +709,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       }
     }
     if (vars.sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
-    console2.log("3");
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
       vars.order.triggerAboveThreshold,
       vars.order.triggerPrice,
@@ -724,7 +717,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.sizeDelta,
       vars.sizeDelta > 0
     );
-    console2.log("4");
 
     // Execute the order
     if (vars.order.reduceOnly) {

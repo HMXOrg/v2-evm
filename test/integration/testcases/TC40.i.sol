@@ -16,8 +16,6 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
-import "forge-std/console.sol";
-
 contract TC40 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
@@ -228,8 +226,6 @@ contract TC40 is BaseIntTest_WithActions {
     // BOB add liquidity
     addLiquidity(BOB, usdc, 1_000_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
-    
-
     // Deposit Collateral   
     depositCollateral(ALICE, 0, ERC20(_token), _deltAmount);
 
@@ -333,13 +329,11 @@ contract TC40 is BaseIntTest_WithActions {
         false
       );
       vm.stopPrank();
-      // console.log(vaultStorage.traderBalances(_aliceSubAccount1, _token));
     }
 
     // Close current position
     {
       marketSell(ALICE, 1, wethMarketIndex, _sizeDelta, _token, tickPrices, publishTimeDiff, block.timestamp);
-
     }
 
     // Transfer leftover collateral to subAccount 0

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+
 interface ITradeService {
   /**
    * Errors
@@ -14,6 +16,7 @@ interface ITradeService {
   error ITradeService_BadSubAccountId();
   error ITradeService_BadSizeDelta();
   error ITradeService_NotAllowIncrease();
+  error ITradeService_NotAllowDecrease();
   error ITradeService_BadNumberOfPosition();
   error ITradeService_BadExposure();
   error ITradeService_InvalidAveragePrice();
@@ -29,6 +32,8 @@ interface ITradeService {
   /**
    * States
    */
+  function calculator() external view returns (ICalculator);
+
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);

@@ -30,11 +30,11 @@ interface ILiquidityService {
   /**
    * States
    */
-  function configStorage() external returns (address);
+  function configStorage() external view returns (address);
 
-  function vaultStorage() external returns (address);
+  function vaultStorage() external view returns (address);
 
-  function perpStorage() external returns (address);
+  function perpStorage() external view returns (address);
 
   /**
    * Functions
@@ -46,10 +46,20 @@ interface ILiquidityService {
     uint256 _minAmount
   ) external returns (uint256);
 
+  function addLiquidity(
+    address _lpProvider,
+    address _token,
+    uint256 _amount,
+    uint256 _minAmount,
+    address _receiver
+  ) external returns (uint256);
+
   function removeLiquidity(
     address _lpProvider,
     address _tokenOut,
     uint256 _amount,
     uint256 _minAmount
   ) external returns (uint256);
+
+  function validatePreAddRemoveLiquidity(uint256 _amount) external view;
 }

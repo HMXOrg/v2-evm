@@ -139,7 +139,8 @@ contract TC38 is BaseIntTest_WithActions {
       (int256 _BobUnrealizedPnlE30, ) = calculator.getUnrealizedPnlAndFee(getSubAccount(BOB, 0), 0, 0);
       (int256 _CarolUnrealizedPnlE30, ) = calculator.getUnrealizedPnlAndFee(getSubAccount(CAROL, 0), 0, 0);
 
-      assertEq(_BobUnrealizedPnlE30, 0, "T3: Bob unrealized Pnl");
+      // Bob unrealized PnL is not negated with min profit duration
+      assertEq(_BobUnrealizedPnlE30, 5366745427251721878598193819658182, "T3: Bob unrealized Pnl");
       assertEq(_CarolUnrealizedPnlE30, 0, "T3: CAROL unrealized Pnl");
     }
 

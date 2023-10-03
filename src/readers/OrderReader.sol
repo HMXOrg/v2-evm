@@ -63,7 +63,7 @@ contract OrderReader {
     vars.marketConfigs = configStorage.getMarketConfigs();
     uint256 len = vars.marketConfigs.length;
     vars.isInValidMarket = new bool[](len);
-    for (uint256 i = 0; i < len; i++) {
+    for (uint256 i; i < len; i++) {
       // check active merket
       if (!vars.marketConfigs[i].active) {
         vars.isInValidMarket[i] = true;
@@ -74,7 +74,6 @@ contract OrderReader {
         vars.isInValidMarket[i] = true;
         continue;
       }
-      vars.isInValidMarket[i] = false;
     }
 
     len = _prices.length;
@@ -89,7 +88,7 @@ contract OrderReader {
     bytes32 _positionId;
     IPerpStorage.Position memory _position;
     len = vars.orders.length;
-    for (uint256 i = 0; i < len; i++) {
+    for (uint256 i; i < len; i++) {
       _order = vars.orders[i];
       {
         if (vars.isInValidMarket[_order.marketIndex]) {

@@ -9,15 +9,15 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("CNH"),
+      assetId: ethers.utils.formatBytes32String("BCH"),
       confidenceThreshold: 0,
-      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("HKD"),
+      assetId: ethers.utils.formatBytes32String("ICP"),
       confidenceThreshold: 0,
-      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
   ];
@@ -27,17 +27,15 @@ async function main(chainId: number) {
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
   console.log("[configs/OracleMiddleware] Setting asset price configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    oracle.address,
-    0,
-    oracle.interface.encodeFunctionData("setAssetPriceConfigs", [
+
+  await (
+    await oracle.setAssetPriceConfigs(
       assetConfigs.map((each) => each.assetId),
       assetConfigs.map((each) => each.confidenceThreshold),
       assetConfigs.map((each) => each.trustPriceAge),
-      assetConfigs.map((each) => each.adapter),
-    ])
-  );
-  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
+      assetConfigs.map((each) => each.adapter)
+    )
+  ).wait();
   console.log("[configs/OracleMiddleware] Finished");
 }
 

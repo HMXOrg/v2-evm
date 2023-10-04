@@ -56,7 +56,9 @@ contract CIXPythAdapter_GetPriceTest is CIXPythAdapter_BaseTest {
     _usdQuoteds[4] = false;
     _usdQuoteds[5] = false;
 
-    cixPythAdapter.setConfig(cix1AssetId, 43.92050844e8, _pythPriceIds, _weightsE8, _usdQuoteds);
+    uint256 _c = 43.92050844e8;
+
+    cixPythAdapter.setConfig(cix1AssetId, _c, _pythPriceIds, _weightsE8, _usdQuoteds);
   }
 
   function updatePrice(bytes32 priceId, int64 priceE8) private {

@@ -197,7 +197,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     uint256 _len = _pythPriceIds.length;
     // Validate length
     {
-      if (_len != _weightsE8.length) revert CIXPythAdapter_BadParams();
+      if (_len != _weightsE8.length || _len != _usdQuoteds.length) revert CIXPythAdapter_BadParams();
       if (_cE8 == 0) revert CIXPythAdapter_BadParams();
     }
 

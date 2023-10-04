@@ -8,6 +8,8 @@ import { ethers } from "ethers";
 
 // OrderType 1 = Create switch collateral order
 const SWITCH_COLLATERAL_ORDER_TYPE = 1;
+// OrderType 2 = Create transfer collateral order
+const TRANSFER_COLLATERAL_ORDER_TYPE = 2;
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);

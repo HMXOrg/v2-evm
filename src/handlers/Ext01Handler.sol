@@ -255,7 +255,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         _localVars.amount
       );
     }
-    
+
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _params.subAccountId);
     _orderIndex = genericOrdersIndex[_subAccount];
 
@@ -383,24 +383,24 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     if (_amount == 0) revert IExt01Handler_BadAmount();
     if (_fromToken == _toToken) revert IExt01Handler_SameFromToToken();
 
-    emit LogCreateSwitchCollateralOrder(msg.sender, _subAccountId, _amount, _path, _minToAmount);
+    emit LogCreateSwitchCollateralOrder(_msgSender(), _subAccountId, _amount, _path, _minToAmount);
 
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = genericOrdersIndex[_subAccount];
 
-    SwitchCollateralOrder memory order = SwitchCollateralOrder({
-      primaryAccount: _msgSender(),
-      subAccountId: _subAccountId,
-      orderIndex: _orderIndex,
-      amount: _amount,
-      fromToken: _fromToken,
-      toToken: _toToken,
-      path: _path,
-      minToAmount: _minToAmount,
-      crossMarginService: crossMarginService
-    });
-
-    _rawOrder = abi.encode(order);
+    _rawOrder = abi.encode(
+      SwitchCollateralOrder({
+        primaryAccount: _msgSender(),
+        subAccountId: _subAccountId,
+        orderIndex: _orderIndex,
+        amount: _amount,
+        fromToken: _fromToken,
+        toToken: _toToken,
+        path: _path,
+        minToAmount: _minToAmount,
+        crossMarginService: crossMarginService
+      })
+    );
   }
 
   function _executeOrder(
@@ -435,7 +435,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     }
   }
 
-
   /**
    * Transfer Collateral
    */
@@ -457,11 +456,11 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     if (_amount == 0) revert IExt01Handler_BadAmount();
     if (_fromSubAccountId == _toSubAccountId) revert IExt01Handler_SelfTransfer();
 
-    emit LogCreateTransferCollateralOrder(msg.sender, _fromSubAccountId, _toSubAccountId, _token, _amount);
+    emit LogCreateTransferCollateralOrder(_msgSender(), _fromSubAccountId, _toSubAccountId, _token, _amount);
 
     _rawOrder = abi.encode(
       TransferCollateralOrder({
-        primaryAccount: msg.sender,
+        primaryAccount: _msgSender(),
         fromSubAccountId: _fromSubAccountId,
         toSubAccountId: _toSubAccountId,
         token: _token,
@@ -484,10 +483,18 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       )
     );
 
-    emit LogSwitchCollateral(_order.primaryAccount, _order.subAccountId, _order.path, _fromToken, _toToken, _order.amount, _toAmount);
+    emit LogSwitchCollateral(
+      _order.primaryAccount,
+      _order.subAccountId,
+      _order.path,
+      _fromToken,
+      _toToken,
+      _order.amount,
+      _toAmount
+    );
   }
 
-    function _executeTransferCollateralOrder(TransferCollateralOrder memory _order) internal {
+  function _executeTransferCollateralOrder(TransferCollateralOrder memory _order) internal {
     // Call service to transfer collateral
     _order.crossMarginService.transferCollateral(
       ICrossMarginService.TransferCollateralParams(
@@ -500,7 +507,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       )
     );
 
-    emit LogTransferCollateral( 
+    emit LogTransferCollateral(
       _order.primaryAccount,
       _order.fromSubAccountId,
       _order.toSubAccountId,

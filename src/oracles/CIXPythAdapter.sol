@@ -70,39 +70,17 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     return _price256;
   }
 
-  /// @notice Calculate geometric average price according to the formula
-  /// price = c * (price1 ^ weight1) * (price2 ^ weight2) * ... * (priceN ^ weightN)
-  /// @dev The function returns the average price of given prices and weight in e30 basis
-  /// @param _cE8 A magic constant in e8 basis
-  /// @param _pricesE8 An array of prices in e8 basis
-  /// @param _weightsE8 An array of price weights in e8 basis, the lenght should be relative to _pricesE8
-  function _calculateGeometricAveragePriceE30(
-    uint256 _cE8,
-    uint256[] memory _pricesE8,
-    uint256[] memory _weightsE8,
-    bool[] memory _usdQuoteds
-  ) private view returns (uint256 _avgE30) {
-    // Declare _accum as c
-    int128 _accum = _convertE8To64x64(_cE8);
+  function _accumulateWeightedPrice(
+    int128 _accum,
+    uint256 _priceE8,
+    uint256 _weightE8,
+    bool _usdQuoted
+  ) private view returns (int128) {
+    int128 _price = _convertE8To64x64(_priceE8);
+    int128 _weight = _convertE8To64x64(_weightE8);
+    if (_usdQuoted) _weight = _weight.neg();
 
-    // Reducing the _pricesE8, _weightsE8 with multiplication onto _accum
-    uint256 _len = _pricesE8.length;
-    for (uint256 i = 0; i < _len; ) {
-      int128 _price = _convertE8To64x64(_pricesE8[i]);
-      int128 _weight = _convertE8To64x64(_weightsE8[i]);
-
-      if (_usdQuoteds[i]) _weight = _weight.neg();
-
-      _accum = _accum.mul(_price.pow(_weight));
-
-      unchecked {
-        ++i;
-      }
-    }
-
-    // Convert the final result to uint256 in e30 basis
-    _avgE30 = _convert64x64ToE8(_accum) * 1e22;
-    return _avgE30;
+    return _accum.mul(_price.pow(_weight));
   }
 
   function _convertE8To64x64(uint256 _n) private view returns (int128 _output) {
@@ -118,6 +96,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
   /**
    * Getter
    */
+
   /// @notice Get the latest price of the given asset. Returned price is in e30 basis.
   /// @dev The price returns here can be staled. Min publish time is picked from the oldest price.
   /// @param _assetId The HMX asset id to get price. (not Pyth priceId)
@@ -125,32 +104,35 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
     bytes32 _assetId,
     bool /* _isMax */,
     uint32 /* _confidenceThreshold */
-  ) external view returns (uint256 _price30, uint256 _publishTime) {
+  ) external view returns (uint256 _priceE30, uint256 _publishTime) {
     // 1. Load the config
     ICIXPythAdapter.CIXPythPriceConfig memory _config = configs[_assetId];
 
     uint256 _len = _config.pythPriceIds.length;
     if (_len == 0) revert CIXPythAdapter_UnknownAssetId();
 
-    // 2. Prepare the parameters, map them into arrays
-    uint256[] memory _pricesE8 = new uint256[](_len);
-    uint256[] memory _weightsE8 = new uint256[](_len);
-    bool[] memory _usdQuoteds = new bool[](_len);
+    // 2. Loop through config.
+    // - Reduce the parameter with geometric average calculation.
+    //   Calculate geometric average price according to the formula
+    //   price = c * (price1 ^ +-weight1) * (price2 ^ +-weight2) * ... * (priceN ^ +-weightN)
+    // - Keep track of minimum publish time
+
+    // Declare _accum as c
+    int128 _accum = _convertE8To64x64(_config.cE8);
 
     for (uint256 i = 0; i < _len; ) {
-      // Get price
-      PythStructs.Price memory _price = pyth.getPriceUnsafe(_config.pythPriceIds[i]);
+      // Get price from Pyth
+      PythStructs.Price memory _priceStruct = pyth.getPriceUnsafe(_config.pythPriceIds[i]);
+      uint256 _priceE8 = _convertToUint256(_priceStruct, 8);
 
-      // Store params in array for average calculation
-      _pricesE8[i] = _convertToUint256(_price, 8);
-      _weightsE8[i] = _config.weightsE8[i];
-      _usdQuoteds[i] = _config.usdQuoteds[i];
+      // Accumulate the _accum with (priceN ^ +-weightN)
+      _accum = _accumulateWeightedPrice(_accum, _priceE8, _config.weightsE8[i], _config.usdQuoteds[i]);
 
       // Update publish time, with minimum _price.publishTime
       if (i == 0) {
-        _publishTime = _price.publishTime;
+        _publishTime = _priceStruct.publishTime;
       } else {
-        _publishTime = HMXLib.min(_publishTime, _price.publishTime);
+        _publishTime = HMXLib.min(_publishTime, _priceStruct.publishTime);
       }
 
       unchecked {
@@ -158,10 +140,10 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
       }
     }
 
-    // 3. Calculate the price with geometric weighted average
-    _price30 = _calculateGeometricAveragePriceE30(_config.cE8, _pricesE8, _weightsE8, _usdQuoteds);
+    // 3. Convert the final result to uint256 in e30 basis
+    _priceE30 = _convert64x64ToE8(_accum) * 1e22;
 
-    return (_price30, _publishTime);
+    return (_priceE30, _publishTime);
   }
 
   function getConfigByAssetId(bytes32 _assetId) external view returns (ICIXPythAdapter.CIXPythPriceConfig memory) {

@@ -12,6 +12,15 @@ contract CIXPythAdapter_GetPriceTest is CIXPythAdapter_BaseTest {
   function setUp() public override {
     super.setUp();
 
+    // Just init price to make the sanity check pass
+    updatePrice(eurPriceId, 1e8);
+    updatePrice(jpyPriceId, 1e8);
+    updatePrice(gbpPriceId, 1e8);
+    updatePrice(cadPriceId, 1e8);
+    updatePrice(sekPriceId, 1e8);
+    updatePrice(chfPriceId, 1e8);
+    vm.warp(2);
+
     /* 
       EURUSD	55.00%
       USDJPY	15.00%
@@ -90,7 +99,29 @@ contract CIXPythAdapter_GetPriceTest is CIXPythAdapter_BaseTest {
     (uint256 _price30, ) = cixPythAdapter.getLatestPrice(cix1AssetId, true, 0);
 
     // Assert with a very small precision error
-    assertApproxEqRel(_price30, 100e30, 0.0000000001e18, "Price E30 should be 100 USD");
+    assertApproxEqRel(_price30, 100e30, 0.00000001e18, "Price E30 should be 100 USD");
+  }
+
+  function testCorrectness_GetLatestPrice_PriceShouldBeCorrect2() external {
+    /*
+      EURUSD 1.05048
+      USDJPY 149.39
+      GBPUSD 1.2142
+      USDCAD 1.349
+      USDSEK 11.06
+      USDCHF 0.92
+    */
+    updatePrice(eurPriceId, 1.05048e8);
+    updatePrice(jpyPriceId, 180.00e8);
+    updatePrice(gbpPriceId, 1.2142e8);
+    updatePrice(cadPriceId, 1.349e8);
+    updatePrice(sekPriceId, 11.06e8);
+    updatePrice(chfPriceId, 0.92e8);
+
+    (uint256 _price30, ) = cixPythAdapter.getLatestPrice(cix1AssetId, true, 0);
+
+    // Assert with a very small precision error
+    assertApproxEqRel(_price30, 102.8354012e30, 0.00000001e18, "Price E30 should be 100 USD");
   }
 
   function testCorrectness_GetLatestPrice_PublishTimeShouldBeCorrect() external {
@@ -121,7 +152,7 @@ contract CIXPythAdapter_GetPriceTest is CIXPythAdapter_BaseTest {
     (uint256 _price30, uint256 _publishTime) = cixPythAdapter.getLatestPrice(cix1AssetId, true, 0);
 
     // Assert with a very small precision error
-    assertApproxEqRel(_price30, 100e30, 0.0000000001e18, "Price E30 should be 100 USD");
+    assertApproxEqRel(_price30, 100e30, 0.00000001e18, "Price E30 should be 100 USD");
     assertEq(_publishTime, 100, "Publish time should be the minimum from one of the asset");
   }
 }

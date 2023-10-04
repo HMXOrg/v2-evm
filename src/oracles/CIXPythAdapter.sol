@@ -29,7 +29,13 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
   mapping(bytes32 assetId => ICIXPythAdapter.CIXPythPriceConfig config) public configs;
 
   // events
-  event LogSetConfig(bytes32 indexed _assetId, uint256 _cE8, bytes32[] _pythPriceIds, uint256[] _weightsE8);
+  event LogSetConfig(
+    bytes32 indexed _assetId,
+    uint256 _cE8,
+    bytes32[] _pythPriceIds,
+    uint256[] _weightsE8,
+    bool[] _usdQuoteds
+  );
   event LogSetPyth(address _oldPyth, address _newPyth);
 
   function initialize(address _pyth) external initializer {
@@ -203,7 +209,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
         _weightSum += _weightsE8[i];
 
         // Sanity check for price id
-        // pyth.getPriceUnsafe(_pythPriceIds[i]);
+        pyth.getPriceUnsafe(_pythPriceIds[i]);
 
         unchecked {
           ++i;
@@ -221,7 +227,7 @@ contract CIXPythAdapter is OwnableUpgradeable, ICIXPythAdapter {
 
     // 3. Save to storage
     configs[_assetId] = _config;
-    emit LogSetConfig(_assetId, _cE8, _pythPriceIds, _weightsE8);
+    emit LogSetConfig(_assetId, _cE8, _pythPriceIds, _weightsE8, _usdQuoteds);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

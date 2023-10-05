@@ -1,30 +1,26 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
+import { ethers, tenderly, upgrades } from "hardhat";
+import { getConfig } from "../../utils/config";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
   const Contract = await ethers.getContractFactory("CrossMarginService", deployer);
   const TARGET_ADDRESS = config.services.crossMargin;
 
-  console.log(`> Preparing to upgrade CrossMarginService`);
+  console.log(`[upgrade/CrossMarginService] Preparing to upgrade CrossMarginService`);
   const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
-  console.log(`> Done`);
+  console.log(`[upgrade/CrossMarginService] Done`);
+  console.log(`[upgrade/CrossMarginService] New CrossMarginService Implementation address: ${newImplementation}`);
 
-  console.log(`> New CrossMarginService Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
-  console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`> Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`> Tx is mined!`);
+  await proxyAdminWrapper.upgrade(TARGET_ADDRESS, newImplementation.toString());
 
-  console.log(`> Verify contract on Tenderly`);
+  console.log(`[upgrade/CrossMarginService] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "CrossMarginService",

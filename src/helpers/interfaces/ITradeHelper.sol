@@ -75,4 +75,6 @@ interface ITradeHelper {
   function setAdaptiveFeeCalculator(address _adaptiveFeeCalculator) external;
 
   function setOrderbookOracle(address _orderbookOracle) external;
+
+  function setMaxAdaptiveFeeBps(uint32 _maxAdaptiveFeeBps) external;
 }

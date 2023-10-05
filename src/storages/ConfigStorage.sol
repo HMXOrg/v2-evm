@@ -97,7 +97,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   address public switchCollateralRouter;
   // Min Profit Duration by Market
   mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
-  mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex; // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
+  // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
+  mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
 
   /**
    * Modifiers

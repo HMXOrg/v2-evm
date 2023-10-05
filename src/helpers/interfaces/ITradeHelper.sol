@@ -71,4 +71,8 @@ interface ITradeHelper {
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex
   ) external;
+
+  function setAdaptiveFeeCalculator(address _adaptiveFeeCalculator) external;
+
+  function setOrderbookOracle(address _orderbookOracle) external;
 }

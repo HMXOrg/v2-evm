@@ -110,6 +110,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
   event LogFundingRate(uint256 indexed marketIndex, int256 oldFundingRate, int256 newFundingRate);
+  event LogSetAdaptiveFeeCalculator(address indexed oldAdaptiveFeeCalculator, address indexed adaptiveFeeCalculator);
+  event LogSetOrderbookOracle(address indexed oldOrderbookOracle, address indexed orderbookOracle);
+  event LogSetMaxAdaptiveFeeBps(uint32 indexed oldMaxAdaptiveFeeBps, uint32 indexed maxAdaptiveFeeBps);
 
   /**
    * Structs
@@ -172,6 +175,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   Calculator public calculator; // cache this from configStorage
   OrderbookOracle public orderbookOracle;
   AdaptiveFeeCalculator public adaptiveFeeCalculator;
+  uint32 public maxAdaptiveFeeBps;
 
   /// @notice Initializes the contract by setting the addresses for PerpStorage, VaultStorage, and ConfigStorage.
   /// @dev This function must be called after the contract is deployed and before it can be used.
@@ -1028,6 +1032,21 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _baseFeeBps,
       500
     );
+  }
+
+  function setAdaptiveFeeCalculator(address _adaptiveFeeCalculator) external onlyOwner {
+    emit LogSetAdaptiveFeeCalculator(address(adaptiveFeeCalculator), _adaptiveFeeCalculator);
+    adaptiveFeeCalculator = AdaptiveFeeCalculator(_adaptiveFeeCalculator);
+  }
+
+  function setOrderbookOracle(address _orderbookOracle) external onlyOwner {
+    emit LogSetOrderbookOracle(address(orderbookOracle), _orderbookOracle);
+    orderbookOracle = OrderbookOracle(_orderbookOracle);
+  }
+
+  function setMaxAdaptiveFeeBps(uint32 _maxAdaptiveFeeBps) external onlyOwner {
+    emit LogSetMaxAdaptiveFeeBps(maxAdaptiveFeeBps, _maxAdaptiveFeeBps);
+    maxAdaptiveFeeBps = _maxAdaptiveFeeBps;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

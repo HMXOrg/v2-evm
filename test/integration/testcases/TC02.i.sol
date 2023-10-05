@@ -1672,5 +1672,19 @@ contract TC02 is BaseIntTest_WithActions {
       assertAssetClassReserve(2, 0, "T19: ");
       assertAssetClassReserve(1, 0, "T19: ");
     }
+
+    // Test where epoch length is changed
+    skip(30 minutes);
+
+    marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 300 * 1e30);
+    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+
+    perpStorage.setEpochLengthForOI(1 minutes);
+
+    skip(2 minutes);
+
+    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
   }
 }

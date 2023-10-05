@@ -240,7 +240,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         _localVars.minToAmount
       );
     } else if (_params.orderType == 2) {
-      // OrderType 1 = Create transfer collateral order
+      // OrderType 2 = Create transfer collateral order
       CreateTransferCollateralOrderParams memory _localVars;
       (_localVars.fromSubAccountId, _localVars.toSubAccountId, _localVars.token, _localVars.amount) = abi.decode(
         _params.data,
@@ -533,7 +533,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));  
       _owner = _transferCollateralOrder.primaryAccount;
     }
-    
+
     bool _isExecutor = orderExecutors[_msgSender()];
     // validate if msg.sender is not owned the order or not executor, then revert
     if (_msgSender() != _owner && !_isExecutor) revert IExt01Handler_NotOrderOwner();

@@ -5,7 +5,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest, console2 } from "@hmx-test/base/BaseTest.sol";
-import { ABDKMath64x64 } from "lib/abdk-libraries-solidity/ABDKMath64x64.sol";
+import { ABDKMath64x64 } from "@abdk/ABDKMath64x64.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 

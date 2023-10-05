@@ -5,7 +5,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest, console2 } from "@hmx-test/base/BaseTest.sol";
-import { ABDKMath64x64 } from "@hmx/libraries/ABDKMath64x64.sol";
+import { ABDKMath64x64 } from "lib/abdk-libraries-solidity/ABDKMath64x64.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 
@@ -28,27 +28,27 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
   }
 
   function testCorrectness() external {
-    // 0.9 / 0.4372 = 1.67535368
-    int128 c = convertE8To64x64(1.67535368 * 1e8);
+    // c = 0.009 / 0.4372 = 0.02058554
+    int128 c = convertE8To64x64(0.02058554 * 1e8);
 
-    // g = 2^(2 - min(1, c/100))
-    // g = 2^(2 - min(1, 0.01675354))
-    // g = 2^(2 - 0.01675354)
-    // g = 2^(1.98324646) = 3.95381799
+    // g = 2^(2 - min(1, c))
+    // g = 2^(2 - min(1, 0.02058554))
+    // g = 2^(2 - 0.02058554)
+    // g = 2^(1.97941446) = 3.94333003
     int128 g = adaptiveFeeCalculator.findG(c);
-    assertEq(convert64x64ToE8(g), 395381799);
+    assertEq(convert64x64ToE8(g), 394333003);
 
     // c = sd / p
     // c = 2.56 / 0.5373 = 4.76456356
-    // g = 2^(2 - min(1, c/100))
-    // g = 2^(2 - min(1, 4.76456356/100)) = 3.87005578
+    // g = 2^(2 - min(1, c))
+    // g = 2^(2 - min(1, 4.76456356)) = 2
     // x = 400_000 + (0 * 1.5)
     // y = 0.0007 + ((min(400_000/500_000, 1))^g) * 0.05
-    // y = 0.0007 + ((min(400_000/500_000, 1))^3.87005578) * 0.05
-    // y = 0.0007 + (0.8)^3.87005578) * 0.05
-    // y = 0.0007 + 0.42165072 * 0.05
-    // y = 0.02178254 = 2.178254%
-    // in BPS = 0.02178254 * 1e4 = 217 BPS
+    // y = 0.0007 + ((min(400_000/500_000, 1))^2) * 0.05
+    // y = 0.0007 + (0.8)^2 * 0.05
+    // y = 0.0007 + 0.64 * 0.05
+    // y = 0.0327 = 3.27%
+    // in BPS = 0.0327 * 1e4 = 327 BPS => 326 BPS due to precision loss
     uint256 feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
       400_000 * 1e8,
       0 * 1e8,
@@ -57,7 +57,7 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
       7,
       500
     );
-    assertEq(feeBps, 217);
+    assertEq(feeBps, 326);
 
     // c = sd / p
     // c = 210 / 1.2 = 175

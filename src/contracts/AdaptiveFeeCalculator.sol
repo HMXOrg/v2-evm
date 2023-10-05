@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-import { ABDKMath64x64 } from "@hmx/libraries/ABDKMath64x64.sol";
+import { ABDKMath64x64 } from "lib/abdk-libraries-solidity/ABDKMath64x64.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract AdaptiveFeeCalculator {
@@ -36,7 +36,7 @@ contract AdaptiveFeeCalculator {
 
     int128 g = findG(_convertE8To64x64(coeffVariant));
     int128 B = HMXLib.minInt128(A, ABDKMath64x64.fromUInt(1));
-    int128 C = B.pow(g);
+    int128 C = pow(B, g);
     int128 y = _convertE8To64x64(baseFeeBps * 1e4).add(C.mul(_convertE8To64x64(maxFeeBps * 1e4)));
     return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), uint256(maxFeeBps)));
   }
@@ -50,5 +50,14 @@ contract AdaptiveFeeCalculator {
 
   function _convertE8To64x64(uint256 input) internal view returns (int128 output) {
     output = ABDKMath64x64.fromUInt(input).div(RATE_PRECISION_64x64);
+  }
+
+  function pow(int128 x, int128 y) internal pure returns (int128) {
+    require(x >= 0, "Negative base not allowed");
+    if (x == 0) {
+      require(y > 0, "0^0 is undefined");
+      return 0;
+    }
+    return ABDKMath64x64.exp_2(ABDKMath64x64.mul(ABDKMath64x64.log_2(x), y));
   }
 }

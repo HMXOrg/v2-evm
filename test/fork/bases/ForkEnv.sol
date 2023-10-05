@@ -57,6 +57,9 @@ import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
+
 abstract contract ForkEnv is Test {
   using stdJson for string;
 
@@ -138,4 +141,7 @@ abstract contract ForkEnv is Test {
   IERC20 internal sglp = IERC20(getAddress(".tokens.sglp"));
   IERC20 internal wstEth = IERC20(getAddress(".tokens.wstEth"));
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
+
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
 }

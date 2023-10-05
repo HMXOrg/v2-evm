@@ -48,6 +48,7 @@ import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
@@ -95,6 +96,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   address internal FEEVER;
   address internal ORDER_EXECUTOR;
   address internal BOT;
+
+  address internal constant EXT01_EXECUTOR = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -156,6 +159,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   AdaptiveFeeCalculator adaptiveFeeCalculator;
   OrderbookOracle orderbookOracle;
+  IExt01Handler ext01Handler;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -296,6 +300,29 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       executionOrderFee,
       maxExecutionChuck
     );
+
+    // deploy executor
+    ext01Handler = Deployer.deployExt01Handler(
+      address(proxyAdmin),
+      address(crossMarginService),
+      address(liquidationService),
+      address(liquidityService),
+      address(tradeService),
+      address(pyth)
+    );
+
+    ext01Handler.setOrderExecutor(EXT01_EXECUTOR, true);
+    ext01Handler.setMinExecutionFee(2, 0.1 * 1e9);
+    pyth.setUpdater(address(ext01Handler), true);
+    address[] memory _handlers = new address[](1);
+    _handlers[0] = address(ext01Handler);
+    address[] memory _services = new address[](1);
+    _services[0] = address(crossMarginService);
+    bool[] memory _isAllows = new bool[](1);
+    _isAllows[0] = true;
+    configStorage.setServiceExecutors(_services, _handlers, _isAllows);
+
+    vm.label(address(ext01Handler), "ext01Handler");
 
     // testers
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));

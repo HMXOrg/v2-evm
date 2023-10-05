@@ -12,7 +12,7 @@ import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC2
 import { IHLP } from "./interfaces/IHLP.sol";
 
 contract HLP is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable {
-  mapping(address => bool) public minters;
+  mapping(address user => bool isMinter) public minters;
 
   event SetMinter(address indexed minter, bool isMinter);
 
@@ -33,16 +33,16 @@ contract HLP is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable
     ERC20Upgradeable.__ERC20_init("HLP", "HLP");
   }
 
-  function setMinter(address minter, bool isMinter) external onlyOwner nonReentrant {
+  function setMinter(address minter, bool isMinter) external onlyOwner {
     minters[minter] = isMinter;
     emit SetMinter(minter, isMinter);
   }
 
-  function mint(address to, uint256 amount) external onlyMinter nonReentrant {
+  function mint(address to, uint256 amount) external onlyMinter {
     _mint(to, amount);
   }
 
-  function burn(address from, uint256 amount) external onlyMinter nonReentrant {
+  function burn(address from, uint256 amount) external onlyMinter {
     _burn(from, amount);
   }
 

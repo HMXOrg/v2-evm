@@ -290,28 +290,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     return _orderId;
   }
 
-  /// @notice Calculate new trader balance after transfer collateral token.
-  /// @dev This uses to calculate new trader balance when they tranferring token as collateral.
-  /// @param _subAccountIdFrom Trader's Sub-Account Id to withdraw from.
-  /// @param _subAccountIdTo Trader's Sub-Account Id to deposit to.
-  /// @param _token Token that's withdrawn as collateral.
-  /// @param _amount Token withdrawing amount.
-  function transferCollateralSubAccount(
-    uint8 _subAccountIdFrom,
-    uint8 _subAccountIdTo,
-    address _token,
-    uint256 _amount
-  ) external nonReentrant onlyAcceptedToken(_token) {
-    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
-    if (_subAccountIdFrom == _subAccountIdTo) revert ICrossMarginHandler_SelfTransfer();
-    // SLOAD
-    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
-
-    _crossMarginService.transferCollateral(msg.sender, _subAccountIdFrom, msg.sender, _subAccountIdTo, _token, _amount);
-
-    emit LogTransferCollateralSubAccount(msg.sender, _subAccountIdFrom, _subAccountIdTo, _token, _amount);
-  }
-
   /// @notice Executes a batch of pending withdraw orders.
   /// @param _endIndex The index of the last withdraw order to execute.
   /// @param _feeReceiver The address to receive the total execution fee.

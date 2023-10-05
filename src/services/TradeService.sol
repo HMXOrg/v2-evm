@@ -14,7 +14,7 @@ import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
-import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
@@ -109,7 +109,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     PerpStorage.Position position;
     OracleMiddleware oracle;
     ConfigStorage configStorage;
-    Calculator calculator;
+    ICalculator calculator;
     PerpStorage perpStorage;
     TradeHelper tradeHelper;
   }
@@ -136,7 +136,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     bool isLongPosition;
     AccountInfo accountInfo;
     // for SLOAD
-    Calculator calculator;
+    ICalculator calculator;
     PerpStorage perpStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
@@ -174,7 +174,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   address public vaultStorage;
   address public configStorage;
   address public tradeHelper;
-  Calculator public calculator; // cache this from configStorage
+  ICalculator public calculator; // cache this from configStorage
 
   /// @notice Initializes the contract and sets the required contract addresses.
   /// @param _perpStorage Address of the PerpStorage contract.
@@ -199,7 +199,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
     tradeHelper = _tradeHelper;
-    calculator = Calculator(ConfigStorage(_configStorage).calculator());
+    calculator = ICalculator(ConfigStorage(_configStorage).calculator());
   }
 
   /**
@@ -374,7 +374,12 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       // in order to avoid bypassing the maximum profit cap.
       // Additionally, if the minimum profit duration is active, increasing the position is not allowed.
       // This is checked by comparing _delta to 0, as it is virtually impossible for _delta to be 0 if the position is active without a minimum profit duration.
-      if (_isProfit && (_delta >= _vars.position.reserveValueE30 || _delta == 0)) {
+      uint256 minProfitDuration = _vars.configStorage.minProfitDurations(_marketIndex);
+      if (
+        _isProfit &&
+        (_delta >= _vars.position.reserveValueE30 ||
+          (block.timestamp < _vars.position.lastIncreaseTimestamp + minProfitDuration))
+      ) {
         revert ITradeService_NotAllowIncrease();
       }
 
@@ -623,8 +628,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           0
         );
 
-      // if market status is not 2, means that the market is closed or market status has been defined yet
-      if (_marketConfig.active && _marketStatus != 2) revert ITradeService_MarketIsClosed();
       // check sub account equity is under MMR
       /// @dev no need to derived price on this
       _subAccountHealthCheck(_vars.accountInfo.subAccount, 0, 0);
@@ -662,7 +665,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   /// @notice This function validates if deleverage is safe and healthy in Pool liquidity provider.
   function validateDeleverage() external view {
     // SLOAD
-    Calculator _calculator = calculator;
+    ICalculator _calculator = calculator;
     uint256 _aum = _calculator.getAUME30(false);
     uint256 _tvl = _calculator.getHLPValueE30(false);
 
@@ -675,7 +678,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
   /// @notice Reloads the configuration for the contract.
   function reloadConfig() external nonReentrant onlyOwner {
-    calculator = Calculator(ConfigStorage(configStorage).calculator());
+    calculator = ICalculator(ConfigStorage(configStorage).calculator());
   }
 
   /**
@@ -723,10 +726,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     if (_calculator == address(0)) revert ITradeService_InvalidAddress();
 
     emit LogSetCalculator(address(calculator), _calculator);
-    calculator = Calculator(_calculator);
+    calculator = ICalculator(_calculator);
 
     // Sanity check
-    Calculator(_calculator).oracle();
+    ICalculator(_calculator).oracle();
   }
 
   /// @notice Set new TradeHelper contract address.
@@ -778,7 +781,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.accountInfo.subAccount,
         _vars.position,
         _vars.positionSizeE30ToDecrease,
-        _marketConfig.increasePositionFeeRateBPS,
+        _marketConfig.decreasePositionFeeRateBPS,
         _marketConfig.assetClass,
         _vars.marketIndex
       );
@@ -829,6 +832,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       if (isProfit && delta >= _vars.position.reserveValueE30) {
         delta = _vars.position.reserveValueE30;
         _isMaxProfit = true;
+      }
+
+      uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
+      if (isProfit && block.timestamp < (_vars.position.lastIncreaseTimestamp + minProfitDuration)) {
+        revert ITradeService_NotAllowDecrease();
       }
 
       _vars.toRealizedPnl = (delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30;
@@ -1093,7 +1101,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   function _subAccountHealthCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) private view {
     // SLOAD
-    Calculator _calculator = calculator;
+    ICalculator _calculator = calculator;
 
     // check sub account is healthy
     int256 _subAccountEquity = _calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);

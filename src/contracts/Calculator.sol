@@ -19,6 +19,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is OwnableUpgradeable, ICalculator {
   using SafeCastUpgradeable for int256;
@@ -70,8 +71,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value in E30 format
-  function getAUME30(bool _isMaxPrice) external view returns (uint256) {
+  /// @return aum HLP Value in E30 format
+  function getAUME30(bool _isMaxPrice) external view returns (uint256 aum) {
     // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
@@ -81,7 +82,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     int256 pnlE30 = _getGlobalPNLE30();
 
     uint256 lossDebt = _vaultStorage.globalLossDebt();
-    uint256 aum = _getHLPValueE30(_isMaxPrice) +
+    aum =
+      _getHLPValueE30(_isMaxPrice) +
       pendingBorrowingFeeE30 +
       borrowingFeeDebt +
       lossDebt +
@@ -94,8 +96,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     } else {
       aum += uint256(pnlE30);
     }
-
-    return aum;
   }
 
   function getGlobalPNLE30() external view returns (int256) {
@@ -154,42 +154,36 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice GetHLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value
-  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
+  /// @return assetValue HLP Value
+  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256 assetValue) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     bytes32[] memory _hlpAssetIds = _configStorage.getHlpAssetIds();
-    uint256 assetValue = 0;
     uint256 _len = _hlpAssetIds.length;
 
-    for (uint256 i = 0; i < _len; ) {
-      uint256 value = _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
-      unchecked {
-        assetValue += value;
-        ++i;
+    unchecked {
+      for (uint256 i; i < _len; ++i) {
+        assetValue += _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
       }
     }
-
-    return assetValue;
   }
 
   /// @notice Get HLP underlying asset value in E30
   /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value
+  /// @return value HLP Value
   function _getHLPUnderlyingAssetValueE30(
     bytes32 _underlyingAssetId,
     ConfigStorage _configStorage,
     bool _isMaxPrice
-  ) internal view returns (uint256) {
+  ) internal view returns (uint256 value) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
     (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
-    uint256 value = (VaultStorage(vaultStorage).hlpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
+    value =
+      (VaultStorage(vaultStorage).hlpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
-
-    return value;
   }
 
   /// @notice getHLPPrice in e18 format
@@ -244,12 +238,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
       }
 
-      {
-        unchecked {
-          ++i;
-          totalPnlLong += _pnlLongE30;
-          totalPnlShort += _pnlShortE30;
-        }
+      unchecked {
+        ++i;
+        totalPnlLong += _pnlLongE30;
+        totalPnlShort += _pnlShortE30;
       }
     }
 
@@ -565,7 +557,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     VaultStorage vaultStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
-    uint256 decimals;
+    uint8 decimals;
     uint256 amount;
     uint256 priceE30;
     bytes32 tokenAssetId;
@@ -655,7 +647,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           _var.priceE30,
           _var.position.avgEntryPriceE30,
           _var.position.lastIncreaseTimestamp,
-          _var.position.marketIndex
+          _var.position.marketIndex,
+          false
         );
 
         if (_var.isProfit) {
@@ -1099,6 +1092,56 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return (_size * _baseFeeRateBPS) / BPS;
   }
 
+  function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) public view returns (bool, uint256) {
+    // Check for invalid input: averagePrice cannot be zero.
+    if (position.avgEntryPriceE30 == 0) return (false, 0);
+
+    // Calculate the difference between the average price and the fixed price.
+    uint256 priceDelta;
+    unchecked {
+      priceDelta = position.avgEntryPriceE30 > _markPrice
+        ? position.avgEntryPriceE30 - _markPrice
+        : _markPrice - position.avgEntryPriceE30;
+    }
+
+    // Calculate the delta, adjusted for the size of the order.
+    uint256 delta = (HMXLib.abs(position.positionSizeE30) * priceDelta) / position.avgEntryPriceE30;
+
+    // Determine if the position is profitable or not based on the averagePrice and the mark price.
+    bool isProfit;
+    bool _isLong = position.positionSizeE30 > 0;
+    if (_isLong) {
+      isProfit = _markPrice > position.avgEntryPriceE30;
+    } else {
+      isProfit = _markPrice < position.avgEntryPriceE30;
+    }
+
+    // In case of profit, we need to check the current timestamp against minProfitDuration
+    // in order to prevent front-run attack, or price manipulation.
+    // Check `isProfit` first, to save SLOAD in loss case.
+    if (isProfit) {
+      uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(position.marketIndex);
+      if (block.timestamp < position.lastIncreaseTimestamp + minProfitDuration) {
+        PerpStorage.Market memory _market = PerpStorage(perpStorage).getMarketByIndex(position.marketIndex);
+        ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
+          position.marketIndex
+        );
+        OracleMiddleware(oracle).getLatestAdaptivePrice(
+          _marketConfig.assetId,
+          _isLong, // if current position is SHORT position, then we use max price
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          -position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
+        );
+        return (isProfit, 0);
+      }
+    }
+
+    // Return the values of isProfit and delta.
+    return (isProfit, delta);
+  }
+
   function getDelta(
     uint256 _size,
     bool _isLong,
@@ -1107,7 +1150,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _lastIncreaseTimestamp,
     uint256 _marketIndex
   ) external view returns (bool, uint256) {
-    return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
+    return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex, true);
   }
 
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
@@ -1123,7 +1166,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _markPrice,
     uint256 _averagePrice,
     uint256 _lastIncreaseTimestamp,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool _useMinProfitDuration
   ) internal view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) return (false, 0);
@@ -1148,7 +1192,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // In case of profit, we need to check the current timestamp against minProfitDuration
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
-    if (isProfit) {
+    if (isProfit && _useMinProfitDuration) {
       uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
       if (block.timestamp < _lastIncreaseTimestamp + minProfitDuration) {
         return (isProfit, 0);

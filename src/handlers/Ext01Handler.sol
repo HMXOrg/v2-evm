@@ -530,10 +530,10 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));  
       _owner = _switchCollateralOrder.primaryAccount;
     } else if (_order.orderType == 2) {
-      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));  
-      _owner = _switchCollateralOrder.primaryAccount;
+      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));  
+      _owner = _transferCollateralOrder.primaryAccount;
     }
- 
+    
     bool _isExecutor = orderExecutors[_msgSender()];
     // validate if msg.sender is not owned the order or not executor, then revert
     if (_msgSender() != _owner && !_isExecutor) revert IExt01Handler_NotOrderOwner();

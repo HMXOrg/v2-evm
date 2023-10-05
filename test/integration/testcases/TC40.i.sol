@@ -78,7 +78,7 @@ contract TC40 is BaseIntTest_WithActions {
         _publishTimeData,
         block.timestamp,
         "",
-        false
+        true
       );
       vm.stopPrank();
     }
@@ -251,7 +251,7 @@ contract TC40 is BaseIntTest_WithActions {
         _publishTimeData,
         block.timestamp,
         "",
-        false
+        true
       );
       vm.stopPrank();
     }
@@ -326,7 +326,7 @@ contract TC40 is BaseIntTest_WithActions {
         _publishTimeData,
         block.timestamp,
         "",
-        false
+        true
       );
       vm.stopPrank();
     }
@@ -354,5 +354,22 @@ contract TC40 is BaseIntTest_WithActions {
       );
       vm.stopPrank();
     }
+  }
+
+  function testCorrectness_CancelTransferCollateralOrder() external {
+    usdc.mint(ALICE, 10_000 * 1e6);
+    vm.deal(ALICE, 10 ether);
+    uint256[] memory _orderIndexes = transferCollateralSubAccount(ALICE, 0, 1, address(usdc), 100 * 1e6);
+    vm.startPrank(ALICE);
+    assertEq(ext01Handler.getAllActiveOrders(3, 0).length, 1);
+    // cancel order, should have 0 active, 0 execute.
+    uint256 balanceBefore = ALICE.balance;
+
+    ext01Handler.cancelOrder(ALICE, 0, _orderIndexes[0]);
+    vm.stopPrank();
+
+    assertEq(ALICE.balance - balanceBefore, 100 * 1e6);
+    assertEq(ext01Handler.getAllActiveOrders(3, 0).length, 0);
+    assertEq(ext01Handler.getAllExecutedOrders(3, 0).length, 0);
   }
 }

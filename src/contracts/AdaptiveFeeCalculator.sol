@@ -35,33 +35,20 @@ contract AdaptiveFeeCalculator {
     int128 A = x.div(d);
 
     int128 g = findG(_convertE8To64x64(coeffVariant));
-    int128 B = _min(A, ABDKMath64x64.fromUInt(1));
+    int128 B = HMXLib.minInt128(A, ABDKMath64x64.fromUInt(1));
     int128 C = B.pow(g);
     int128 y = _convertE8To64x64(baseFeeBps * 1e4).add(C.mul(_convertE8To64x64(maxFeeBps * 1e4)));
     return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), uint256(maxFeeBps)));
   }
 
   function findG(int128 c) public pure returns (int128 g) {
-    // g = 2^(2 - min(1, c/100))
-    int128 c_100 = c.div(ABDKMath64x64.fromUInt(100));
-    int128 min = _min(ABDKMath64x64.fromUInt(1), c_100);
+    // g = 2^(2 - min(1, c))
+    int128 min = HMXLib.minInt128(ABDKMath64x64.fromUInt(1), c);
     int128 expo = ABDKMath64x64.fromUInt(2).sub(min);
     g = ABDKMath64x64.exp_2(expo);
   }
 
-  function findC(uint256 standardDeviationE8, uint256 averagePriceE8) public view returns (int128 c) {
-    // c = s/p
-    int128 s = _convertE8To64x64(standardDeviationE8);
-    int128 p = _convertE8To64x64(averagePriceE8);
-
-    c = s.div(p);
-  }
-
   function _convertE8To64x64(uint256 input) internal view returns (int128 output) {
     output = ABDKMath64x64.fromUInt(input).div(RATE_PRECISION_64x64);
-  }
-
-  function _min(int128 a, int128 b) internal pure returns (int128) {
-    return a < b ? a : b;
   }
 }

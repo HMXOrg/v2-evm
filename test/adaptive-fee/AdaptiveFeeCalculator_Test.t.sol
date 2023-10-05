@@ -10,6 +10,8 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 
 contract AdaptiveFeeCalculator_Test is BaseTest {
+  using ABDKMath64x64 for int128;
+
   int128 RATE_PRECISION_64x64 = ABDKMath64x64.fromUInt(1e8);
   AdaptiveFeeCalculator adaptiveFeeCalculator;
 
@@ -21,12 +23,13 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
     result = ABDKMath64x64.toUInt(ABDKMath64x64.mul(x, RATE_PRECISION_64x64));
   }
 
+  function convertE8To64x64(uint256 input) internal view returns (int128 output) {
+    output = ABDKMath64x64.fromUInt(input).div(RATE_PRECISION_64x64);
+  }
+
   function testCorrectness() external {
-    uint256 standardDeviationE8 = 0.9 * 1e8;
-    uint256 averagePriceE8 = 0.5372 * 1e8;
     // 0.9 / 0.4372 = 1.67535368
-    int128 c = adaptiveFeeCalculator.findC(standardDeviationE8, averagePriceE8);
-    assertEq(convert64x64ToE8(c), 167535368);
+    int128 c = convertE8To64x64(1.67535368 * 1e8);
 
     // g = 2^(2 - min(1, c/100))
     // g = 2^(2 - min(1, 0.01675354))

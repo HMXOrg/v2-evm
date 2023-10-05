@@ -1030,7 +1030,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       isBuy ? askDepth : bidDepth,
       coeffVariants,
       _baseFeeBps,
-      500
+      maxAdaptiveFeeBps
     );
   }
 

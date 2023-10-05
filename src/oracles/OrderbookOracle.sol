@@ -41,6 +41,7 @@ contract OrderbookOracle is Ownable {
   // events
   event LogSetUpdater(address indexed _account, bool _isActive);
   event SetMarketIndex(uint256 indexed index, uint256 marketIndex);
+  event SetMarketIndexes(uint256[] marketIndexes);
 
   /**
    * Modifiers
@@ -139,6 +140,17 @@ contract OrderbookOracle is Ownable {
     emit SetMarketIndex(indexCount, _marketIndex);
     marketIndexes.push(_marketIndex);
     ++indexCount;
+  }
+
+  function setMarketIndexes(uint256[] calldata _marketIndexes) external onlyOwner {
+    marketIndexes = _marketIndexes;
+    indexCount = marketIndexes.length + 1;
+
+    delete askDepths;
+    delete bidDepths;
+    delete coeffVariants;
+
+    emit SetMarketIndexes(_marketIndexes);
   }
 
   function buildUpdateData(int24[] calldata _depths) external pure returns (bytes32[] memory _updateData) {

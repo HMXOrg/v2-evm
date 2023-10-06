@@ -17,7 +17,7 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
   int128 private immutable _E8_PRECISION_64X64 = ABDKMath64x64.fromUInt(1e8);
 
   // errors
-  error CIXPriceAdapter_BrokenPythPrice();
+  error CIXPriceAdapter_MissingPriceFromBuildData();
   error CIXPriceAdapter_UnknownAssetId();
   error CIXPriceAdapter_BadParams();
   error CIXPriceAdapter_BadWeightSum();
@@ -90,7 +90,7 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
   function _getPriceE8ByAssetId(
     bytes32 _assetId,
     IEcoPythCalldataBuilder3.BuildData[] memory _buildDatas
-  ) private pure returns (uint256 priceE8) {
+  ) private pure returns (uint256 _priceE8) {
     uint256 _len = _buildDatas.length;
     for (uint256 i = 0; i < _len; ) {
       if (_assetId == _buildDatas[i].assetId) return uint256(int256(_buildDatas[i].priceE8));
@@ -99,6 +99,8 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
         ++i;
       }
     }
+
+    if (_priceE8 == 0) revert CIXPriceAdapter_MissingPriceFromBuildData();
   }
 
   /**

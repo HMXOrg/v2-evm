@@ -38,7 +38,6 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
-import { ICIXPythAdapter } from "@hmx/oracles/interfaces/ICIXPythAdapter.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
@@ -71,7 +70,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // oracle
   IPythAdapter pythAdapter;
-  ICIXPythAdapter cixPythAdapter;
   IOracleMiddleware oracleMiddleware;
   IEcoPyth internal ecoPyth;
 
@@ -182,7 +180,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
-    cixPythAdapter = Deployer.deployCIXPythAdapter(address(proxyAdmin), address(mockPyth));
     oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), 365 days);
 
     convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(

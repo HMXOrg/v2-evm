@@ -27,9 +27,6 @@ contract CalcPriceLens is Ownable {
     for (uint256 i = 0; i < priceIds.length; ) {
       priceAdapterById[priceIds[i]] = calcPriceAdapters[i];
 
-      // Sanity check
-      // calcPriceAdapters[i].getPrice();
-
       emit LogSetPriceAdapter(priceIds[i], address(calcPriceAdapters[i]));
 
       unchecked {

@@ -18,7 +18,6 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
 
   // errors
   error CIXPriceAdapter_MissingPriceFromBuildData();
-  error CIXPriceAdapter_UnknownAssetId();
   error CIXPriceAdapter_BadParams();
   error CIXPriceAdapter_BadWeightSum();
   error CIXPriceAdapter_COverDiff();

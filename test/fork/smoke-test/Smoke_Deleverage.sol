@@ -48,7 +48,7 @@ contract Smoke_Deleverage is Smoke_Base {
     assetIdsToManipulate[1] = "ETH";
     int64[] memory pricesE8ToManipulate = new int64[](2);
     pricesE8ToManipulate[0] = 1 * 1e8;
-    pricesE8ToManipulate[1] = 100000 * 1e8;
+    pricesE8ToManipulate[1] = 1 * 1e8;
     IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice(
       assetIdsToManipulate,
       pricesE8ToManipulate

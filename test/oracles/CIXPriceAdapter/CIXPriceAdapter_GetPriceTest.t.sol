@@ -72,7 +72,7 @@ contract CIXPriceAdapter_GetPriceTest is CIXPriceAdapter_BaseTest {
     _buildDatas[4].priceE8 = 11.06e8;
 
     vm.expectRevert(abi.encodeWithSignature("CIXPriceAdapter_MissingPriceFromBuildData()"));
-    uint256 _priceE18 = cixPriceAdapter.getPrice(_buildDatas);
+    cixPriceAdapter.getPrice(_buildDatas);
   }
 
   function testCorrectness_GetPrice_PriceShouldBeCorrect() external {

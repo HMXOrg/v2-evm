@@ -21,9 +21,11 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
   error CIXPriceAdapter_UnknownAssetId();
   error CIXPriceAdapter_BadParams();
   error CIXPriceAdapter_BadWeightSum();
+  error CIXPriceAdapter_COverDiff();
 
   // state variables
   ICIXPriceAdapter.CIXConfig public config;
+  uint32 public maxCDiffBps;
 
   // events
   event LogSetConfig(uint256 _cE8, bytes32[] _pythPriceIds, uint256[] _weightsE8, bool[] _usdQuoteds);
@@ -31,6 +33,7 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
 
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
+    maxCDiffBps = 1000; // 10%
   }
 
   function _accumulateWeightedPrice(
@@ -54,6 +57,16 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
   function _convert64x64ToE8(int128 _n) private view returns (uint128 _output) {
     _output = _n.mul(_E8_PRECISION_64X64).toUInt();
     return _output;
+  }
+
+  function _isOverMaxDiff(uint256 _a, uint256 _b, uint32 _maxDiffBps) private pure returns (bool) {
+    if (_a * 10000 > _b * uint32(_maxDiffBps)) {
+      return true;
+    }
+    if (_a * uint32(_maxDiffBps) < _b * 10000) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -103,6 +116,10 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
     if (_priceE8 == 0) revert CIXPriceAdapter_MissingPriceFromBuildData();
   }
 
+  function getConfig() external view returns (ICIXPriceAdapter.CIXConfig memory _config) {
+    return config;
+  }
+
   /**
    * Setter
    */
@@ -140,6 +157,14 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
       if (_weightSum != 1e8) revert CIXPriceAdapter_BadWeightSum();
     }
 
+    // Validate c deviation
+    {
+      // Skip this check if c haven't been defined before
+      if (config.cE8 != 0) {
+        if (_isOverMaxDiff(config.cE8, _cE8, maxCDiffBps)) revert CIXPriceAdapter_COverDiff();
+      }
+    }
+
     // 2. Assign config to storage
     config.cE8 = _cE8;
     config.assetIds = _assetIds;
@@ -147,6 +172,10 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
     config.usdQuoteds = _usdQuoteds;
 
     emit LogSetConfig(_cE8, _assetIds, _weightsE8, _usdQuoteds);
+  }
+
+  function setMaxCDiffBps(uint32 _maxCDiffBps) external onlyOwner {
+    maxCDiffBps = _maxCDiffBps;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

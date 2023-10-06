@@ -171,6 +171,30 @@ contract Smoke_Base is ForkEnv {
     }
   }
 
+  function _buildDataForPriceWithSpecificPrice(
+    bytes32[] memory assetIdsToManipulate,
+    int64[] memory pricesE8ToManipulate
+  ) internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
+    bytes32[] memory assetIds = ForkEnv.ecoPyth2.getAssetIds();
+
+    uint256 len = assetIds.length; // 35 - 1(index 0) = 34
+
+    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
+
+    for (uint i = 1; i < len; i++) {
+      data[i - 1].assetId = assetIds[i];
+      for (uint j = 0; j < assetIdsToManipulate.length; j++) {
+        if (assetIdsToManipulate[j] == assetIds[i]) {
+          data[i - 1].priceE8 = pricesE8ToManipulate[j];
+        } else {
+          data[i - 1].priceE8 = ForkEnv.ecoPyth2.getPriceUnsafe(assetIds[i]).price;
+        }
+      }
+      data[i - 1].publishTime = uint160(block.timestamp);
+      data[i - 1].maxDiffBps = 15_000;
+    }
+  }
+
   function _validateClosedPosition(bytes32 _id) internal {
     IPerpStorage.Position memory _position = ForkEnv.perpStorage.getPositionById(_id);
     // As the position has been closed, the gotten one should be empty stuct

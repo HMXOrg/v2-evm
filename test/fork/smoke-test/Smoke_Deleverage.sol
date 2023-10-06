@@ -43,7 +43,16 @@ contract Smoke_Deleverage is Smoke_Base {
   }
 
   function testCorrectness_SmokeTest_deleverage() external {
-    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice("BTC", 1 * 1e8);
+    bytes32[] memory assetIdsToManipulate = new bytes32[](2);
+    assetIdsToManipulate[0] = "BTC";
+    assetIdsToManipulate[1] = "ETH";
+    int64[] memory pricesE8ToManipulate = new int64[](2);
+    pricesE8ToManipulate[0] = 1 * 1e8;
+    pricesE8ToManipulate[1] = 100000 * 1e8;
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPriceWithSpecificPrice(
+      assetIdsToManipulate,
+      pricesE8ToManipulate
+    );
     (
       uint256 _minPublishTime,
       bytes32[] memory _priceUpdateCalldata,

@@ -43,10 +43,8 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   event LogCancelOrder(
     address indexed primaryAccount,
     uint256 indexed orderIndex,
-    uint8 indexed subAccountId,
-    uint248 amount,
-    address[] path,
-    uint256 executionFee
+    uint24 orderType,
+    uint8 indexed subAccountId
   );
   event LogTransferCollateral(
     address indexed primaryAccount,
@@ -242,7 +240,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         _localVars.minToAmount
       );
     } else if (_params.orderType == 2) {
-      // OrderType 1 = Create transfer collateral order
+      // OrderType 2 = Create transfer collateral order
       CreateTransferCollateralOrderParams memory _localVars;
       (_localVars.fromSubAccountId, _localVars.toSubAccountId, _localVars.token, _localVars.amount) = abi.decode(
         _params.data,
@@ -343,9 +341,13 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     } else {
       emit LogExecuteOrderResult(_order.orderIndex, _order.orderType, _order.executionFee, false, errMsg);
       _order.status = OrderStatus.FAIL;
-
-      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
-      _cancelOrder(_switchCollateralOrder.primaryAccount, _switchCollateralOrder.subAccountId, _order.orderIndex);
+      if (_order.orderType == 1) {
+        SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
+        _cancelOrder(_switchCollateralOrder.primaryAccount, _switchCollateralOrder.subAccountId, _order.orderIndex);
+      } else if (_order.orderType == 2) {
+        TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));
+        _cancelOrder(_transferCollateralOrder.primaryAccount, _transferCollateralOrder.fromSubAccountId, _order.orderIndex);
+      }
     }
   }
 
@@ -520,28 +522,35 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     address subAccount = HMXLib.getSubAccount(_mainAccount, _subAccountId);
     // SLOAD
     GenericOrder memory _order = genericOrders[subAccount][_orderIndex];
-    SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
 
-    // Check if this order still exists
-    if (_switchCollateralOrder.primaryAccount == address(0)) revert IExt01Handler_NonExistentOrder();
-    // validate if msg.sender is not owned the order, then revert
-    if (_msgSender() != _switchCollateralOrder.primaryAccount && !orderExecutors[_msgSender()])
-      revert IExt01Handler_NotOrderOwner();
+    if (_order.orderType == 0) revert IExt01Handler_NonExistentOrder();
+
+    address _owner;
+    if (_order.orderType == 1) {
+      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));  
+      _owner = _switchCollateralOrder.primaryAccount;
+    } else if (_order.orderType == 2) {
+      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));  
+      _owner = _transferCollateralOrder.primaryAccount;
+    }
+
+    bool _isExecutor = orderExecutors[_msgSender()];
+    // validate if msg.sender is not owned the order or not executor, then revert
+    if (_msgSender() != _owner && !_isExecutor) revert IExt01Handler_NotOrderOwner();
+
 
     _removeOrder(subAccount, _orderIndex);
 
     // refund the _order.executionFee if the caller is not executor
-    if (!orderExecutors[_msgSender()]) {
-      _transferOutETH(_order.executionFee, _switchCollateralOrder.primaryAccount);
+    if (!_isExecutor) {
+      _transferOutETH(_order.executionFee, _owner);
     }
 
     emit LogCancelOrder(
-      payable(_switchCollateralOrder.primaryAccount),
-      _switchCollateralOrder.orderIndex,
-      _switchCollateralOrder.subAccountId,
-      _switchCollateralOrder.amount,
-      _switchCollateralOrder.path,
-      _order.executionFee
+      payable(_owner),
+      _order.orderIndex,
+      _order.orderType,
+      _subAccountId
     );
 
     delete genericOrders[subAccount][_orderIndex];

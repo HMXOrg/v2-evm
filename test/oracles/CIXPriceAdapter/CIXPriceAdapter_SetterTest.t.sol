@@ -159,31 +159,4 @@ contract CIXPriceAdapter_SetterTest is CIXPriceAdapter_BaseTest {
     vm.expectRevert(abi.encodeWithSignature("CIXPriceAdapter_COverDiff()"));
     cixPriceAdapter.setConfig(_skewedC, _assetIds, _weightsE8, _usdQuoteds);
   }
-  // function testRevert_WhenSetConfig_WithBadAssetId() external {
-  //   bytes32[] memory _assetIds = new bytes32[](6);
-  //   _assetIds[0] = eurAssetId;
-  //   _assetIds[1] = jpyAssetId;
-  //   _assetIds[2] = gbpAssetId;
-  //   _assetIds[3] = cadAssetId;
-  //   _assetIds[4] = sekAssetId;
-  //   _assetIds[5] = "unknown_price_id";
-  //   uint256[] memory _weightsE8 = new uint256[](6);
-  //   _weightsE8[0] = 0.55e8;
-  //   _weightsE8[1] = 0.15e8;
-  //   _weightsE8[2] = 0.125e8;
-  //   _weightsE8[3] = 0.10e8;
-  //   _weightsE8[4] = 0.04e8;
-  //   _weightsE8[5] = 0.035e8;
-  //   bool[] memory _usdQuoteds = new bool[](6);
-  //   _usdQuoteds[0] = true;
-  //   _usdQuoteds[1] = false;
-  //   _usdQuoteds[2] = true;
-  //   _usdQuoteds[3] = false;
-  //   _usdQuoteds[4] = false;
-  //   _usdQuoteds[5] = false;
-  //   uint256 _c = 43.92050844e8;
-  //   // Revert when doing sanity check
-  //   vm.expectRevert(abi.encodeWithSignature("PriceFeedNotFound()"));
-  //   cixPriceAdapter.setConfig(cix1AssetId, _c, _assetIds, _weightsE8, _usdQuoteds);
-  // }
 }

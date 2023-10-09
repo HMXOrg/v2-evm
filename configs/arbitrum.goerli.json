@@ -42,7 +42,8 @@
       "glp": "",
       "wstEth": "",
       "hlp": ""
-    }
+    },
+    "orderbook": ""
   },
   "tokens": {
     "hlp": "0x83CC3519fA8F501Cd0C325f4F5e34Ac0B67c22fE",
@@ -85,6 +86,7 @@
     "tlc": "0x85da4D806D53120AF8f3Bd2D328549851Da49617"
   },
   "calculator": "0xf96b8cd6619E22A63E91960e8827B74256c913Ef",
+  "adaptiveFeeCalculator": "",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": "0x2dC02905A19879Be641f050a9659C47725E5d500"

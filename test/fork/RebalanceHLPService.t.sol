@@ -197,18 +197,26 @@ contract RebalanceHLPService_Test is Smoke_Base {
     rebalanceHLPService.setMinHLPValueLossBPS(1);
     vm.stopPrank();
 
-    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
-    params[0] = IRebalanceHLPService.AddGlpParams(
-      address(usdc_e),
-      address(0),
-      vaultStorage.hlpLiquidity(address(usdc_e)),
-      0,
-      0
-    );
+    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](4);
+    params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), 1_700_000 * 1e6, 0, 0);
     params[1] = IRebalanceHLPService.AddGlpParams(
       address(weth),
       address(0),
       vaultStorage.hlpLiquidity(address(weth)),
+      0,
+      0
+    );
+    params[2] = IRebalanceHLPService.AddGlpParams(
+      address(wbtc),
+      address(0),
+      vaultStorage.hlpLiquidity(address(wbtc)),
+      0,
+      0
+    );
+    params[3] = IRebalanceHLPService.AddGlpParams(
+      address(usdt),
+      address(0),
+      vaultStorage.hlpLiquidity(address(usdt)),
       0,
       0
     );

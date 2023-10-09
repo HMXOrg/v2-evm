@@ -14,12 +14,6 @@ async function main(chainId: number) {
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
-    {
-      assetId: ethers.utils.formatBytes32String("ICP"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
-      adapter: config.oracles.pythAdapter,
-    },
   ];
 
   const deployer = signers.deployer(chainId);
@@ -33,10 +27,10 @@ async function main(chainId: number) {
       assetConfigs.map((each) => each.assetId),
       assetConfigs.map((each) => each.confidenceThreshold),
       assetConfigs.map((each) => each.trustPriceAge),
-      assetConfigs.map((each) => each.adapter)
-    )
-  ).wait();
-  console.log("[configs/OracleMiddleware] Finished");
+      assetConfigs.map((each) => each.adapter),
+    ])
+  );
+  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
 }
 
 const prog = new Command();

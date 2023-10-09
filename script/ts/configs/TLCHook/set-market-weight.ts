@@ -22,10 +22,6 @@ async function main(chainId: number) {
       marketIndex: 32, // BCHUSD
       weightBPS: 7 * BPS,
     },
-    {
-      marketIndex: 33, // ICPUSD
-      weightBPS: 7 * BPS,
-    },
   ];
 
   const tlcHook = TLCHook__factory.connect(config.hooks.tlc, deployer);

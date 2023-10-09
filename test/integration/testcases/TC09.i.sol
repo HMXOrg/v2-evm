@@ -58,6 +58,9 @@ contract TC09 is BaseIntTest_WithActions {
       // buy
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
       marketBuy(ALICE, 1, wbtcMarketIndex, 10_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+
+      assertEq(perpStorage.getEpochOI(true, jpyMarketIndex), 100_000 * 1e30);
+      assertEq(perpStorage.getEpochOI(true, wbtcMarketIndex), 10_000 * 1e30);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level

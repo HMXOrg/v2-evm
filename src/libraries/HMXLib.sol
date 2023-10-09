@@ -55,4 +55,8 @@ library HMXLib {
   function getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
+
+  function minInt128(int128 a, int128 b) internal pure returns (int128) {
+    return a < b ? a : b;
+  }
 }

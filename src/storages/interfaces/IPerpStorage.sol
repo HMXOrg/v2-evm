@@ -105,4 +105,12 @@ interface IPerpStorage {
   function getActivePositions(uint256 _limit, uint256 _offset) external view returns (Position[] memory _positions);
 
   function getActiveSubAccounts(uint256 _limit, uint256 _offset) external view returns (address[] memory _subAccounts);
+
+  function setEpochLengthForOI(uint256 epochLength) external;
+
+  function increaseEpochOI(bool isLong, uint256 marketIndex, uint256 absSizeDelta) external;
+
+  function decreaseEpochOI(bool isLong, uint256 marketIndex, uint256 absSizeDelta) external;
+
+  function getEpochOI(bool isLong, uint256 marketIndex) external view returns (uint256 epochOI);
 }

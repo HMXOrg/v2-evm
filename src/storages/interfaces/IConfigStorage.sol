@@ -192,7 +192,8 @@ interface IConfigStorage {
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig calldata _newConfig
+    MarketConfig calldata _newConfig,
+    bool isAdaptiveFeeEnabled
   ) external returns (MarketConfig memory _marketConfig);
 
   function setHlpTokenConfig(
@@ -237,4 +238,6 @@ interface IConfigStorage {
   function minimumPositionSize() external view returns (uint256);
 
   function getAssetClassConfigsLength() external view returns (uint256);
+
+  function isAdaptiveFeeEnabledByMarketIndex(uint256 marketIndex) external view returns (bool);
 }

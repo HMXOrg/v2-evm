@@ -73,6 +73,8 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
@@ -155,7 +157,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   ProxyAdmin proxyAdmin;
 
-  // Executor
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
   IExt01Handler ext01Handler;
 
   constructor() {
@@ -298,7 +301,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       maxExecutionChuck
     );
 
-
     // deploy executor
     ext01Handler = Deployer.deployExt01Handler(
       address(proxyAdmin),
@@ -396,5 +398,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       crossMarginHandler.setOrderExecutor(address(this), true);
     }
+
+    adaptiveFeeCalculator = new AdaptiveFeeCalculator();
+    orderbookOracle = new OrderbookOracle();
+
+    tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));
+    tradeHelper.setOrderbookOracle(address(orderbookOracle));
+    tradeHelper.setMaxAdaptiveFeeBps(500);
   }
 }

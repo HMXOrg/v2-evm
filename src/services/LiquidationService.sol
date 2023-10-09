@@ -321,10 +321,11 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.positionId,
           _subAccount,
           _vars.position,
-          HMXLib.abs(_vars.position.positionSizeE30),
+          -_vars.position.positionSizeE30,
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
-          _vars.position.marketIndex
+          _vars.position.marketIndex,
+          _vars.configStorage.isAdaptiveFeeEnabledByMarketIndex(_vars.position.marketIndex)
         );
         tradingFee += _vars.tradingFee;
         borrowingFee += _vars.borrowingFee;
@@ -391,19 +392,23 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
       // Update counter trade states
       {
-        _vars.isLong
-          ? _vars.perpStorage.updateGlobalLongMarketById(
+        if (_vars.isLong) {
+          _vars.perpStorage.updateGlobalLongMarketById(
             _vars.position.marketIndex,
             _vars.globalMarket.longPositionSize - _vars.absPositionSizeE30,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumSE - _vars.oldSumSe) : 0,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumS2E - _vars.oldSumS2e) : 0
-          )
-          : _vars.perpStorage.updateGlobalShortMarketById(
+          );
+          _vars.perpStorage.decreaseEpochOI(true, _vars.position.marketIndex, _vars.absPositionSizeE30);
+        } else {
+          _vars.perpStorage.updateGlobalShortMarketById(
             _vars.position.marketIndex,
             _vars.globalMarket.shortPositionSize - _vars.absPositionSizeE30,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumSE - _vars.oldSumSe) : 0,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumS2E - _vars.oldSumS2e) : 0
           );
+          _vars.perpStorage.decreaseEpochOI(false, _vars.position.marketIndex, _vars.absPositionSizeE30);
+        }
       }
 
       unchecked {

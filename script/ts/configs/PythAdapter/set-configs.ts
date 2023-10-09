@@ -11,11 +11,6 @@ const inputs = [
     pythPriceId: ethers.utils.formatBytes32String("BCH"),
     inverse: false,
   },
-  {
-    assetId: ethers.utils.formatBytes32String("ICP"),
-    pythPriceId: ethers.utils.formatBytes32String("ICP"),
-    inverse: false,
-  },
 ];
 
 async function main(chainId: number) {
@@ -29,10 +24,10 @@ async function main(chainId: number) {
     await pythAdapter.setConfigs(
       inputs.map((each) => each.assetId),
       inputs.map((each) => each.pythPriceId),
-      inputs.map((each) => each.inverse)
-    )
-  ).wait();
-  console.log("[configs/PythAdapter] Finished");
+      inputs.map((each) => each.inverse),
+    ])
+  );
+  console.log(`[configs/PythAdapter] Tx: ${tx}`);
 }
 
 const program = new Command();

@@ -161,6 +161,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
     oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
     oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+
+    orderbookOracle.insertMarketIndex(wethMarketIndex);
   }
 
   /// @notice setPrices of pyth

@@ -38,8 +38,10 @@
     "onChainPriceLens": "0x34F3Ae43A4766e35b2c53FE4D6e53F57Eb451B5A",
     "priceAdapters": {
       "glp": "0xDAa9eF42a073fAE417D9668b9bEbE1Ed8a4922E1",
-      "wstEth": "0x960a9A6Fc2dd724D0f28f0DDFDd7919CE9C7bD6C"
-    }
+      "wstEth": "0x960a9A6Fc2dd724D0f28f0DDFDd7919CE9C7bD6C",
+      "hlp": ""
+    },
+    "orderbook": ""
   },
   "tokens": {
     "hlp": "0x9772cE382D33573850f029c56828dff7717b3282",
@@ -82,6 +84,7 @@
     "tlc": "0x51461a3d67B2489e4879587404a0B51dA166DFd3"
   },
   "calculator": "0xCd6a5d5D7028D3EF48e25B626180b256EF901C4a",
+  "adaptiveFeeCalculator": "",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": "0x2dC02905A19879Be641f050a9659C47725E5d500"

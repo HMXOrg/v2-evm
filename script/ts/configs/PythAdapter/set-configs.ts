@@ -7,13 +7,8 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("CNH"),
-    pythPriceId: ethers.utils.formatBytes32String("CNH"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("HKD"),
-    pythPriceId: ethers.utils.formatBytes32String("HKD"),
+    assetId: ethers.utils.formatBytes32String("BCH"),
+    pythPriceId: ethers.utils.formatBytes32String("BCH"),
     inverse: false,
   },
 ];
@@ -35,7 +30,6 @@ async function main(chainId: number) {
     ])
   );
   console.log(`[configs/PythAdapter] Tx: ${tx}`);
-  console.log("[configs/PythAdapter] Finished");
 }
 
 const program = new Command();

@@ -16,6 +16,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 
 /// Readers
 import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
@@ -87,6 +88,7 @@ abstract contract ForkEnv is Test {
     IEcoPythCalldataBuilder(getAddress(".oracles.unsafeEcoPythCalldataBuilder")); // UnsafeEcoPythCalldataBuilder
   IPythAdapter internal pythAdapter = IPythAdapter(getAddress(".oracles.pythAdapter"));
   IOracleMiddleware internal oracleMiddleware = IOracleMiddleware(getAddress(".oracles.middleware"));
+  OnChainPriceLens internal onChainPriceLens = OnChainPriceLens(getAddress(".oracles.onChainPriceLens"));
   /// Handlers
   CrossMarginHandler internal crossMarginHandler = CrossMarginHandler(payable(getAddress(".handlers.crossMargin")));
   LimitTradeHandler internal limitTradeHandler = LimitTradeHandler(payable(getAddress(".handlers.limitTrade")));

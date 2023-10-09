@@ -12,6 +12,6 @@ contract CIXPriceAdapter_BaseTest is BaseTest {
   CIXPriceAdapter cixPriceAdapter;
 
   function setUp() public virtual {
-    cixPriceAdapter = CIXPriceAdapter(address(Deployer.deployCIXPriceAdapter(address(proxyAdmin))));
+    cixPriceAdapter = CIXPriceAdapter(address(Deployer.deployCIXPriceAdapter()));
   }
 }

@@ -4,13 +4,13 @@
 
 pragma solidity 0.8.18;
 
-import { ICIXPriceAdapter } from "@hmx/oracles/interfaces/ICIXPriceAdapter.sol";
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ABDKMath64x64 } from "@hmx/libraries/ABDKMath64x64.sol";
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
+import { ICIXPriceAdapter } from "@hmx/oracles/interfaces/ICIXPriceAdapter.sol";
 
 /// @dev Customized Index Pyth Adapter - Index price will be calculated using geometric mean according to weight config
-contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
+contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
   using ABDKMath64x64 for int128;
 
   // constant
@@ -24,16 +24,11 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
 
   // state variables
   ICIXPriceAdapter.CIXConfig public config;
-  uint32 public maxCDiffBps;
+  uint32 public maxCDiffBps = 1000; // 10%
 
   // events
   event LogSetConfig(uint256 _cE8, bytes32[] _pythPriceIds, uint256[] _weightsE8, bool[] _usdQuoteds);
   event LogSetPyth(address _oldPyth, address _newPyth);
-
-  function initialize() external initializer {
-    OwnableUpgradeable.__Ownable_init();
-    maxCDiffBps = 1000; // 10%
-  }
 
   function _accumulateWeightedPrice(
     int128 _accum,
@@ -175,10 +170,5 @@ contract CIXPriceAdapter is OwnableUpgradeable, ICIXPriceAdapter {
 
   function setMaxCDiffBps(uint32 _maxCDiffBps) external onlyOwner {
     maxCDiffBps = _maxCDiffBps;
-  }
-
-  /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor() {
-    _disableInitializers();
   }
 }

@@ -99,6 +99,10 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     uint256 _c = 43.92050844e8;
 
     cix1PriceAdapter.setConfig(_c, _assetIds, _weightsE8, _usdQuoteds);
+
+    vm.startPrank(ForkEnv.multiSig);
+    ForkEnv.ecoPyth2.insertAssetId("CIX1");
+    vm.stopPrank();
   }
 
   function _setupCalcPriceLens() internal {
@@ -145,76 +149,136 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     assertApproxEqRel(p, 100e18, 0.00000001e18, "Price E18 should be 100 USD");
   }
 
-  function testCorrectness_EcoPythCalldataBuilder3_build() external view {
-    IEcoPythCalldataBuilder3.BuildData[] memory _data = new IEcoPythCalldataBuilder3.BuildData[](11);
-    _data[0] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "ETH",
-      priceE8: 1594e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[1] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "GLP",
-      priceE8: 0,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[2] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "BTC",
-      priceE8: 25794.75 * 1e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[3] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "wstETH",
-      priceE8: 0,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[4] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "CIX1",
-      priceE8: 0,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[5] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "EUR",
-      priceE8: 1.05048e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[6] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "CHF",
-      priceE8: 0.92e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[7] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "CAD",
-      priceE8: 1.349e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[8] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "JPY",
-      priceE8: 180.00e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 100000
-    });
-    _data[9] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "GBP",
-      priceE8: 1.2142e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-    _data[10] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "CNH",
-      priceE8: 11.06e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 100000
-    });
+  function _getCurrentBuildData() internal view returns (IEcoPythCalldataBuilder3.BuildData[] memory data) {
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+    uint256 len = pythRes.length;
+    data = new IEcoPythCalldataBuilder3.BuildData[](len - 1);
+    for (uint i = 1; i < len; i++) {
+      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
+      data[i - 1].assetId = pythRes[i];
+      data[i - 1].priceE8 = _ecoPythPrice.price;
+      data[i - 1].publishTime = uint160(block.timestamp);
+      data[i - 1].maxDiffBps = 15_000;
+    }
+  }
 
-    ecoPythCalldataBuilder.build(_data);
-    unsafeEcoPythCalldataBuilder.build(_data);
+  function _overwritePriceByAssetId(
+    bytes32 _assetId,
+    IEcoPythCalldataBuilder3.BuildData[] memory _data,
+    int64 _newPriceE8,
+    uint32 _newMaxDiffBps
+  ) internal pure returns (IEcoPythCalldataBuilder3.BuildData[] memory) {
+    uint256 len = _data.length;
+
+    for (uint i = 1; i < len; i++) {
+      if (_assetId == _data[i].assetId) {
+        _data[i].priceE8 = _newPriceE8;
+        _data[i].maxDiffBps = _newMaxDiffBps;
+        return _data;
+      }
+    }
+
+    require(false, "Assset not found");
+    return _data;
+  }
+
+  function testCorrectness_EcoPythCalldataBuilder3_build() external {
+    // Prepare build data
+    IEcoPythCalldataBuilder3.BuildData[] memory _data = _getCurrentBuildData();
+    _overwritePriceByAssetId("EUR", _data, 1.05048e8, 15_000);
+    _overwritePriceByAssetId("CHF", _data, 0.92e8, 15_000);
+    _overwritePriceByAssetId("CAD", _data, 1.349e8, 15_000);
+    _overwritePriceByAssetId("JPY", _data, 149.39e8, 15_000);
+    _overwritePriceByAssetId("GBP", _data, 1.2142e8, 15_000);
+    _overwritePriceByAssetId("CNH", _data, 11.06e8, 100_000); // Use SEK price here
+
+    // Build
+    (
+      uint256 _minPublishTime,
+      bytes32[] memory _priceUpdateCalldata,
+      bytes32[] memory _publishTimeUpdateCalldata,
+
+    ) = ecoPythCalldataBuilder.build(_data);
+    vm.startPrank(address(ForkEnv.botHandler));
+
+    // Feed
+    ForkEnv.ecoPyth2.updatePriceFeeds(
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      _minPublishTime,
+      keccak256("pyth")
+    );
+    vm.stopPrank();
+
+    // Assertions
+
+    // Assert CIX
+    {
+      PythStructs.Price memory _p = ForkEnv.ecoPyth2.getPriceUnsafe("CIX1");
+      assertApproxEqRel(_p.price, 100e8, 0.000001e18, "CIX1 price should be 100 USD"); // 0.000001% error
+    }
+
+    // Assert GLP
+    {
+      PythStructs.Price memory _p = ForkEnv.ecoPyth2.getPriceUnsafe("GLP");
+      assertEq(_p.price, 0.96618661e8);
+    }
+
+    // Assert wstETH
+    {
+      PythStructs.Price memory _p = ForkEnv.ecoPyth2.getPriceUnsafe("wstETH");
+      assertEq(_p.price, 1849.59850477e8);
+    }
+
+    // Randomly assert the common assets, to ensure the data sequence
+    {
+      PythStructs.Price memory _p;
+      _p = ForkEnv.ecoPyth2.getPriceUnsafe("BTC");
+      assertEq(_p.price, 27852.78594028e8);
+      _p = ForkEnv.ecoPyth2.getPriceUnsafe("ETH");
+      assertEq(_p.price, 1621.21388544e8);
+      _p = ForkEnv.ecoPyth2.getPriceUnsafe("JPY");
+      assertEq(_p.price, 149.38840760e8);
+      _p = ForkEnv.ecoPyth2.getPriceUnsafe("XAG");
+      assertEq(_p.price, 21.72679030e8);
+      _p = ForkEnv.ecoPyth2.getPriceUnsafe("NVDA");
+      assertEq(_p.price, 457.50770011e8);
+      _p = ForkEnv.ecoPyth2.getPriceUnsafe("BCH");
+      assertEq(_p.price, 226.85902471e8);
+    }
+  }
+
+  function testCorrectness_UnsafeEcoPythCalldataBuilder3_shouldBuildTheSameResultAsSafeOne() external {
+    IEcoPythCalldataBuilder3.BuildData[] memory _data = _getCurrentBuildData();
+    _overwritePriceByAssetId("EUR", _data, 1.05048e8, 15_000);
+    _overwritePriceByAssetId("CHF", _data, 0.92e8, 15_000);
+    _overwritePriceByAssetId("CAD", _data, 1.349e8, 15_000);
+    _overwritePriceByAssetId("JPY", _data, 149.39e8, 15_000);
+    _overwritePriceByAssetId("GBP", _data, 1.2142e8, 15_000);
+    _overwritePriceByAssetId("CNH", _data, 11.06e8, 100_000); // Use SEK price here
+
+    (
+      uint256 _minPublishTime,
+      bytes32[] memory _priceUpdateCalldata,
+      bytes32[] memory _publishTimeUpdateCalldata,
+
+    ) = ecoPythCalldataBuilder.build(_data);
+
+    (
+      uint256 _unsafeMinPublishTime,
+      bytes32[] memory _unsafePriceUpdateCalldata,
+      bytes32[] memory _unsafePublishTimeUpdateCalldata,
+
+    ) = unsafeEcoPythCalldataBuilder.build(_data);
+
+    assertEq(_minPublishTime, _unsafeMinPublishTime);
+
+    for (uint i = 0; i < _priceUpdateCalldata.length; i++) {
+      assertEq(_priceUpdateCalldata[i], _unsafePriceUpdateCalldata[i]);
+    }
+
+    for (uint i = 0; i < _publishTimeUpdateCalldata.length; i++) {
+      assertEq(_publishTimeUpdateCalldata[i], _unsafePublishTimeUpdateCalldata[i]);
+    }
   }
 }

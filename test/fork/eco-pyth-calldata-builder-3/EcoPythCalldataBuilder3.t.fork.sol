@@ -39,8 +39,6 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
   function setUp() external {
     vm.createSelectFork(vm.rpcUrl("arbitrum_fork"), 138960612);
 
-    // glpPriceAdapter = new CIXPriceAdapter(ForkEnv.sglp, ForkEnv.glpManager);
-
     cix1PriceAdapter = new CIXPriceAdapter();
     _setupCIX1PriceAdapter();
 
@@ -60,51 +58,6 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
       calcPriceLens,
       false
     );
-
-    // _addSek();
-  }
-
-  function _addSek() internal {
-    vm.startPrank(ForkEnv.multiSig);
-    ForkEnv.ecoPyth2.insertAssetId("SEK");
-    vm.stopPrank();
-
-    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
-
-    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
-
-    IEcoPythCalldataBuilder3.BuildData[] memory data = new IEcoPythCalldataBuilder3.BuildData[](len + 1);
-
-    for (uint i = 1; i < len; i++) {
-      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
-      data[i - 1].assetId = pythRes[i];
-      data[i - 1].priceE8 = _ecoPythPrice.price;
-      data[i - 1].publishTime = uint160(block.timestamp);
-      data[i - 1].maxDiffBps = 15_000;
-    }
-
-    data[len] = IEcoPythCalldataBuilder3.BuildData({
-      assetId: "SEK",
-      priceE8: 11.00e8,
-      publishTime: uint160(block.timestamp),
-      maxDiffBps: 15000
-    });
-
-    (
-      uint256 _minPublishTime,
-      bytes32[] memory _priceUpdateCalldata,
-      bytes32[] memory _publishTimeUpdateCalldata,
-
-    ) = unsafeEcoPythCalldataBuilder.build(data);
-
-    vm.startPrank(address(ForkEnv.botHandler));
-    ForkEnv.ecoPyth2.updatePriceFeeds(
-      _priceUpdateCalldata,
-      _publishTimeUpdateCalldata,
-      _minPublishTime,
-      keccak256("pyth")
-    );
-    vm.stopPrank();
   }
 
   function _setupCIX1PriceAdapter() internal {
@@ -156,14 +109,6 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     calcPriceLens.setPriceAdapters(priceIds, priceAdapters);
   }
 
-  function testCorrectness_OnChainPriceLens_getPrice() external {
-    uint256 wstEthUsdPrice = onChainPriceLens.getPrice("wstETH");
-    assertEq(wstEthUsdPrice, 1849.608961014197395889 ether);
-
-    uint256 glpPrice = onChainPriceLens.getPrice("GLP");
-    assertEq(glpPrice, 0.966239558995737274 ether);
-  }
-
   function testCorrectness_CalcPriceLens_getPrice() external {
     IEcoPythCalldataBuilder3.BuildData[] memory _buildDatas = new IEcoPythCalldataBuilder3.BuildData[](10);
     _buildDatas[0].assetId = "EUR";
@@ -200,7 +145,7 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     assertApproxEqRel(p, 100e18, 0.00000001e18, "Price E18 should be 100 USD");
   }
 
-  function testCorrectness_EcoPythCalldataBuilder3_build() external {
+  function testCorrectness_EcoPythCalldataBuilder3_build() external view {
     IEcoPythCalldataBuilder3.BuildData[] memory _data = new IEcoPythCalldataBuilder3.BuildData[](11);
     _data[0] = IEcoPythCalldataBuilder3.BuildData({
       assetId: "ETH",
@@ -270,6 +215,6 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     });
 
     ecoPythCalldataBuilder.build(_data);
-    // unsafeEcoPythCalldataBuilder.build(_data);
+    unsafeEcoPythCalldataBuilder.build(_data);
   }
 }

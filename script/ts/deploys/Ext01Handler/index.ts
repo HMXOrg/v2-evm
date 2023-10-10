@@ -17,8 +17,8 @@ async function main() {
     config.oracles.ecoPyth2,
   ]);
   await contract.deployed();
-  console.log(`Deploying Ext01Handler Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploy/Ext01Handler] Deploying Ext01Handler Contract`);
+  console.log(`[deploy/Ext01Handler] Deployed at: ${contract.address}`);
 
   config.handlers.ext01 = contract.address;
   writeConfigFile(config);

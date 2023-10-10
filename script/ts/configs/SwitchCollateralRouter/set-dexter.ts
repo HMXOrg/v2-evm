@@ -12,22 +12,15 @@ type SetDexter = {
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const dexter = SwitchCollateralRouter__factory.connect(config.extension.switchCollateralRouter, deployer);
+  const swithCollateralRouter = SwitchCollateralRouter__factory.connect(
+    config.extension.switchCollateralRouter,
+    deployer
+  );
   const params: Array<SetDexter> = [
     {
-      tokenIn: config.tokens.usdt,
-      tokenOut: config.tokens.usdc,
-      dexter: config.extension.dexter.uniswapV3,
-    },
-    {
       tokenIn: config.tokens.usdc,
       tokenOut: config.tokens.usdt,
-      dexter: config.extension.dexter.uniswapV3,
-    },
-    {
-      tokenIn: config.tokens.dai,
-      tokenOut: config.tokens.usdc,
-      dexter: config.extension.dexter.uniswapV3,
+      dexter: config.extension.dexter.curve,
     },
     {
       tokenIn: config.tokens.usdc,
@@ -35,18 +28,8 @@ async function main(chainId: number) {
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.dai,
-      tokenOut: config.tokens.usdt,
-      dexter: config.extension.dexter.uniswapV3,
-    },
-    {
-      tokenIn: config.tokens.usdt,
-      tokenOut: config.tokens.dai,
-      dexter: config.extension.dexter.uniswapV3,
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.usdc,
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.wbtc,
       dexter: config.extension.dexter.uniswapV3,
     },
     {
@@ -55,12 +38,67 @@ async function main(chainId: number) {
       dexter: config.extension.dexter.uniswapV3,
     },
     {
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.arb,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.sglp,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.usdt,
+      tokenOut: config.tokens.usdc,
+      dexter: config.extension.dexter.curve,
+    },
+    {
+      tokenIn: config.tokens.dai,
+      tokenOut: config.tokens.usdc,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
       tokenIn: config.tokens.wbtc,
       tokenOut: config.tokens.usdc,
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.usdc,
+      tokenIn: config.tokens.weth,
+      tokenOut: config.tokens.usdc,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
+      tokenIn: config.tokens.arb,
+      tokenOut: config.tokens.usdc,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
+      tokenIn: config.tokens.sglp,
+      tokenOut: config.tokens.usdc,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.usdt,
+      tokenOut: config.tokens.weth,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
+      tokenIn: config.tokens.weth,
+      tokenOut: config.tokens.usdt,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
+      tokenIn: config.tokens.dai,
+      tokenOut: config.tokens.sglp,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.sglp,
+      tokenOut: config.tokens.dai,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.weth,
       tokenOut: config.tokens.wbtc,
       dexter: config.extension.dexter.uniswapV3,
     },
@@ -70,18 +108,43 @@ async function main(chainId: number) {
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.arb,
+      tokenIn: config.tokens.weth,
+      tokenOut: config.tokens.sglp,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.wbtc,
       tokenOut: config.tokens.weth,
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.sglp,
+      tokenIn: config.tokens.arb,
+      tokenOut: config.tokens.usdc,
       dexter: config.extension.dexter.uniswapV3,
     },
     {
       tokenIn: config.tokens.sglp,
       tokenOut: config.tokens.weth,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.wbtc,
+      tokenOut: config.tokens.sglp,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.sglp,
+      tokenOut: config.tokens.wbtc,
+      dexter: config.extension.dexter.glp,
+    },
+    {
+      tokenIn: config.tokens.wstEth,
+      tokenOut: config.tokens.weth,
+      dexter: config.extension.dexter.uniswapV3,
+    },
+    {
+      tokenIn: config.tokens.wstEth,
+      tokenOut: config.tokens.usdc,
       dexter: config.extension.dexter.uniswapV3,
     },
     {
@@ -90,15 +153,15 @@ async function main(chainId: number) {
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.wstEth,
-      tokenOut: config.tokens.weth,
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.wstEth,
       dexter: config.extension.dexter.uniswapV3,
     },
   ];
 
   console.log("[cmds/SwitchCollateralRouter] Setting dexter ...");
   for (let i = 0; i < params.length; i++) {
-    const tx = await dexter.setDexterOf(params[i].tokenIn, params[i].tokenOut, params[i].dexter, {
+    const tx = await swithCollateralRouter.setDexterOf(params[i].tokenIn, params[i].tokenOut, params[i].dexter, {
       gasLimit: 10000000,
     });
     console.log(

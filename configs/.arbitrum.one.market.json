@@ -271,6 +271,16 @@
       "assetSymbol": "FX.HKD",
       "quotedAssetSymbol": "FX.HKD",
       "sortIndex": 2004
+    },
+    {
+      "index": 32,
+      "name": "BCHUSD",
+      "assetId": "0x4243480000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "bch-usd",
+      "assetSymbol": "Crypto.BCH",
+      "quotedAssetSymbol": "Crypto.BCH",
+      "sortIndex": 2004
     }
   ],
   "assets": {

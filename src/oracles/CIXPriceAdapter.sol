@@ -28,6 +28,7 @@ contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
 
   // events
   event LogSetConfig(uint256 _cE8, bytes32[] _pythPriceIds, uint256[] _weightsE8, bool[] _usdQuoteds);
+  event LogSetMaxCDiffBps(uint256 _oldMaxCDiffBps, uint256 _newMaxCDiffBps);
   event LogSetPyth(address _oldPyth, address _newPyth);
 
   function _accumulateWeightedPrice(
@@ -117,6 +118,7 @@ contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
   /**
    * Setter
    */
+
   /// @notice Set the Pyth price id for the given asset.
   /// @param _cE8 A magic constant. Need to be recalculate every time the weight is changed.
   /// @param _assetIds An array asset id defined by HMX. This array index is relative to weightsE8.
@@ -168,7 +170,12 @@ contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
     emit LogSetConfig(_cE8, _assetIds, _weightsE8, _usdQuoteds);
   }
 
+  /// @notice Set maxCDiffBps.
+  /// @param _maxCDiffBps New value. Valid value is 0 - 10000.
   function setMaxCDiffBps(uint32 _maxCDiffBps) external onlyOwner {
+    if (_maxCDiffBps > 10000) revert CIXPriceAdapter_BadParams();
+
+    emit LogSetMaxCDiffBps(maxCDiffBps, _maxCDiffBps);
     maxCDiffBps = _maxCDiffBps;
   }
 }

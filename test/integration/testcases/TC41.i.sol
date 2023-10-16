@@ -103,7 +103,7 @@ contract TC41 is BaseIntTest_WithActions {
       for (uint256 i = 0; i < _orders.length; ++i) {
         _orderIndexes[i] = _orders[i].orderIndex;
       }
-      limitTradeHandler.batchCancelOrder(ALICE, subAccountId, _orderIndexes);
+      limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
       vm.stopPrank();
     }
 
@@ -145,7 +145,7 @@ contract TC41 is BaseIntTest_WithActions {
     // Populate _orderIndexes with order get
     _orderIndexes[0] = _orders[0].orderIndex;
     // Cancel Order
-    limitTradeHandler.batchCancelOrder(ALICE, subAccountId, _orderIndexes);
+    limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
 
     (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
@@ -158,7 +158,6 @@ contract TC41 is BaseIntTest_WithActions {
   function testCorrectness_TC41_batchCancelWithNonExistOrder() external {
     address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
     vm.deal(ALICE, 1 ether);
-    uint256 balanceBefore = ALICE.balance;
     vm.startPrank(ALICE);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _mainAccount: ALICE,
@@ -182,10 +181,11 @@ contract TC41 is BaseIntTest_WithActions {
     // Populate _orderIndexes with order get
     _orderIndexes[0] = _orders[0].orderIndex;
     _orderIndexes[1] = 99;
-    // Cancel Order
+    // Batch cancel orders with one non-existed order
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.batchCancelOrder(ALICE, subAccountId, _orderIndexes);
+    limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
 
+    // Order still not cancelled
     assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 1, "Order should not be cancelled");
   }
 }

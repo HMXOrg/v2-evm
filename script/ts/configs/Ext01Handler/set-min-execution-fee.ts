@@ -17,7 +17,7 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01, deployer);
 
-  const orderType = SWITCH_COLLATERAL_ORDER_TYPE;
+  const orderType = TRANSFER_COLLATERAL_ORDER_TYPE;
   const minExecutionFee = ethers.utils.parseEther("0.0003");
 
   console.log("[config/Ext01Handler] Ext01Handler setMinExecutionFee...");

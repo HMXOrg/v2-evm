@@ -5,7 +5,7 @@
 pragma solidity 0.8.18;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ABDKMath64x64 } from "@hmx/libraries/ABDKMath64x64.sol";
+import { ABDKMath64x64 } from "@abdk/ABDKMath64x64.sol";
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 import { ICIXPriceAdapter } from "@hmx/oracles/interfaces/ICIXPriceAdapter.sol";
 
@@ -41,7 +41,7 @@ contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
     int128 _weight = _convertE8To64x64(_weightE8);
     if (_usdQuoted) _weight = _weight.neg();
 
-    return _accum.mul(_price.pow(_weight));
+    return _accum.mul(pow(_price, _weight));
   }
 
   function _convertE8To64x64(uint256 _n) private view returns (int128 _output) {
@@ -177,5 +177,14 @@ contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
 
     emit LogSetMaxCDiffBps(maxCDiffBps, _maxCDiffBps);
     maxCDiffBps = _maxCDiffBps;
+  }
+
+  function pow(int128 x, int128 y) internal pure returns (int128) {
+    require(x >= 0, "Negative base not allowed");
+    if (x == 0) {
+      require(y > 0, "0^0 is undefined");
+      return 0;
+    }
+    return ABDKMath64x64.exp_2(ABDKMath64x64.mul(ABDKMath64x64.log_2(x), y));
   }
 }

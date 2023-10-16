@@ -6,7 +6,6 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
-// import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
@@ -87,6 +86,7 @@ contract TC41 is BaseIntTest_WithActions {
     }
 
     // Check orders length after create
+    // Must equal to 3
     {
       vm.prank(ALICE);
       assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 3);
@@ -95,8 +95,10 @@ contract TC41 is BaseIntTest_WithActions {
     // Batch Cancel Order
     {
       vm.startPrank(ALICE);
+      // Get all limit order
       ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
       uint256[] memory _orderIndexes = new uint256[](_orders.length);
+      // Populate _orderIndexes with order get
       for (uint256 i = 0; i < _orders.length; ++i) {
         _orderIndexes[i] = _orders[i].orderIndex;
       }
@@ -105,10 +107,10 @@ contract TC41 is BaseIntTest_WithActions {
     }
 
     // Check orders length after cancel
+    // Must equal to 0
     {
       vm.prank(ALICE);
       assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 0);
-      // assertEq(limitTradeHandler.activeLimitOrdersCount(), 0);
     }
   }
 }

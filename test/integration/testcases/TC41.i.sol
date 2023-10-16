@@ -20,7 +20,8 @@ contract TC41 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
   uint8 subAccountId = 0;
 
-  function testCorrectness_TC41_BatchCancelLimitTradeOrder() external {
+  // Batch cancel multiple order
+  function testCorrectness_TC41_batchCancelLimitTradeOrder() external {
 
     address _tokenAddress = address(weth);
 
@@ -112,5 +113,79 @@ contract TC41 is BaseIntTest_WithActions {
       vm.prank(ALICE);
       assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 0);
     }
+  }
+
+  // Batch cancel one order => from LimitTradeHandler_CancelOrder.t.sol
+  // Test normal functionality
+  function testCorrectness_TC41_batchCancelOneOrder() external {
+    address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
+    vm.deal(ALICE, 1 ether);
+    uint256 balanceBefore = ALICE.balance;
+    vm.startPrank(ALICE);
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(weth)
+    });
+
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    assertEq(limitOrder.account, ALICE);
+
+    // Get all limit order
+    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
+    uint256[] memory _orderIndexes = new uint256[](1);
+    // Populate _orderIndexes with order get
+    _orderIndexes[0] = _orders[0].orderIndex;
+    // Cancel Order
+    limitTradeHandler.batchCancelOrder(ALICE, subAccountId, _orderIndexes);
+
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    assertEq(limitOrder.account, address(0));
+
+    uint256 balanceDiff = ALICE.balance - balanceBefore;
+    assertEq(balanceDiff, 0 ether, "User should receive execution fee refund.");
+  }
+
+  // Test if there is non-exist order
+  function testCorrectness_TC41_batchCancelWithNonExistOrder() external {
+    address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
+    vm.deal(ALICE, 1 ether);
+    uint256 balanceBefore = ALICE.balance;
+    vm.startPrank(ALICE);
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(weth)
+    });
+
+    // Check if order is created
+    assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 1);
+
+    // Get all limit order
+    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
+    uint256[] memory _orderIndexes = new uint256[](2);
+    // Populate _orderIndexes with order get
+    _orderIndexes[0] = _orders[0].orderIndex;
+    _orderIndexes[1] = 99;
+    // Cancel Order
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
+    limitTradeHandler.batchCancelOrder(ALICE, subAccountId, _orderIndexes);
+
+    assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 1, "Order should not be cancelled");
   }
 }

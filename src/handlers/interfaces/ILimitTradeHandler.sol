@@ -159,6 +159,12 @@ interface ILimitTradeHandler {
 
   function cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
+  function batchCancelOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256[] calldata _orderIndexes
+  ) external;
+
   function updateOrder(
     address _mainAccount,
     uint8 _subAccountId,

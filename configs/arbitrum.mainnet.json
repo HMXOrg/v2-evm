@@ -14,7 +14,7 @@
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
     "rebalanceHLP": "0x3b2AC5d307595726f9fDa14B319fd1497Ac853cc",
-    "ext01": ""
+    "ext01": "0x04BEF154a57B8e884D53f2B8F141B34825b448Da"
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",

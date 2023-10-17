@@ -15,7 +15,7 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01, deployer);
 
-  const orderExecutor = "0x0578c797798ae89b688cd5676348344d7d0ec35e";
+  const orderExecutor = "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E";
   const isAllow = true;
 
   console.log("[config/Ext01Handler] Ext01Handler setOrderExecutor...");

@@ -69,6 +69,8 @@ interface IVaultStorage {
 
   function removeHLPLiquidity(address _token, uint256 _amount) external;
 
+  function removeHLPLiquidityOnHold(address _token, uint256 _amount) external;
+
   function pushToken(address _token, address _to, uint256 _amount) external;
 
   function addFundingFee(address _token, uint256 _amount) external;

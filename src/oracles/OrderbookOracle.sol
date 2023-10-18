@@ -24,18 +24,18 @@ contract OrderbookOracle is Ownable {
   // the order of the data will be according to market index
   bytes32[] public askDepths;
   bytes32[] public bidDepths;
-  bytes32[] public coeffVariants; // C (coefficient variant) = sd / averagePrice
-  // map Asset Id to index in the `prices` which is the array of tick price
+  // C (coefficient variant) = sd / averagePrice
+  bytes32[] public coeffVariants;
+  // map AssetId to index in the `askDepths`, `bidDepths`, and `coeffVariants`
   mapping(uint256 => uint256) public mapMarketIndexToIndex;
   uint256[] public marketIndexes;
   uint256 public indexCount;
-  // each price and each publish time diff will occupy 24 bits
-  // price will be in int24, where publish time diff will be in uint24
-  // multiple prices/publish time diffs will be fitted into a single uint256 (or word)
-  // uint256 will be able to contain 10 (10 * 24 = 240 bits) entries
+  // each `askDepths`, `bidDepths`, and `coeffVariants` will occupy 24 bits
+  // all three will be in int24 format. 10 entries of `askDepth`, `bidDepth`,
+  // and `coeffVariant` will be fitted into a single uint256 (or a word)
   uint256 public constant MAX_DEPTH_PER_WORD = 10;
 
-  // whitelist mapping of price updater
+  // whitelist mapping of updaters
   mapping(address => bool) public isUpdaters;
 
   // events
@@ -94,9 +94,9 @@ contract OrderbookOracle is Ownable {
     coeffVariant = (uint256(sqrtCoeffVariantX96) * (uint256(sqrtCoeffVariantX96)) * (1e8)) >> (96 * 2);
   }
 
-  /// @dev Sets the `isActive` status of the given account as a price updater.
+  /// @dev Sets the `isActive` status of the given account as a updater.
   /// @param _account The account address to update.
-  /// @param _isActive The new status of the account as a price updater.
+  /// @param _isActive The new status of the account as a updater.
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     // Set the `isActive` status of the given account
     isUpdaters[_account] = _isActive;

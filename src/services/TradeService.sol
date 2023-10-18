@@ -791,7 +791,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.position.positionSizeE30 > 0
           ? -_vars.positionSizeE30ToDecrease.toInt256()
           : _vars.positionSizeE30ToDecrease.toInt256(),
-        _marketConfig.increasePositionFeeRateBPS,
+        _marketConfig.decreasePositionFeeRateBPS,
         _marketConfig.assetClass,
         _vars.marketIndex,
         ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_vars.marketIndex)

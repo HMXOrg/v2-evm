@@ -10,6 +10,10 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 contract AdaptiveFeeCalculator {
   using ABDKMath64x64 for int128;
 
+  // Errors
+  error AdaptiveFeeCalculator_BadBase();
+  error AdaptiveFeeCalculator_ZeroPowZero();
+
   int128 RATE_PRECISION_64x64 = ABDKMath64x64.fromUInt(1e8);
   int128 BPS_PRECISION_64x64 = ABDKMath64x64.fromUInt(1e4);
 
@@ -38,7 +42,7 @@ contract AdaptiveFeeCalculator {
     int128 B = HMXLib.minInt128(A, ABDKMath64x64.fromUInt(1));
     int128 C = pow(B, g);
     int128 y = _convertE8To64x64(baseFeeBps * 1e4).add(C.mul(_convertE8To64x64(maxFeeBps * 1e4)));
-    return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), uint256(maxFeeBps)));
+    return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), maxFeeBps));
   }
 
   function findG(int128 c) public pure returns (int128 g) {
@@ -53,9 +57,13 @@ contract AdaptiveFeeCalculator {
   }
 
   function pow(int128 x, int128 y) internal pure returns (int128) {
-    require(x >= 0, "Negative base not allowed");
+    if (x < 0) {
+      revert AdaptiveFeeCalculator_BadBase();
+    }
     if (x == 0) {
-      require(y > 0, "0^0 is undefined");
+      if (y <= 0) {
+        revert AdaptiveFeeCalculator_ZeroPowZero();
+      }
       return 0;
     }
     return ABDKMath64x64.exp_2(ABDKMath64x64.mul(ABDKMath64x64.log_2(x), y));

@@ -24,3 +24,6 @@
 [submodule "lib/uni-v3-lib"]
 	path = lib/uni-v3-lib
 	url = https://github.com/Aperture-Finance/uni-v3-lib
+[submodule "lib/gmx-synthetics"]
+	path = lib/gmx-synthetics
+	url = https://github.com/gmx-io/gmx-synthetics

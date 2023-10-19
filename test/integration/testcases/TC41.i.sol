@@ -7,200 +7,202 @@ pragma solidity 0.8.18;
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
 contract TC41 is BaseIntTest_WithActions {
-  function testCorrectness_TC41_AdaptiveFee() external {
+  bytes[] internal updatePriceData;
+  uint8 subAccountId = 0;
+
+  // Batch cancel multiple order
+  function testCorrectness_TC41_batchCancelLimitTradeOrder() external {
+    address _tokenAddress = address(weth);
+
     // T0: Initialized state
-    // ALICE as liquidity provider
-    // BOB as trader
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+    {
+      //deal with out of gas
+      vm.deal(BOB, 10 ether);
+      vm.deal(BOT, 10 ether);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    _marketConfig.increasePositionFeeRateBPS = 7;
-    _marketConfig.decreasePositionFeeRateBPS = 7;
-    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, true);
+      // Mint liquidity for BOB
+      usdc.mint(BOB, 10_000_000 * 1e6);
 
-    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
-    configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);
+      // Mint collateral and gas for ALICE
+      vm.deal(ALICE, 20 ether);
+    }
 
-    // T1: Add liquidity in pool USDC 100_000 , WBTC 100
-    vm.deal(ALICE, executionOrderFee);
-    wbtc.mint(ALICE, 100 * 1e8);
+    // BOB add liquidity
+    addLiquidity(BOB, usdc, 10_000_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
-    addLiquidity(
-      ALICE,
-      ERC20(address(wbtc)),
-      100 * 1e8,
-      executionOrderFee,
-      tickPrices,
-      publishTimeDiff,
-      block.timestamp,
-      true
+    // Deposit Collateral
+    depositCollateral(ALICE, subAccountId, ERC20(_tokenAddress), 10 ether, true);
+
+    address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
+
+    // Create Limit Orders
+    {
+      createLimitTradeOrder({
+        _account: ALICE,
+        _subAccountId: subAccountId,
+        _marketIndex: wethMarketIndex,
+        _sizeDelta: 1_000 * 1e30,
+        _triggerPrice: 0,
+        _acceptablePrice: type(uint256).max,
+        _triggerAboveThreshold: true,
+        _executionFee: 0.0001 ether,
+        _reduceOnly: false,
+        _tpToken: _tokenAddress
+      });
+      createLimitTradeOrder({
+        _account: ALICE,
+        _subAccountId: subAccountId,
+        _marketIndex: wbtcMarketIndex,
+        _sizeDelta: 1_000 * 1e30,
+        _triggerPrice: 0,
+        _acceptablePrice: type(uint256).max,
+        _triggerAboveThreshold: true,
+        _executionFee: 0.0001 ether,
+        _reduceOnly: false,
+        _tpToken: _tokenAddress
+      });
+      createLimitTradeOrder({
+        _account: ALICE,
+        _subAccountId: subAccountId,
+        _marketIndex: jpyMarketIndex,
+        _sizeDelta: 1_000 * 1e30,
+        _triggerPrice: 0,
+        _acceptablePrice: type(uint256).max,
+        _triggerAboveThreshold: true,
+        _executionFee: 0.0001 ether,
+        _reduceOnly: false,
+        _tpToken: _tokenAddress
+      });
+    }
+
+    // Check orders length after create
+    // Must equal to 3
+    {
+      vm.prank(ALICE);
+      assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 3);
+    }
+
+    // Batch Cancel Order
+    {
+      vm.startPrank(ALICE);
+      // Get all limit order
+      ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(
+        _aliceSubAccount0,
+        5,
+        0
+      );
+      uint256[] memory _orderIndexes = new uint256[](_orders.length);
+      // Populate _orderIndexes with order get
+      for (uint256 _i; _i < _orders.length; ) {
+        _orderIndexes[_i] = _orders[_i].orderIndex;
+        unchecked {
+          ++_i;
+        }
+      }
+      limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
+      vm.stopPrank();
+    }
+
+    // Check orders length after cancel
+    // Must equal to 0
+    {
+      vm.prank(ALICE);
+      assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 0);
+    }
+  }
+
+  // Batch cancel one order => from LimitTradeHandler_CancelOrder.t.sol
+  // Test normal functionality
+  function testCorrectness_TC41_batchCancelOneOrder() external {
+    address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
+    vm.deal(ALICE, 1 ether);
+    uint256 balanceBefore = ALICE.balance;
+    vm.startPrank(ALICE);
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(weth)
+    });
+
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    assertEq(limitOrder.account, ALICE);
+
+    // Get all limit order
+    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(
+      _aliceSubAccount0,
+      5,
+      0
     );
+    uint256[] memory _orderIndexes = new uint256[](1);
+    // Populate _orderIndexes with order get
+    _orderIndexes[0] = _orders[0].orderIndex;
+    // Cancel Order
+    limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
 
-    vm.deal(ALICE, executionOrderFee);
-    usdc.mint(ALICE, 100_000 * 1e6);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    assertEq(limitOrder.account, address(0));
 
-    addLiquidity(
-      ALICE,
-      ERC20(address(usdc)),
-      100_000 * 1e6,
-      executionOrderFee,
-      tickPrices,
-      publishTimeDiff,
-      block.timestamp,
-      true
+    uint256 balanceDiff = ALICE.balance - balanceBefore;
+    assertEq(balanceDiff, 0 ether, "User should receive execution fee refund.");
+  }
+
+  // Test if there is non-exist order
+  function testCorrectness_TC41_batchCancelWithNonExistOrder() external {
+    address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
+    vm.deal(ALICE, 1 ether);
+    vm.startPrank(ALICE);
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(weth)
+    });
+
+    // Check if order is created
+    assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 1);
+
+    // Get all limit order
+    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(
+      _aliceSubAccount0,
+      5,
+      0
     );
+    uint256[] memory _orderIndexes = new uint256[](2);
+    // Populate _orderIndexes with order get
+    _orderIndexes[0] = _orders[0].orderIndex;
+    _orderIndexes[1] = 99;
+    // Batch cancel orders with one non-existed order
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
+    limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
 
-    {
-      // HLP => 1_994_000.00(WBTC) + 100_000 (USDC)
-      assertHLPTotalSupply(2_094_000 * 1e18);
-
-      // assert HLP
-      assertTokenBalanceOf(ALICE, address(hlpV2), 2_094_000 * 1e18);
-      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
-      assertHLPLiquidity(address(usdc), 100_000 * 1e6);
-    }
-
-    // T2: Open 2 positions in the same market and the same exposure
-    {
-      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
-      assertVaultTokenBalance(address(usdc), 100_000 * 1e6, "TC38: before deposit collateral");
-    }
-
-    usdc.mint(BOB, 100_000 * 1e6);
-    usdc.mint(CAROL, 100_000 * 1e6);
-    depositCollateral(BOB, 0, ERC20(address(usdc)), 100_000 * 1e6);
-    depositCollateral(CAROL, 0, ERC20(address(usdc)), 100_000 * 1e6);
-
-    {
-      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
-      assertVaultTokenBalance(address(usdc), 300_000 * 1e6, "TC38: before deposit collateral");
-    }
-
-    int24[] memory askDepthTicks = new int24[](1);
-    askDepthTicks[0] = 149149; // 3000094.37572017
-
-    int24[] memory bidDepthTicks = new int24[](1);
-    bidDepthTicks[0] = 129149; // 406059.22326026
-
-    int24[] memory coeffVariantTicks = new int24[](1);
-    coeffVariantTicks[0] = -60708; // 0.00231002
-
-    bytes32[] memory askDepths = orderbookOracle.buildUpdateData(askDepthTicks);
-    bytes32[] memory bidDepths = orderbookOracle.buildUpdateData(bidDepthTicks);
-    bytes32[] memory coeffVariants = orderbookOracle.buildUpdateData(coeffVariantTicks);
-    orderbookOracle.setUpdater(address(this), true);
-    orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
-
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
-
-    //  Open position
-    // - Long ETHUSD 100,000 USD
-    // Adaptive Fee:
-    // c = 0.00231002
-    // g = 2^(2 - min(1, c))
-    // g = 2^(2 - min(1, 0.00231002))
-    // g = 2^(2 - 0.00231002) = 3.99360039
-    // x = 100000 + (0 * 1.5) = 100000
-    // y = 0.0007 + ((min(100000/3000094.37572017, 1))^g) * 0.05
-    // y = 0.0007 + ((min(0.03333228, 1))^3.99360039) * 0.05
-    // y = 0.0007 + (0.03333228)^3.99360039 * 0.05
-    // y = 0.0007 + 0.00000126 * 0.05
-    // y = 0.00070006 = 0.070006%
-    // in BPS = 0.00070006 * 1e4 = 7 BPS
-
-    // Long ETH
-    uint256 usdcProtocolFeeBefore = vaultStorage.protocolFees(address(usdc));
-    uint256 usdcDevFeeBefore = vaultStorage.devFees(address(usdc));
-
-    vm.deal(BOB, 1 ether);
-    marketBuy(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
-
-    bytes32 _positionId = keccak256(abi.encodePacked(BOB, wethMarketIndex));
-    IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
-    assertEq(_position.positionSizeE30, 100_000 * 1e30);
-
-    // 0.07% of 100,000 trade = 70 usd in fee
-    // 63 usd -> protocol fee
-    // 7 usd -> dev fee (10%)
-    assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 63 * 1e6);
-    assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 7 * 1e6);
-
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 100_000 * 1e30);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
-
-    // Increase position
-    // Long ETHUSD 1,500,000 USD
-    // Adaptive Fee:
-    // c = 0.00231002
-    // g = 2^(2 - min(1, c))
-    // g = 2^(2 - min(1, 0.00231002))
-    // g = 2^(2 - 0.00231002) = 3.99360039
-    // x = 1500000 + (100000 * 1.5) = 1650000
-    // y = 0.0007 + ((min(1650000/3000094.37572017, 1))^g) * 0.05
-    // y = 0.0007 + ((min(0.5499827, 1))^3.99360039) * 0.05
-    // y = 0.0007 + (0.5499827)^3.99360039 * 0.05
-    // y = 0.0007 + 0.09184548 * 0.05
-    // y = 0.00529227 = 0.529227%
-    // in BPS = 0.00529227 * 1e4 = 52 BPS
-    usdcProtocolFeeBefore = vaultStorage.protocolFees(address(usdc));
-    usdcDevFeeBefore = vaultStorage.devFees(address(usdc));
-    marketBuy(BOB, 0, wethMarketIndex, 1_500_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
-
-    _position = perpStorage.getPositionById(_positionId);
-    assertEq(_position.positionSizeE30, 1_600_000 * 1e30);
-
-    // 0.52% of 1,500,000 trade = 7800 usd in fee
-    // 7,020 usd -> protocol fee
-    // 780 usd -> dev fee (10%)
-    assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 7020 * 1e6);
-    assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 780 * 1e6);
-
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 1_600_000 * 1e30);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
-
-    // Time passed to reset the epochOI
-    vm.warp(block.timestamp + 16 minutes);
-
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
-
-    // Decrese position
-    // ETHUSD 100,000 USD
-    // Adaptive Fee:
-    // c = 0.00231002
-    // g = 2^(2 - min(1, c))
-    // g = 2^(2 - min(1, 0.00231002))
-    // g = 2^(2 - 0.00231002) = 3.99360039
-    // x = 100000 + (0 * 1.5) = 100000
-    // y = 0.0007 + ((min(100000/406059.22326026, 1))^g) * 0.05
-    // y = 0.0007 + ((min(0.2462695, 1))^3.99360039) * 0.05
-    // y = 0.0007 + (0.2462695)^3.99360039 * 0.05
-    // y = 0.0007 + 0.0037114 * 0.05
-    // y = 0.00088557 = 0.088557%
-    // in BPS = 0.00088557 * 1e4 = 8 BPS
-    usdcProtocolFeeBefore = vaultStorage.protocolFees(address(usdc));
-    usdcDevFeeBefore = vaultStorage.devFees(address(usdc));
-    marketSell(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
-
-    _position = perpStorage.getPositionById(_positionId);
-    assertEq(_position.positionSizeE30, 1_500_000 * 1e30);
-
-    // 0.08% of 100,000 trade = 80 usd in fee
-    // 72 usd -> protocol fee
-    // 8 usd -> dev fee (10%)
-    assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 72 * 1e6);
-    assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 8 * 1e6);
-
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+    // Order still not cancelled
+    assertEq(
+      limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length,
+      1,
+      "Order should not be cancelled"
+    );
   }
 }

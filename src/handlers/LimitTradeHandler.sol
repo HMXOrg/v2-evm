@@ -884,15 +884,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _len = _orderIndices.length;
-    for (uint256 i = 0; i < _len;) {
-      uint256 _orderIndex = _orderIndices[i];
+    for (uint256 _i; _i < _len;) {
+      uint256 _orderIndex = _orderIndices[_i];
       LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
       // Check if this order still exists
       if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
       _cancelOrder(_order, _subAccount, _orderIndex);
       unchecked {
-        ++i;
+        ++_i;
       }
     }
   }

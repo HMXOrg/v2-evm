@@ -100,8 +100,11 @@ contract TC41 is BaseIntTest_WithActions {
       ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
       uint256[] memory _orderIndexes = new uint256[](_orders.length);
       // Populate _orderIndexes with order get
-      for (uint256 i = 0; i < _orders.length; ++i) {
-        _orderIndexes[i] = _orders[i].orderIndex;
+      for (uint256 _i; _i < _orders.length;) {
+        _orderIndexes[_i] = _orders[_i].orderIndex;
+        unchecked {
+          ++_i;
+        }
       }
       limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
       vm.stopPrank();

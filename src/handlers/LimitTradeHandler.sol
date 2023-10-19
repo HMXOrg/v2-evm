@@ -872,6 +872,31 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _cancelOrder(_order, _subAccount, _orderIndex);
   }
 
+  function batchCancelOrders(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256[] calldata _orderIndices
+  ) external nonReentrant delegate(_mainAccount) {
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
+    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
+    uint256 _len = _orderIndices.length;
+    for (uint256 _i; _i < _len;) {
+      uint256 _orderIndex = _orderIndices[_i];
+      LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+      // Check if this order still exists
+      if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+
+      _cancelOrder(_order, _subAccount, _orderIndex);
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
   function _cancelOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
     // Remove this order from the list
     _removeOrder(_order, _subAccount, _orderIndex);

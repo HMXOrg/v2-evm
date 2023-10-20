@@ -16,6 +16,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 
 /// Readers
 import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
@@ -56,6 +57,7 @@ import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IGmxV2Reader } from "@hmx/interfaces/gmxV2/IGmxV2Reader.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;
@@ -87,6 +89,7 @@ abstract contract ForkEnv is Test {
     IEcoPythCalldataBuilder(getAddress(".oracles.unsafeEcoPythCalldataBuilder")); // UnsafeEcoPythCalldataBuilder
   IPythAdapter internal pythAdapter = IPythAdapter(getAddress(".oracles.pythAdapter"));
   IOracleMiddleware internal oracleMiddleware = IOracleMiddleware(getAddress(".oracles.middleware"));
+  OnChainPriceLens internal onChainPriceLens = OnChainPriceLens(getAddress(".oracles.onChainPriceLens"));
   /// Handlers
   CrossMarginHandler internal crossMarginHandler = CrossMarginHandler(payable(getAddress(".handlers.crossMargin")));
   LimitTradeHandler internal limitTradeHandler = LimitTradeHandler(payable(getAddress(".handlers.limitTrade")));
@@ -122,6 +125,9 @@ abstract contract ForkEnv is Test {
   IGmxGlpManager internal glpManager = IGmxGlpManager(getAddress(".vendors.gmx.glpManager"));
   IGmxRewardRouterV2 internal gmxRewardRouterV2 = IGmxRewardRouterV2(getAddress(".vendors.gmx.rewardRouterV2"));
   IGmxVault internal gmxVault = IGmxVault(getAddress(".vendors.gmx.gmxVault"));
+  /// GMX V2
+  IGmxV2Reader internal gmxV2Reader = IGmxV2Reader(getAddress(".vendors.gmxV2.reader"));
+  address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
 
@@ -129,6 +135,7 @@ abstract contract ForkEnv is Test {
 
   /// Tokens
   IERC20 internal usdc_e = IERC20(getAddress(".tokens.usdc"));
+  IERC20 internal usdc = IERC20(getAddress(".tokens.usdcCircle"));
   IERC20 internal weth = IERC20(getAddress(".tokens.weth"));
   IERC20 internal wbtc = IERC20(getAddress(".tokens.wbtc"));
   IERC20 internal usdt = IERC20(getAddress(".tokens.usdt"));
@@ -138,4 +145,6 @@ abstract contract ForkEnv is Test {
   IERC20 internal sglp = IERC20(getAddress(".tokens.sglp"));
   IERC20 internal wstEth = IERC20(getAddress(".tokens.wstEth"));
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
+  IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
+  IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
 }

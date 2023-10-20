@@ -25,7 +25,8 @@
     "liquidity": "0x686fA9AA62A8571Be022ba72f93Da83D8b9814e5",
     "liquidation": "0x7e7923f809345A919f28cA1dE5a5B375b3B1874b",
     "trade": "0x937DbD8bB0E155D4c3773dE366E4ae9f421411e2",
-    "rebalanceHLP": "0x0E7D2A832e6087BF45a55e15C5F8D48539cbDD48"
+    "rebalanceHLP": "0x0E7D2A832e6087BF45a55e15C5F8D48539cbDD48",
+    "rebalanceHLPToGMXV2": ""
   },
   "oracles": {
     "ecoPyth": "0xBaDB27718087B8d2D490479515E6222D9A20CDf4",
@@ -56,7 +57,8 @@
     "arb": "",
     "wstEth": "",
     "gmBTCUSD": "",
-    "gmETHUSD": ""
+    "gmETHUSD": "",
+    "usdcCircle": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
   },
   "vendors": {
     "gmx": {
@@ -68,7 +70,9 @@
     "gmxV2": {
       "exchangeRouter": "",
       "depositVault": "",
-      "depositHandler": ""
+      "depositHandler": "",
+      "dataStore": "",
+      "reader": ""
     },
     "uniswap": {
       "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",

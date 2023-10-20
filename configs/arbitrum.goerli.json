@@ -54,7 +54,9 @@
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
     "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08",
     "arb": "",
-    "wstEth": ""
+    "wstEth": "",
+    "gmBTCUSD": "",
+    "gmETHUSD": ""
   },
   "vendors": {
     "gmx": {
@@ -62,6 +64,11 @@
       "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
       "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6",
       "gmxVault": ""
+    },
+    "gmxV2": {
+      "exchangeRouter": "",
+      "depositVault": "",
+      "depositHandler": ""
     },
     "uniswap": {
       "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",

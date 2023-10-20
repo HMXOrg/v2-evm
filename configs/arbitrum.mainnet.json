@@ -54,7 +54,9 @@
     "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
     "traderLoyaltyCredit": "0x1fDcB022daECA9326a37A318f143A0feD61abba6",
     "arb": "0x912CE59144191C1204E64559FE8253a0e49E6548",
-    "wstEth": "0x5979d7b546e38e414f7e9822514be443a4800529"
+    "wstEth": "0x5979d7b546e38e414f7e9822514be443a4800529",
+    "gmBTCUSD": "0x47c031236e19d024b42f8AE6780E44A573170703",
+    "gmETHUSD": "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336"
   },
   "vendors": {
     "gmx": {
@@ -62,6 +64,11 @@
       "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
       "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6",
       "gmxVault": "0x489ee077994B6658eAfA855C308275EAd8097C4A"
+    },
+    "gmxV2": {
+      "exchangeRouter": "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8",
+      "depositVault": "0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55",
+      "depositHandler": "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457"
     },
     "uniswap": {
       "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",

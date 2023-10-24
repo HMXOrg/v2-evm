@@ -65,6 +65,8 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => bool) public serviceExecutors;
   // mapping(token => strategy => target => isAllow?)
   mapping(address token => mapping(address strategy => bytes4 functionSig)) public strategyFunctionSigAllowances;
+  // this mapping keeps track of hlpLiquidity that is on hold while being under rebalancing operation
+  mapping(address token => uint256 amount) public hlpLiquidityOnHold;
 
   /**
    * Modifiers
@@ -111,8 +113,16 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     uint256 prevBalance = totalAmount[_token];
     uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
 
-    totalAmount[_token] = nextBalance;
+    totalAmount[_token] = nextBalance + hlpLiquidityOnHold[_token];
     return nextBalance - prevBalance;
+  }
+
+  function pullTokenAndClearOnHold(
+    address _token,
+    uint256 _amount
+  ) external nonReentrant onlyWhitelistedExecutor returns (uint256) {
+    hlpLiquidityOnHold[_token] -= _amount;
+    return _pullToken(_token);
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
@@ -121,7 +131,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function _pushToken(address _token, address _to, uint256 _amount) internal {
     IERC20Upgradeable(_token).safeTransfer(_to, _amount);
-    totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this));
+    totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this)) + hlpLiquidityOnHold[_token];
   }
 
   /**
@@ -194,6 +204,12 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function removeHLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
     if (hlpLiquidity[_token] < _amount) revert IVaultStorage_HLPBalanceRemaining();
+    hlpLiquidity[_token] -= _amount;
+  }
+
+  function removeHLPLiquidityOnHold(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    if (hlpLiquidity[_token] < _amount) revert IVaultStorage_HLPBalanceRemaining();
+    hlpLiquidityOnHold[_token] += _amount;
     hlpLiquidity[_token] -= _amount;
   }
 

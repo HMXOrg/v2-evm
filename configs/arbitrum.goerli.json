@@ -23,7 +23,8 @@
     "crossMargin": "0x9061B0c73e834ef38082cdC19D7ad385a51871C1",
     "liquidity": "0xEcb5179Ab2757D8BD858D64B80E2DC8747E77Bdc",
     "liquidation": "0xeb13641272529B0a26992E56D1dd6Cd607aC473E",
-    "trade": "0x981C901b8aD50Bbf7fC139CB182D947488D52CBe"
+    "trade": "0x981C901b8aD50Bbf7fC139CB182D947488D52CBe",
+    "rebalanceHLPToGMXV2": ""
   },
   "oracles": {
     "ecoPyth": "0xbDd5809FAc1528491a88d90E4DE8B6782D3dA071",
@@ -53,7 +54,10 @@
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
     "traderLoyaltyCredit": "0xB8880717681cA218d8f8eF6679a23894a5745473",
     "arb": "0xCa2d9AB2995dfE4e97E363088954C6eE7CadaA42",
-    "wstEth": "0xA31596895931880510cB94c40D54080a4498b724"
+    "wstEth": "0xA31596895931880510cB94c40D54080a4498b724",
+    "gmBTCUSD": "",
+    "gmETHUSD": "",
+    "usdcCircle": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
   },
   "vendors": {
     "gmx": {
@@ -61,6 +65,13 @@
       "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
       "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6",
       "gmxVault": ""
+    },
+    "gmxV2": {
+      "exchangeRouter": "",
+      "depositVault": "",
+      "depositHandler": "",
+      "dataStore": "",
+      "reader": ""
     },
     "uniswap": {
       "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",

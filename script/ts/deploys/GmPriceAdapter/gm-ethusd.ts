@@ -10,25 +10,25 @@ async function main() {
     [
       config.vendors.gmxV2.reader,
       config.vendors.gmxV2.dataStore,
-      config.tokens.gmBTCUSD,
-      "0x47904963fc8b2340414262125aF798B9655E58Cd", // BTCUSD
+      config.tokens.gmETHUSD,
+      config.tokens.weth,
       8,
-      config.tokens.wbtc,
+      config.tokens.weth,
       8,
       config.tokens.usdcCircle,
       6,
-      1,
-      1,
+      0,
+      0,
       2,
     ],
     deployer
   );
 
   await contract.deployed();
-  console.log(`[deploys/GmPriceAdapter] Deploying GmPriceAdapter Contract`);
+  console.log(`[deploys/GmPriceAdapter] Deploying GmPriceAdapter for GM-ETHUSD Contract`);
   console.log(`[deploys/GmPriceAdapter] Deployed at: ${contract.address}`);
 
-  config.oracles.priceAdapters.gmBTCUSD = contract.address;
+  config.oracles.priceAdapters.gmETHUSD = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

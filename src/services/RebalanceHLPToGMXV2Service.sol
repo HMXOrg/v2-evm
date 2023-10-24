@@ -10,8 +10,8 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 // interfaces
-import { IGMXExchangeRouter } from "@hmx/interfaces/gmx/IGMXExchangeRouter.sol";
-import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmx/IDepositCallbackReceiver.sol";
+import { IGMXExchangeRouter } from "@hmx/interfaces/gmxV2/IGMXExchangeRouter.sol";
+import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmxV2/IDepositCallbackReceiver.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
@@ -61,18 +61,28 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
     for (uint256 i; i < depositParams.length; i++) {
       DepositParams memory depositParam = depositParams[i];
       if (depositParam.longTokenAmount > 0) {
-        vaultStorage.pushToken(depositParam.longToken, address(this), depositParam.longTokenAmount);
+        vaultStorage.pushToken(depositParam.longToken, address(depositVault), depositParam.longTokenAmount);
         vaultStorage.removeHLPLiquidityOnHold(depositParam.longToken, depositParam.longTokenAmount);
-        exchangeRouter.sendTokens(depositParam.longToken, address(depositVault), depositParam.longTokenAmount);
+        // exchangeRouter.sendTokens(depositParam.longToken, address(depositVault), depositParam.longTokenAmount);
       }
 
       if (depositParam.shortTokenAmount > 0) {
-        vaultStorage.pushToken(depositParam.shortToken, address(this), depositParam.shortTokenAmount);
+        vaultStorage.pushToken(depositParam.shortToken, address(depositVault), depositParam.shortTokenAmount);
         vaultStorage.removeHLPLiquidityOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
-        exchangeRouter.sendTokens(depositParam.shortToken, address(depositVault), depositParam.shortTokenAmount);
+        // exchangeRouter.sendTokens(depositParam.shortToken, address(depositVault), depositParam.shortTokenAmount);
       }
 
-      bytes32 gmxOrderKey = exchangeRouter.createDeposit(address(this), depositParams[i].params);
+      IGMXExchangeRouter.CreateDepositParams memory gmxDepositParams;
+      gmxDepositParams.receiver = address(this);
+      gmxDepositParams.callbackContract = address(this);
+      gmxDepositParams.market = depositParam.market;
+      gmxDepositParams.initialLongToken = depositParam.longToken;
+      gmxDepositParams.initialShortToken = depositParam.shortToken;
+      gmxDepositParams.minMarketTokens = depositParam.minMarketTokens;
+      gmxDepositParams.executionFee = depositParam.executionFee;
+      gmxDepositParams.callbackGasLimit = 50000;
+
+      bytes32 gmxOrderKey = exchangeRouter.createDeposit(address(this), gmxDepositParams);
       depositHistory[gmxOrderKey] = depositParam;
     }
   }
@@ -97,8 +107,8 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
       vaultStorage.pullTokenAndClearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
     }
 
-    IERC20Upgradeable(depositParam.params.market).safeTransfer(address(vaultStorage), receivedMarketTokens);
-    vaultStorage.pullToken(depositParam.params.market);
+    IERC20Upgradeable(depositParam.market).safeTransfer(address(vaultStorage), receivedMarketTokens);
+    vaultStorage.pullToken(depositParam.market);
 
     delete depositHistory[key];
   }

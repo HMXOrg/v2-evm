@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IGMXExchangeRouter } from "@hmx/interfaces/gmx/IGMXExchangeRouter.sol";
+import { IGMXExchangeRouter } from "@hmx/interfaces/gmxV2/IGMXExchangeRouter.sol";
 
 interface IRebalanceHLPToGMXV2Service {
   error RebalanceHLPToGMXV2Service_Unauthorized();
@@ -10,11 +10,13 @@ interface IRebalanceHLPToGMXV2Service {
   error RebalanceHLPToGMXV2Service_AmountIsZero();
 
   struct DepositParams {
+    address market;
     address longToken;
     uint256 longTokenAmount;
     address shortToken;
     uint256 shortTokenAmount;
-    IGMXExchangeRouter.CreateDepositParams params;
+    uint256 minMarketTokens;
+    uint256 executionFee;
   }
 
   function executeDeposits(DepositParams[] calldata depositParams) external;

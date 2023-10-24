@@ -150,4 +150,7 @@ abstract contract ForkEnv is Test {
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
   IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
   IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
+
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
 }

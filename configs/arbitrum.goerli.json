@@ -38,11 +38,16 @@
     "unsafeEcoPythCalldataBuilder": "",
     "ecoPythCalldataBuilder2": "",
     "unsafeEcoPythCalldataBuilder2": "",
+    "ecoPythCalldataBuilder3": "",
+    "unsafeEcoPythCalldataBuilder3": "",
     "onChainPriceLens": "",
+    "calcPriceLens": "",
     "priceAdapters": {
       "glp": "",
       "wstEth": "",
-      "hlp": ""
+      "hlp": "",
+      "gmBTCUSD": "",
+      "gmETHUSD": ""
     }
   },
   "tokens": {

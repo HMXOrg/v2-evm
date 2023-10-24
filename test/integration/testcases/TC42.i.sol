@@ -13,7 +13,7 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
 
-contract TC41 is BaseIntTest_WithActions {
+contract TC42 is BaseIntTest_WithActions {
   function testCorrectness_TC41_AdaptiveFee() external {
     // T0: Initialized state
     // ALICE as liquidity provider

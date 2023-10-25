@@ -25,7 +25,7 @@ async function main() {
   );
 
   await contract.deployed();
-  console.log(`[deploys/GmPriceAdapter] Deploying GmPriceAdapter for GM-ETHUSD Contract`);
+  console.log(`[deploys/GmPriceAdapter] Deploying GmPriceAdapter for GM-BTCUSD Contract`);
   console.log(`[deploys/GmPriceAdapter] Deployed at: ${contract.address}`);
 
   config.oracles.priceAdapters.gmBTCUSD = contract.address;

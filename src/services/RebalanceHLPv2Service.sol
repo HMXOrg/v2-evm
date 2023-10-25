@@ -22,8 +22,9 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
   IVaultStorage public vaultStorage;
   IConfigStorage public configStorage;
   IGmxExchangeRouter public exchangeRouter;
+  IERC20Upgradeable public weth;
   address public depositVault;
-  address public depositHandler; // 0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457
+  address public depositHandler;
   uint16 public minHLPValueLossBPS;
 
   mapping(bytes32 gmxOrderKey => DepositParams depositParam) depositHistory;
@@ -38,9 +39,11 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     _;
   }
 
+  event LogDepositCreated(bytes32 gmxOrderKey, DepositParams depositParam);
   event LogSetMinHLPValueLossBPS(uint16 oldValue, uint16 newValue);
 
   function initialize(
+    IERC20Upgradeable _weth,
     address _vaultStorage,
     address _configStorage,
     address _exchangeRouter,
@@ -49,6 +52,8 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     uint16 _minHLPValueLossBPS
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
+
+    weth = _weth;
     vaultStorage = IVaultStorage(_vaultStorage);
     configStorage = IConfigStorage(_configStorage);
     exchangeRouter = IGmxExchangeRouter(_exchangeRouter);
@@ -57,33 +62,46 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     minHLPValueLossBPS = _minHLPValueLossBPS;
   }
 
-  function executeDeposits(DepositParams[] calldata depositParams) external onlyWhitelisted {
-    for (uint256 i; i < depositParams.length; i++) {
-      DepositParams memory depositParam = depositParams[i];
-      if (depositParam.longTokenAmount > 0) {
-        vaultStorage.pushToken(depositParam.longToken, address(depositVault), depositParam.longTokenAmount);
-        vaultStorage.removeHLPLiquidityOnHold(depositParam.longToken, depositParam.longTokenAmount);
-        // exchangeRouter.sendTokens(depositParam.longToken, address(depositVault), depositParam.longTokenAmount);
+  function executeDeposits(
+    DepositParams[] calldata _depositParams,
+    uint256 _executionFee
+  ) external onlyWhitelisted returns (bytes32[] memory gmxOrderKeys) {
+    uint256 _depositParamsLen = _depositParams.length;
+    gmxOrderKeys = new bytes32[](_depositParamsLen);
+
+    for (uint256 i; i < _depositParamsLen; i++) {
+      DepositParams memory _depositParam = _depositParams[i];
+      if (_depositParam.longTokenAmount > 0) {
+        vaultStorage.pushToken(_depositParam.longToken, address(depositVault), _depositParam.longTokenAmount);
+        vaultStorage.removeHLPLiquidityOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
+      }
+      if (_depositParam.shortTokenAmount > 0) {
+        vaultStorage.pushToken(_depositParam.shortToken, address(depositVault), _depositParam.shortTokenAmount);
+        vaultStorage.removeHLPLiquidityOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
       }
 
-      if (depositParam.shortTokenAmount > 0) {
-        vaultStorage.pushToken(depositParam.shortToken, address(depositVault), depositParam.shortTokenAmount);
-        vaultStorage.removeHLPLiquidityOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
-        // exchangeRouter.sendTokens(depositParam.shortToken, address(depositVault), depositParam.shortTokenAmount);
-      }
+      // Taken WETH from caller and send to depositVault for execution fee
+      weth.safeTransferFrom(msg.sender, address(depositVault), _executionFee);
+      bytes32 gmxOrderKey = exchangeRouter.createDeposit(
+        IGmxExchangeRouter.CreateDepositParams({
+          receiver: address(this),
+          callbackContract: address(this),
+          uiFeeReceiver: address(0),
+          market: _depositParam.market,
+          initialLongToken: _depositParam.longToken,
+          initialShortToken: _depositParam.shortToken,
+          longTokenSwapPath: new address[](0),
+          shortTokenSwapPath: new address[](0),
+          minMarketTokens: _depositParam.minMarketTokens,
+          shouldUnwrapNativeToken: false,
+          executionFee: _executionFee,
+          callbackGasLimit: 50000
+        })
+      );
+      gmxOrderKeys[i] = gmxOrderKey;
+      depositHistory[gmxOrderKey] = _depositParam;
 
-      IGmxExchangeRouter.CreateDepositParams memory gmxDepositParams;
-      gmxDepositParams.receiver = address(this);
-      gmxDepositParams.callbackContract = address(this);
-      gmxDepositParams.market = depositParam.market;
-      gmxDepositParams.initialLongToken = depositParam.longToken;
-      gmxDepositParams.initialShortToken = depositParam.shortToken;
-      gmxDepositParams.minMarketTokens = depositParam.minMarketTokens;
-      gmxDepositParams.executionFee = depositParam.executionFee;
-      gmxDepositParams.callbackGasLimit = 50000;
-
-      bytes32 gmxOrderKey = exchangeRouter.createDeposit(address(this), gmxDepositParams);
-      depositHistory[gmxOrderKey] = depositParam;
+      emit LogDepositCreated(gmxOrderKey, _depositParam);
     }
   }
 

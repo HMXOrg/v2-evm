@@ -613,8 +613,9 @@ library Deployer {
     return IConvertedGlpStrategy(payable(_proxy));
   }
 
-  function deployRebalanceHLPToGMXV2Service(
+  function deployRebalanceHLPv2Service(
     address _proxyAdmin,
+    address _weth,
     address _vaultStorage,
     address _configStorage,
     address _exchangeRouter,
@@ -626,7 +627,8 @@ library Deployer {
       vm.getCode("./out/RebalanceHLPv2Service.sol/RebalanceHLPv2Service.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
+      bytes4(keccak256("initialize(address,address,address,address,address,address,uint16)")),
+      _weth,
       _vaultStorage,
       _configStorage,
       _exchangeRouter,

@@ -42,6 +42,10 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
+/// Helpers
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
 /// Vendors
@@ -52,12 +56,13 @@ import { IUniversalRouter } from "@hmx/interfaces/uniswap/IUniversalRouter.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
+/// GMXv2
+import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
+import { IGmxV2DepositHandler } from "@hmx/interfaces/gmx-v2/IGmxV2DepositHandler.sol";
+import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
+import { IGmxV2RoleStore } from "@hmx/interfaces/gmx-v2/IGmxV2RoleStore.sol";
 /// Curve
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
-
-import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
-import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;
@@ -96,8 +101,7 @@ abstract contract ForkEnv is Test {
   LiquidityHandler internal liquidityHandler = LiquidityHandler(payable(getAddress(".handlers.liquidity")));
   IBotHandler internal botHandler = IBotHandler(getAddress(".handlers.bot"));
   RebalanceHLPHandler internal rebalanceHLPHandler = RebalanceHLPHandler(getAddress(".handlers.rebalanceHLP"));
-
-  // readers
+  // Readers
   ILiquidationReader internal liquidationReader = ILiquidationReader(getAddress(".reader.liquidation"));
   IPositionReader internal positionReader = IPositionReader(getAddress(".reader.position"));
   IOrderReader internal orderReader = IOrderReader(getAddress(".reader.order"));
@@ -107,12 +111,11 @@ abstract contract ForkEnv is Test {
   LiquidityService internal liquidityService = LiquidityService(getAddress(".services.liquidity"));
   TradeService internal tradeService = TradeService(getAddress(".services.trade"));
   RebalanceHLPService internal rebalanceHLPService = RebalanceHLPService(getAddress(".services.rebalanceHLP"));
-
   /// Storages
   ConfigStorage internal configStorage = ConfigStorage(getAddress(".storages.config"));
   PerpStorage internal perpStorage = PerpStorage(getAddress(".storages.perp"));
   VaultStorage internal vaultStorage = VaultStorage(getAddress(".storages.vault"));
-
+  /// Helpers
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
 
   ITradingStaking internal hlpStaking = ITradingStaking(getAddress(".staking.hlp"));
@@ -125,9 +128,20 @@ abstract contract ForkEnv is Test {
   IGmxGlpManager internal glpManager = IGmxGlpManager(getAddress(".vendors.gmx.glpManager"));
   IGmxRewardRouterV2 internal gmxRewardRouterV2 = IGmxRewardRouterV2(getAddress(".vendors.gmx.rewardRouterV2"));
   IGmxVault internal gmxVault = IGmxVault(getAddress(".vendors.gmx.gmxVault"));
-  /// GMX V2
+  /// GMXv2
+  address internal gmxV2Admin = 0xE7BfFf2aB721264887230037940490351700a068;
+  address internal gmxV2Timelock = 0x62aB76Ed722C507f297f2B97920dCA04518fe274;
+  address internal gmxV2Oracle = 0xa11B501c2dd83Acd29F6727570f2502FAaa617F2;
   IGmxV2Reader internal gmxV2Reader = IGmxV2Reader(getAddress(".vendors.gmxV2.reader"));
+  IGmxExchangeRouter internal gmxV2ExchangeRouter = IGmxExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
+  address internal gmxV2DepositVault = address(getAddress(".vendors.gmxV2.depositVault"));
+  address internal gmxV2DepositUtils = address(getAddress(".vendors.gmxV2.depositUtils"));
+  address internal gmxV2ExecuteDepositUtils = 0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2;
+  IGmxV2DepositHandler internal gmxV2DepositHandler = IGmxV2DepositHandler(getAddress(".vendors.gmxV2.depositHandler"));
+  address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
+  IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
+  address internal gmxV2WbtcUsdcMarket = 0x47c031236e19d024b42f8AE6780E44A573170703;
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
 
@@ -147,4 +161,26 @@ abstract contract ForkEnv is Test {
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
   IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
   IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
+
+  constructor() {
+    // Labeling known addresses
+    // Storages
+    vm.label(address(configStorage), "ConfigStorage");
+    vm.label(address(perpStorage), "PerpStorage");
+    vm.label(address(vaultStorage), "VaultStorage");
+    // GMXv2
+    vm.label(address(gmxV2ExchangeRouter), "gmxV2ExchangeRouter");
+    vm.label(gmxV2DepositVault, "gmxV2DepositVault");
+    vm.label(gmxV2DepositUtils, "gmxV2DepositUtils");
+    vm.label(address(gmxV2DepositHandler), "gmxV2DepositHandler");
+    vm.label(gmxV2ExecuteDepositUtils, "gmxV2ExecuteDepositUtils");
+    vm.label(gmxV2MarketStoreUtils, "gmxV2MarketStoreUtils");
+    vm.label(gmxV2DataStore, "gmxV2DataStore");
+    vm.label(address(gmxV2RoleStore), "gmxV2RoleStore");
+    vm.label(gmxV2Oracle, "gmxV2Oracle");
+    // Tokens
+    vm.label(address(weth), "WETH");
+    vm.label(address(wbtc), "WBTC");
+    vm.label(address(usdc), "USDC.e");
+  }
 }

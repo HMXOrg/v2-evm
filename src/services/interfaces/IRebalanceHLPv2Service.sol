@@ -16,10 +16,12 @@ interface IRebalanceHLPv2Service {
     address shortToken;
     uint256 shortTokenAmount;
     uint256 minMarketTokens;
-    uint256 executionFee;
   }
 
-  function executeDeposits(DepositParams[] calldata depositParams) external;
+  function executeDeposits(
+    DepositParams[] calldata _depositParams,
+    uint256 _executionFee
+  ) external returns (bytes32[] memory gmxOrderKeys);
 
   function setMinHLPValueLossBPS(uint16 _hlpValueLossBPS) external;
 }

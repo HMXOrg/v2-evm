@@ -71,8 +71,11 @@
     "gmxV2": {
       "exchangeRouter": "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8",
       "depositVault": "0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55",
+      "depositUtils": "0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4",
       "depositHandler": "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457",
+      "marketStoreUtils": "0x41613136174912714faF4cF0680fB1Acbe0cC7D1",
       "dataStore": "0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8",
+      "roleStore": "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72",
       "reader": "0xf60becbba223EEA9495Da3f606753867eC10d139"
     },
     "uniswap": {

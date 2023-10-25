@@ -121,5 +121,18 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
 
     assertApproxEqRel(gmBtcPrice, 1.042 * 1e18, MAX_DIFF);
     assertApproxEqRel(gmEthPrice, 0.93 * 1e18, MAX_DIFF);
+
+    uint256[] memory prices = new uint256[](3);
+    prices[0] = 29628.25620309 * 1e8;
+    prices[1] = 29628.25620309 * 1e8;
+    prices[2] = 0.99981427 * 1e8;
+    gmBtcPrice = gmBtcUsdPriceAdapter.getPrice(prices);
+    prices[0] = 1600.2925 * 1e8;
+    prices[1] = 1600.2925 * 1e8;
+    prices[2] = 0.99981427 * 1e8;
+    gmEthPrice = gmEthUsdPriceAdapter.getPrice(prices);
+
+    assertApproxEqRel(gmBtcPrice, 1.042 * 1e18, MAX_DIFF);
+    assertApproxEqRel(gmEthPrice, 0.93 * 1e18, MAX_DIFF);
   }
 }

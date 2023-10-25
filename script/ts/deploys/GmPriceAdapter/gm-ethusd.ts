@@ -9,12 +9,12 @@ async function main() {
     "GmPriceAdapter",
     [
       config.vendors.gmxV2.reader,
-      config.tokens.wbtc, // dummy
+      config.vendors.gmxV2.dataStore,
       config.tokens.gmETHUSD,
       config.tokens.weth,
-      18,
+      8,
       config.tokens.weth,
-      18,
+      8,
       config.tokens.usdcCircle,
       6,
       0,
@@ -25,7 +25,7 @@ async function main() {
   );
 
   await contract.deployed();
-  console.log(`[deploys/GmPriceAdapter] Deploying GmPriceAdapter Contract`);
+  console.log(`[deploys/GmPriceAdapter] Deploying GmPriceAdapter for GM-ETHUSD Contract`);
   console.log(`[deploys/GmPriceAdapter] Deployed at: ${contract.address}`);
 
   config.oracles.priceAdapters.gmETHUSD = contract.address;

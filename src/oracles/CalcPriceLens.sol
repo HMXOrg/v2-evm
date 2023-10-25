@@ -43,4 +43,10 @@ contract CalcPriceLens is Ownable {
 
     price = priceAdapterById[priceId].getPrice(_buildDatas);
   }
+
+  function getPrice(bytes32 priceId, uint256[] memory priceE8s) external view returns (uint256 price) {
+    if (address(priceAdapterById[priceId]) == address(0)) revert CalcPriceLens_BadPriceId();
+
+    price = priceAdapterById[priceId].getPrice(priceE8s);
+  }
 }

@@ -23,7 +23,7 @@ import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 import { ICalcPriceAdapter } from "@hmx/oracles/interfaces/ICalcPriceAdapter.sol";
 import { ArbSys } from "@hmx/interfaces/arbitrum/ArbSys.sol";
 
-contract UnsafeEcoPythCalldataBuilder2 is IEcoPythCalldataBuilder3 {
+contract UnsafeEcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
   address constant ARBSYS_ADDR = address(0x0000000000000000000000000000000000000064);
   IEcoPyth public ecoPyth;
   OnChainPriceLens public ocLens;

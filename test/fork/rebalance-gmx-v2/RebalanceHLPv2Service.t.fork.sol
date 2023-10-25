@@ -18,10 +18,10 @@ import { Cheats } from "@hmx-test/base/Cheats.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 /// HMX
-import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
+import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
 contract RebalanceHLPToGMXV2Service_ForkTest is ForkEnv {
-  IRebalanceHLPToGMXV2Service rebalanceService;
+  IRebalanceHLPv2Service rebalanceService;
   address gmxExchangeRouter = 0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8;
   address depositVault = 0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55;
   address depositHandler = 0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457;
@@ -50,7 +50,7 @@ contract RebalanceHLPToGMXV2Service_ForkTest is ForkEnv {
   }
 
   function testCorrectness_executeDeposit() external {
-    IRebalanceHLPToGMXV2Service.DepositParams memory depositParam;
+    IRebalanceHLPv2Service.DepositParams memory depositParam;
     depositParam.market = 0x47c031236e19d024b42f8AE6780E44A573170703; // BTCUSD
     depositParam.longToken = address(ForkEnv.wbtc);
     depositParam.longTokenAmount = 0.01 * 1e8;
@@ -59,9 +59,7 @@ contract RebalanceHLPToGMXV2Service_ForkTest is ForkEnv {
     depositParam.minMarketTokens = 0;
     depositParam.executionFee = 0.01 ether;
 
-    IRebalanceHLPToGMXV2Service.DepositParams[] memory depositParams = new IRebalanceHLPToGMXV2Service.DepositParams[](
-      1
-    );
+    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
     depositParams[0] = depositParam;
 
     rebalanceService.executeDeposits(depositParams);

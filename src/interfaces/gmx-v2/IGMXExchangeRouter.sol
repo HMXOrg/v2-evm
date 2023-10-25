@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-interface IGMXExchangeRouter {
+interface IGmxExchangeRouter {
   // @dev CreateDepositParams struct used in createDeposit to avoid stack
   // too deep errors
   //

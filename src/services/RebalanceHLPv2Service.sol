@@ -10,19 +10,19 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 // interfaces
-import { IGMXExchangeRouter } from "@hmx/interfaces/gmx-v2/IGMXExchangeRouter.sol";
+import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
 import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmx-v2/IDepositCallbackReceiver.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
+import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
-contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackReceiver, IRebalanceHLPToGMXV2Service {
+contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, IRebalanceHLPv2Service {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   IVaultStorage public vaultStorage;
   IConfigStorage public configStorage;
-  IGMXExchangeRouter public exchangeRouter; // 0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8
-  address public depositVault; // 0xf89e77e8dc11691c9e8757e84aafbcd8a67d7a55
+  IGmxExchangeRouter public exchangeRouter;
+  address public depositVault;
   address public depositHandler; // 0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457
   uint16 public minHLPValueLossBPS;
 
@@ -34,7 +34,7 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
   }
 
   modifier onlyGmxDepositHandler() {
-    if (msg.sender != depositHandler) revert RebalanceHLPToGMXV2Service_Unauthorized();
+    if (msg.sender != depositHandler) revert IRebalanceHLPv2Service_Unauthorized();
     _;
   }
 
@@ -51,7 +51,7 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
     OwnableUpgradeable.__Ownable_init();
     vaultStorage = IVaultStorage(_vaultStorage);
     configStorage = IConfigStorage(_configStorage);
-    exchangeRouter = IGMXExchangeRouter(_exchangeRouter);
+    exchangeRouter = IGmxExchangeRouter(_exchangeRouter);
     depositVault = _depositVault;
     depositHandler = _depositHandler;
     minHLPValueLossBPS = _minHLPValueLossBPS;
@@ -72,7 +72,7 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
         // exchangeRouter.sendTokens(depositParam.shortToken, address(depositVault), depositParam.shortTokenAmount);
       }
 
-      IGMXExchangeRouter.CreateDepositParams memory gmxDepositParams;
+      IGmxExchangeRouter.CreateDepositParams memory gmxDepositParams;
       gmxDepositParams.receiver = address(this);
       gmxDepositParams.callbackContract = address(this);
       gmxDepositParams.market = depositParam.market;
@@ -94,10 +94,10 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
   ) external onlyGmxDepositHandler {
     DepositParams memory depositParam = depositHistory[key];
     if (depositParam.longToken == address(0) && depositParam.shortToken == address(0))
-      revert RebalanceHLPToGMXV2Service_KeyNotFound();
+      revert IRebalanceHLPv2Service_KeyNotFound();
 
     uint256 receivedMarketTokens = eventData.uintItems.items[0].value;
-    if (receivedMarketTokens == 0) revert RebalanceHLPToGMXV2Service_ZeroMarketTokenReceived();
+    if (receivedMarketTokens == 0) revert IRebalanceHLPv2Service_ZeroMarketTokenReceived();
 
     if (depositParam.longTokenAmount > 0) {
       vaultStorage.pullTokenAndClearOnHold(depositParam.longToken, depositParam.longTokenAmount);
@@ -141,7 +141,7 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
 
   function setMinHLPValueLossBPS(uint16 _hlpValueLossBPS) external onlyOwner {
     if (_hlpValueLossBPS == 0) {
-      revert RebalanceHLPToGMXV2Service_AmountIsZero();
+      revert IRebalanceHLPv2Service_AmountIsZero();
     }
     emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _hlpValueLossBPS);
     minHLPValueLossBPS = _hlpValueLossBPS;

@@ -62,7 +62,7 @@ import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/inter
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
+import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
@@ -621,9 +621,9 @@ library Deployer {
     address _depositVault,
     address _depositHandler,
     uint16 _minHLPValueLossBPS
-  ) internal returns (IRebalanceHLPToGMXV2Service) {
+  ) internal returns (IRebalanceHLPv2Service) {
     bytes memory _logicBytecode = abi.encodePacked(
-      vm.getCode("./out/RebalanceHLPToGMXV2Service.sol/RebalanceHLPToGMXV2Service.json")
+      vm.getCode("./out/RebalanceHLPv2Service.sol/RebalanceHLPv2Service.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
       bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
@@ -635,7 +635,7 @@ library Deployer {
       _minHLPValueLossBPS
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IRebalanceHLPToGMXV2Service(payable(_proxy));
+    return IRebalanceHLPv2Service(payable(_proxy));
   }
 
   /**

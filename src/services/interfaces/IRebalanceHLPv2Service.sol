@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IGMXExchangeRouter } from "@hmx/interfaces/gmx-v2/IGMXExchangeRouter.sol";
+import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
 
-interface IRebalanceHLPToGMXV2Service {
-  error RebalanceHLPToGMXV2Service_Unauthorized();
-  error RebalanceHLPToGMXV2Service_KeyNotFound();
-  error RebalanceHLPToGMXV2Service_ZeroMarketTokenReceived();
-  error RebalanceHLPToGMXV2Service_AmountIsZero();
+interface IRebalanceHLPv2Service {
+  error IRebalanceHLPv2Service_Unauthorized();
+  error IRebalanceHLPv2Service_KeyNotFound();
+  error IRebalanceHLPv2Service_ZeroMarketTokenReceived();
+  error IRebalanceHLPv2Service_AmountIsZero();
 
   struct DepositParams {
     address market;

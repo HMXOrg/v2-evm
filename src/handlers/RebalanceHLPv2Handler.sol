@@ -11,28 +11,26 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // interfaces
-import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
-import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
+import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
-/// @title RebalanceHLPToGMXV2Handler
-/// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
-contract RebalanceHLPToGMXV2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
+/// @title RebalanceHLPv2Handler
+/// @notice This contract act as an entry point for rebalancing HLP to GM(x) tokens
+contract RebalanceHLPv2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
-  error RebalanceHLPToGMXV2Handler_AddressIsZero();
-  error RebalanceHLPToGMXV2Handler_NotWhiteListed();
+  error RebalanceHLPv2Handler_AddressIsZero();
+  error RebalanceHLPv2Handler_NotWhiteListed();
 
-  IRebalanceHLPToGMXV2Service public service;
+  IRebalanceHLPv2Service public service;
   mapping(address => bool) public whitelistExecutors;
 
   event LogSetRebalanceHLPToGMXV2Service(address indexed _oldService, address indexed _newService);
-  event LogSetWhitelistExecutor(address indexed _executor, bool _isAllow);
+  event LogSetWhitelistExecutor(address indexed _executor, bool _prevAllow, bool _isAllow);
 
   modifier onlyWhitelisted() {
-    if (!whitelistExecutors[msg.sender]) revert RebalanceHLPToGMXV2Handler_NotWhiteListed();
+    if (!whitelistExecutors[msg.sender]) revert RebalanceHLPv2Handler_NotWhiteListed();
     _;
   }
 
@@ -40,29 +38,27 @@ contract RebalanceHLPToGMXV2Handler is OwnableUpgradeable, ReentrancyGuardUpgrad
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    service = IRebalanceHLPToGMXV2Service(_service);
+    service = IRebalanceHLPv2Service(_service);
   }
 
-  function executeDeposits(
-    IRebalanceHLPToGMXV2Service.DepositParams[] calldata depositParams
-  ) external onlyWhitelisted {
+  function executeDeposits(IRebalanceHLPv2Service.DepositParams[] calldata depositParams) external onlyWhitelisted {
     service.executeDeposits(depositParams);
   }
 
   function setWhitelistExecutor(address _executor, bool _isAllow) external onlyOwner {
     if (_executor == address(0)) {
-      revert RebalanceHLPToGMXV2Handler_AddressIsZero();
+      revert RebalanceHLPv2Handler_AddressIsZero();
     }
+    emit LogSetWhitelistExecutor(_executor, whitelistExecutors[_executor], _isAllow);
     whitelistExecutors[_executor] = _isAllow;
-    emit LogSetWhitelistExecutor(_executor, _isAllow);
   }
 
   function setRebalanceHLPToGMXV2Service(address _newService) external nonReentrant onlyOwner {
     if (_newService == address(0)) {
-      revert RebalanceHLPToGMXV2Handler_AddressIsZero();
+      revert RebalanceHLPv2Handler_AddressIsZero();
     }
     emit LogSetRebalanceHLPToGMXV2Service(address(service), _newService);
-    service = IRebalanceHLPToGMXV2Service(_newService);
+    service = IRebalanceHLPv2Service(_newService);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

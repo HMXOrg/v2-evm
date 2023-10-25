@@ -9,7 +9,7 @@ const mintAmount = ethers.utils.parseUnits("1000000", 18);
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
-  const token = MockErc20__factory.connect(config.tokens.wstEth, deployer);
+  const token = MockErc20__factory.connect(config.tokens.gmETHUSD, deployer);
 
   console.log("> Mint Token...");
   await (await token.mint(receiver, mintAmount)).wait();

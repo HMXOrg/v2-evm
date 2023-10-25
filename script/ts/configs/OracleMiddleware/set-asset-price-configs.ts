@@ -9,7 +9,13 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("BCH"),
+      assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
@@ -22,15 +28,12 @@ async function main(chainId: number) {
 
   console.log("[configs/OracleMiddleware] Setting asset price configs...");
 
-  await (
-    await oracle.setAssetPriceConfigs(
-      assetConfigs.map((each) => each.assetId),
-      assetConfigs.map((each) => each.confidenceThreshold),
-      assetConfigs.map((each) => each.trustPriceAge),
-      assetConfigs.map((each) => each.adapter),
-    ])
+  await oracle.setAssetPriceConfigs(
+    assetConfigs.map((each) => each.assetId),
+    assetConfigs.map((each) => each.confidenceThreshold),
+    assetConfigs.map((each) => each.trustPriceAge),
+    assetConfigs.map((each) => each.adapter)
   );
-  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
 }
 
 const prog = new Command();

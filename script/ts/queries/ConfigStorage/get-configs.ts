@@ -10,9 +10,10 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  console.log(await configStorage.marketConfigs(26));
-  console.log(await configStorage.marketConfigs(27));
-  console.log(await configStorage.marketConfigs(28));
+  console.log(
+    "glp",
+    await configStorage.assetHlpTokenConfigs("0x474c500000000000000000000000000000000000000000000000000000000000")
+  );
 }
 
 main().catch((error) => {

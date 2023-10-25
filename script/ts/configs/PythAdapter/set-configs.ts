@@ -7,8 +7,13 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("BCH"),
-    pythPriceId: ethers.utils.formatBytes32String("BCH"),
+    assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+    pythPriceId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
+    pythPriceId: ethers.utils.formatBytes32String("GM-ETHUSD"),
     inverse: false,
   },
 ];
@@ -20,14 +25,11 @@ async function main(chainId: number) {
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
   console.log("[configs/PythAdapter] Setting configs...");
-  await (
-    await pythAdapter.setConfigs(
-      inputs.map((each) => each.assetId),
-      inputs.map((each) => each.pythPriceId),
-      inputs.map((each) => each.inverse),
-    ])
+  await await pythAdapter.setConfigs(
+    inputs.map((each) => each.assetId),
+    inputs.map((each) => each.pythPriceId),
+    inputs.map((each) => each.inverse)
   );
-  console.log(`[configs/PythAdapter] Tx: ${tx}`);
 }
 
 const program = new Command();

@@ -15,6 +15,7 @@ import { console } from "forge-std/console.sol";
 
 contract TC42 is BaseIntTest_WithActions {
   function testCorrectness_TC41_AdaptiveFee() external {
+    vm.warp(1698207980);
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
@@ -99,8 +100,8 @@ contract TC42 is BaseIntTest_WithActions {
     orderbookOracle.setUpdater(address(this), true);
     orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
 
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
 
     //  Open position
     // - Long ETHUSD 100,000 USD
@@ -134,8 +135,8 @@ contract TC42 is BaseIntTest_WithActions {
     assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 63 * 1e6);
     assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 7 * 1e6);
 
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 100_000 * 1e30);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 100_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
 
     // Increase position
     // Long ETHUSD 1,500,000 USD
@@ -164,14 +165,14 @@ contract TC42 is BaseIntTest_WithActions {
     assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 7020 * 1e6);
     assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 780 * 1e6);
 
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 1_600_000 * 1e30);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 1_600_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
 
     // Time passed to reset the epochOI
     vm.warp(block.timestamp + 16 minutes);
 
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
 
     // Decrese position
     // ETHUSD 100,000 USD
@@ -200,7 +201,7 @@ contract TC42 is BaseIntTest_WithActions {
     assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 72 * 1e6);
     assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 8 * 1e6);
 
-    assertEq(perpStorage.getEpochOI(true, wethMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
   }
 }

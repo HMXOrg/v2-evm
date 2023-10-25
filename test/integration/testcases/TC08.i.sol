@@ -16,6 +16,7 @@ contract TC08 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   function testCorrectness_TC08() external {
+    vm.warp(1698207980);
     // T0: Initialized state
     {
       //deal with out of gas
@@ -56,18 +57,18 @@ contract TC08 is BaseIntTest_WithActions {
       getPositionId(ALICE, 0, jpyMarketIndex);
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
 
-      assertEq(perpStorage.getEpochOI(true, jpyMarketIndex), 100_000 * 1e30);
+      assertEq(perpStorage.getEpochVolume(true, jpyMarketIndex), 100_000 * 1e30);
 
       marketSell(ALICE, 0, wbtcMarketIndex, 50_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
 
-      assertEq(perpStorage.getEpochOI(false, wbtcMarketIndex), 50_000 * 1e30);
+      assertEq(perpStorage.getEpochVolume(false, wbtcMarketIndex), 50_000 * 1e30);
     }
 
     // T3: Alice opened the position for 3 hours, BTC pumped hard to 23,100 USD. This makes Alice account went below her kill level
     vm.warp(block.timestamp + (3 * HOURS));
 
-    assertEq(perpStorage.getEpochOI(true, jpyMarketIndex), 0);
-    assertEq(perpStorage.getEpochOI(false, wbtcMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, jpyMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wbtcMarketIndex), 0);
 
     {
       updatePriceData = new bytes[](3);

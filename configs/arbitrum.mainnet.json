@@ -40,6 +40,7 @@
     "unsafeEcoPythCalldataBuilder2": "0xCF43C575359D25280672c606E4F7F50bc668a813",
     "ecoPythCalldataBuilder3": "",
     "unsafeEcoPythCalldataBuilder3": "",
+    "uncheckedEcoPythCalldataBuilder3": "",
     "onChainPriceLens": "0x7D8eAa8dF02526c711F4ff1f97F6c5324212DBBa",
     "calcPriceLens": "",
     "priceAdapters": {

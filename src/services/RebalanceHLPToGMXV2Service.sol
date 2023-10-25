@@ -10,8 +10,8 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 // interfaces
-import { IGMXExchangeRouter } from "@hmx/interfaces/gmxV2/IGMXExchangeRouter.sol";
-import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmxV2/IDepositCallbackReceiver.sol";
+import { IGMXExchangeRouter } from "@hmx/interfaces/gmx-v2/IGMXExchangeRouter.sol";
+import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmx-v2/IDepositCallbackReceiver.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPToGMXV2Service } from "@hmx/services/interfaces/IRebalanceHLPToGMXV2Service.sol";
@@ -89,7 +89,7 @@ contract RebalanceHLPToGMXV2Service is OwnableUpgradeable, IDepositCallbackRecei
 
   function afterDepositExecution(
     bytes32 key,
-    Deposit.Props memory deposit,
+    Deposit.Props memory /* deposit */,
     EventUtils.EventLogData memory eventData
   ) external onlyGmxDepositHandler {
     DepositParams memory depositParam = depositHistory[key];

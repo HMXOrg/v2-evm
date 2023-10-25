@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IGMXExchangeRouter } from "@hmx/interfaces/gmxV2/IGMXExchangeRouter.sol";
+import { IGMXExchangeRouter } from "@hmx/interfaces/gmx-v2/IGMXExchangeRouter.sol";
 
 interface IRebalanceHLPToGMXV2Service {
   error RebalanceHLPToGMXV2Service_Unauthorized();

@@ -28,7 +28,7 @@ import { CalcPriceLens } from "@hmx/oracles/CalcPriceLens.sol";
 import { EcoPythCalldataBuilder3 } from "@hmx/oracles/EcoPythCalldataBuilder3.sol";
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 import { GmPriceAdapter } from "@hmx/oracles/adapters/GmPriceAdapter.sol";
-import { IGmxV2Reader } from "@hmx/interfaces/gmxV2/IGmxV2Reader.sol";
+import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
 
 contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
   uint256 constant MAX_DIFF = 0.001 ether; // 0.1 %

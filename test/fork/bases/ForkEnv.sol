@@ -57,7 +57,7 @@ import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IGmxV2Reader } from "@hmx/interfaces/gmxV2/IGmxV2Reader.sol";
+import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;

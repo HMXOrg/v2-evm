@@ -9,8 +9,8 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const config = loadConfig(chainId);
 
-  const index = 35;
-  const ecoPythPriceId = ethers.utils.formatBytes32String("wstETH");
+  const index = 40;
+  const ecoPythPriceId = ethers.utils.formatBytes32String("GM-ETHUSD");
 
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
   console.log("[EcoPyth] Setting asset IDs...");

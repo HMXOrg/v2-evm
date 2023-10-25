@@ -10,10 +10,8 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  console.log(
-    "glp",
-    await configStorage.assetHlpTokenConfigs("0x474c500000000000000000000000000000000000000000000000000000000000")
-  );
+  await (await configStorage.removeHlpAssetId(8)).wait();
+  console.log(await configStorage.getHlpAssetIds());
 }
 
 main().catch((error) => {

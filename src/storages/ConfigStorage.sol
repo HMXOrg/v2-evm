@@ -633,6 +633,12 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogRemoveUnderlying(_token);
   }
 
+  function removeHlpAssetId(uint256 _i) external {
+    uint256 _len = hlpAssetIds.length;
+    hlpAssetIds[_i] = hlpAssetIds[_len - 1];
+    hlpAssetIds.pop();
+  }
+
   function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {
     for (uint256 i = 0; i < _newHooks.length; ) {
       if (_newHooks[i] == address(0)) revert IConfigStorage_InvalidAddress();

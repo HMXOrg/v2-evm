@@ -165,6 +165,7 @@ contract EcoPyth2 is Ownable, IEcoPyth {
     if (_index == 0) revert EcoPyth_InvalidArgs();
 
     mapAssetIdToIndex[_assetId] = _index;
+    indexCount = assetIds.length;
 
     emit SetAssetId(_index, _assetId);
 

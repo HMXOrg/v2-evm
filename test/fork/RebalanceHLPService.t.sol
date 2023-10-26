@@ -12,6 +12,7 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { Smoke_Base } from "@hmx-test/fork/smoke-test/Smoke_Base.t.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract RebalanceHLPService_Test is Smoke_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
@@ -46,10 +47,10 @@ contract RebalanceHLPService_Test is Smoke_Base {
     (_minPublishTime, _priceUpdateCalldata, _publishTimeUpdateCalldata) = ForkEnv.ecoPythBuilder.build(data);
   }
 
-  function testCorrectness_Rebalance_ReinvestSuccess() external {
+  function testCorrectness_Rebalance_Success() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
-    uint256 usdcAmount = 1000 * 1e6;
-    uint256 wethAmount = 10 * 1e18;
+    uint256 usdcAmount = HMXLib.min(vaultStorage.hlpLiquidity(address(usdc_e)), 1000 * 1e6);
+    uint256 wethAmount = HMXLib.min(vaultStorage.hlpLiquidity(address(weth)), 0.1 * 1e18);
 
     params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 990 * 1e6, 100);
     params[1] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), wethAmount, 95 * 1e16, 100);

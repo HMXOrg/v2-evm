@@ -202,8 +202,8 @@ contract TC42 is BaseIntTest_WithActions {
     assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 72 * 1e6);
     assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 8 * 1e6);
 
-    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 100_000 * 1e30);
-    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 100_000 * 1e30);
   }
 
   function testCorrectness_TC42_testEpochVolume() external {

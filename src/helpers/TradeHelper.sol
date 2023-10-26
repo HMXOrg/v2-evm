@@ -438,12 +438,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Calculate the trading fee
     if (_isAdaptiveFee) {
-      _positionFeeBPS = _getAdaptiveFeeBps(
-        _position.positionSizeE30 > 0,
-        _sizeDelta,
-        _position.marketIndex,
-        _positionFeeBPS
-      );
+      _positionFeeBPS = _getAdaptiveFeeBps(_sizeDelta, _position.marketIndex, _positionFeeBPS);
     }
 
     _tradingFee = (_absSizeDelta * _positionFeeBPS) / BPS;
@@ -1016,7 +1011,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   }
 
   function _getAdaptiveFeeBps(
-    bool _isLong,
     int256 _sizeDelta,
     uint256 _marketIndex,
     uint32 _baseFeeBps

@@ -399,7 +399,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumSE - _vars.oldSumSe) : 0,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumS2E - _vars.oldSumS2e) : 0
           );
-          _vars.perpStorage.increaseEpochVolume(true, _vars.position.marketIndex, _vars.absPositionSizeE30);
+          // Decrease Long = Sell
+          _vars.perpStorage.increaseEpochVolume(false, _vars.position.marketIndex, _vars.absPositionSizeE30);
         } else {
           _vars.perpStorage.updateGlobalShortMarketById(
             _vars.position.marketIndex,
@@ -407,7 +408,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumSE - _vars.oldSumSe) : 0,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumS2E - _vars.oldSumS2e) : 0
           );
-          _vars.perpStorage.increaseEpochVolume(false, _vars.position.marketIndex, _vars.absPositionSizeE30);
+          // Decrease Short = Buy
+          _vars.perpStorage.increaseEpochVolume(true, _vars.position.marketIndex, _vars.absPositionSizeE30);
         }
       }
 

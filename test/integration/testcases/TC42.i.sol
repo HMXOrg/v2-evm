@@ -14,8 +14,9 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
 
 contract TC42 is BaseIntTest_WithActions {
-  function testCorrectness_TC41_AdaptiveFee() external {
-    vm.warp(1698207980);
+  function testCorrectness_TC42_AdaptiveFee() external {
+    uint256 startTimestamp = 1698207980;
+    vm.warp(startTimestamp);
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
@@ -201,7 +202,181 @@ contract TC42 is BaseIntTest_WithActions {
     assertEq(vaultStorage.protocolFees(address(usdc)) - usdcProtocolFeeBefore, 72 * 1e6);
     assertEq(vaultStorage.devFees(address(usdc)) - usdcDevFeeBefore, 8 * 1e6);
 
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 100_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+  }
+
+  function testCorrectness_TC42_testEpochVolume() external {
+    uint256 startTimestamp = 1698207980;
+    vm.warp(startTimestamp);
+    // T0: Initialized state
+    // ALICE as liquidity provider
+    // BOB as trader
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+
+    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
+    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
+    _marketConfig.increasePositionFeeRateBPS = 7;
+    _marketConfig.decreasePositionFeeRateBPS = 7;
+    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, true);
+
+    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
+    configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);
+
+    // T1: Add liquidity in pool USDC 100_000 , WBTC 100
+    vm.deal(ALICE, executionOrderFee);
+    wbtc.mint(ALICE, 100 * 1e8);
+
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      100 * 1e8,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
+
+    vm.deal(ALICE, executionOrderFee);
+    usdc.mint(ALICE, 100_000 * 1e6);
+
+    addLiquidity(
+      ALICE,
+      ERC20(address(usdc)),
+      100_000 * 1e6,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
+
+    {
+      // HLP => 1_994_000.00(WBTC) + 100_000 (USDC)
+      assertHLPTotalSupply(2_094_000 * 1e18);
+
+      // assert HLP
+      assertTokenBalanceOf(ALICE, address(hlpV2), 2_094_000 * 1e18);
+      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertHLPLiquidity(address(usdc), 100_000 * 1e6);
+    }
+
+    // T2: Open 2 positions in the same market and the same exposure
+    {
+      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
+      assertVaultTokenBalance(address(usdc), 100_000 * 1e6, "TC38: before deposit collateral");
+    }
+
+    usdc.mint(BOB, 100_000 * 1e6);
+    usdc.mint(CAROL, 100_000 * 1e6);
+    depositCollateral(BOB, 0, ERC20(address(usdc)), 100_000 * 1e6);
+    depositCollateral(CAROL, 0, ERC20(address(usdc)), 100_000 * 1e6);
+
+    {
+      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
+      assertVaultTokenBalance(address(usdc), 300_000 * 1e6, "TC38: before deposit collateral");
+    }
+
+    int24[] memory askDepthTicks = new int24[](1);
+    askDepthTicks[0] = 149149; // 3000094.37572017
+
+    int24[] memory bidDepthTicks = new int24[](1);
+    bidDepthTicks[0] = 129149; // 406059.22326026
+
+    int24[] memory coeffVariantTicks = new int24[](1);
+    coeffVariantTicks[0] = -60708; // 0.00231002
+
+    bytes32[] memory askDepths = orderbookOracle.buildUpdateData(askDepthTicks);
+    bytes32[] memory bidDepths = orderbookOracle.buildUpdateData(bidDepthTicks);
+    bytes32[] memory coeffVariants = orderbookOracle.buildUpdateData(coeffVariantTicks);
+    orderbookOracle.setUpdater(address(this), true);
+    orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
+
     assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 0);
     assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    vm.deal(BOB, 1 ether);
+    marketBuy(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
+
+    bytes32 _positionId = keccak256(abi.encodePacked(BOB, wethMarketIndex));
+    IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 100_000 * 1e30);
+
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 100_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    vm.warp(startTimestamp + 1 minutes);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = [100,000 0]
+    // Sell = [0, 0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 100_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    marketBuy(BOB, 0, wethMarketIndex, 10_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = [100_000,10_000]
+    // Sell = [0, 0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 110_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    vm.warp(startTimestamp + 2 minutes);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = [100_000,10_000, 0]
+    // Sell = [0, 0, 0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 110_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    vm.warp(startTimestamp + 14 minutes);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = [100_000,10_000,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    // Sell = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 110_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    marketBuy(BOB, 0, wethMarketIndex, 22_222 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = [100_000,10_000,0,0,0,0,0,0,0,0,0,0,0,0,22_222]
+    // Sell = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 132_222 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    vm.warp(startTimestamp + 15 minutes);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = 100,000,[10_000,0,0,0,0,0,0,0,0,0,0,0,22_222,0]
+    // Sell = 0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 32_222 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    marketSell(BOB, 0, wethMarketIndex, 50_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = 100,000,[10_000,0,0,0,0,0,0,0,0,0,0,0,22_222,0]
+    // Sell = 0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50_000]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 32_222 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 50_000 * 1e30);
+
+    vm.warp(startTimestamp + 16 minutes);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = 100,000,10_000,[0,0,0,0,0,0,0,0,0,0,0,22_222,0,0]
+    // Sell = 0,0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,50_000,0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 22_222 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 50_000 * 1e30);
+
+    // Change the window length to 2 and expect that epoch volume would be summed up correctly
+    perpStorage.setMovingWindowConfig(2, 1 minutes);
+
+    // Epoch Volume Window (1 minute interval)
+    // Buy = 100,000,10_000,0,0,0,0,0,0,0,0,0,0,0,22_222,[0,0]
+    // Sell = 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[50_000,0]
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 50_000 * 1e30);
   }
 }

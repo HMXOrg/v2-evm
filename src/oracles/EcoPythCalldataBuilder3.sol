@@ -30,6 +30,8 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
   CalcPriceLens public cLens;
   bool private l2BlockNumber;
 
+  error BadOrder(uint256 index, bytes32 assetId);
+
   constructor(IEcoPyth ecoPyth_, OnChainPriceLens ocLens_, CalcPriceLens cLens_, bool l2BlockNumber_) {
     ecoPyth = ecoPyth_;
     ocLens = ocLens_;
@@ -57,7 +59,9 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
 
     for (uint _i = 0; _i < _dataLength; ) {
       // +1 here because assetIds[0] is blank
-      require(_data[_i].assetId == assetIds[_i + 1], "BAD_ORDER");
+      if (_data[_i].assetId != assetIds[_i + 1]) {
+        revert BadOrder(_i, _data[_i].assetId);
+      }
       unchecked {
         ++_i;
       }

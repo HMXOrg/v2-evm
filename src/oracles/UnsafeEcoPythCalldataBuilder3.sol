@@ -30,6 +30,8 @@ contract UnsafeEcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
   CalcPriceLens public cLens;
   bool private l2BlockNumber;
 
+  error BadOrder(uint256 index, bytes32 assetId);
+
   constructor(IEcoPyth ecoPyth_, OnChainPriceLens ocLens_, CalcPriceLens cLens_, bool l2BlockNumber_) {
     ecoPyth = ecoPyth_;
     ocLens = ocLens_;

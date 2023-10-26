@@ -48,6 +48,22 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
     return false;
   }
 
+  function validateAssetOrder(BuildData[] calldata _data) internal view {
+    uint _dataLength = _data.length;
+    bytes32[] memory assetIds = ecoPyth.getAssetIds();
+
+    // +1 here because assetIds[0] is blank
+    require(_dataLength + 1 == assetIds.length, "BAD_LENGTH");
+
+    for (uint _i = 0; _i < _dataLength; ) {
+      // +1 here because assetIds[0] is blank
+      require(_data[_i].assetId == assetIds[_i + 1], "BAD_ORDER");
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
   function build(
     BuildData[] calldata _data
   )
@@ -60,6 +76,7 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
       uint256 blockNumber
     )
   {
+    validateAssetOrder(_data);
     uint _dataLength = _data.length;
 
     // 1. Validation

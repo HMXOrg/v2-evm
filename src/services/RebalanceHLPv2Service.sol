@@ -95,7 +95,7 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
           minMarketTokens: _depositParam.minMarketTokens,
           shouldUnwrapNativeToken: false,
           executionFee: _executionFee,
-          callbackGasLimit: 50000
+          callbackGasLimit: _depositParam.gasLimit
         })
       );
       gmxOrderKeys[i] = gmxOrderKey;
@@ -118,11 +118,11 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     if (receivedMarketTokens == 0) revert IRebalanceHLPv2Service_ZeroMarketTokenReceived();
 
     if (depositParam.longTokenAmount > 0) {
-      vaultStorage.pullTokenAndClearOnHold(depositParam.longToken, depositParam.longTokenAmount);
+      vaultStorage.clearOnHold(depositParam.longToken, depositParam.longTokenAmount);
     }
 
     if (depositParam.shortTokenAmount > 0) {
-      vaultStorage.pullTokenAndClearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
+      vaultStorage.clearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
     }
 
     IERC20Upgradeable(depositParam.market).safeTransfer(address(vaultStorage), receivedMarketTokens);
@@ -164,6 +164,13 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _hlpValueLossBPS);
     minHLPValueLossBPS = _hlpValueLossBPS;
   }
+
+  function claimETH() external onlyOwner {
+    payable(owner()).transfer(address(this).balance);
+  }
+
+  /// Receive unspent execution fee from GMXv2
+  receive() external payable {}
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {

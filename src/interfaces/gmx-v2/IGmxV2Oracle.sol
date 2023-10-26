@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IGmxV2Price } from "@hmx/interfaces/gmx-v2/IGmxV2Price.sol";
+
 interface IGmxV2Oracle {
   struct SetPricesParams {
     uint256 signerInfo;
@@ -41,4 +43,6 @@ interface IGmxV2Oracle {
     // The timestamp of the current (upperbound) block number
     uint64 currentBlockTimestamp;
   }
+
+  function getPrimaryPrice(address token) external view returns (IGmxV2Price.Props memory);
 }

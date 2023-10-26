@@ -16,6 +16,7 @@ interface IRebalanceHLPv2Service {
     address shortToken;
     uint256 shortTokenAmount;
     uint256 minMarketTokens;
+    uint256 gasLimit;
   }
 
   function executeDeposits(

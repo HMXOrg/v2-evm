@@ -32,6 +32,14 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     bytes4 newFunctionSig
   );
   event LogAddDevFee(address indexed token, uint256 devFeeAmount);
+  event LogClearOnHold(
+    address indexed token,
+    uint256 clearAmount,
+    uint256 totalAmountBefore,
+    uint256 onHoldAmountBefore,
+    uint256 totalAmountAfter,
+    uint256 onHoldAmountAfter
+  );
 
   /**
    * States
@@ -117,12 +125,15 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     return nextBalance - prevBalance;
   }
 
-  function pullTokenAndClearOnHold(
-    address _token,
-    uint256 _amount
-  ) external nonReentrant onlyWhitelistedExecutor returns (uint256) {
-    hlpLiquidityOnHold[_token] -= _amount;
-    return _pullToken(_token);
+  function clearOnHold(address _token, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
+    emit LogClearOnHold(
+      _token,
+      _amount,
+      totalAmount[_token],
+      hlpLiquidityOnHold[_token],
+      totalAmount[_token] -= _amount,
+      hlpLiquidityOnHold[_token] -= _amount
+    );
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {

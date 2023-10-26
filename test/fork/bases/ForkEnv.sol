@@ -136,12 +136,14 @@ abstract contract ForkEnv is Test {
   IGmxExchangeRouter internal gmxV2ExchangeRouter = IGmxExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
   address internal gmxV2DepositVault = address(getAddress(".vendors.gmxV2.depositVault"));
   address internal gmxV2DepositUtils = address(getAddress(".vendors.gmxV2.depositUtils"));
+  address internal gmxV2DepositStoreUtils = 0x556665e81c1516B6028d04EE081518b3818D1453;
+  address internal gmxV2MarketUtils = 0x7ffF7ef2fc8Db5159B0046ad49d018A5aB40dB11;
   address internal gmxV2ExecuteDepositUtils = 0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2;
   IGmxV2DepositHandler internal gmxV2DepositHandler = IGmxV2DepositHandler(getAddress(".vendors.gmxV2.depositHandler"));
   address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
-  address internal gmxV2WbtcUsdcMarket = 0x47c031236e19d024b42f8AE6780E44A573170703;
+  IERC20 internal gmxV2WbtcUsdcMarket = IERC20(0x47c031236e19d024b42f8AE6780E44A573170703);
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
 
@@ -174,6 +176,8 @@ abstract contract ForkEnv is Test {
     vm.label(gmxV2DepositUtils, "gmxV2DepositUtils");
     vm.label(address(gmxV2DepositHandler), "gmxV2DepositHandler");
     vm.label(gmxV2ExecuteDepositUtils, "gmxV2ExecuteDepositUtils");
+    vm.label(gmxV2DepositStoreUtils, "gmxV2DepositStoreUtils");
+    vm.label(gmxV2MarketUtils, "gmxV2MarketUtils");
     vm.label(gmxV2MarketStoreUtils, "gmxV2MarketStoreUtils");
     vm.label(gmxV2DataStore, "gmxV2DataStore");
     vm.label(address(gmxV2RoleStore), "gmxV2RoleStore");

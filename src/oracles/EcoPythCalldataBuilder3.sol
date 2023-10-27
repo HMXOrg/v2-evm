@@ -55,7 +55,9 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
     bytes32[] memory assetIds = ecoPyth.getAssetIds();
 
     // +1 here because assetIds[0] is blank
-    require(_dataLength + 1 == assetIds.length, "BAD_LENGTH");
+    // check that the buildData should have more assets than ecoPyth's assetIds
+    // it can be less to support adding new assetIds operation
+    require(_dataLength + 1 <= assetIds.length, "BAD_LENGTH");
 
     for (uint _i = 0; _i < _dataLength; ) {
       // +1 here because assetIds[0] is blank

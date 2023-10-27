@@ -28,7 +28,7 @@ contract OrderbookOracle is Ownable {
   bytes32[] public coeffVariants;
   // map AssetId to index in the `askDepths`, `bidDepths`, and `coeffVariants`
   mapping(uint256 => uint256) public mapMarketIndexToIndex;
-  uint256[] public marketIndexes;
+  uint256[] private marketIndexes;
   uint256 public indexCount;
   // each `askDepths`, `bidDepths`, and `coeffVariants` will occupy 24 bits
   // all three will be in int24 format. 10 entries of `askDepth`, `bidDepth`,

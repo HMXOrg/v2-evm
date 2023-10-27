@@ -40,6 +40,7 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
   }
 
   event LogDepositCreated(bytes32 gmxOrderKey, DepositParams depositParam);
+  event LogDepositSucceed(bytes32 gmxOrderKey, DepositParams depositParam, uint256 receivedMarketTokens);
   event LogSetMinHLPValueLossBPS(uint16 oldValue, uint16 newValue);
 
   function initialize(
@@ -114,20 +115,26 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     if (depositParam.longToken == address(0) && depositParam.shortToken == address(0))
       revert IRebalanceHLPv2Service_KeyNotFound();
 
-    uint256 receivedMarketTokens = eventData.uintItems.items[0].value;
-    if (receivedMarketTokens == 0) revert IRebalanceHLPv2Service_ZeroMarketTokenReceived();
+    // Add recieved GMs as liquidity
+    uint256 receivedGms = eventData.uintItems.items[0].value;
+    if (receivedGms == 0) revert IRebalanceHLPv2Service_ZeroGmReceived();
+    IERC20Upgradeable(depositParam.market).safeTransfer(address(vaultStorage), receivedGms);
+    vaultStorage.pullToken(depositParam.market);
+    vaultStorage.addHLPLiquidity(depositParam.market, receivedGms);
 
+    // Clear on hold long token
     if (depositParam.longTokenAmount > 0) {
       vaultStorage.clearOnHold(depositParam.longToken, depositParam.longTokenAmount);
     }
 
+    // Clear on hold short token
     if (depositParam.shortTokenAmount > 0) {
       vaultStorage.clearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
     }
 
-    IERC20Upgradeable(depositParam.market).safeTransfer(address(vaultStorage), receivedMarketTokens);
-    vaultStorage.pullToken(depositParam.market);
+    emit LogDepositSucceed(key, depositParam, receivedGms);
 
+    // Clear deposit history
     delete depositHistory[key];
   }
 

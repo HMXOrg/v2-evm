@@ -4,6 +4,7 @@
 
 pragma solidity 0.8.18;
 
+/// Forge
 import { stdJson } from "forge-std/StdJson.sol";
 import { Test } from "forge-std/Test.sol";
 
@@ -46,6 +47,8 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+/// Staking
+import { IHLPStaking } from "@hmx/staking/interfaces/IHLPStaking.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
 /// Vendors
@@ -117,8 +120,8 @@ abstract contract ForkEnv is Test {
   VaultStorage internal vaultStorage = VaultStorage(getAddress(".storages.vault"));
   /// Helpers
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
-
-  ITradingStaking internal hlpStaking = ITradingStaking(getAddress(".staking.hlp"));
+  /// Staking
+  IHLPStaking internal hlpStaking = IHLPStaking(getAddress(".staking.hlp"));
 
   /// Vendors
   /// Uniswap

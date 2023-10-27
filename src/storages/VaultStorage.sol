@@ -35,10 +35,10 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   event LogClearOnHold(
     address indexed token,
     uint256 clearAmount,
-    uint256 totalAmountBefore,
-    uint256 onHoldAmountBefore,
-    uint256 totalAmountAfter,
-    uint256 onHoldAmountAfter
+    uint256 prevTotalAmount,
+    uint256 nextTotalAmount,
+    uint256 prevOnHoldAmount,
+    uint256 nextOnHoldAmount
   );
 
   /**
@@ -122,6 +122,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
 
     totalAmount[_token] = nextBalance + hlpLiquidityOnHold[_token];
+
     return nextBalance - prevBalance;
   }
 
@@ -130,10 +131,11 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
       _token,
       _amount,
       totalAmount[_token],
-      hlpLiquidityOnHold[_token],
       totalAmount[_token] -= _amount,
+      hlpLiquidityOnHold[_token],
       hlpLiquidityOnHold[_token] -= _amount
     );
+    _pullToken(_token);
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {

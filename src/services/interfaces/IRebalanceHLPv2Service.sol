@@ -4,10 +4,11 @@ pragma solidity 0.8.18;
 import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
 
 interface IRebalanceHLPv2Service {
-  error IRebalanceHLPv2Service_Unauthorized();
-  error IRebalanceHLPv2Service_KeyNotFound();
-  error IRebalanceHLPv2Service_ZeroMarketTokenReceived();
   error IRebalanceHLPv2Service_AmountIsZero();
+  error IRebalanceHLPv2Service_BadPullAmount();
+  error IRebalanceHLPv2Service_KeyNotFound();
+  error IRebalanceHLPv2Service_Unauthorized();
+  error IRebalanceHLPv2Service_ZeroGmReceived();
 
   struct DepositParams {
     address market;

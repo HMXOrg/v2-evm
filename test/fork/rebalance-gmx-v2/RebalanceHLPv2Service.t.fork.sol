@@ -202,13 +202,13 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnv, Cheats {
     // 2. AUM should remains the same.
     // 3. 0.01 WBTC should be on-hold.
     // 4. pullToken should return zero.
-    // 5. afterTotalWbtc should be decreased by 0.01 WBTC
+    // 5. afterTotalWbtc should be the same as beforeTotalWbtc.
     // 6. beforeWbtc should be 0.01 more than afterWbtc.
     assertEq(beforeTvl, afterTvl, "tvl must remains the same");
     assertEq(beforeAum, afterAum, "aum must remains the same");
     assertEq(0.01 * 1e8, ForkEnv.vaultStorage.hlpLiquidityOnHold(address(ForkEnv.wbtc)), "0.01 WBTC should be on-hold");
     assertEq(0, ForkEnv.vaultStorage.pullToken(address(ForkEnv.wbtc)), "pullToken should return zero");
-    assertEq(afterTotalWbtc + 0.01 * 1e8, beforeTotalWbtc, "afterTotalWbtc should be decreased by 0.01 WBTC");
+    assertEq(afterTotalWbtc, beforeTotalWbtc, "afterTotalWbtc should the same as before");
     assertEq(beforeWbtc - afterWbtc, 0.01 * 1e8, "wbtcBefore should be 0.01 more than wbtcAfter");
 
     // GMXv2 Keeper comes and execute the deposit order
@@ -284,7 +284,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnv, Cheats {
     assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum must remains the same");
   }
 
-  function testCorrectness_WhenSomeoneJamInTheMiddle() external {
+  function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
     // Wrap small ETHs for execution fee
     uint256 executionFee = 0.001 ether;
     // Override GM(WBTC-USDC) price
@@ -416,7 +416,172 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnv, Cheats {
     // 4. AUM should not change more than 0.01%
     assertEq(0, ForkEnv.vaultStorage.hlpLiquidityOnHold(address(ForkEnv.wbtc)), "0 WBTC should be on-hold");
     assertEq(ForkEnv.vaultStorage.pullToken(address(ForkEnv.wbtc)), 0, "pullToken should return zero");
-    assertApproxEqRel(beforeTvl, afterTvl, 0.0001 ether, "tvl must remains the same");
-    assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum must remains the same");
+    assertApproxEqRel(beforeTvl, afterTvl, 0.0001 ether, "tvl should not change more than 0.01%");
+    assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum should not change more than 0.01%");
+  }
+
+  function testCorrectness_WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
+    // Wrap small ETHs for execution fee
+    uint256 executionFee = 0.001 ether;
+    // Override GM(WBTC-USDC) price
+    MockEcoPyth(address(ForkEnv.ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
+
+    uint256 beforeTvl = ForkEnv.calculator.getHLPValueE30(false);
+    uint256 beforeAum = ForkEnv.calculator.getAUME30(false);
+
+    // Preps
+    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
+      market: address(ForkEnv.gmxV2WbtcUsdcMarket),
+      longToken: address(ForkEnv.wbtc),
+      longTokenAmount: 0.01 * 1e8,
+      shortToken: address(ForkEnv.usdc),
+      shortTokenAmount: 0,
+      minMarketTokens: 0,
+      gasLimit: 1_000_000
+    });
+    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
+    depositParams[0] = depositParam;
+
+    // Wrap some ETHs for execution fee
+    IWNative(address(ForkEnv.weth)).deposit{ value: executionFee * depositParams.length }();
+    // Approve rebalanceService to spend WETH
+    ForkEnv.weth.approve(address(rebalanceService), type(uint256).max);
+    // Execute deposits
+    bytes32[] memory gmxDepositOrderKeys = rebalanceService.executeDeposits(depositParams, executionFee);
+
+    uint256 afterTvl = ForkEnv.calculator.getHLPValueE30(false);
+    uint256 afterAum = ForkEnv.calculator.getAUME30(false);
+
+    // Assert the following conditions:
+    // 1. TVL should remains the same.
+    // 2. AUM should remains the same.
+    assertEq(beforeTvl, afterTvl, "tvl must remains the same");
+    assertEq(beforeAum, afterAum, "aum must remains the same");
+
+    // Alice try to deposit 1 WBTC as collateral in the middle
+    vm.startPrank(ALICE);
+    motherload(address(ForkEnv.wbtc), ALICE, 1 * 1e8);
+    ForkEnv.wbtc.approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
+    ForkEnv.crossMarginHandler.depositCollateral(0, address(ForkEnv.wbtc), 1 * 1e8, false);
+    vm.stopPrank();
+
+    // Assert the following conditions:
+    // 1. WBTC's total amount should 9.97066301
+    // 2. WBTC's balance should 9.96066301s
+    // 3. Alice's WBTC balance in HMX should be 1e8
+    assertEq(
+      ForkEnv.vaultStorage.totalAmount(address(ForkEnv.wbtc)),
+      9.97066301 * 1e8,
+      "totalAmount should be 9.97066301 WBTC"
+    );
+    assertEq(
+      ForkEnv.wbtc.balanceOf(address(ForkEnv.vaultStorage)),
+      9.96066301 * 1e8,
+      "balance should be 9.96066301 WBTC"
+    );
+    assertEq(
+      ForkEnv.vaultStorage.traderBalances(ALICE, address(ForkEnv.wbtc)),
+      1 * 1e8,
+      "Alice's WBTC balance should be 1e8"
+    );
+
+    // Alice try withdraw 1 WBTC as collateral in the middle
+    vm.startPrank(ALICE);
+    vm.deal(ALICE, 1 ether);
+    ForkEnv.crossMarginHandler.createWithdrawCollateralOrder{ value: executionFee }(
+      0,
+      address(ForkEnv.wbtc),
+      1 * 1e8,
+      executionFee,
+      false
+    );
+    vm.stopPrank();
+    // Keeper comes and execute the deposit order
+    vm.startPrank(ForkEnv.crossMarginOrderExecutor);
+    (
+      bytes32[] memory priceData,
+      bytes32[] memory publishedTimeData,
+      uint256 minPublishedTime,
+      bytes32 encodedVaas
+    ) = MockEcoPyth(address(ForkEnv.ecoPyth2)).getLastestPriceUpdateData();
+    ForkEnv.crossMarginHandler.executeOrder(
+      type(uint256).max,
+      payable(ForkEnv.crossMarginHandler),
+      priceData,
+      publishedTimeData,
+      minPublishedTime,
+      encodedVaas
+    );
+    vm.stopPrank();
+
+    // Assert the following conditions:
+    // 1. WBTC's total amount should 8.97066301
+    // 2. WBTC's balance should 8.96066301s
+    // 3. Alice's WBTC balance in HMX should be 0
+    // 4. Alice's WBTC balance should be 1e8
+    assertEq(
+      ForkEnv.vaultStorage.totalAmount(address(ForkEnv.wbtc)),
+      8.97066301 * 1e8,
+      "totalAmount should be 8.97066301 WBTC"
+    );
+    assertEq(
+      ForkEnv.wbtc.balanceOf(address(ForkEnv.vaultStorage)),
+      8.96066301 * 1e8,
+      "balance should be 8.96066301 WBTC"
+    );
+    assertEq(ForkEnv.vaultStorage.traderBalances(ALICE, address(ForkEnv.wbtc)), 0, "Alice's WBTC balance should be 0");
+    assertEq(ForkEnv.wbtc.balanceOf(ALICE), 1 * 1e8, "Alice's WBTC balance should be 1e8 (not in HMX)");
+
+    // GMXv2 Keeper comes and execute the deposit order
+    address[] memory realtimeFeedTokens = new address[](3);
+    // Index token
+    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
+    // Long token
+    realtimeFeedTokens[1] = address(ForkEnv.wbtc);
+    // Short token
+    realtimeFeedTokens[2] = address(ForkEnv.usdc);
+    bytes[] memory realtimeFeedData = new bytes[](3);
+    // Index token
+    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+    // Long token
+    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+    // Short token
+    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
+
+    beforeTvl = ForkEnv.calculator.getHLPValueE30(false);
+    beforeAum = ForkEnv.calculator.getAUME30(false);
+
+    ForkEnv.gmxV2DepositHandler.executeDeposit(
+      gmxDepositOrderKeys[0],
+      IGmxV2Oracle.SetPricesParams({
+        signerInfo: 0,
+        tokens: new address[](0),
+        compactedMinOracleBlockNumbers: new uint256[](0),
+        compactedMaxOracleBlockNumbers: new uint256[](0),
+        compactedOracleTimestamps: new uint256[](0),
+        compactedDecimals: new uint256[](0),
+        compactedMinPrices: new uint256[](0),
+        compactedMinPricesIndexes: new uint256[](0),
+        compactedMaxPrices: new uint256[](0),
+        compactedMaxPricesIndexes: new uint256[](0),
+        signatures: new bytes[](0),
+        priceFeedTokens: new address[](0),
+        realtimeFeedTokens: realtimeFeedTokens,
+        realtimeFeedData: realtimeFeedData
+      })
+    );
+
+    afterTvl = ForkEnv.calculator.getHLPValueE30(false);
+    afterAum = ForkEnv.calculator.getAUME30(false);
+
+    // Assert the following conditions:
+    // 1. 0 WBTC should be on-hold.
+    // 2. pullToken should return zero.
+    // 3. TVL should not change more than 0.01%
+    // 4. AUM should not change more than 0.01%
+    assertEq(0, ForkEnv.vaultStorage.hlpLiquidityOnHold(address(ForkEnv.wbtc)), "0 WBTC should be on-hold");
+    assertEq(ForkEnv.vaultStorage.pullToken(address(ForkEnv.wbtc)), 0, "pullToken should return zero");
+    assertApproxEqRel(beforeTvl, afterTvl, 0.0001 ether, "tvl should not change more than 0.01%");
+    assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum should not change more than 0.01%");
   }
 }

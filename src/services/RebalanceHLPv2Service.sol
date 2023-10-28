@@ -73,12 +73,12 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     for (uint256 i; i < _depositParamsLen; i++) {
       DepositParams memory _depositParam = _depositParams[i];
       if (_depositParam.longTokenAmount > 0) {
-        vaultStorage.pushToken(_depositParam.longToken, address(depositVault), _depositParam.longTokenAmount);
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
+        vaultStorage.pushToken(_depositParam.longToken, address(depositVault), _depositParam.longTokenAmount);
       }
       if (_depositParam.shortTokenAmount > 0) {
-        vaultStorage.pushToken(_depositParam.shortToken, address(depositVault), _depositParam.shortTokenAmount);
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
+        vaultStorage.pushToken(_depositParam.shortToken, address(depositVault), _depositParam.shortTokenAmount);
       }
 
       // Taken WETH from caller and send to depositVault for execution fee

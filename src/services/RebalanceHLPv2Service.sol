@@ -13,11 +13,17 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { IGmxV2ExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxV2ExchangeRouter.sol";
 import { IGmxV2Types } from "@hmx/interfaces/gmx-v2/IGmxV2Types.sol";
 import { IGmxV2DepositCallbackReceiver } from "@hmx/interfaces/gmx-v2/IGmxV2DepositCallbackReceiver.sol";
+import { IGmxV2WithdrawalCallbackReceiver } from "@hmx/interfaces/gmx-v2/IGmxV2WithdrawalCallbackReceiver.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
-contract RebalanceHLPv2Service is OwnableUpgradeable, IGmxV2DepositCallbackReceiver, IRebalanceHLPv2Service {
+contract RebalanceHLPv2Service is
+  OwnableUpgradeable,
+  IGmxV2DepositCallbackReceiver,
+  IGmxV2WithdrawalCallbackReceiver,
+  IRebalanceHLPv2Service
+{
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   IVaultStorage public vaultStorage;
@@ -235,6 +241,20 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IGmxV2DepositCallbackRecei
 
     delete depositHistory[key];
   }
+
+  /// @notice Called by GMXv2 after a withdrawal execution
+  function afterWithdrawalExecution(
+    bytes32,
+    IGmxV2Types.WithdrawalProps memory,
+    IGmxV2Types.EventLogData memory
+  ) external override onlyGmxWithdrawalHandler {}
+
+  /// @notice Called by GMXv2 if a withdrawal was cancelled/reverted
+  function afterWithdrawalCancellation(
+    bytes32,
+    IGmxV2Types.WithdrawalProps memory,
+    IGmxV2Types.EventLogData memory
+  ) external override onlyGmxWithdrawalHandler {}
 
   /// @notice Claim returned ETH from GMXv2.
   /// @dev This is likely unused execution fee.

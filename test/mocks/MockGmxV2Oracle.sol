@@ -2,20 +2,20 @@
 pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { IGmxV2Price } from "@hmx/interfaces/gmx-v2/IGmxV2Price.sol";
+import { IGmxV2Types } from "@hmx/interfaces/gmx-v2/IGmxV2Types.sol";
 import { IGmxV2Oracle } from "@hmx/interfaces/gmx-v2/IGmxV2Oracle.sol";
 
 contract MockGmxV2Oracle is IGmxV2Oracle {
-  mapping(address => IGmxV2Price.Props) public prices;
+  mapping(address => IGmxV2Types.PriceProps) public prices;
 
   function setPrices(address /* dataStore */, address /* eventEmitter */, SetPricesParams memory params) external {
     for (uint i = 0; i < params.realtimeFeedTokens.length; i++) {
       (uint256 min, uint256 max) = abi.decode(params.realtimeFeedData[i], (uint256, uint256));
-      prices[params.realtimeFeedTokens[i]] = IGmxV2Price.Props({ min: min, max: max });
+      prices[params.realtimeFeedTokens[i]] = IGmxV2Types.PriceProps({ min: min, max: max });
     }
   }
 
-  function getPrimaryPrice(address token) external view returns (IGmxV2Price.Props memory) {
+  function getPrimaryPrice(address token) external view returns (IGmxV2Types.PriceProps memory) {
     return prices[token];
   }
 

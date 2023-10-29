@@ -16,8 +16,6 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, IRebalanceHLPv2Service {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 

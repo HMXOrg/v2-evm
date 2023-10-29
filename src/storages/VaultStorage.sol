@@ -126,6 +126,9 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     return nextBalance - prevBalance;
   }
 
+  /// @notice Clear on hold amount
+  /// @param _token The token to clear on hold amount
+  /// @param _amount The amount to clear on hold amount
   function clearOnHold(address _token, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
     emit LogClearOnHold(
       _token,

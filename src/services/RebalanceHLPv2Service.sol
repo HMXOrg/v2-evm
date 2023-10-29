@@ -4,17 +4,19 @@
 
 pragma solidity 0.8.18;
 
-// libs
+/// Libs
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-// interfaces
+/// Interfaces
 import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
 import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmx-v2/IDepositCallbackReceiver.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
+
+import { console2 } from "forge-std/console2.sol";
 
 contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, IRebalanceHLPv2Service {
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -41,6 +43,12 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
 
   event LogDepositCreated(bytes32 gmxOrderKey, DepositParams depositParam);
   event LogDepositSucceed(bytes32 gmxOrderKey, DepositParams depositParam, uint256 receivedMarketTokens);
+  event LogDepositCancelled(
+    bytes32 gmxOrderKey,
+    DepositParams depositParam,
+    uint256 returnedLongTokens,
+    uint256 returnedShortTokens
+  );
   event LogSetMinHLPValueLossBPS(uint16 oldValue, uint16 newValue);
 
   function initialize(
@@ -63,7 +71,11 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     minHLPValueLossBPS = _minHLPValueLossBPS;
   }
 
-  function executeDeposits(
+  /// @notice Create deposit orders on GMXv2 to rebalance HLP
+  /// @dev Caller must approve WETH to this contract
+  /// @param _depositParams Array of DepositParams
+  /// @param _executionFee Execution fee in WETH
+  function createDepositOrders(
     DepositParams[] calldata _depositParams,
     uint256 _executionFee
   ) external onlyWhitelisted returns (bytes32[] memory gmxOrderKeys) {
@@ -106,6 +118,9 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     }
   }
 
+  /// @notice Called by GMXv2 after a deposit execution
+  /// @param key The key of the deposit
+  /// @param eventData The event data emitted by GMXv2
   function afterDepositExecution(
     bytes32 key,
     Deposit.Props memory /* deposit */,
@@ -138,14 +153,35 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     delete depositHistory[key];
   }
 
-  // @dev called after a deposit cancellation
-  // @param key the key of the deposit
-  // @param deposit the deposit that was cancelled
+  /// @notice Called by GMXv2 if a deposit was cancelled/reverted
+  /// @param key the key of the deposit
   function afterDepositCancellation(
     bytes32 key,
-    Deposit.Props memory deposit,
-    EventUtils.EventLogData memory eventData
-  ) external onlyGmxDepositHandler {}
+    Deposit.Props memory /* deposit */,
+    EventUtils.EventLogData memory /* eventData */
+  ) external onlyGmxDepositHandler {
+    // Clear on hold long token
+    uint256 pulled = 0;
+    DepositParams memory depositParam = depositHistory[key];
+    if (depositParam.longTokenAmount > 0) {
+      vaultStorage.clearOnHold(depositParam.longToken, depositParam.longTokenAmount);
+      IERC20Upgradeable(depositParam.longToken).safeTransfer(address(vaultStorage), depositParam.longTokenAmount);
+      pulled = vaultStorage.pullToken(depositParam.longToken);
+      vaultStorage.addHLPLiquidity(depositParam.longToken, pulled);
+    }
+
+    // Clear on hold short token
+    if (depositParam.shortTokenAmount > 0) {
+      vaultStorage.clearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
+      IERC20Upgradeable(depositParam.longToken).safeTransfer(address(vaultStorage), depositParam.shortTokenAmount);
+      pulled = vaultStorage.pullToken(depositParam.shortToken);
+      vaultStorage.addHLPLiquidity(depositParam.shortToken, pulled);
+    }
+
+    emit LogDepositCancelled(key, depositParam, depositParam.longTokenAmount, depositParam.shortTokenAmount);
+
+    delete depositHistory[key];
+  }
 
   // function _validateHLPValue(uint256 _valueBefore) internal view {
   //   uint256 hlpValue = calculator.getHLPValueE30(true);

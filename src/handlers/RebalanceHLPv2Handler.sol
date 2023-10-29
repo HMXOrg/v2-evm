@@ -52,7 +52,7 @@ contract RebalanceHLPv2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable
     IERC20Upgradeable(address(_weth)).safeApprove(_service, type(uint256).max);
   }
 
-  function executeDeposits(
+  function createDepositOrders(
     IRebalanceHLPv2Service.DepositParams[] calldata _depositParams,
     uint256 _executionFee
   ) external payable nonReentrant onlyWhitelisted returns (bytes32[] memory) {
@@ -64,7 +64,7 @@ contract RebalanceHLPv2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable
     // Wrap ETH to WETH
     weth.deposit{ value: msg.value }();
 
-    return service.executeDeposits(_depositParams, _executionFee);
+    return service.createDepositOrders(_depositParams, _executionFee);
   }
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {

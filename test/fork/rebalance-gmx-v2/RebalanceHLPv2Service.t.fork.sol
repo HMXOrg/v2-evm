@@ -125,7 +125,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     // Approve rebalanceService to spend WETH
     weth.approve(address(rebalanceService), type(uint256).max);
     // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.executeDeposits(depositParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -193,6 +193,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     afterAum = calculator.getAUME30(false);
     uint256 afterGmBtcTotal = vaultStorage.totalAmount(address(gmxV2WbtcUsdcMarket));
     uint256 afterGmBtc = gmxV2WbtcUsdcMarket.balanceOf(address(vaultStorage));
+
     afterTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     afterWbtc = wbtc.balanceOf(address(vaultStorage));
 
@@ -217,6 +218,123 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     assertEq(afterGmBtc, afterGmBtcTotal, "gmBtcAfter should match with gmBtcTotalAfter");
     assertApproxEqRel(beforeTvl, afterTvl, 0.0001 ether, "tvl must remains the same");
     assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum must remains the same");
+  }
+
+  function testCorrectness_WhenErr_WhenNoOneJamInTheMiddle() external {
+    // Wrap small ETHs for execution fee
+    uint256 executionFee = 0.001 ether;
+    // Override GM(WBTC-USDC) price
+    MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
+
+    // Preps
+    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
+      market: address(gmxV2WbtcUsdcMarket),
+      longToken: address(wbtc),
+      longTokenAmount: 0.01 * 1e8,
+      shortToken: address(usdc),
+      shortTokenAmount: 0,
+      minMarketTokens: 307089148973164794124,
+      gasLimit: 1_000_000
+    });
+    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
+    depositParams[0] = depositParam;
+
+    uint256 wbtcInitialHlpLiquidity = vaultStorage.hlpLiquidity(address(wbtc));
+    uint256 beforeTvl = calculator.getHLPValueE30(false);
+    uint256 beforeAum = calculator.getAUME30(false);
+    uint256 beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
+    uint256 beforeWbtc = wbtc.balanceOf(address(vaultStorage));
+
+    // Wrap some ETHs for execution fee
+    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
+    // Approve rebalanceService to spend WETH
+    weth.approve(address(rebalanceService), type(uint256).max);
+    // Execute deposits
+    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+
+    uint256 afterTvl = calculator.getHLPValueE30(false);
+    uint256 afterAum = calculator.getAUME30(false);
+    uint256 afterTotalWbtc = vaultStorage.totalAmount(address(wbtc));
+    uint256 afterWbtc = wbtc.balanceOf(address(vaultStorage));
+
+    // Assert the following conditions:
+    // 1. TVL should remains the same.
+    // 2. AUM should remains the same.
+    // 3. 0.01 WBTC should be on-hold.
+    // 4. pullToken should return zero.
+    // 5. afterTotalWbtc should be the same as beforeTotalWbtc.
+    // 6. beforeWbtc should be 0.01 more than afterWbtc.
+    assertEq(beforeTvl, afterTvl, "tvl must remains the same");
+    assertEq(beforeAum, afterAum, "aum must remains the same");
+    assertEq(0.01 * 1e8, vaultStorage.hlpLiquidityOnHold(address(wbtc)), "0.01 WBTC should be on-hold");
+    assertEq(0, vaultStorage.pullToken(address(wbtc)), "pullToken should return zero");
+    assertEq(afterTotalWbtc, beforeTotalWbtc, "afterTotalWbtc should the same as before");
+    assertEq(beforeWbtc - afterWbtc, 0.01 * 1e8, "wbtcBefore should be 0.01 more than wbtcAfter");
+
+    // GMXv2 Keeper comes and execute the deposit order
+    address[] memory realtimeFeedTokens = new address[](3);
+    // Index token
+    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
+    // Long token
+    realtimeFeedTokens[1] = address(wbtc);
+    // Short token
+    realtimeFeedTokens[2] = address(usdc);
+    bytes[] memory realtimeFeedData = new bytes[](3);
+    // Index token
+    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+    // Long token
+    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+    // Short token
+    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
+
+    beforeTvl = calculator.getHLPValueE30(false);
+    beforeAum = calculator.getAUME30(false);
+    beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
+    beforeWbtc = wbtc.balanceOf(address(vaultStorage));
+
+    // Execute here should callback to `afterDepositCancellation`
+    gmxV2DepositHandler.executeDeposit(
+      gmxDepositOrderKeys[0],
+      IGmxV2Oracle.SetPricesParams({
+        signerInfo: 0,
+        tokens: new address[](0),
+        compactedMinOracleBlockNumbers: new uint256[](0),
+        compactedMaxOracleBlockNumbers: new uint256[](0),
+        compactedOracleTimestamps: new uint256[](0),
+        compactedDecimals: new uint256[](0),
+        compactedMinPrices: new uint256[](0),
+        compactedMinPricesIndexes: new uint256[](0),
+        compactedMaxPrices: new uint256[](0),
+        compactedMaxPricesIndexes: new uint256[](0),
+        signatures: new bytes[](0),
+        priceFeedTokens: new address[](0),
+        realtimeFeedTokens: realtimeFeedTokens,
+        realtimeFeedData: realtimeFeedData
+      })
+    );
+
+    afterTvl = calculator.getHLPValueE30(false);
+    afterAum = calculator.getAUME30(false);
+    afterTotalWbtc = vaultStorage.totalAmount(address(wbtc));
+    afterWbtc = wbtc.balanceOf(address(vaultStorage));
+
+    // Assert the following conditions:
+    // 1. 0 WBTC should be on-hold.
+    // 2. pullToken should return zero.
+    // 3. totalWbtc should remain the same.
+    // 4. wbtcBefore should increase by 0.01 WBTC.
+    // 5. afterTotalWbtc should match afterWbtc.
+    // 6. TVL should remain unchanged.
+    // 7. AUM should remain unchanged.
+    // 8. HLP WBTC liquidity should match with initial HLP WBTC liquidity.
+    assertEq(0, vaultStorage.hlpLiquidityOnHold(address(wbtc)), "0 WBTC should be on-hold");
+    assertEq(0, vaultStorage.pullToken(address(wbtc)), "pullToken should return zero");
+    assertEq(afterTotalWbtc, beforeTotalWbtc, "totalWbtcAfter remain the same");
+    assertEq(beforeWbtc + 0.01 * 1e8, afterWbtc, "wbtcBefore should increase by 0.01 WBTC");
+    assertEq(afterWbtc, afterTotalWbtc, "total[WBTC] should match wbtcAfter");
+    assertEq(beforeTvl, afterTvl, "tvl must remains the same");
+    assertEq(beforeAum, afterAum, "aum must remains the same");
+    assertEq(wbtcInitialHlpLiquidity, vaultStorage.hlpLiquidity(address(wbtc)), "hlpLiquidity must remains the same");
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
@@ -246,7 +364,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     // Approve rebalanceService to spend WETH
     weth.approve(address(rebalanceService), type(uint256).max);
     // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.executeDeposits(depositParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -385,7 +503,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     // Approve rebalanceService to spend WETH
     weth.approve(address(rebalanceService), type(uint256).max);
     // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.executeDeposits(depositParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -533,7 +651,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     // Approve rebalanceService to spend WETH
     weth.approve(address(rebalanceService), type(uint256).max);
     // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.executeDeposits(depositParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);

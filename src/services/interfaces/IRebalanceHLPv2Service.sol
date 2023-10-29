@@ -20,7 +20,7 @@ interface IRebalanceHLPv2Service {
     uint256 gasLimit;
   }
 
-  function executeDeposits(
+  function createDepositOrders(
     DepositParams[] calldata _depositParams,
     uint256 _executionFee
   ) external returns (bytes32[] memory gmxOrderKeys);

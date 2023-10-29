@@ -7,6 +7,7 @@ pragma solidity 0.8.18;
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 contract MockCalculator is ICalculator {
@@ -246,6 +247,11 @@ contract MockCalculator is ICalculator {
     uint256 /* _positionNextClosePrice */,
     int256 /* _positionRealizedPnl */
   ) public view virtual returns (uint256 _newAvaragePrice) {}
+
+  function getDelta(
+    IPerpStorage.Position memory position,
+    uint256 _markPrice
+  ) public view virtual returns (bool, uint256) {}
 
   function getDelta(
     uint256 _size,

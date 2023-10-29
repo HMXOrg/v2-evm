@@ -74,6 +74,7 @@
       "depositUtils": "0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4",
       "depositHandler": "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457",
       "marketStoreUtils": "0x41613136174912714faF4cF0680fB1Acbe0cC7D1",
+      "withdrawalHandler": "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac",
       "dataStore": "0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8",
       "roleStore": "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72",
       "reader": "0xf60becbba223EEA9495Da3f606753867eC10d139"

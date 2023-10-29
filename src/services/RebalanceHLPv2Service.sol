@@ -10,34 +10,27 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 /// Interfaces
-import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
-import { IDepositCallbackReceiver, EventUtils, Deposit } from "@hmx/interfaces/gmx-v2/IDepositCallbackReceiver.sol";
+import { IGmxV2ExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxV2ExchangeRouter.sol";
+import { IGmxV2Types } from "@hmx/interfaces/gmx-v2/IGmxV2Types.sol";
+import { IGmxV2DepositCallbackReceiver } from "@hmx/interfaces/gmx-v2/IGmxV2DepositCallbackReceiver.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
-contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, IRebalanceHLPv2Service {
+contract RebalanceHLPv2Service is OwnableUpgradeable, IGmxV2DepositCallbackReceiver, IRebalanceHLPv2Service {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   IVaultStorage public vaultStorage;
   IConfigStorage public configStorage;
-  IGmxExchangeRouter public exchangeRouter;
   IERC20Upgradeable public weth;
-  address public depositVault;
-  address public depositHandler;
-  uint16 public minHLPValueLossBPS;
+
+  IGmxV2ExchangeRouter public gmxV2ExchangeRouter;
+  address public gmxV2DepositVault;
+  address public gmxV2DepositHandler;
+  address public gmxV2WithdrawalHandler;
 
   mapping(bytes32 gmxOrderKey => DepositParams depositParam) depositHistory;
-
-  modifier onlyWhitelisted() {
-    configStorage.validateServiceExecutor(address(this), msg.sender);
-    _;
-  }
-
-  modifier onlyGmxDepositHandler() {
-    if (msg.sender != depositHandler) revert IRebalanceHLPv2Service_Unauthorized();
-    _;
-  }
+  mapping(bytes32 gmxOrderKey => WithdrawalParams withdrawParam) withdrawHistory;
 
   event LogDepositCreated(bytes32 gmxOrderKey, DepositParams depositParam);
   event LogDepositSucceed(bytes32 gmxOrderKey, DepositParams depositParam, uint256 receivedMarketTokens);
@@ -47,26 +40,40 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     uint256 returnedLongTokens,
     uint256 returnedShortTokens
   );
-  event LogSetMinHLPValueLossBPS(uint16 oldValue, uint16 newValue);
 
   function initialize(
     IERC20Upgradeable _weth,
     address _vaultStorage,
     address _configStorage,
-    address _exchangeRouter,
-    address _depositVault,
-    address _depositHandler,
-    uint16 _minHLPValueLossBPS
+    address _gmxV2ExchangeRouter,
+    address _gmxV2DepositVault,
+    address _gmxV2DepositHandler,
+    address _gmxV2WithdrawalHandler
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
 
     weth = _weth;
     vaultStorage = IVaultStorage(_vaultStorage);
     configStorage = IConfigStorage(_configStorage);
-    exchangeRouter = IGmxExchangeRouter(_exchangeRouter);
-    depositVault = _depositVault;
-    depositHandler = _depositHandler;
-    minHLPValueLossBPS = _minHLPValueLossBPS;
+    gmxV2ExchangeRouter = IGmxV2ExchangeRouter(_gmxV2ExchangeRouter);
+    gmxV2DepositVault = _gmxV2DepositVault;
+    gmxV2DepositHandler = _gmxV2DepositHandler;
+    gmxV2WithdrawalHandler = _gmxV2WithdrawalHandler;
+  }
+
+  modifier onlyWhitelisted() {
+    configStorage.validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
+  modifier onlyGmxDepositHandler() {
+    if (msg.sender != gmxV2DepositHandler) revert IRebalanceHLPv2Service_Unauthorized();
+    _;
+  }
+
+  modifier onlyGmxWithdrawalHandler() {
+    if (msg.sender != gmxV2WithdrawalHandler) revert IRebalanceHLPv2Service_Unauthorized();
+    _;
   }
 
   /// @notice Create deposit orders on GMXv2 to rebalance HLP
@@ -76,25 +83,28 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
   function createDepositOrders(
     DepositParams[] calldata _depositParams,
     uint256 _executionFee
-  ) external onlyWhitelisted returns (bytes32[] memory gmxOrderKeys) {
+  ) external onlyWhitelisted returns (bytes32[] memory _gmxOrderKeys) {
     uint256 _depositParamsLen = _depositParams.length;
-    gmxOrderKeys = new bytes32[](_depositParamsLen);
+    _gmxOrderKeys = new bytes32[](_depositParamsLen);
 
+    DepositParams memory _depositParam;
+    bytes32 _gmxOrderKey;
     for (uint256 i; i < _depositParamsLen; i++) {
-      DepositParams memory _depositParam = _depositParams[i];
+      _depositParam = _depositParams[i];
       if (_depositParam.longTokenAmount > 0) {
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
-        vaultStorage.pushToken(_depositParam.longToken, address(depositVault), _depositParam.longTokenAmount);
+        vaultStorage.pushToken(_depositParam.longToken, address(gmxV2DepositVault), _depositParam.longTokenAmount);
       }
       if (_depositParam.shortTokenAmount > 0) {
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
-        vaultStorage.pushToken(_depositParam.shortToken, address(depositVault), _depositParam.shortTokenAmount);
+        vaultStorage.pushToken(_depositParam.shortToken, address(gmxV2DepositVault), _depositParam.shortTokenAmount);
       }
 
-      // Taken WETH from caller and send to depositVault for execution fee
-      weth.safeTransferFrom(msg.sender, address(depositVault), _executionFee);
-      bytes32 gmxOrderKey = exchangeRouter.createDeposit(
-        IGmxExchangeRouter.CreateDepositParams({
+      // Taken WETH from caller and send to gmxV2DepositVault for execution fee
+      weth.safeTransferFrom(msg.sender, address(gmxV2DepositVault), _executionFee);
+      // Create a deposit order
+      _gmxOrderKey = gmxV2ExchangeRouter.createDeposit(
+        IGmxV2ExchangeRouter.CreateDepositParams({
           receiver: address(this),
           callbackContract: address(this),
           uiFeeReceiver: address(0),
@@ -109,10 +119,55 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
           callbackGasLimit: _depositParam.gasLimit
         })
       );
-      gmxOrderKeys[i] = gmxOrderKey;
-      depositHistory[gmxOrderKey] = _depositParam;
+      _gmxOrderKeys[i] = _gmxOrderKey;
+      depositHistory[_gmxOrderKey] = _depositParam;
 
-      emit LogDepositCreated(gmxOrderKey, _depositParam);
+      emit LogDepositCreated(_gmxOrderKey, _depositParam);
+    }
+  }
+
+  /// @notice Create withdraw orders on GMXv2 to rebalance HLP
+  /// @dev Caller must approve WETH to this contract
+  /// @param _withdrawParams Array of WithdrawParams
+  /// @param _executionFee Execution fee in WETH
+  function createWithdrawalOrders(
+    WithdrawalParams[] calldata _withdrawParams,
+    uint256 _executionFee
+  ) external onlyWhitelisted returns (bytes32[] memory _gmxOrderKeys) {
+    uint256 _withdrawParamsLen = _withdrawParams.length;
+    _gmxOrderKeys = new bytes32[](_withdrawParamsLen);
+
+    WithdrawalParams memory _withdrawParam;
+    bytes32 _gmxOrderKey;
+    for (uint256 i = 0; i < _withdrawParamsLen; ) {
+      _withdrawParam = _withdrawParams[i];
+
+      // Remove GM(x), accounted as on hold, and send to gmxV2DepositVault.
+      vaultStorage.removeHLPLiquidityOnHold(_withdrawParam.market, _withdrawParam.amount);
+      vaultStorage.pushToken(_withdrawParam.market, address(gmxV2DepositVault), _withdrawParam.amount);
+
+      // Taken WETH from caller and send to gmxV2DepositVault for execution fee
+      weth.safeTransferFrom(msg.sender, address(gmxV2DepositVault), _executionFee);
+      // Create a withdrawal order
+      _gmxOrderKey = gmxV2ExchangeRouter.createWithdrawal(
+        IGmxV2ExchangeRouter.CreateWithdrawalParams({
+          receiver: address(this),
+          callbackContract: address(this),
+          uiFeeReceiver: address(0),
+          market: _withdrawParam.market,
+          longTokenSwapPath: new address[](0),
+          shortTokenSwapPath: new address[](0),
+          minLongTokenAmount: _withdrawParam.minLongTokenAmount,
+          minShortTokenAmount: _withdrawParam.minShortTokenAmount,
+          shouldUnwrapNativeToken: false,
+          executionFee: _executionFee,
+          callbackGasLimit: _withdrawParam.gasLimit
+        })
+      );
+
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -121,8 +176,8 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
   /// @param eventData The event data emitted by GMXv2
   function afterDepositExecution(
     bytes32 key,
-    Deposit.Props memory /* deposit */,
-    EventUtils.EventLogData memory eventData
+    IGmxV2Types.DepositProps memory /* deposit */,
+    IGmxV2Types.EventLogData memory eventData
   ) external onlyGmxDepositHandler {
     DepositParams memory depositParam = depositHistory[key];
     if (depositParam.longToken == address(0) && depositParam.shortToken == address(0))
@@ -155,8 +210,8 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
   /// @param key the key of the deposit
   function afterDepositCancellation(
     bytes32 key,
-    Deposit.Props memory /* deposit */,
-    EventUtils.EventLogData memory /* eventData */
+    IGmxV2Types.DepositProps memory /* deposit */,
+    IGmxV2Types.EventLogData memory /* eventData */
   ) external onlyGmxDepositHandler {
     // Clear on hold long token
     uint256 pulled = 0;
@@ -181,36 +236,13 @@ contract RebalanceHLPv2Service is OwnableUpgradeable, IDepositCallbackReceiver, 
     delete depositHistory[key];
   }
 
-  // function _validateHLPValue(uint256 _valueBefore) internal view {
-  //   uint256 hlpValue = calculator.getHLPValueE30(true);
-  //   if (_valueBefore > hlpValue) {
-  //     uint256 diff = _valueBefore - hlpValue;
-  //     /**
-  //     EQ:  ( Before - After )          minHLPValueLossBPS
-  //           ----------------     >      ----------------
-  //               Before                        BPS
-
-  //     To reduce the div,   ( Before - After ) * (BPS**2) = minHLPValueLossBPS * Before
-  //      */
-  //     if ((diff * 1e4) > (minHLPValueLossBPS * _valueBefore)) {
-  //       revert RebalanceHLPService_HlpTvlDropExceedMin();
-  //     }
-  //   }
-  // }
-
-  function setMinHLPValueLossBPS(uint16 _hlpValueLossBPS) external onlyOwner {
-    if (_hlpValueLossBPS == 0) {
-      revert IRebalanceHLPv2Service_AmountIsZero();
-    }
-    emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _hlpValueLossBPS);
-    minHLPValueLossBPS = _hlpValueLossBPS;
-  }
-
+  /// @notice Claim returned ETH from GMXv2.
+  /// @dev This is likely unused execution fee.
   function claimETH() external onlyOwner {
     payable(owner()).transfer(address(this).balance);
   }
 
-  /// Receive unspent execution fee from GMXv2
+  /// @notice Receive unspent execution fee from GMXv2
   receive() external payable {}
 
   /// @custom:oz-upgrades-unsafe-allow constructor

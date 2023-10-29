@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
-
 interface IRebalanceHLPv2Service {
   error IRebalanceHLPv2Service_AmountIsZero();
   error IRebalanceHLPv2Service_BadPullAmount();
@@ -20,10 +18,21 @@ interface IRebalanceHLPv2Service {
     uint256 gasLimit;
   }
 
+  struct WithdrawalParams {
+    address market;
+    uint256 amount;
+    uint256 minLongTokenAmount;
+    uint256 minShortTokenAmount;
+    uint256 gasLimit;
+  }
+
   function createDepositOrders(
     DepositParams[] calldata _depositParams,
     uint256 _executionFee
-  ) external returns (bytes32[] memory gmxOrderKeys);
+  ) external returns (bytes32[] memory _gmxOrderKeys);
 
-  function setMinHLPValueLossBPS(uint16 _hlpValueLossBPS) external;
+  function createWithdrawalOrders(
+    WithdrawalParams[] calldata _withdrawalParams,
+    uint256 _executionFee
+  ) external returns (bytes32[] memory _gmxOrderKeys);
 }

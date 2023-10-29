@@ -54,7 +54,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
       address(gmxV2ExchangeRouter),
       gmxV2DepositVault,
       address(gmxV2DepositHandler),
-      10000
+      address(gmxV2WithdrawalHandler)
     );
 
     // Upgrade dependencies
@@ -94,6 +94,44 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     vm.stopPrank();
 
     vm.label(address(rebalanceService), "RebalanceHLPv2Service");
+  }
+
+  function gmxV2ExecuteDepositOrder(bytes32 depositOrderId) internal {
+    // GMXv2 Keeper comes and execute the deposit order
+    address[] memory realtimeFeedTokens = new address[](3);
+    // Index token
+    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
+    // Long token
+    realtimeFeedTokens[1] = address(wbtc);
+    // Short token
+    realtimeFeedTokens[2] = address(usdc);
+    bytes[] memory realtimeFeedData = new bytes[](3);
+    // Index token
+    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+    // Long token
+    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+    // Short token
+    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
+
+    gmxV2DepositHandler.executeDeposit(
+      depositOrderId,
+      IGmxV2Oracle.SetPricesParams({
+        signerInfo: 0,
+        tokens: new address[](0),
+        compactedMinOracleBlockNumbers: new uint256[](0),
+        compactedMaxOracleBlockNumbers: new uint256[](0),
+        compactedOracleTimestamps: new uint256[](0),
+        compactedDecimals: new uint256[](0),
+        compactedMinPrices: new uint256[](0),
+        compactedMinPricesIndexes: new uint256[](0),
+        compactedMaxPrices: new uint256[](0),
+        compactedMaxPricesIndexes: new uint256[](0),
+        signatures: new bytes[](0),
+        priceFeedTokens: new address[](0),
+        realtimeFeedTokens: realtimeFeedTokens,
+        realtimeFeedData: realtimeFeedData
+      })
+    );
   }
 
   function testCorrectness_WhenNoOneJamInTheMiddle() external {
@@ -146,22 +184,6 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     assertEq(afterTotalWbtc, beforeTotalWbtc, "afterTotalWbtc should the same as before");
     assertEq(beforeWbtc - afterWbtc, 0.01 * 1e8, "wbtcBefore should be 0.01 more than wbtcAfter");
 
-    // GMXv2 Keeper comes and execute the deposit order
-    address[] memory realtimeFeedTokens = new address[](3);
-    // Index token
-    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
-    // Long token
-    realtimeFeedTokens[1] = address(wbtc);
-    // Short token
-    realtimeFeedTokens[2] = address(usdc);
-    bytes[] memory realtimeFeedData = new bytes[](3);
-    // Index token
-    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Long token
-    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Short token
-    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
-
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
     uint256 beforeGmBtcTotal = vaultStorage.totalAmount(address(gmxV2WbtcUsdcMarket));
@@ -169,25 +191,7 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
-    gmxV2DepositHandler.executeDeposit(
-      gmxDepositOrderKeys[0],
-      IGmxV2Oracle.SetPricesParams({
-        signerInfo: 0,
-        tokens: new address[](0),
-        compactedMinOracleBlockNumbers: new uint256[](0),
-        compactedMaxOracleBlockNumbers: new uint256[](0),
-        compactedOracleTimestamps: new uint256[](0),
-        compactedDecimals: new uint256[](0),
-        compactedMinPrices: new uint256[](0),
-        compactedMinPricesIndexes: new uint256[](0),
-        compactedMaxPrices: new uint256[](0),
-        compactedMaxPricesIndexes: new uint256[](0),
-        signatures: new bytes[](0),
-        priceFeedTokens: new address[](0),
-        realtimeFeedTokens: realtimeFeedTokens,
-        realtimeFeedData: realtimeFeedData
-      })
-    );
+    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -271,47 +275,13 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     assertEq(afterTotalWbtc, beforeTotalWbtc, "afterTotalWbtc should the same as before");
     assertEq(beforeWbtc - afterWbtc, 0.01 * 1e8, "wbtcBefore should be 0.01 more than wbtcAfter");
 
-    // GMXv2 Keeper comes and execute the deposit order
-    address[] memory realtimeFeedTokens = new address[](3);
-    // Index token
-    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
-    // Long token
-    realtimeFeedTokens[1] = address(wbtc);
-    // Short token
-    realtimeFeedTokens[2] = address(usdc);
-    bytes[] memory realtimeFeedData = new bytes[](3);
-    // Index token
-    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Long token
-    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Short token
-    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
-
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
     beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
     // Execute here should callback to `afterDepositCancellation`
-    gmxV2DepositHandler.executeDeposit(
-      gmxDepositOrderKeys[0],
-      IGmxV2Oracle.SetPricesParams({
-        signerInfo: 0,
-        tokens: new address[](0),
-        compactedMinOracleBlockNumbers: new uint256[](0),
-        compactedMaxOracleBlockNumbers: new uint256[](0),
-        compactedOracleTimestamps: new uint256[](0),
-        compactedDecimals: new uint256[](0),
-        compactedMinPrices: new uint256[](0),
-        compactedMinPricesIndexes: new uint256[](0),
-        compactedMaxPrices: new uint256[](0),
-        compactedMaxPricesIndexes: new uint256[](0),
-        signatures: new bytes[](0),
-        priceFeedTokens: new address[](0),
-        realtimeFeedTokens: realtimeFeedTokens,
-        realtimeFeedData: realtimeFeedData
-      })
-    );
+    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -423,44 +393,10 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
       "aum should decrease by ~5,000,000 USD"
     );
 
-    // GMXv2 Keeper comes and execute the deposit order
-    address[] memory realtimeFeedTokens = new address[](3);
-    // Index token
-    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
-    // Long token
-    realtimeFeedTokens[1] = address(wbtc);
-    // Short token
-    realtimeFeedTokens[2] = address(usdc);
-    bytes[] memory realtimeFeedData = new bytes[](3);
-    // Index token
-    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Long token
-    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Short token
-    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
-
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
 
-    gmxV2DepositHandler.executeDeposit(
-      gmxDepositOrderKeys[0],
-      IGmxV2Oracle.SetPricesParams({
-        signerInfo: 0,
-        tokens: new address[](0),
-        compactedMinOracleBlockNumbers: new uint256[](0),
-        compactedMaxOracleBlockNumbers: new uint256[](0),
-        compactedOracleTimestamps: new uint256[](0),
-        compactedDecimals: new uint256[](0),
-        compactedMinPrices: new uint256[](0),
-        compactedMinPricesIndexes: new uint256[](0),
-        compactedMaxPrices: new uint256[](0),
-        compactedMaxPricesIndexes: new uint256[](0),
-        signatures: new bytes[](0),
-        priceFeedTokens: new address[](0),
-        realtimeFeedTokens: realtimeFeedTokens,
-        realtimeFeedData: realtimeFeedData
-      })
-    );
+    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -568,44 +504,10 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
     assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 0, "Alice's WBTC balance should be 0");
     assertEq(wbtc.balanceOf(ALICE), 1 * 1e8, "Alice's WBTC balance should be 1e8 (not in HMX)");
 
-    // GMXv2 Keeper comes and execute the deposit order
-    address[] memory realtimeFeedTokens = new address[](3);
-    // Index token
-    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
-    // Long token
-    realtimeFeedTokens[1] = address(wbtc);
-    // Short token
-    realtimeFeedTokens[2] = address(usdc);
-    bytes[] memory realtimeFeedData = new bytes[](3);
-    // Index token
-    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Long token
-    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Short token
-    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
-
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
 
-    gmxV2DepositHandler.executeDeposit(
-      gmxDepositOrderKeys[0],
-      IGmxV2Oracle.SetPricesParams({
-        signerInfo: 0,
-        tokens: new address[](0),
-        compactedMinOracleBlockNumbers: new uint256[](0),
-        compactedMaxOracleBlockNumbers: new uint256[](0),
-        compactedOracleTimestamps: new uint256[](0),
-        compactedDecimals: new uint256[](0),
-        compactedMinPrices: new uint256[](0),
-        compactedMinPricesIndexes: new uint256[](0),
-        compactedMaxPrices: new uint256[](0),
-        compactedMaxPricesIndexes: new uint256[](0),
-        signatures: new bytes[](0),
-        priceFeedTokens: new address[](0),
-        realtimeFeedTokens: realtimeFeedTokens,
-        realtimeFeedData: realtimeFeedData
-      })
-    );
+    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -702,45 +604,11 @@ contract RebalanceHLPv2Service_ForkTest is ForkEnvWithActions, Cheats {
       "HMX WBTC balance should correct"
     );
 
-    // GMXv2 Keeper comes and execute the deposit order
-    address[] memory realtimeFeedTokens = new address[](3);
-    // Index token
-    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
-    // Long token
-    realtimeFeedTokens[1] = address(wbtc);
-    // Short token
-    realtimeFeedTokens[2] = address(usdc);
-    bytes[] memory realtimeFeedData = new bytes[](3);
-    // Index token
-    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Long token
-    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Short token
-    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
-
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
     uint256 gmBtcLiquidityBefore = vaultStorage.hlpLiquidity(address(gmxV2WbtcUsdcMarket));
 
-    gmxV2DepositHandler.executeDeposit(
-      gmxDepositOrderKeys[0],
-      IGmxV2Oracle.SetPricesParams({
-        signerInfo: 0,
-        tokens: new address[](0),
-        compactedMinOracleBlockNumbers: new uint256[](0),
-        compactedMaxOracleBlockNumbers: new uint256[](0),
-        compactedOracleTimestamps: new uint256[](0),
-        compactedDecimals: new uint256[](0),
-        compactedMinPrices: new uint256[](0),
-        compactedMinPricesIndexes: new uint256[](0),
-        compactedMaxPrices: new uint256[](0),
-        compactedMaxPricesIndexes: new uint256[](0),
-        signatures: new bytes[](0),
-        priceFeedTokens: new address[](0),
-        realtimeFeedTokens: realtimeFeedTokens,
-        realtimeFeedData: realtimeFeedData
-      })
-    );
+    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);

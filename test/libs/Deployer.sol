@@ -621,20 +621,20 @@ library Deployer {
     address _exchangeRouter,
     address _depositVault,
     address _depositHandler,
-    uint16 _minHLPValueLossBPS
+    address _withdrawalHandler
   ) internal returns (IRebalanceHLPv2Service) {
     bytes memory _logicBytecode = abi.encodePacked(
       vm.getCode("./out/RebalanceHLPv2Service.sol/RebalanceHLPv2Service.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,address,uint16)")),
+      bytes4(keccak256("initialize(address,address,address,address,address,address,address)")),
       _weth,
       _vaultStorage,
       _configStorage,
       _exchangeRouter,
       _depositVault,
       _depositHandler,
-      _minHLPValueLossBPS
+      _withdrawalHandler
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IRebalanceHLPv2Service(payable(_proxy));

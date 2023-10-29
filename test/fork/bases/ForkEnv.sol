@@ -65,7 +65,8 @@ import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
 /// GMXv2
 import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
 import { IGmxV2DepositHandler } from "@hmx/interfaces/gmx-v2/IGmxV2DepositHandler.sol";
-import { IGmxExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxExchangeRouter.sol";
+import { IGmxV2WithdrawalHandler } from "@hmx/interfaces/gmx-v2/IGmxV2WithdrawalHandler.sol";
+import { IGmxV2ExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxV2ExchangeRouter.sol";
 import { IGmxV2RoleStore } from "@hmx/interfaces/gmx-v2/IGmxV2RoleStore.sol";
 /// Curve
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
@@ -140,13 +141,15 @@ abstract contract ForkEnv is Test {
   address internal gmxV2Timelock = 0x62aB76Ed722C507f297f2B97920dCA04518fe274;
   address internal gmxV2Oracle = 0xa11B501c2dd83Acd29F6727570f2502FAaa617F2;
   IGmxV2Reader internal gmxV2Reader = IGmxV2Reader(getAddress(".vendors.gmxV2.reader"));
-  IGmxExchangeRouter internal gmxV2ExchangeRouter = IGmxExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
+  IGmxV2ExchangeRouter internal gmxV2ExchangeRouter = IGmxV2ExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
   address internal gmxV2DepositVault = address(getAddress(".vendors.gmxV2.depositVault"));
   address internal gmxV2DepositUtils = address(getAddress(".vendors.gmxV2.depositUtils"));
   address internal gmxV2DepositStoreUtils = 0x556665e81c1516B6028d04EE081518b3818D1453;
   address internal gmxV2MarketUtils = 0x7ffF7ef2fc8Db5159B0046ad49d018A5aB40dB11;
   address internal gmxV2ExecuteDepositUtils = 0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2;
   IGmxV2DepositHandler internal gmxV2DepositHandler = IGmxV2DepositHandler(getAddress(".vendors.gmxV2.depositHandler"));
+  IGmxV2WithdrawalHandler internal gmxV2WithdrawalHandler =
+    IGmxV2WithdrawalHandler(getAddress(".vendors.gmxV2.withdrawalHandler"));
   address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));

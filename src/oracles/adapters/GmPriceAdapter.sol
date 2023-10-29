@@ -5,8 +5,7 @@
 pragma solidity 0.8.18;
 
 import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
-import { Price } from "@hmx/interfaces/gmx-v2/Price.sol";
-import { Market } from "@hmx/interfaces/gmx-v2/Market.sol";
+import { IGmxV2Types } from "@hmx/interfaces/gmx-v2/IGmxV2Types.sol";
 import { ICalcPriceAdapter } from "@hmx/oracles/interfaces/ICalcPriceAdapter.sol";
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 
@@ -58,16 +57,21 @@ contract GmPriceAdapter is ICalcPriceAdapter {
   function getPrice(IEcoPythCalldataBuilder3.BuildData[] calldata _buildDatas) external view returns (uint256 price) {
     (int256 gmPrice, ) = reader.getMarketTokenPrice(
       dataStore,
-      Market.Props({ marketToken: marketToken, indexToken: indexToken, longToken: longToken, shortToken: shortToken }),
-      Price.Props({
+      IGmxV2Types.MarketProps({
+        marketToken: marketToken,
+        indexToken: indexToken,
+        longToken: longToken,
+        shortToken: shortToken
+      }),
+      IGmxV2Types.PriceProps({
         min: _convertToGmxV2Decimals(_buildDatas[indexTokenPriceAssetId].priceE8, 30 - indexTokenDecimals),
         max: _convertToGmxV2Decimals(_buildDatas[indexTokenPriceAssetId].priceE8, 30 - indexTokenDecimals)
       }),
-      Price.Props({
+      IGmxV2Types.PriceProps({
         min: _convertToGmxV2Decimals(_buildDatas[longTokenPriceAssetId].priceE8, 30 - longTokenDecimals),
         max: _convertToGmxV2Decimals(_buildDatas[longTokenPriceAssetId].priceE8, 30 - longTokenDecimals)
       }),
-      Price.Props({
+      IGmxV2Types.PriceProps({
         min: _convertToGmxV2Decimals(_buildDatas[shortTokenPriceAssetId].priceE8, 30 - shortTokenDecimals),
         max: _convertToGmxV2Decimals(_buildDatas[shortTokenPriceAssetId].priceE8, 30 - shortTokenDecimals)
       }),

@@ -417,7 +417,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     MockEcoPyth(address(ecoPyth2)).overridePrice(bytes32("ETH"), 30_000 * 1e8);
     // Alice try to close position
     marketSell(ALICE, 0, 0, 750_000 * 1e30, address(wbtc));
-    marketSell(ALICE, 0, 1, 750_000 * 1e30, address(wbtc));
+    marketSell(ALICE, 0, 0, 750_000 * 1e30, address(wbtc));
 
     // Assert the following conditions:
     // 1. HLP's WBTC liquidity should be drained.

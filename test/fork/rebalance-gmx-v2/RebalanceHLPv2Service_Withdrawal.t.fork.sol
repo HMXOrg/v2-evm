@@ -9,6 +9,7 @@ import { console2 } from "forge-std/console2.sol";
 
 /// HMX Test
 import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx-v2/RebalanceHLPv2Service_Base.t.fork.sol";
+import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {
   struct WithdrawalTestLocalVars {
@@ -18,16 +19,20 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     uint256 gmEthTotalBefore;
     uint256 wethBalanceBefore;
     uint256 wethTotalBefore;
+    uint256 wethLiquidityBefore;
     uint256 usdcBalanceBefore;
     uint256 usdcTotalBefore;
+    uint256 usdcLiquidityBefore;
     uint256 tvlAfter;
     uint256 aumAfter;
     uint256 gmEthBalanceAfter;
     uint256 gmEthTotalAfter;
     uint256 wethBalanceAfter;
     uint256 wethTotalAfter;
+    uint256 wethLiquidityAfter;
     uint256 usdcBalanceAfter;
     uint256 usdcTotalAfter;
+    uint256 usdcLiquidityAfter;
   }
 
   function setUp() public override {
@@ -386,6 +391,94 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertEq(vars.wethTotalAfter, vars.wethBalanceAfter, "WETH total should equal to WETH balance");
     assertEq(vars.usdcTotalBefore + 4226796583, vars.usdcTotalAfter, "USDC total should increase by 4226796583");
     assertEq(vars.usdcBalanceBefore + 4226796583, vars.usdcBalanceAfter, "USDC balance should increase by 4226796583");
+    assertEq(vars.usdcTotalAfter, vars.usdcBalanceAfter, "USDC total should equal to USDC balance");
+  }
+
+  function testCorrectness_WhenSomeoneJamInTheMiddle_WhenTraderTakeProfitMoreThanHlpLiquidity() external {
+    WithdrawalTestLocalVars memory vars;
+    vars.tvlBefore = calculator.getHLPValueE30(false);
+    vars.aumBefore = calculator.getAUME30(false);
+
+    // Create withdrawal orders
+    bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 8912412145575829437123, 0, 0);
+
+    vars.tvlAfter = calculator.getHLPValueE30(false);
+    vars.aumAfter = calculator.getAUME30(false);
+
+    // Asserts
+    assertEq(vars.tvlBefore, vars.tvlAfter, "TVL should not change");
+    assertEq(vars.aumBefore, vars.aumAfter, "AUM should not change");
+
+    // Assuming Alice try deposit 1 WBTC as collateral and long BTC in the middle
+    vm.deal(ALICE, 1 ether);
+    motherload(address(wbtc), ALICE, 1 * 1e8);
+    depositCollateral(ALICE, 0, wbtc, 1 * 1e8);
+    marketBuy(ALICE, 0, 1, 750_000 * 1e30, address(weth));
+    marketBuy(ALICE, 0, 1, 750_000 * 1e30, address(weth));
+    // Assuming BTC moon to 150_000 USD and min profit passed
+    vm.warp(block.timestamp + 60);
+    MockEcoPyth(address(ecoPyth2)).overridePrice(bytes32("BTC"), 150_000 * 1e8);
+    // Alice try to close position
+    marketSell(ALICE, 0, 1, 750_000 * 1e30, address(weth));
+    marketSell(ALICE, 0, 1, 750_000 * 1e30, address(weth));
+
+    // Asserts
+    assertEq(vaultStorage.hlpLiquidity(address(weth)), 0, "WETH liquidity should be 0");
+    assertEq(
+      vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)),
+      8912412145575829437123,
+      "GM(ETH-USDC) liquidity on hold should be 8912412145575829437123"
+    );
+
+    vars.tvlBefore = calculator.getHLPValueE30(false);
+    vars.aumBefore = calculator.getAUME30(false);
+    vars.wethTotalBefore = vaultStorage.totalAmount(address(weth));
+    vars.wethBalanceBefore = weth.balanceOf(address(vaultStorage));
+    vars.wethLiquidityBefore = vaultStorage.hlpLiquidity(address(weth));
+    vars.usdcTotalBefore = vaultStorage.totalAmount(address(usdc));
+    vars.usdcBalanceBefore = usdc.balanceOf(address(vaultStorage));
+    vars.usdcLiquidityBefore = vaultStorage.hlpLiquidity(address(usdc));
+
+    // Execute withdrawal orders
+    gmxV2Keeper_executeWithdrawalOrder(GM_ETHUSDC_ASSET_ID, gmxOrderKey);
+
+    vars.tvlAfter = calculator.getHLPValueE30(false);
+    vars.aumAfter = calculator.getAUME30(false);
+    vars.wethTotalAfter = vaultStorage.totalAmount(address(weth));
+    vars.wethBalanceAfter = weth.balanceOf(address(vaultStorage));
+    vars.wethLiquidityAfter = vaultStorage.hlpLiquidity(address(weth));
+    vars.usdcTotalAfter = vaultStorage.totalAmount(address(usdc));
+    vars.usdcBalanceAfter = usdc.balanceOf(address(vaultStorage));
+    vars.usdcLiquidityAfter = vaultStorage.hlpLiquidity(address(usdc));
+
+    // Asserts
+    assertEq(
+      rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
+      address(0),
+      "Withdrawal order should be deleted"
+    );
+    assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
+    assertEq(vaultStorage.hlpLiquidity(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity should be 0");
+    assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
+    assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
+    assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
+    assertApproxEqAbs(vars.tvlAfter, vars.tvlBefore, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
+    assertApproxEqAbs(vars.aumAfter, vars.aumBefore, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
+    assertEq(
+      vars.wethTotalBefore + 2522039519212270023,
+      vars.wethTotalAfter,
+      "WETH total should increase by 2522039519212270023"
+    );
+    assertEq(
+      vars.wethBalanceBefore + 2522039519212270023,
+      vars.wethBalanceAfter,
+      "WETH balance should increase by 2522039519212270023"
+    );
+    assertEq(vars.wethLiquidityBefore + 2522039519212270023, vars.wethLiquidityAfter, "WETH liquidity should increase");
+    assertEq(vars.wethTotalAfter, vars.wethBalanceAfter, "WETH total should equal to WETH balance");
+    assertEq(vars.usdcTotalBefore + 4226796895, vars.usdcTotalAfter, "USDC total should increase by 4226796895");
+    assertEq(vars.usdcBalanceBefore + 4226796895, vars.usdcBalanceAfter, "USDC balance should increase by 4226796895");
+    assertEq(vars.usdcLiquidityBefore + 4226796895, vars.usdcLiquidityAfter, "USDC liquidity should increase");
     assertEq(vars.usdcTotalAfter, vars.usdcBalanceAfter, "USDC total should equal to USDC balance");
   }
 }

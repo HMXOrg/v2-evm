@@ -10,6 +10,8 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
   function setUp() public override {
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 143862285);
     super.setUp();
+
+    // Deploy some WETH to GM(ETH-USDC)
   }
 
   function testCorrectness_WhenNoOneJamInTheMiddle() external {}

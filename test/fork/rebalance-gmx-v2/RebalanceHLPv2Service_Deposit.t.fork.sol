@@ -26,35 +26,16 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
   }
 
   function testCorrectness_WhenNoOneJamInTheMiddle() external {
-    // Wrap small ETHs for execution fee
-    uint256 executionFee = 0.001 ether;
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
-
-    // Preps
-    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
-      market: address(gmxV2WbtcUsdcMarket),
-      longToken: address(wbtc),
-      longTokenAmount: 0.01 * 1e8,
-      shortToken: address(usdc),
-      shortTokenAmount: 0,
-      minMarketTokens: 0,
-      gasLimit: 1_000_000
-    });
-    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
-    depositParams[0] = depositParam;
 
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
     uint256 beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     uint256 beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
-    // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+    // Create deposit order on GMXv2
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -82,7 +63,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
-    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
+    // Execute deposit order on GMXv2
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKey);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -116,23 +98,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
   }
 
   function testCorrectness_WhenErr_WhenNoOneJamInTheMiddle() external {
-    // Wrap small ETHs for execution fee
-    uint256 executionFee = 0.001 ether;
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
-
-    // Preps
-    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
-      market: address(gmxV2WbtcUsdcMarket),
-      longToken: address(wbtc),
-      longTokenAmount: 0.01 * 1e8,
-      shortToken: address(usdc),
-      shortTokenAmount: 0,
-      minMarketTokens: 307089148973164794124,
-      gasLimit: 1_000_000
-    });
-    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
-    depositParams[0] = depositParam;
 
     uint256 wbtcInitialHlpLiquidity = vaultStorage.hlpLiquidity(address(wbtc));
     uint256 beforeTvl = calculator.getHLPValueE30(false);
@@ -140,12 +107,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     uint256 beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
-    // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+    // Create deposit order on GMXv2
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -172,7 +135,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
     // Execute here should callback to `afterDepositCancellation`
-    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKey);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -199,33 +162,14 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
-    // Wrap small ETHs for execution fee
-    uint256 executionFee = 0.001 ether;
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
 
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
 
-    // Preps
-    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
-      market: address(gmxV2WbtcUsdcMarket),
-      longToken: address(wbtc),
-      longTokenAmount: 0.01 * 1e8,
-      shortToken: address(usdc),
-      shortTokenAmount: 0,
-      minMarketTokens: 0,
-      gasLimit: 1_000_000
-    });
-    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
-    depositParams[0] = depositParam;
-
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
-    // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+    // Create deposit order on GMXv2
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -287,7 +231,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
 
-    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKey);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -304,33 +248,14 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
-    // Wrap small ETHs for execution fee
-    uint256 executionFee = 0.001 ether;
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
 
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
 
-    // Preps
-    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
-      market: address(gmxV2WbtcUsdcMarket),
-      longToken: address(wbtc),
-      longTokenAmount: 0.01 * 1e8,
-      shortToken: address(usdc),
-      shortTokenAmount: 0,
-      minMarketTokens: 0,
-      gasLimit: 1_000_000
-    });
-    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
-    depositParams[0] = depositParam;
-
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
-    // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+    // Create deposit order on GMXv2
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -359,11 +284,11 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     // Alice try withdraw 1 WBTC as collateral in the middle
     vm.startPrank(ALICE);
     vm.deal(ALICE, 1 ether);
-    crossMarginHandler.createWithdrawCollateralOrder{ value: executionFee }(
+    crossMarginHandler.createWithdrawCollateralOrder{ value: crossMarginHandler.minExecutionOrderFee() }(
       0,
       address(wbtc),
       1 * 1e8,
-      executionFee,
+      crossMarginHandler.minExecutionOrderFee(),
       false
     );
     vm.stopPrank();
@@ -398,7 +323,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
 
-    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKey);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -416,9 +341,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_WhenTraderTakeProfitMoreThanHlpLiquidity() external {
     // Some liquidity is on-hold, but trader try to take profit more than available liquidity.
-    // This should be reverted with underflow.
-    // Wrap small ETHs for execution fee
-    uint256 executionFee = 0.001 ether;
+    // This should be handled correctly.
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
 
@@ -426,25 +349,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 beforeAum = calculator.getAUME30(false);
     uint256 initialHmxBtcBalance = wbtc.balanceOf(address(vaultStorage));
 
-    // Preps
-    IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
-      market: address(gmxV2WbtcUsdcMarket),
-      longToken: address(wbtc),
-      longTokenAmount: 0.01 * 1e8,
-      shortToken: address(usdc),
-      shortTokenAmount: 0,
-      minMarketTokens: 0,
-      gasLimit: 1_000_000
-    });
-    IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
-    depositParams[0] = depositParam;
-
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
-    // Execute deposits
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+    // Create deposit order on GMXv2
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -499,7 +405,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeAum = calculator.getAUME30(false);
     uint256 gmBtcLiquidityBefore = vaultStorage.hlpLiquidity(address(gmxV2WbtcUsdcMarket));
 
-    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKey);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);

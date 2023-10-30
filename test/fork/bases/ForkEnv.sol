@@ -154,6 +154,7 @@ abstract contract ForkEnv is Test {
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
   IERC20 internal gmxV2WbtcUsdcMarket = IERC20(0x47c031236e19d024b42f8AE6780E44A573170703);
+  IERC20 internal gmxV2EthUsdcMarket = IERC20(0x70d95587d40A2caf56bd97485aB3Eec10Bee6336);
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
+pragma experimental ABIEncoderV2;
 
 interface IRebalanceHLPv2Service {
   error IRebalanceHLPv2Service_AmountIsZero();
@@ -26,10 +27,14 @@ interface IRebalanceHLPv2Service {
     uint256 gasLimit;
   }
 
+  function getDepositHistory(bytes32 _key) external view returns (DepositParams memory);
+
   function createDepositOrders(
     DepositParams[] calldata _depositParams,
     uint256 _executionFee
   ) external returns (bytes32[] memory _gmxOrderKeys);
+
+  function getWithdrawalHistory(bytes32 _key) external view returns (WithdrawalParams memory);
 
   function createWithdrawalOrders(
     WithdrawalParams[] calldata _withdrawalParams,

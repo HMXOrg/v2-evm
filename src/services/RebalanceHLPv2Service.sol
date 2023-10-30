@@ -203,7 +203,7 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.EventLogData memory eventData
   ) external onlyGmxDepositHandler {
     DepositParams memory depositParam = depositHistory[key];
-    if (depositParam.longToken == address(0) && depositParam.shortToken == address(0))
+    if (depositParam.longToken == address(0) || depositParam.shortToken == address(0))
       revert IRebalanceHLPv2Service_KeyNotFound();
 
     // Add recieved GMs as liquidity
@@ -236,9 +236,15 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.DepositProps memory /* deposit */,
     IGmxV2Types.EventLogData memory /* eventData */
   ) external onlyGmxDepositHandler {
-    // Clear on hold long token
-    uint256 pulled = 0;
+    // Check
     DepositParams memory depositParam = depositHistory[key];
+    if (depositParam.longToken == address(0) || depositParam.shortToken == address(0))
+      revert IRebalanceHLPv2Service_KeyNotFound();
+
+    // Effect
+    uint256 pulled = 0;
+
+    // Clear on hold long token
     if (depositParam.longTokenAmount > 0) {
       vaultStorage.clearOnHold(depositParam.longToken, depositParam.longTokenAmount);
       IERC20Upgradeable(depositParam.longToken).safeTransfer(address(vaultStorage), depositParam.longTokenAmount);
@@ -254,9 +260,10 @@ contract RebalanceHLPv2Service is
       vaultStorage.addHLPLiquidity(depositParam.shortToken, pulled);
     }
 
-    emit LogDepositCancelled(key, depositParam, depositParam.longTokenAmount, depositParam.shortTokenAmount);
-
     delete depositHistory[key];
+
+    // Log
+    emit LogDepositCancelled(key, depositParam, depositParam.longTokenAmount, depositParam.shortTokenAmount);
   }
 
   /// @notice Called by GMXv2 after a withdrawal execution
@@ -265,9 +272,11 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.WithdrawalProps memory,
     IGmxV2Types.EventLogData memory _eventData
   ) external override onlyGmxWithdrawalHandler {
+    // Check
     WithdrawalParams memory _withdrawParam = withdrawalHistory[_key];
     if (_withdrawParam.market == address(0)) revert IRebalanceHLPv2Service_KeyNotFound();
 
+    // Effect
     // Add received long as liquidity
     uint256 _receivedLong = _eventData.uintItems.items[0].value;
     if (_receivedLong > 0) {
@@ -286,16 +295,48 @@ contract RebalanceHLPv2Service is
 
     // Clear on hold GM(x)
     vaultStorage.clearOnHold(_withdrawParam.market, _withdrawParam.amount);
+    // Clear withdrawal history
+    delete withdrawalHistory[_key];
 
     emit LogWithdrawalSucceed(_key, _withdrawParam, _receivedLong, _receivedShort);
   }
 
   /// @notice Called by GMXv2 if a withdrawal was cancelled/reverted
   function afterWithdrawalCancellation(
-    bytes32,
+    bytes32 _key,
     IGmxV2Types.WithdrawalProps memory,
     IGmxV2Types.EventLogData memory
-  ) external override onlyGmxWithdrawalHandler {}
+  ) external override onlyGmxWithdrawalHandler {
+    // Check
+    WithdrawalParams memory _withdrawParam = withdrawalHistory[_key];
+    if (_withdrawParam.market == address(0)) revert IRebalanceHLPv2Service_KeyNotFound();
+
+    // Clear GM(x) on hold and update HLP liquidity
+    vaultStorage.clearOnHold(_withdrawParam.market, _withdrawParam.amount);
+    IERC20Upgradeable(_withdrawParam.market).safeTransfer(address(vaultStorage), _withdrawParam.amount);
+    uint256 _pulled = vaultStorage.pullToken(_withdrawParam.market);
+    vaultStorage.addHLPLiquidity(_withdrawParam.market, _pulled);
+
+    // Clear withdrawal history
+    delete withdrawalHistory[_key];
+
+    // Log
+    emit LogWithdrawalCancelled(_key, _withdrawParam, _pulled);
+  }
+
+  /// @notice Get deposit history
+  /// @param _key The key of the deposit
+  /// @return DepositParams
+  function getDepositHistory(bytes32 _key) external view override returns (DepositParams memory) {
+    return depositHistory[_key];
+  }
+
+  /// @notice Get withdrawal history
+  /// @param _key The key of the withdrawal
+  /// @return WithdrawalParams
+  function getWithdrawalHistory(bytes32 _key) external view override returns (WithdrawalParams memory) {
+    return withdrawalHistory[_key];
+  }
 
   /// @notice Claim returned ETH from GMXv2.
   /// @dev This is likely unused execution fee.

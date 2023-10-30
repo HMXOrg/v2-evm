@@ -172,9 +172,6 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
   }
 
   function testCorrectness_WhenETH_WhenErr_WhenNoOneJamInTheMiddle() external {
-    // Override GM(ETH-USDC) price
-    MockEcoPyth(address(ecoPyth2)).overridePrice(GM_ETHUSDC_ASSET_ID, 0.98014296 * 1e8);
-
     uint256 wethInitialHlpLiquidity = vaultStorage.hlpLiquidity(address(weth));
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
@@ -241,9 +238,6 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
-    // Override GM(WBTC-USDC) price
-    MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
-
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
 
@@ -346,11 +340,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertEq(beforeAum, afterAum, "aum must remains the same");
 
     // Alice try to deposit 1 WBTC as collateral in the middle
-    vm.startPrank(ALICE);
     motherload(address(wbtc), ALICE, 1 * 1e8);
-    wbtc.approve(address(crossMarginHandler), type(uint256).max);
-    crossMarginHandler.depositCollateral(0, address(wbtc), 1 * 1e8, false);
-    vm.stopPrank();
+    depositCollateral(ALICE, 0, wbtc, 1 * 1e8);
 
     // Assert the following conditions:
     // 1. WBTC's total amount should 9.97066301
@@ -361,33 +352,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 1 * 1e8, "Alice's WBTC balance should be 1e8");
 
     // Alice try withdraw 1 WBTC as collateral in the middle
-    vm.startPrank(ALICE);
     vm.deal(ALICE, 1 ether);
-    crossMarginHandler.createWithdrawCollateralOrder{ value: crossMarginHandler.minExecutionOrderFee() }(
-      0,
-      address(wbtc),
-      1 * 1e8,
-      crossMarginHandler.minExecutionOrderFee(),
-      false
-    );
-    vm.stopPrank();
-    // Keeper comes and execute the deposit order
-    vm.startPrank(crossMarginOrderExecutor);
-    (
-      bytes32[] memory priceData,
-      bytes32[] memory publishedTimeData,
-      uint256 minPublishedTime,
-      bytes32 encodedVaas
-    ) = MockEcoPyth(address(ecoPyth2)).getLastestPriceUpdateData();
-    crossMarginHandler.executeOrder(
-      type(uint256).max,
-      payable(crossMarginHandler),
-      priceData,
-      publishedTimeData,
-      minPublishedTime,
-      encodedVaas
-    );
-    vm.stopPrank();
+    withdrawCollateral(ALICE, 0, wbtc, 1 * 1e8);
 
     // Assert the following conditions:
     // 1. WBTC's total amount should 8.97066301

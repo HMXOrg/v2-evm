@@ -95,6 +95,41 @@ abstract contract ForkEnvWithActions is ForkEnv {
     vm.stopPrank();
   }
 
+  function withdrawCollateral(
+    address _account,
+    uint8 _subAccountId,
+    IERC20 _collateralToken,
+    uint256 _withdrawAmount
+  ) internal {
+    uint256 _executionFee = crossMarginHandler.minExecutionOrderFee();
+    vm.startPrank(_account);
+    crossMarginHandler.createWithdrawCollateralOrder{ value: _executionFee }(
+      _subAccountId,
+      address(_collateralToken),
+      _withdrawAmount,
+      _executionFee,
+      false
+    );
+    vm.stopPrank();
+    // Keeper comes and execute the order
+    vm.startPrank(crossMarginOrderExecutor);
+    (
+      bytes32[] memory priceData,
+      bytes32[] memory publishedTimeData,
+      uint256 minPublishedTime,
+      bytes32 encodedVaas
+    ) = MockEcoPyth(address(ecoPyth2)).getLastestPriceUpdateData();
+    crossMarginHandler.executeOrder(
+      type(uint256).max,
+      payable(crossMarginHandler),
+      priceData,
+      publishedTimeData,
+      minPublishedTime,
+      encodedVaas
+    );
+    vm.stopPrank();
+  }
+
   function marketBuy(
     address _account,
     uint8 _subAccountId,

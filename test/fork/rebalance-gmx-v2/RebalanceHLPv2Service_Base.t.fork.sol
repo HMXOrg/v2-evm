@@ -33,6 +33,11 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
 
   IRebalanceHLPv2Service rebalanceService;
 
+  struct SnapshotUint256 {
+    uint256 before;
+    uint256 after1;
+  }
+
   function setUp() public virtual {
     // Mock ArbSys
     MockArbSys arbSys = new MockArbSys();

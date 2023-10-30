@@ -12,29 +12,6 @@ import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx
 import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {
-  struct WithdrawalTestLocalVars {
-    uint256 tvlBefore;
-    uint256 aumBefore;
-    uint256 gmEthBalanceBefore;
-    uint256 gmEthTotalBefore;
-    uint256 wethBalanceBefore;
-    uint256 wethTotalBefore;
-    uint256 wethLiquidityBefore;
-    uint256 usdcBalanceBefore;
-    uint256 usdcTotalBefore;
-    uint256 usdcLiquidityBefore;
-    uint256 tvlAfter;
-    uint256 aumAfter;
-    uint256 gmEthBalanceAfter;
-    uint256 gmEthTotalAfter;
-    uint256 wethBalanceAfter;
-    uint256 wethTotalAfter;
-    uint256 wethLiquidityAfter;
-    uint256 usdcBalanceAfter;
-    uint256 usdcTotalAfter;
-    uint256 usdcLiquidityAfter;
-  }
-
   function setUp() public override {
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 143862285);
     super.setUp();
@@ -57,50 +34,64 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
   }
 
   function testCorrectness_WhenNoOneJamInTheMiddle() external {
-    WithdrawalTestLocalVars memory vars;
-    vars.tvlBefore = calculator.getHLPValueE30(false);
-    vars.aumBefore = calculator.getAUME30(false);
-    vars.gmEthBalanceBefore = gmETHUSD.balanceOf(address(vaultStorage));
-    vars.gmEthTotalBefore = vaultStorage.totalAmount(address(gmETHUSD));
+    SnapshotUint256 memory tvlSnap;
+    SnapshotUint256 memory aumSnap;
+    SnapshotUint256 memory gmEthBalanceSnap;
+    SnapshotUint256 memory gmEthTotalSnap;
+    SnapshotUint256 memory wethBalanceSnap;
+    SnapshotUint256 memory wethTotalSnap;
+    SnapshotUint256 memory wethLiquiditySnap;
+    SnapshotUint256 memory usdcBalanceSnap;
+    SnapshotUint256 memory usdcTotalSnap;
+    SnapshotUint256 memory usdcLiquiditySnap;
+
+    tvlSnap.before = calculator.getHLPValueE30(false);
+    aumSnap.before = calculator.getAUME30(false);
+    gmEthBalanceSnap.before = gmETHUSD.balanceOf(address(vaultStorage));
+    gmEthTotalSnap.before = vaultStorage.totalAmount(address(gmETHUSD));
 
     // Create withdrawal orders
     bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 8912412145575829437123, 0, 0);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
-    vars.gmEthBalanceAfter = gmETHUSD.balanceOf(address(vaultStorage));
-    vars.gmEthTotalAfter = vaultStorage.totalAmount(address(gmETHUSD));
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
+    gmEthBalanceSnap.after1 = gmETHUSD.balanceOf(address(vaultStorage));
+    gmEthTotalSnap.after1 = vaultStorage.totalAmount(address(gmETHUSD));
 
     assertEq(
       vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)),
       8912412145575829437123,
       "GM(ETH-USDC) liquidity on hold should be 8912412145575829437123"
     );
-    assertEq(vars.tvlAfter, vars.tvlBefore, "TVL should not change");
-    assertEq(vars.aumAfter, vars.aumBefore, "AUM should not change");
-    assertEq(vars.gmEthBalanceAfter, 0, "GM(ETH-USDC) balance should be 0");
-    assertEq(vars.gmEthTotalAfter, vars.gmEthTotalBefore, "GM(ETH-USDC) total should not change");
+    assertEq(tvlSnap.after1, tvlSnap.before, "TVL should not change");
+    assertEq(aumSnap.after1, aumSnap.before, "AUM should not change");
+    assertEq(gmEthBalanceSnap.after1, 0, "GM(ETH-USDC) balance should be 0");
+    assertEq(gmEthTotalSnap.after1, gmEthTotalSnap.before, "GM(ETH-USDC) total should not change");
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
-    vars.gmEthBalanceBefore = vars.gmEthBalanceAfter;
-    vars.gmEthTotalBefore = vars.gmEthTotalAfter;
-    vars.wethBalanceBefore = weth.balanceOf(address(vaultStorage));
-    vars.wethTotalBefore = vaultStorage.totalAmount(address(weth));
-    vars.usdcBalanceBefore = usdc.balanceOf(address(vaultStorage));
-    vars.usdcTotalBefore = vaultStorage.totalAmount(address(usdc));
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
+    gmEthBalanceSnap.before = gmEthBalanceSnap.after1;
+    gmEthTotalSnap.before = gmEthTotalSnap.after1;
+    wethBalanceSnap.before = weth.balanceOf(address(vaultStorage));
+    wethTotalSnap.before = vaultStorage.totalAmount(address(weth));
+    wethLiquiditySnap.before = vaultStorage.hlpLiquidity(address(weth));
+    usdcBalanceSnap.before = usdc.balanceOf(address(vaultStorage));
+    usdcTotalSnap.before = vaultStorage.totalAmount(address(usdc));
+    usdcLiquiditySnap.before = vaultStorage.hlpLiquidity(address(usdc));
 
     // Execute withdrawal orders
     gmxV2Keeper_executeWithdrawalOrder(GM_ETHUSDC_ASSET_ID, gmxOrderKey);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
-    vars.gmEthBalanceAfter = gmETHUSD.balanceOf(address(vaultStorage));
-    vars.gmEthTotalAfter = vaultStorage.totalAmount(address(gmETHUSD));
-    vars.wethBalanceAfter = weth.balanceOf(address(vaultStorage));
-    vars.wethTotalAfter = vaultStorage.totalAmount(address(weth));
-    vars.usdcBalanceAfter = usdc.balanceOf(address(vaultStorage));
-    vars.usdcTotalAfter = vaultStorage.totalAmount(address(usdc));
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
+    gmEthBalanceSnap.after1 = gmETHUSD.balanceOf(address(vaultStorage));
+    gmEthTotalSnap.after1 = vaultStorage.totalAmount(address(gmETHUSD));
+    wethBalanceSnap.after1 = weth.balanceOf(address(vaultStorage));
+    wethTotalSnap.after1 = vaultStorage.totalAmount(address(weth));
+    wethLiquiditySnap.after1 = vaultStorage.hlpLiquidity(address(weth));
+    usdcBalanceSnap.after1 = usdc.balanceOf(address(vaultStorage));
+    usdcTotalSnap.after1 = vaultStorage.totalAmount(address(usdc));
+    usdcLiquiditySnap.after1 = vaultStorage.hlpLiquidity(address(usdc));
 
     assertEq(
       rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
@@ -108,24 +99,30 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       "Withdrawal order should be deleted"
     );
     assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
-    assertApproxEqAbs(vars.tvlAfter, vars.tvlBefore, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
-    assertApproxEqAbs(vars.aumAfter, vars.aumBefore, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
-    assertEq(vars.gmEthBalanceAfter, 0, "GM(ETH-USDC) balance should be 0");
-    assertEq(vars.gmEthTotalAfter, 0, "GM(ETH-USDC) after executed total should be 0");
+    assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
+    assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
+    assertEq(gmEthBalanceSnap.after1, 0, "GM(ETH-USDC) balance should be 0");
+    assertEq(gmEthTotalSnap.after1, 0, "GM(ETH-USDC) after executed total should be 0");
     assertEq(
-      vars.wethBalanceBefore + 2522039333159539803,
-      vars.wethBalanceAfter,
+      wethBalanceSnap.before + 2522039333159539803,
+      wethBalanceSnap.after1,
       "WETH balance should increase by 2522039333159539803"
     );
     assertEq(
-      vars.wethTotalBefore + 2522039333159539803,
-      vars.wethTotalAfter,
+      wethTotalSnap.before + 2522039333159539803,
+      wethTotalSnap.after1,
       "WETH total should increase by 2522039333159539803"
     );
-    assertEq(vars.wethTotalAfter, vars.wethBalanceAfter, "WETH total should equal to WETH balance");
-    assertEq(vars.usdcBalanceBefore + 4226796583, vars.usdcBalanceAfter, "USDC balance should increase by 4226796583");
-    assertEq(vars.usdcTotalBefore + 4226796583, vars.usdcTotalAfter, "USDC total should increase by 4226796583");
-    assertEq(vars.usdcTotalAfter, vars.usdcBalanceAfter, "USDC total should equal to USDC balance");
+    assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
+    assertEq(
+      wethLiquiditySnap.before + 2522039333159539803,
+      wethLiquiditySnap.after1,
+      "WETH liquidity should increase"
+    );
+    assertEq(usdcBalanceSnap.before + 4226796583, usdcBalanceSnap.after1, "USDC balance should increase by 4226796583");
+    assertEq(usdcTotalSnap.before + 4226796583, usdcTotalSnap.after1, "USDC total should increase by 4226796583");
+    assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
+    assertEq(usdcLiquiditySnap.before + 4226796583, usdcLiquiditySnap.after1, "USDC liquidity should increase");
   }
 
   function testCorrectness_WhenErr_WhenNoOneJamInTheMiddle() external {
@@ -187,22 +184,24 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
-    WithdrawalTestLocalVars memory vars;
-    vars.tvlBefore = calculator.getHLPValueE30(false);
-    vars.aumBefore = calculator.getAUME30(false);
+    SnapshotUint256 memory tvlSnap;
+    SnapshotUint256 memory aumSnap;
+
+    tvlSnap.before = calculator.getHLPValueE30(false);
+    aumSnap.before = calculator.getAUME30(false);
 
     // Create withdrawal orders
     bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 8912412145575829437123, 0, 0);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
 
     // Asserts
-    assertEq(vars.tvlBefore, vars.tvlAfter, "TVL should not change");
-    assertEq(vars.aumBefore, vars.aumAfter, "AUM should not change");
+    assertEq(tvlSnap.before, tvlSnap.after1, "TVL should not change");
+    assertEq(aumSnap.before, aumSnap.after1, "AUM should not change");
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
 
     // Assuming Alice try deposit in the middle
     vm.deal(ALICE, 1 ether);
@@ -212,52 +211,52 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     uint256 liquidityValue = ((10_000_000 * 1e22 * uint256(int256(ecoPyth2.getPriceUnsafe(bytes32("USDC")).price))) *
       9950) / 10000;
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
 
     // Asserts
-    assertEq(vars.tvlBefore + liquidityValue, vars.tvlAfter, "TVL should increase by liquidity value");
+    assertEq(tvlSnap.before + liquidityValue, tvlSnap.after1, "TVL should increase by liquidity value");
     assertApproxEqAbs(
-      vars.aumBefore + liquidityValue,
-      vars.aumAfter,
+      aumSnap.before + liquidityValue,
+      aumSnap.after1,
       0.16 * 1e30,
       "AUM should increase by liquidity value"
     );
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
 
     // Assuming Alice try to withdraw.
-    uint256 hlpPrice = (vars.aumBefore * 1e6) / hlp.totalSupply();
+    uint256 hlpPrice = (aumSnap.before * 1e6) / hlp.totalSupply();
     uint256 estimateWithdrawValueE30 = (((5_000_000 ether * hlpPrice) / 1e6) * 9950) / 10000;
     unstakeHLP(ALICE, 5_000_000 ether);
     removeLiquidity(ALICE, usdc_e, 5_000_000 ether, true);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
 
     // Asserts
     assertApproxEqAbs(
-      vars.tvlBefore - estimateWithdrawValueE30,
-      vars.tvlAfter,
+      tvlSnap.before - estimateWithdrawValueE30,
+      tvlSnap.after1,
       25500 * 1e30,
       "TVL should decrease by withdraw value"
     );
     assertApproxEqAbs(
-      vars.aumBefore - estimateWithdrawValueE30,
-      vars.aumAfter,
+      aumSnap.before - estimateWithdrawValueE30,
+      aumSnap.after1,
       25500 * 1e30,
       "AUM should decrease by withdraw value"
     );
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
 
     // Execute withdrawal orders
     gmxV2Keeper_executeWithdrawalOrder(GM_ETHUSDC_ASSET_ID, gmxOrderKey);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
 
     assertEq(
       rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
@@ -269,51 +268,57 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
     assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
     assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
-    assertApproxEqAbs(vars.tvlAfter, vars.tvlBefore, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
-    assertApproxEqAbs(vars.aumAfter, vars.aumBefore, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
+    assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
+    assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
-    WithdrawalTestLocalVars memory vars;
-    vars.tvlBefore = calculator.getHLPValueE30(false);
-    vars.aumBefore = calculator.getAUME30(false);
+    SnapshotUint256 memory tvlSnap;
+    SnapshotUint256 memory aumSnap;
+    SnapshotUint256 memory usdcTotalSnap;
+    SnapshotUint256 memory usdcBalanceSnap;
+    SnapshotUint256 memory wethTotalSnap;
+    SnapshotUint256 memory wethBalanceSnap;
+
+    tvlSnap.before = calculator.getHLPValueE30(false);
+    aumSnap.before = calculator.getAUME30(false);
 
     // Create withdrawal orders
     bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 8912412145575829437123, 0, 0);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
 
     // Asserts
-    assertEq(vars.tvlBefore, vars.tvlAfter, "TVL should not change");
-    assertEq(vars.aumBefore, vars.aumAfter, "AUM should not change");
+    assertEq(tvlSnap.before, tvlSnap.after1, "TVL should not change");
+    assertEq(aumSnap.before, aumSnap.after1, "AUM should not change");
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
-    vars.usdcTotalBefore = vaultStorage.totalAmount(address(usdc_e));
-    vars.usdcBalanceBefore = usdc_e.balanceOf(address(vaultStorage));
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
+    usdcTotalSnap.before = vaultStorage.totalAmount(address(usdc_e));
+    usdcBalanceSnap.before = usdc_e.balanceOf(address(vaultStorage));
 
     // Assuming Alice try deposit in the middle
     vm.deal(ALICE, 1 ether);
     motherload(address(usdc_e), ALICE, 10_000_000 * 1e6);
     depositCollateral(ALICE, 0, usdc_e, 10_000_000 * 1e6);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
-    vars.usdcTotalAfter = vaultStorage.totalAmount(address(usdc_e));
-    vars.usdcBalanceAfter = usdc_e.balanceOf(address(vaultStorage));
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
+    usdcTotalSnap.after1 = vaultStorage.totalAmount(address(usdc_e));
+    usdcBalanceSnap.after1 = usdc_e.balanceOf(address(vaultStorage));
 
     // Assert the following values are correct
-    assertEq(vars.tvlBefore, vars.tvlAfter, "TVL should not change");
-    assertEq(vars.aumBefore, vars.aumAfter, "AUM should not change");
+    assertEq(tvlSnap.before, tvlSnap.after1, "TVL should not change");
+    assertEq(aumSnap.before, aumSnap.after1, "AUM should not change");
     assertEq(
-      vars.usdcTotalBefore + 10_000_000 * 1e6,
-      vars.usdcTotalAfter,
+      usdcTotalSnap.before + 10_000_000 * 1e6,
+      usdcTotalSnap.after1,
       "USDC.E total should increase by 10_000_000 USDC"
     );
     assertEq(
-      vars.usdcBalanceBefore + 10_000_000 * 1e6,
-      vars.usdcBalanceAfter,
+      usdcBalanceSnap.before + 10_000_000 * 1e6,
+      usdcBalanceSnap.after1,
       "USDC.E balance should increase by 10_000_000 USDC"
     );
     assertEq(
@@ -322,49 +327,49 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       "Alice's USDC.E balance should be 10_000_000 USDC"
     );
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
-    vars.usdcTotalBefore = vars.usdcTotalAfter;
-    vars.usdcBalanceBefore = vars.usdcBalanceAfter;
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
+    usdcTotalSnap.before = usdcTotalSnap.after1;
+    usdcBalanceSnap.before = usdcBalanceSnap.after1;
 
     withdrawCollateral(ALICE, 0, usdc_e, 10_000_000 * 1e6);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
-    vars.usdcTotalAfter = vaultStorage.totalAmount(address(usdc_e));
-    vars.usdcBalanceAfter = usdc_e.balanceOf(address(vaultStorage));
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
+    usdcTotalSnap.after1 = vaultStorage.totalAmount(address(usdc_e));
+    usdcBalanceSnap.after1 = usdc_e.balanceOf(address(vaultStorage));
 
     // Assert the following values are correct
-    assertEq(vars.tvlBefore, vars.tvlAfter, "TVL should not change");
-    assertEq(vars.aumBefore, vars.aumAfter, "AUM should not change");
+    assertEq(tvlSnap.before, tvlSnap.after1, "TVL should not change");
+    assertEq(aumSnap.before, aumSnap.after1, "AUM should not change");
     assertEq(
-      vars.usdcTotalBefore - 10_000_000 * 1e6,
-      vars.usdcTotalAfter,
+      usdcTotalSnap.before - 10_000_000 * 1e6,
+      usdcTotalSnap.after1,
       "USDC.E total should decrease by 10_000_000 USDC"
     );
     assertEq(
-      vars.usdcBalanceBefore - 10_000_000 * 1e6,
-      vars.usdcBalanceAfter,
+      usdcBalanceSnap.before - 10_000_000 * 1e6,
+      usdcBalanceSnap.after1,
       "USDC.E balance should decrease by 10_000_000 USDC"
     );
     assertEq(vaultStorage.traderBalances(ALICE, address(usdc_e)), 0, "Alice's USDC.E balance should be 0 USDC");
 
-    vars.tvlBefore = vars.tvlAfter;
-    vars.aumBefore = vars.aumAfter;
-    vars.wethTotalBefore = vaultStorage.totalAmount(address(weth));
-    vars.wethBalanceBefore = weth.balanceOf(address(vaultStorage));
-    vars.usdcTotalBefore = vaultStorage.totalAmount(address(usdc));
-    vars.usdcBalanceBefore = usdc.balanceOf(address(vaultStorage));
+    tvlSnap.before = tvlSnap.after1;
+    aumSnap.before = aumSnap.after1;
+    wethTotalSnap.before = vaultStorage.totalAmount(address(weth));
+    wethBalanceSnap.before = weth.balanceOf(address(vaultStorage));
+    usdcTotalSnap.before = vaultStorage.totalAmount(address(usdc));
+    usdcBalanceSnap.before = usdc.balanceOf(address(vaultStorage));
 
     // Execute withdrawal orders
     gmxV2Keeper_executeWithdrawalOrder(GM_ETHUSDC_ASSET_ID, gmxOrderKey);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
-    vars.wethTotalAfter = vaultStorage.totalAmount(address(weth));
-    vars.wethBalanceAfter = weth.balanceOf(address(vaultStorage));
-    vars.usdcTotalAfter = vaultStorage.totalAmount(address(usdc));
-    vars.usdcBalanceAfter = usdc.balanceOf(address(vaultStorage));
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
+    wethTotalSnap.after1 = vaultStorage.totalAmount(address(weth));
+    wethBalanceSnap.after1 = weth.balanceOf(address(vaultStorage));
+    usdcTotalSnap.after1 = vaultStorage.totalAmount(address(usdc));
+    usdcBalanceSnap.after1 = usdc.balanceOf(address(vaultStorage));
 
     assertEq(
       rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
@@ -376,38 +381,46 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
     assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
     assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
-    assertApproxEqAbs(vars.tvlAfter, vars.tvlBefore, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
-    assertApproxEqAbs(vars.aumAfter, vars.aumBefore, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
+    assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
+    assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(
-      vars.wethTotalBefore + 2522039333159539803,
-      vars.wethTotalAfter,
+      wethTotalSnap.before + 2522039333159539803,
+      wethTotalSnap.after1,
       "WETH total should increase by 2522039333159539803"
     );
     assertEq(
-      vars.wethBalanceBefore + 2522039333159539803,
-      vars.wethBalanceAfter,
+      wethBalanceSnap.before + 2522039333159539803,
+      wethBalanceSnap.after1,
       "WETH balance should increase by 2522039333159539803"
     );
-    assertEq(vars.wethTotalAfter, vars.wethBalanceAfter, "WETH total should equal to WETH balance");
-    assertEq(vars.usdcTotalBefore + 4226796583, vars.usdcTotalAfter, "USDC total should increase by 4226796583");
-    assertEq(vars.usdcBalanceBefore + 4226796583, vars.usdcBalanceAfter, "USDC balance should increase by 4226796583");
-    assertEq(vars.usdcTotalAfter, vars.usdcBalanceAfter, "USDC total should equal to USDC balance");
+    assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
+    assertEq(usdcTotalSnap.before + 4226796583, usdcTotalSnap.after1, "USDC total should increase by 4226796583");
+    assertEq(usdcBalanceSnap.before + 4226796583, usdcBalanceSnap.after1, "USDC balance should increase by 4226796583");
+    assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_WhenTraderTakeProfitMoreThanHlpLiquidity() external {
-    WithdrawalTestLocalVars memory vars;
-    vars.tvlBefore = calculator.getHLPValueE30(false);
-    vars.aumBefore = calculator.getAUME30(false);
+    SnapshotUint256 memory tvlSnap;
+    SnapshotUint256 memory aumSnap;
+    SnapshotUint256 memory wethTotalSnap;
+    SnapshotUint256 memory wethBalanceSnap;
+    SnapshotUint256 memory wethLiquiditySnap;
+    SnapshotUint256 memory usdcTotalSnap;
+    SnapshotUint256 memory usdcBalanceSnap;
+    SnapshotUint256 memory usdcLiquiditySnap;
+
+    tvlSnap.before = calculator.getHLPValueE30(false);
+    aumSnap.before = calculator.getAUME30(false);
 
     // Create withdrawal orders
     bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 8912412145575829437123, 0, 0);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
 
     // Asserts
-    assertEq(vars.tvlBefore, vars.tvlAfter, "TVL should not change");
-    assertEq(vars.aumBefore, vars.aumAfter, "AUM should not change");
+    assertEq(tvlSnap.before, tvlSnap.after1, "TVL should not change");
+    assertEq(aumSnap.before, aumSnap.after1, "AUM should not change");
 
     // Assuming Alice try deposit 1 WBTC as collateral and long BTC in the middle
     vm.deal(ALICE, 1 ether);
@@ -430,26 +443,26 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       "GM(ETH-USDC) liquidity on hold should be 8912412145575829437123"
     );
 
-    vars.tvlBefore = calculator.getHLPValueE30(false);
-    vars.aumBefore = calculator.getAUME30(false);
-    vars.wethTotalBefore = vaultStorage.totalAmount(address(weth));
-    vars.wethBalanceBefore = weth.balanceOf(address(vaultStorage));
-    vars.wethLiquidityBefore = vaultStorage.hlpLiquidity(address(weth));
-    vars.usdcTotalBefore = vaultStorage.totalAmount(address(usdc));
-    vars.usdcBalanceBefore = usdc.balanceOf(address(vaultStorage));
-    vars.usdcLiquidityBefore = vaultStorage.hlpLiquidity(address(usdc));
+    tvlSnap.before = calculator.getHLPValueE30(false);
+    aumSnap.before = calculator.getAUME30(false);
+    wethTotalSnap.before = vaultStorage.totalAmount(address(weth));
+    wethBalanceSnap.before = weth.balanceOf(address(vaultStorage));
+    wethLiquiditySnap.before = vaultStorage.hlpLiquidity(address(weth));
+    usdcTotalSnap.before = vaultStorage.totalAmount(address(usdc));
+    usdcBalanceSnap.before = usdc.balanceOf(address(vaultStorage));
+    usdcLiquiditySnap.before = vaultStorage.hlpLiquidity(address(usdc));
 
     // Execute withdrawal orders
     gmxV2Keeper_executeWithdrawalOrder(GM_ETHUSDC_ASSET_ID, gmxOrderKey);
 
-    vars.tvlAfter = calculator.getHLPValueE30(false);
-    vars.aumAfter = calculator.getAUME30(false);
-    vars.wethTotalAfter = vaultStorage.totalAmount(address(weth));
-    vars.wethBalanceAfter = weth.balanceOf(address(vaultStorage));
-    vars.wethLiquidityAfter = vaultStorage.hlpLiquidity(address(weth));
-    vars.usdcTotalAfter = vaultStorage.totalAmount(address(usdc));
-    vars.usdcBalanceAfter = usdc.balanceOf(address(vaultStorage));
-    vars.usdcLiquidityAfter = vaultStorage.hlpLiquidity(address(usdc));
+    tvlSnap.after1 = calculator.getHLPValueE30(false);
+    aumSnap.after1 = calculator.getAUME30(false);
+    wethTotalSnap.after1 = vaultStorage.totalAmount(address(weth));
+    wethBalanceSnap.after1 = weth.balanceOf(address(vaultStorage));
+    wethLiquiditySnap.after1 = vaultStorage.hlpLiquidity(address(weth));
+    usdcTotalSnap.after1 = vaultStorage.totalAmount(address(usdc));
+    usdcBalanceSnap.after1 = usdc.balanceOf(address(vaultStorage));
+    usdcLiquiditySnap.after1 = vaultStorage.hlpLiquidity(address(usdc));
 
     // Asserts
     assertEq(
@@ -462,23 +475,27 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
     assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
     assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
-    assertApproxEqAbs(vars.tvlAfter, vars.tvlBefore, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
-    assertApproxEqAbs(vars.aumAfter, vars.aumBefore, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
+    assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
+    assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(
-      vars.wethTotalBefore + 2522039519212270023,
-      vars.wethTotalAfter,
+      wethTotalSnap.before + 2522039519212270023,
+      wethTotalSnap.after1,
       "WETH total should increase by 2522039519212270023"
     );
     assertEq(
-      vars.wethBalanceBefore + 2522039519212270023,
-      vars.wethBalanceAfter,
+      wethBalanceSnap.before + 2522039519212270023,
+      wethBalanceSnap.after1,
       "WETH balance should increase by 2522039519212270023"
     );
-    assertEq(vars.wethLiquidityBefore + 2522039519212270023, vars.wethLiquidityAfter, "WETH liquidity should increase");
-    assertEq(vars.wethTotalAfter, vars.wethBalanceAfter, "WETH total should equal to WETH balance");
-    assertEq(vars.usdcTotalBefore + 4226796895, vars.usdcTotalAfter, "USDC total should increase by 4226796895");
-    assertEq(vars.usdcBalanceBefore + 4226796895, vars.usdcBalanceAfter, "USDC balance should increase by 4226796895");
-    assertEq(vars.usdcLiquidityBefore + 4226796895, vars.usdcLiquidityAfter, "USDC liquidity should increase");
-    assertEq(vars.usdcTotalAfter, vars.usdcBalanceAfter, "USDC total should equal to USDC balance");
+    assertEq(
+      wethLiquiditySnap.before + 2522039519212270023,
+      wethLiquiditySnap.after1,
+      "WETH liquidity should increase"
+    );
+    assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
+    assertEq(usdcTotalSnap.before + 4226796895, usdcTotalSnap.after1, "USDC total should increase by 4226796895");
+    assertEq(usdcBalanceSnap.before + 4226796895, usdcBalanceSnap.after1, "USDC balance should increase by 4226796895");
+    assertEq(usdcLiquiditySnap.before + 4226796895, usdcLiquiditySnap.after1, "USDC liquidity should increase");
+    assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
   }
 }

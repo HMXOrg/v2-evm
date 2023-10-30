@@ -73,8 +73,10 @@
       "depositVault": "0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55",
       "depositUtils": "0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4",
       "depositHandler": "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457",
-      "marketStoreUtils": "0x41613136174912714faF4cF0680fB1Acbe0cC7D1",
+      "withdrawalVault": "0x0628D46b5D145f183AdB6Ef1f2c97eD1C4701C55",
+      "withdrawalUtils": "0x46088fA22988c40CE5aBC0647a7638D27A8bF7d1",
       "withdrawalHandler": "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac",
+      "marketStoreUtils": "0x41613136174912714faF4cF0680fB1Acbe0cC7D1",
       "dataStore": "0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8",
       "roleStore": "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72",
       "reader": "0xf60becbba223EEA9495Da3f606753867eC10d139"

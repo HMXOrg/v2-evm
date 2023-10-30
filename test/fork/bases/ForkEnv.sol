@@ -148,6 +148,9 @@ abstract contract ForkEnv is Test {
   address internal gmxV2MarketUtils = 0x7ffF7ef2fc8Db5159B0046ad49d018A5aB40dB11;
   address internal gmxV2ExecuteDepositUtils = 0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2;
   IGmxV2DepositHandler internal gmxV2DepositHandler = IGmxV2DepositHandler(getAddress(".vendors.gmxV2.depositHandler"));
+  address internal gmxV2WithdrawalVault = address(getAddress(".vendors.gmxV2.withdrawalVault"));
+  address internal gmxV2WithdrawalUtils = address(getAddress(".vendors.gmxV2.withdrawalUtils"));
+  address internal gmxV2WithdrawalStoreUtils = 0x713c6a2479f6C079055A6AD3690D95dEDCEf9e1e;
   IGmxV2WithdrawalHandler internal gmxV2WithdrawalHandler =
     IGmxV2WithdrawalHandler(getAddress(".vendors.gmxV2.withdrawalHandler"));
   address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
@@ -188,6 +191,10 @@ abstract contract ForkEnv is Test {
     vm.label(address(gmxV2DepositHandler), "gmxV2DepositHandler");
     vm.label(gmxV2ExecuteDepositUtils, "gmxV2ExecuteDepositUtils");
     vm.label(gmxV2DepositStoreUtils, "gmxV2DepositStoreUtils");
+    vm.label(gmxV2WithdrawalVault, "gmxV2WithdrawalVault");
+    vm.label(gmxV2WithdrawalUtils, "gmxV2WithdrawalUtils");
+    vm.label(gmxV2WithdrawalStoreUtils, "gmxV2WithdrawalStoreUtils");
+    vm.label(address(gmxV2WithdrawalHandler), "gmxV2WithdrawalHandler");
     vm.label(gmxV2MarketUtils, "gmxV2MarketUtils");
     vm.label(gmxV2MarketStoreUtils, "gmxV2MarketStoreUtils");
     vm.label(gmxV2DataStore, "gmxV2DataStore");

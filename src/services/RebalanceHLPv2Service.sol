@@ -31,12 +31,15 @@ contract RebalanceHLPv2Service is
   IERC20Upgradeable public weth;
 
   IGmxV2ExchangeRouter public gmxV2ExchangeRouter;
+
   address public gmxV2DepositVault;
   address public gmxV2DepositHandler;
+
+  address public gmxV2WithdrawalVault;
   address public gmxV2WithdrawalHandler;
 
   mapping(bytes32 gmxOrderKey => DepositParams depositParam) depositHistory;
-  mapping(bytes32 gmxOrderKey => WithdrawalParams withdrawParam) withdrawHistory;
+  mapping(bytes32 gmxOrderKey => WithdrawalParams withdrawParam) withdrawalHistory;
 
   event LogDepositCreated(bytes32 gmxOrderKey, DepositParams depositParam);
   event LogDepositSucceed(bytes32 gmxOrderKey, DepositParams depositParam, uint256 receivedMarketTokens);
@@ -46,6 +49,14 @@ contract RebalanceHLPv2Service is
     uint256 returnedLongTokens,
     uint256 returnedShortTokens
   );
+  event LogWithdrawalCreated(bytes32 gmxOrderKey, WithdrawalParams withdrawParam);
+  event LogWithdrawalSucceed(
+    bytes32 gmxOrderKey,
+    WithdrawalParams withdrawParam,
+    uint256 receivedLongTokens,
+    uint256 receivedShortTokens
+  );
+  event LogWithdrawalCancelled(bytes32 gmxOrderKey, WithdrawalParams withdrawParam, uint256 returnedMarketTokens);
 
   function initialize(
     IERC20Upgradeable _weth,
@@ -54,6 +65,7 @@ contract RebalanceHLPv2Service is
     address _gmxV2ExchangeRouter,
     address _gmxV2DepositVault,
     address _gmxV2DepositHandler,
+    address _gmxV2WithdrawalVault,
     address _gmxV2WithdrawalHandler
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -64,6 +76,7 @@ contract RebalanceHLPv2Service is
     gmxV2ExchangeRouter = IGmxV2ExchangeRouter(_gmxV2ExchangeRouter);
     gmxV2DepositVault = _gmxV2DepositVault;
     gmxV2DepositHandler = _gmxV2DepositHandler;
+    gmxV2WithdrawalVault = _gmxV2WithdrawalVault;
     gmxV2WithdrawalHandler = _gmxV2WithdrawalHandler;
   }
 
@@ -99,15 +112,15 @@ contract RebalanceHLPv2Service is
       _depositParam = _depositParams[i];
       if (_depositParam.longTokenAmount > 0) {
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
-        vaultStorage.pushToken(_depositParam.longToken, address(gmxV2DepositVault), _depositParam.longTokenAmount);
+        vaultStorage.pushToken(_depositParam.longToken, gmxV2DepositVault, _depositParam.longTokenAmount);
       }
       if (_depositParam.shortTokenAmount > 0) {
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
-        vaultStorage.pushToken(_depositParam.shortToken, address(gmxV2DepositVault), _depositParam.shortTokenAmount);
+        vaultStorage.pushToken(_depositParam.shortToken, gmxV2DepositVault, _depositParam.shortTokenAmount);
       }
 
       // Taken WETH from caller and send to gmxV2DepositVault for execution fee
-      weth.safeTransferFrom(msg.sender, address(gmxV2DepositVault), _executionFee);
+      weth.safeTransferFrom(msg.sender, gmxV2DepositVault, _executionFee);
       // Create a deposit order
       _gmxOrderKey = gmxV2ExchangeRouter.createDeposit(
         IGmxV2ExchangeRouter.CreateDepositParams({
@@ -150,10 +163,10 @@ contract RebalanceHLPv2Service is
 
       // Remove GM(x), accounted as on hold, and send to gmxV2DepositVault.
       vaultStorage.removeHLPLiquidityOnHold(_withdrawParam.market, _withdrawParam.amount);
-      vaultStorage.pushToken(_withdrawParam.market, address(gmxV2DepositVault), _withdrawParam.amount);
+      vaultStorage.pushToken(_withdrawParam.market, gmxV2WithdrawalVault, _withdrawParam.amount);
 
       // Taken WETH from caller and send to gmxV2DepositVault for execution fee
-      weth.safeTransferFrom(msg.sender, address(gmxV2DepositVault), _executionFee);
+      weth.safeTransferFrom(msg.sender, gmxV2WithdrawalVault, _executionFee);
       // Create a withdrawal order
       _gmxOrderKey = gmxV2ExchangeRouter.createWithdrawal(
         IGmxV2ExchangeRouter.CreateWithdrawalParams({
@@ -170,6 +183,10 @@ contract RebalanceHLPv2Service is
           callbackGasLimit: _withdrawParam.gasLimit
         })
       );
+      _gmxOrderKeys[i] = _gmxOrderKey;
+      withdrawalHistory[_gmxOrderKey] = _withdrawParam;
+
+      emit LogWithdrawalCreated(_gmxOrderKey, _withdrawParam);
 
       unchecked {
         ++i;
@@ -244,10 +261,34 @@ contract RebalanceHLPv2Service is
 
   /// @notice Called by GMXv2 after a withdrawal execution
   function afterWithdrawalExecution(
-    bytes32,
+    bytes32 _key,
     IGmxV2Types.WithdrawalProps memory,
-    IGmxV2Types.EventLogData memory
-  ) external override onlyGmxWithdrawalHandler {}
+    IGmxV2Types.EventLogData memory _eventData
+  ) external override onlyGmxWithdrawalHandler {
+    WithdrawalParams memory _withdrawParam = withdrawalHistory[_key];
+    if (_withdrawParam.market == address(0)) revert IRebalanceHLPv2Service_KeyNotFound();
+
+    // Add received long as liquidity
+    uint256 _receivedLong = _eventData.uintItems.items[0].value;
+    if (_receivedLong > 0) {
+      IERC20Upgradeable(_eventData.addressItems.items[0].value).safeTransfer(address(vaultStorage), _receivedLong);
+      vaultStorage.pullToken(_eventData.addressItems.items[0].value);
+      vaultStorage.addHLPLiquidity(_eventData.addressItems.items[0].value, _receivedLong);
+    }
+
+    // Add received short as liquidity
+    uint256 _receivedShort = _eventData.uintItems.items[1].value;
+    if (_receivedShort > 0) {
+      IERC20Upgradeable(_eventData.addressItems.items[1].value).safeTransfer(address(vaultStorage), _receivedShort);
+      vaultStorage.pullToken(_eventData.addressItems.items[1].value);
+      vaultStorage.addHLPLiquidity(_eventData.addressItems.items[1].value, _receivedShort);
+    }
+
+    // Clear on hold GM(x)
+    vaultStorage.clearOnHold(_withdrawParam.market, _withdrawParam.amount);
+
+    emit LogWithdrawalSucceed(_key, _withdrawParam, _receivedLong, _receivedShort);
+  }
 
   /// @notice Called by GMXv2 if a withdrawal was cancelled/reverted
   function afterWithdrawalCancellation(

@@ -4,7 +4,7 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 import { TREASURY_ADDRESS } from "../../constants/important-addresses";
 import { readCsv } from "../../utils/file";
 import { BulkSendErc20__factory, ERC20__factory } from "../../../../typechain";
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
 
 interface DataRow {
   to: string;
@@ -24,7 +24,8 @@ async function main(chainId: number, inputPath: string) {
   const rows = (await readCsv(inputPath)) as DataRow[];
 
   const tokenAddresses = rows.map((row) => row.token_address);
-  for (const tokenAddress of tokenAddresses) {
+  const distinctTokenAddresses = [...new Set(tokenAddresses)];
+  for (const tokenAddress of distinctTokenAddresses) {
     const erc20 = ERC20__factory.connect(tokenAddress, deployer);
     const allowance = await erc20.allowance(safeWrapper.getAddress(), bulkSendErc20.address);
     if (!allowance.eq(ethers.constants.MaxUint256)) {

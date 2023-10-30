@@ -25,19 +25,19 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
   function testCorrectness_WhenNoOneJamInTheMiddle() external {
     uint256 tvlBefore = calculator.getHLPValueE30(false);
     uint256 aumBefore = calculator.getAUME30(false);
-    uint256 gmEthBalanceBefore = gmxV2EthUsdcMarket.balanceOf(address(vaultStorage));
-    uint256 gmEthTotalBefore = vaultStorage.totalAmount(address(gmxV2EthUsdcMarket));
+    uint256 gmEthBalanceBefore = gmETHUSD.balanceOf(address(vaultStorage));
+    uint256 gmEthTotalBefore = vaultStorage.totalAmount(address(gmETHUSD));
 
     // Create withdrawal orders
     bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 8912412145575829437123, 0, 0);
 
     uint256 tvlAfter = calculator.getHLPValueE30(false);
     uint256 aumAfter = calculator.getAUME30(false);
-    uint256 gmEthBalanceAfter = gmxV2EthUsdcMarket.balanceOf(address(vaultStorage));
-    uint256 gmEthTotalAfter = vaultStorage.totalAmount(address(gmxV2EthUsdcMarket));
+    uint256 gmEthBalanceAfter = gmETHUSD.balanceOf(address(vaultStorage));
+    uint256 gmEthTotalAfter = vaultStorage.totalAmount(address(gmETHUSD));
 
     assertEq(
-      vaultStorage.hlpLiquidityOnHold(address(gmxV2EthUsdcMarket)),
+      vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)),
       8912412145575829437123,
       "GM(ETH-USDC) liquidity on hold should be 8912412145575829437123"
     );
@@ -56,14 +56,10 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
 
     tvlAfter = calculator.getHLPValueE30(false);
     aumAfter = calculator.getAUME30(false);
-    gmEthBalanceAfter = gmxV2EthUsdcMarket.balanceOf(address(vaultStorage));
-    gmEthTotalAfter = vaultStorage.totalAmount(address(gmxV2EthUsdcMarket));
+    gmEthBalanceAfter = gmETHUSD.balanceOf(address(vaultStorage));
+    gmEthTotalAfter = vaultStorage.totalAmount(address(gmETHUSD));
 
-    assertEq(
-      vaultStorage.hlpLiquidityOnHold(address(gmxV2EthUsdcMarket)),
-      0,
-      "GM(ETH-USDC) liquidity on hold should be 0"
-    );
+    assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
     assertApproxEqAbs(tvlAfter, tvlBefore, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
     assertApproxEqAbs(aumAfter, aumBefore, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(gmEthBalanceAfter, 0, "GM(ETH-USDC) balance should be 0");

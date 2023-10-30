@@ -139,25 +139,24 @@ abstract contract ForkEnv is Test {
   /// GMXv2
   address internal gmxV2Admin = 0xE7BfFf2aB721264887230037940490351700a068;
   address internal gmxV2Timelock = 0x62aB76Ed722C507f297f2B97920dCA04518fe274;
-  address internal gmxV2Oracle = 0xa11B501c2dd83Acd29F6727570f2502FAaa617F2;
+  address internal gmxV2Oracle = address(getAddress(".vendors.gmxV2.oracle"));
   IGmxV2Reader internal gmxV2Reader = IGmxV2Reader(getAddress(".vendors.gmxV2.reader"));
   IGmxV2ExchangeRouter internal gmxV2ExchangeRouter = IGmxV2ExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
   address internal gmxV2DepositVault = address(getAddress(".vendors.gmxV2.depositVault"));
   address internal gmxV2DepositUtils = address(getAddress(".vendors.gmxV2.depositUtils"));
-  address internal gmxV2DepositStoreUtils = 0x556665e81c1516B6028d04EE081518b3818D1453;
-  address internal gmxV2MarketUtils = 0x7ffF7ef2fc8Db5159B0046ad49d018A5aB40dB11;
-  address internal gmxV2ExecuteDepositUtils = 0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2;
+  address internal gmxV2DepositStoreUtils = address(getAddress(".vendors.gmxV2.depositStoreUtils"));
+  address internal gmxV2ExecuteDepositUtils = address(getAddress(".vendors.gmxV2.executeDepositUtils"));
   IGmxV2DepositHandler internal gmxV2DepositHandler = IGmxV2DepositHandler(getAddress(".vendors.gmxV2.depositHandler"));
   address internal gmxV2WithdrawalVault = address(getAddress(".vendors.gmxV2.withdrawalVault"));
   address internal gmxV2WithdrawalUtils = address(getAddress(".vendors.gmxV2.withdrawalUtils"));
-  address internal gmxV2WithdrawalStoreUtils = 0x713c6a2479f6C079055A6AD3690D95dEDCEf9e1e;
+  address internal gmxV2WithdrawalStoreUtils = address(getAddress(".vendors.gmxV2.withdrawalStoreUtils"));
+  address internal gmxV2ExecuteWithdrawalUtils = address(getAddress(".vendors.gmxV2.executeWithdrawalUtils"));
   IGmxV2WithdrawalHandler internal gmxV2WithdrawalHandler =
     IGmxV2WithdrawalHandler(getAddress(".vendors.gmxV2.withdrawalHandler"));
+  address internal gmxV2MarketUtils = address(getAddress(".vendors.gmxV2.marketUtils"));
   address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
-  IERC20 internal gmxV2WbtcUsdcMarket = IERC20(0x47c031236e19d024b42f8AE6780E44A573170703);
-  IERC20 internal gmxV2EthUsdcMarket = IERC20(0x70d95587d40A2caf56bd97485aB3Eec10Bee6336);
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
 

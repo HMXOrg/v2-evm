@@ -62,8 +62,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
 
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
-    uint256 beforeGmBtcTotal = vaultStorage.totalAmount(address(gmxV2WbtcUsdcMarket));
-    uint256 beforeGmBtc = gmxV2WbtcUsdcMarket.balanceOf(address(vaultStorage));
+    uint256 beforeGmBtcTotal = vaultStorage.totalAmount(address(gmBTCUSD));
+    uint256 beforeGmBtc = gmBTCUSD.balanceOf(address(vaultStorage));
     beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
@@ -72,8 +72,8 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
-    uint256 afterGmBtcTotal = vaultStorage.totalAmount(address(gmxV2WbtcUsdcMarket));
-    uint256 afterGmBtc = gmxV2WbtcUsdcMarket.balanceOf(address(vaultStorage));
+    uint256 afterGmBtcTotal = vaultStorage.totalAmount(address(gmBTCUSD));
+    uint256 afterGmBtc = gmBTCUSD.balanceOf(address(vaultStorage));
 
     afterTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     afterWbtc = wbtc.balanceOf(address(vaultStorage));
@@ -482,7 +482,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
 
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
-    uint256 gmBtcLiquidityBefore = vaultStorage.hlpLiquidity(address(gmxV2WbtcUsdcMarket));
+    uint256 gmBtcLiquidityBefore = vaultStorage.hlpLiquidity(address(gmBTCUSD));
 
     gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKey);
 
@@ -500,7 +500,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertApproxEqRel(beforeTvl, afterTvl, 0.0001 ether, "tvl should not change more than 0.01%");
     assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum should not change more than 0.01%");
     assertTrue(
-      vaultStorage.hlpLiquidity(address(gmxV2WbtcUsdcMarket)) > gmBtcLiquidityBefore,
+      vaultStorage.hlpLiquidity(address(gmBTCUSD)) > gmBtcLiquidityBefore,
       "GM(BTC-USDC) liquidity should increase"
     );
   }

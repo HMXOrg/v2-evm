@@ -87,7 +87,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       GM_WBTCUSDC_ASSET_ID,
       IConfigStorage.AssetConfig({
         assetId: GM_WBTCUSDC_ASSET_ID,
-        tokenAddress: address(gmxV2WbtcUsdcMarket),
+        tokenAddress: address(gmBTCUSD),
         decimals: 18,
         isStableCoin: false
       })
@@ -96,7 +96,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       GM_ETHUSDC_ASSET_ID,
       IConfigStorage.AssetConfig({
         assetId: GM_ETHUSDC_ASSET_ID,
-        tokenAddress: address(gmxV2EthUsdcMarket),
+        tokenAddress: address(gmETHUSD),
         decimals: 18,
         isStableCoin: false
       })
@@ -111,8 +111,8 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       })
     );
     address[] memory newAssetAddresses = new address[](3);
-    newAssetAddresses[0] = address(gmxV2WbtcUsdcMarket);
-    newAssetAddresses[1] = address(gmxV2EthUsdcMarket);
+    newAssetAddresses[0] = address(gmBTCUSD);
+    newAssetAddresses[1] = address(gmETHUSD);
     newAssetAddresses[2] = address(usdc);
     IConfigStorage.HLPTokenConfig[] memory newHlpTokenConfigs = new IConfigStorage.HLPTokenConfig[](3);
     newHlpTokenConfigs[0] = IConfigStorage.HLPTokenConfig({
@@ -142,13 +142,13 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
 
     // Setup GM(WBTC-USDC) config
     gmMarketConfigs[GM_WBTCUSDC_ASSET_ID] = GmMarketConfig({
-      marketAddress: address(gmxV2WbtcUsdcMarket),
+      marketAddress: address(gmBTCUSD),
       longToken: address(wbtc),
       shortToken: address(usdc)
     });
     // Setup GM(ETH-USDC) config
     gmMarketConfigs[GM_ETHUSDC_ASSET_ID] = GmMarketConfig({
-      marketAddress: address(gmxV2EthUsdcMarket),
+      marketAddress: address(gmETHUSD),
       longToken: address(weth),
       shortToken: address(usdc)
     });

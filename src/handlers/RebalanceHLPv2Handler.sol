@@ -67,6 +67,21 @@ contract RebalanceHLPv2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable
     return service.createDepositOrders(_depositParams, _executionFee);
   }
 
+  function createWithdrawalOrders(
+    IRebalanceHLPv2Service.WithdrawalParams[] calldata _withdrawalParams,
+    uint256 _executionFee
+  ) external nonReentrant onlyWhitelisted returns (bytes32[] memory) {
+    // Check
+    if (_executionFee < minExecutionFee) revert RebalanceHLPv2Handler_ExecutionFeeBelowMin();
+    if (msg.value != _withdrawalParams.length * _executionFee) revert RebalanceHLPv2Handler_ExecutionFeeTooLow();
+
+    // Interact
+    // Wrap ETH to WETH
+    weth.deposit{ value: msg.value }();
+
+    return service.createWithdrawalOrders(_withdrawalParams, _executionFee);
+  }
+
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;

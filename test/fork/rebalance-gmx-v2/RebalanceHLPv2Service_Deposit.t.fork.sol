@@ -82,7 +82,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeTotalWbtc = vaultStorage.totalAmount(address(wbtc));
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
-    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -172,7 +172,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
     // Execute here should callback to `afterDepositCancellation`
-    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -287,7 +287,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
 
-    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -398,7 +398,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeTvl = calculator.getHLPValueE30(false);
     beforeAum = calculator.getAUME30(false);
 
-    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);
@@ -499,7 +499,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     beforeAum = calculator.getAUME30(false);
     uint256 gmBtcLiquidityBefore = vaultStorage.hlpLiquidity(address(gmxV2WbtcUsdcMarket));
 
-    gmxV2ExecuteDepositOrder(gmxDepositOrderKeys[0]);
+    gmxV2Keeper_executeDepositOrder(GM_WBTCUSDC_ASSET_ID, gmxDepositOrderKeys[0]);
 
     afterTvl = calculator.getHLPValueE30(false);
     afterAum = calculator.getAUME30(false);

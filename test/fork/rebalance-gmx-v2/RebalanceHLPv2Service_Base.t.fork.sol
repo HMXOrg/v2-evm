@@ -18,6 +18,8 @@ import { MockGmxV2Oracle } from "@hmx-test/mocks/MockGmxV2Oracle.sol";
 
 abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Cheats {
   bytes32 internal constant GM_WBTCUSDC_ASSET_ID = "GM(WBTC-USDC)";
+  bytes32 internal constant GM_ETHUSDC_ASSET_ID = "GM(ETH-USDC)";
+
   IRebalanceHLPv2Service rebalanceService;
 
   function setUp() public virtual {
@@ -82,22 +84,24 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     vm.label(address(rebalanceService), "RebalanceHLPv2Service");
   }
 
-  function gmxV2ExecuteDepositOrder(bytes32 depositOrderId) internal {
-    // GMXv2 Keeper comes and execute the deposit order
+  function gmxV2Keeper_executeDepositOrder(bytes32 market, bytes32 depositOrderId) internal {
     address[] memory realtimeFeedTokens = new address[](3);
-    // Index token
-    realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
-    // Long token
-    realtimeFeedTokens[1] = address(wbtc);
-    // Short token
-    realtimeFeedTokens[2] = address(usdc);
     bytes[] memory realtimeFeedData = new bytes[](3);
-    // Index token
-    realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Long token
-    realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
-    // Short token
-    realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
+
+    if (market == GM_WBTCUSDC_ASSET_ID) {
+      // Index token
+      realtimeFeedTokens[0] = 0x47904963fc8b2340414262125aF798B9655E58Cd;
+      // Long token
+      realtimeFeedTokens[1] = address(wbtc);
+      // Short token
+      realtimeFeedTokens[2] = address(usdc);
+      // Index token
+      realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+      // Long token
+      realtimeFeedData[1] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+      // Short token
+      realtimeFeedData[2] = abi.encode(999900890000000000000000, 1000148200000000000000000);
+    } else if (market == GM_ETHUSDC_ASSET_ID) {}
 
     gmxV2DepositHandler.executeDeposit(
       depositOrderId,

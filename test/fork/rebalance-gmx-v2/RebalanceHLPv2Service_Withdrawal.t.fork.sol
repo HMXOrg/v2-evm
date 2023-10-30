@@ -8,10 +8,14 @@ import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 143862285);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 145291409);
     super.setUp();
 
     // Deploy some WETH to GM(ETH-USDC)
+    bytes32 gmxV2OrderKey = rebalanceHLPv2_createDepositOrder(GM_ETHUSDC_ASSET_ID, 100 ether, 0 ether, 0);
+    assertEq(vaultStorage.hlpLiquidityOnHold(address(weth)), 100 ether, "WETH liquidity on hold should be 100 ETH");
+    gmxV2Keeper_executeDepositOrder(GM_ETHUSDC_ASSET_ID, gmxV2OrderKey);
+    assertEq(vaultStorage.hlpLiquidityOnHold(address(weth)), 0, "WETH liquidity on hold should be 0 ETH");
   }
 
   function testCorrectness_WhenNoOneJamInTheMiddle() external {}

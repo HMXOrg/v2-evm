@@ -117,10 +117,11 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     vm.label(address(rebalanceService), "RebalanceHLPv2Service");
   }
 
-  function rebalanceHLPv2_CreateDepositOrder(
+  function rebalanceHLPv2_createDepositOrder(
     bytes32 market,
     uint256 longTokenAmount,
-    uint256 shortTokenAmount
+    uint256 shortTokenAmount,
+    uint256 minMarketTokens
   ) internal returns (bytes32) {
     // Preps
     uint256 executionFee = 0.001 ether;
@@ -130,7 +131,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       longTokenAmount: longTokenAmount,
       shortToken: gmMarketConfigs[market].shortToken,
       shortTokenAmount: shortTokenAmount,
-      minMarketTokens: 0,
+      minMarketTokens: minMarketTokens,
       gasLimit: 1_000_000
     });
     IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);

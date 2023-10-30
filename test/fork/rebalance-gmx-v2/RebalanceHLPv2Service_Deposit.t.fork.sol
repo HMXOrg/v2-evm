@@ -35,7 +35,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
     // Create deposit order on GMXv2
-    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_createDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -108,7 +108,13 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 beforeWbtc = wbtc.balanceOf(address(vaultStorage));
 
     // Create deposit order on GMXv2
-    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
+    // Assuming slippage hit.
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_createDepositOrder(
+      GM_WBTCUSDC_ASSET_ID,
+      0.01 * 1e8,
+      0,
+      307089148973164794124
+    );
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -169,7 +175,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 beforeAum = calculator.getAUME30(false);
 
     // Create deposit order on GMXv2
-    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_createDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -255,7 +261,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 beforeAum = calculator.getAUME30(false);
 
     // Create deposit order on GMXv2
-    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_createDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);
@@ -350,7 +356,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     uint256 initialHmxBtcBalance = wbtc.balanceOf(address(vaultStorage));
 
     // Create deposit order on GMXv2
-    bytes32 gmxDepositOrderKey = rebalanceHLPv2_CreateDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0);
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_createDepositOrder(GM_WBTCUSDC_ASSET_ID, 0.01 * 1e8, 0, 0);
 
     uint256 afterTvl = calculator.getHLPValueE30(false);
     uint256 afterAum = calculator.getAUME30(false);

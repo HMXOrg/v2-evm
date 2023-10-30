@@ -70,7 +70,7 @@ contract RebalanceHLPv2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable
   function createWithdrawalOrders(
     IRebalanceHLPv2Service.WithdrawalParams[] calldata _withdrawalParams,
     uint256 _executionFee
-  ) external nonReentrant onlyWhitelisted returns (bytes32[] memory) {
+  ) external payable nonReentrant onlyWhitelisted returns (bytes32[] memory) {
     // Check
     if (_executionFee < minExecutionFee) revert RebalanceHLPv2Handler_ExecutionFeeBelowMin();
     if (msg.value != _withdrawalParams.length * _executionFee) revert RebalanceHLPv2Handler_ExecutionFeeTooLow();

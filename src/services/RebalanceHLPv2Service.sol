@@ -111,11 +111,15 @@ contract RebalanceHLPv2Service is
     for (uint256 i; i < _depositParamsLen; i++) {
       _depositParam = _depositParams[i];
       if (_depositParam.longTokenAmount > 0) {
+        // If deploying long token, accounted as on hold and remove from HLP.
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
+        // Push long token to gmxV2DepositVault.
         vaultStorage.pushToken(_depositParam.longToken, gmxV2DepositVault, _depositParam.longTokenAmount);
       }
       if (_depositParam.shortTokenAmount > 0) {
+        // If deploying short token, accounted as on hold and remove from HLP.
         vaultStorage.removeHLPLiquidityOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
+        // Push short token to gmxV2DepositVault.
         vaultStorage.pushToken(_depositParam.shortToken, gmxV2DepositVault, _depositParam.shortTokenAmount);
       }
 
@@ -138,7 +142,9 @@ contract RebalanceHLPv2Service is
           callbackGasLimit: _depositParam.gasLimit
         })
       );
+      // Update returner
       _gmxOrderKeys[i] = _gmxOrderKey;
+      // Keep track of deposit history
       depositHistory[_gmxOrderKey] = _depositParam;
 
       emit LogDepositCreated(_gmxOrderKey, _depositParam);
@@ -161,11 +167,11 @@ contract RebalanceHLPv2Service is
     for (uint256 i = 0; i < _withdrawParamsLen; ) {
       _withdrawParam = _withdrawParams[i];
 
-      // Remove GM(x), accounted as on hold, and send to gmxV2DepositVault.
+      // Remove GM(x), accounted as on hold, and send to gmxV2WithdrawalVault.
       vaultStorage.removeHLPLiquidityOnHold(_withdrawParam.market, _withdrawParam.amount);
       vaultStorage.pushToken(_withdrawParam.market, gmxV2WithdrawalVault, _withdrawParam.amount);
 
-      // Taken WETH from caller and send to gmxV2DepositVault for execution fee
+      // Taken WETH from caller and send to gmxV2WithdrawalVault for execution fee
       weth.safeTransferFrom(msg.sender, gmxV2WithdrawalVault, _executionFee);
       // Create a withdrawal order
       _gmxOrderKey = gmxV2ExchangeRouter.createWithdrawal(
@@ -183,7 +189,9 @@ contract RebalanceHLPv2Service is
           callbackGasLimit: _withdrawParam.gasLimit
         })
       );
+      // Update returner
       _gmxOrderKeys[i] = _gmxOrderKey;
+      // Keep track of withdrawal history
       withdrawalHistory[_gmxOrderKey] = _withdrawParam;
 
       emit LogWithdrawalCreated(_gmxOrderKey, _withdrawParam);
@@ -195,75 +203,84 @@ contract RebalanceHLPv2Service is
   }
 
   /// @notice Called by GMXv2 after a deposit execution
-  /// @param key The key of the deposit
-  /// @param eventData The event data emitted by GMXv2
+  /// @param _key The key of the deposit
+  /// @param _eventData The event data emitted by GMXv2
   function afterDepositExecution(
-    bytes32 key,
+    bytes32 _key,
     IGmxV2Types.DepositProps memory /* deposit */,
-    IGmxV2Types.EventLogData memory eventData
+    IGmxV2Types.EventLogData memory _eventData
   ) external onlyGmxDepositHandler {
-    DepositParams memory depositParam = depositHistory[key];
-    if (depositParam.longToken == address(0) || depositParam.shortToken == address(0))
+    // Check
+    DepositParams memory _depositParam = depositHistory[_key];
+    if (_depositParam.longToken == address(0) || _depositParam.shortToken == address(0))
       revert IRebalanceHLPv2Service_KeyNotFound();
 
     // Add recieved GMs as liquidity
-    uint256 receivedGms = eventData.uintItems.items[0].value;
-    if (receivedGms == 0) revert IRebalanceHLPv2Service_ZeroGmReceived();
-    IERC20Upgradeable(depositParam.market).safeTransfer(address(vaultStorage), receivedGms);
-    vaultStorage.pullToken(depositParam.market);
-    vaultStorage.addHLPLiquidity(depositParam.market, receivedGms);
+    uint256 _receivedGms = _eventData.uintItems.items[0].value;
+    if (_receivedGms == 0) revert IRebalanceHLPv2Service_ZeroGmReceived();
+    // GMs are sent to this contract. So we need to transfer it to vaultStorage
+    // and pull it to make sure totalAmount is updated. Then add as HLP liquidity.
+    IERC20Upgradeable(_depositParam.market).safeTransfer(address(vaultStorage), _receivedGms);
+    vaultStorage.pullToken(_depositParam.market);
+    vaultStorage.addHLPLiquidity(_depositParam.market, _receivedGms);
 
+    // Clear on hold will reduce both totalAmount and hlpLiquidityOnHold.
+    // This is to make sure that totalAmount is updated correctly.
     // Clear on hold long token
-    if (depositParam.longTokenAmount > 0) {
-      vaultStorage.clearOnHold(depositParam.longToken, depositParam.longTokenAmount);
+    if (_depositParam.longTokenAmount > 0) {
+      vaultStorage.clearOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
     }
 
     // Clear on hold short token
-    if (depositParam.shortTokenAmount > 0) {
-      vaultStorage.clearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
+    if (_depositParam.shortTokenAmount > 0) {
+      vaultStorage.clearOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
     }
 
-    emit LogDepositSucceed(key, depositParam, receivedGms);
+    emit LogDepositSucceed(_key, _depositParam, _receivedGms);
 
     // Clear deposit history
-    delete depositHistory[key];
+    delete depositHistory[_key];
   }
 
   /// @notice Called by GMXv2 if a deposit was cancelled/reverted
-  /// @param key the key of the deposit
+  /// @param _key the key of the deposit
   function afterDepositCancellation(
-    bytes32 key,
+    bytes32 _key,
     IGmxV2Types.DepositProps memory /* deposit */,
     IGmxV2Types.EventLogData memory /* eventData */
   ) external onlyGmxDepositHandler {
     // Check
-    DepositParams memory depositParam = depositHistory[key];
-    if (depositParam.longToken == address(0) || depositParam.shortToken == address(0))
+    DepositParams memory _depositParam = depositHistory[_key];
+    if (_depositParam.longToken == address(0) || _depositParam.shortToken == address(0))
       revert IRebalanceHLPv2Service_KeyNotFound();
 
     // Effect
-    uint256 pulled = 0;
+    uint256 _pulled = 0;
+
+    // Clear on hold tokens and add them back to HLP liquidity as
+    // the deposit was cancelled and deployed tokens are returned.
 
     // Clear on hold long token
-    if (depositParam.longTokenAmount > 0) {
-      vaultStorage.clearOnHold(depositParam.longToken, depositParam.longTokenAmount);
-      IERC20Upgradeable(depositParam.longToken).safeTransfer(address(vaultStorage), depositParam.longTokenAmount);
-      pulled = vaultStorage.pullToken(depositParam.longToken);
-      vaultStorage.addHLPLiquidity(depositParam.longToken, pulled);
+    if (_depositParam.longTokenAmount > 0) {
+      vaultStorage.clearOnHold(_depositParam.longToken, _depositParam.longTokenAmount);
+      IERC20Upgradeable(_depositParam.longToken).safeTransfer(address(vaultStorage), _depositParam.longTokenAmount);
+      _pulled = vaultStorage.pullToken(_depositParam.longToken);
+      vaultStorage.addHLPLiquidity(_depositParam.longToken, _pulled);
     }
 
     // Clear on hold short token
-    if (depositParam.shortTokenAmount > 0) {
-      vaultStorage.clearOnHold(depositParam.shortToken, depositParam.shortTokenAmount);
-      IERC20Upgradeable(depositParam.longToken).safeTransfer(address(vaultStorage), depositParam.shortTokenAmount);
-      pulled = vaultStorage.pullToken(depositParam.shortToken);
-      vaultStorage.addHLPLiquidity(depositParam.shortToken, pulled);
+    if (_depositParam.shortTokenAmount > 0) {
+      vaultStorage.clearOnHold(_depositParam.shortToken, _depositParam.shortTokenAmount);
+      IERC20Upgradeable(_depositParam.longToken).safeTransfer(address(vaultStorage), _depositParam.shortTokenAmount);
+      _pulled = vaultStorage.pullToken(_depositParam.shortToken);
+      vaultStorage.addHLPLiquidity(_depositParam.shortToken, _pulled);
     }
 
-    delete depositHistory[key];
+    // Clear deposit history
+    delete depositHistory[_key];
 
     // Log
-    emit LogDepositCancelled(key, depositParam, depositParam.longTokenAmount, depositParam.shortTokenAmount);
+    emit LogDepositCancelled(_key, _depositParam, _depositParam.longTokenAmount, _depositParam.shortTokenAmount);
   }
 
   /// @notice Called by GMXv2 after a withdrawal execution

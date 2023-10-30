@@ -25,6 +25,10 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     super.setUp();
   }
 
+  function testRevert_WhenDeployMoreThanLiquidity() external {
+    rebalanceHLPv2_createDepositOrder(GM_WBTCUSDC_ASSET_ID, 10 * 1e8, 0, 0, "IVaultStorage_HLPBalanceRemaining()");
+  }
+
   function testCorrectness_WhenNoOneJamInTheMiddle() external {
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
@@ -165,6 +169,75 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertEq(beforeTvl, afterTvl, "tvl must remains the same");
     assertEq(beforeAum, afterAum, "aum must remains the same");
     assertEq(wbtcInitialHlpLiquidity, vaultStorage.hlpLiquidity(address(wbtc)), "hlpLiquidity must remains the same");
+  }
+
+  function testCorrectness_WhenETH_WhenErr_WhenNoOneJamInTheMiddle() external {
+    // Override GM(ETH-USDC) price
+    MockEcoPyth(address(ecoPyth2)).overridePrice(GM_ETHUSDC_ASSET_ID, 0.98014296 * 1e8);
+
+    uint256 wethInitialHlpLiquidity = vaultStorage.hlpLiquidity(address(weth));
+    uint256 beforeTvl = calculator.getHLPValueE30(false);
+    uint256 beforeAum = calculator.getAUME30(false);
+    uint256 beforeTotalWeth = vaultStorage.totalAmount(address(weth));
+    uint256 beforeWeth = weth.balanceOf(address(vaultStorage));
+
+    // Create deposit order on GMXv2
+    // Assuming slippage hit.
+    bytes32 gmxDepositOrderKey = rebalanceHLPv2_createDepositOrder(
+      GM_ETHUSDC_ASSET_ID,
+      1 ether,
+      0,
+      1818862156288003735002
+    );
+
+    uint256 afterTvl = calculator.getHLPValueE30(false);
+    uint256 afterAum = calculator.getAUME30(false);
+    uint256 afterTotalWeth = vaultStorage.totalAmount(address(weth));
+    uint256 afterWeth = weth.balanceOf(address(vaultStorage));
+
+    // Assert the following conditions:
+    // 1. TVL should remains the same.
+    // 2. AUM should remains the same.
+    // 3. 1 ETH should be on-hold.
+    // 4. pullToken should return zero.
+    // 5. afterTotalWeth should be the same as beforeTotalWeth.
+    // 6. beforeWeth should be 1 ether more than afterWeth.
+    assertEq(beforeTvl, afterTvl, "tvl must remains the same");
+    assertEq(beforeAum, afterAum, "aum must remains the same");
+    assertEq(1 ether, vaultStorage.hlpLiquidityOnHold(address(weth)), "1 ETH should be on-hold");
+    assertEq(0, vaultStorage.pullToken(address(weth)), "pullToken should return zero");
+    assertEq(afterTotalWeth, beforeTotalWeth, "afterTotalWeth should the same as before");
+    assertEq(beforeWeth - afterWeth, 1 ether, "wethBefore should be 1 more than wethAfter");
+
+    beforeTvl = afterTvl;
+    beforeAum = afterAum;
+    beforeTotalWeth = vaultStorage.totalAmount(address(weth));
+    beforeWeth = weth.balanceOf(address(vaultStorage));
+
+    gmxV2Keeper_executeDepositOrder(GM_ETHUSDC_ASSET_ID, gmxDepositOrderKey);
+
+    afterTvl = calculator.getHLPValueE30(false);
+    afterAum = calculator.getAUME30(false);
+    afterTotalWeth = vaultStorage.totalAmount(address(weth));
+    afterWeth = weth.balanceOf(address(vaultStorage));
+
+    // Assert the following conditions:
+    // 1. 0 WBTC should be on-hold.
+    // 2. pullToken should return zero.
+    // 3. totalWeth should remain the same.
+    // 4. afterWeth should increase by 1 WETH as it returns from GMXv2.
+    // 5. afterTotalWeth should match afterWeth.
+    // 6. TVL should remain unchanged.
+    // 7. AUM should remain unchanged.
+    // 8. HLP WETH liquidity should match with initial HLP WETH liquidity.
+    assertEq(0, vaultStorage.hlpLiquidityOnHold(address(weth)), "0 WETH should be on-hold");
+    assertEq(0, vaultStorage.pullToken(address(weth)), "pullToken should return zero");
+    assertEq(afterTotalWeth, beforeTotalWeth, "totalWeth remain the same");
+    assertEq(beforeWeth + 1 ether, afterWeth, "wethBefore should increase by 1 WETH");
+    assertEq(afterWeth, afterTotalWeth, "total[WETH] should match afterWeth");
+    assertEq(beforeTvl, afterTvl, "tvl must remains the same");
+    assertEq(beforeAum, afterAum, "aum must remains the same");
+    assertEq(wethInitialHlpLiquidity, vaultStorage.hlpLiquidity(address(weth)), "hlpLiquidity must remains the same");
   }
 
   function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {

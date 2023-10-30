@@ -14,6 +14,7 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 import { ForkEnvWithActions } from "@hmx-test/fork/bases/ForkEnvWithActions.sol";
 import { Cheats } from "@hmx-test/base/Cheats.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { String } from "@hmx-test/libs/String.sol";
 import { MockArbSys } from "@hmx-test/mocks/MockArbSys.sol";
 import { MockGmxV2Oracle } from "@hmx-test/mocks/MockGmxV2Oracle.sol";
 
@@ -121,7 +122,8 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     bytes32 market,
     uint256 longTokenAmount,
     uint256 shortTokenAmount,
-    uint256 minMarketTokens
+    uint256 minMarketTokens,
+    string memory errSignature
   ) internal returns (bytes32) {
     // Preps
     uint256 executionFee = 0.001 ether;
@@ -142,9 +144,25 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     // Approve rebalanceService to spend WETH
     weth.approve(address(rebalanceService), type(uint256).max);
     // Execute deposits
+    if (!String.isEmpty(errSignature)) {
+      vm.expectRevert(abi.encodeWithSignature(errSignature));
+    }
     bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
 
+    if (gmxDepositOrderKeys.length == 0) {
+      return bytes32(0);
+    }
+
     return gmxDepositOrderKeys[0];
+  }
+
+  function rebalanceHLPv2_createDepositOrder(
+    bytes32 market,
+    uint256 longTokenAmount,
+    uint256 shortTokenAmount,
+    uint256 minMarketTokens
+  ) internal returns (bytes32) {
+    return rebalanceHLPv2_createDepositOrder(market, longTokenAmount, shortTokenAmount, minMarketTokens, "");
   }
 
   function gmxV2Keeper_executeDepositOrder(bytes32 market, bytes32 depositOrderId) internal {
@@ -176,9 +194,9 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       // Short token
       realtimeFeedTokens[1] = address(usdc);
       // Long token
-      realtimeFeedData[0] = abi.encode(344234240000000000000000000, 344264600000000000000000000);
+      realtimeFeedData[0] = abi.encode(1784642714660000, 1784736100000000);
       // Short token
-      realtimeFeedData[1] = abi.encode(999900890000000000000000, 1000148200000000000000000);
+      realtimeFeedData[1] = abi.encode(999896170000000000000000, 1000040390000000000000000);
     }
 
     gmxV2DepositHandler.executeDeposit(

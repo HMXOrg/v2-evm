@@ -14,8 +14,6 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { Smoke_Base } from "@hmx-test/fork/smoke-test/Smoke_Base.t.sol";
 
 contract RebalanceHLPService_Test is Smoke_Base {
-  uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
-
   uint24[] internal publishTimeDiffs;
 
   uint256 fixedBlock = 121867415;
@@ -193,11 +191,12 @@ contract RebalanceHLPService_Test is Smoke_Base {
   }
 
   function testRevert_Rebalance_NegativeTotalHLPValue() external {
+    vm.warp(block.timestamp + 300 minutes);
     vm.startPrank(rebalanceHLPService.owner());
     rebalanceHLPService.setMinHLPValueLossBPS(1);
     vm.stopPrank();
 
-    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
+    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](4);
     params[0] = IRebalanceHLPService.AddGlpParams(
       address(usdc_e),
       address(0),
@@ -209,6 +208,20 @@ contract RebalanceHLPService_Test is Smoke_Base {
       address(weth),
       address(0),
       vaultStorage.hlpLiquidity(address(weth)),
+      0,
+      0
+    );
+    params[2] = IRebalanceHLPService.AddGlpParams(
+      address(wbtc),
+      address(0),
+      vaultStorage.hlpLiquidity(address(wbtc)),
+      0,
+      0
+    );
+    params[3] = IRebalanceHLPService.AddGlpParams(
+      address(dai),
+      address(0),
+      vaultStorage.hlpLiquidity(address(dai)),
       0,
       0
     );

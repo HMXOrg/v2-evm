@@ -27,14 +27,14 @@ interface IRebalanceHLPv2Service {
     uint256 gasLimit;
   }
 
-  function getDepositHistory(bytes32 _key) external view returns (DepositParams memory);
+  function getPendingDeposit(bytes32 _key) external view returns (DepositParams memory);
 
   function createDepositOrders(
     DepositParams[] calldata _depositParams,
     uint256 _executionFee
   ) external returns (bytes32[] memory _gmxOrderKeys);
 
-  function getWithdrawalHistory(bytes32 _key) external view returns (WithdrawalParams memory);
+  function getPendingWithdrawal(bytes32 _key) external view returns (WithdrawalParams memory);
 
   function createWithdrawalOrders(
     WithdrawalParams[] calldata _withdrawalParams,

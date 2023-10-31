@@ -38,8 +38,8 @@ contract RebalanceHLPv2Service is
   address public gmxV2WithdrawalVault;
   address public gmxV2WithdrawalHandler;
 
-  mapping(bytes32 gmxOrderKey => DepositParams depositParam) depositHistory;
-  mapping(bytes32 gmxOrderKey => WithdrawalParams withdrawParam) withdrawalHistory;
+  mapping(bytes32 gmxOrderKey => DepositParams depositParam) pendingDeposit;
+  mapping(bytes32 gmxOrderKey => WithdrawalParams withdrawParam) pendingWithdrawal;
 
   event LogDepositCreated(bytes32 gmxOrderKey, DepositParams depositParam);
   event LogDepositSucceed(bytes32 gmxOrderKey, DepositParams depositParam, uint256 receivedMarketTokens);
@@ -144,8 +144,8 @@ contract RebalanceHLPv2Service is
       );
       // Update returner
       _gmxOrderKeys[i] = _gmxOrderKey;
-      // Keep track of deposit history
-      depositHistory[_gmxOrderKey] = _depositParam;
+      // Keep track of the pending deposit
+      pendingDeposit[_gmxOrderKey] = _depositParam;
 
       emit LogDepositCreated(_gmxOrderKey, _depositParam);
     }
@@ -191,8 +191,8 @@ contract RebalanceHLPv2Service is
       );
       // Update returner
       _gmxOrderKeys[i] = _gmxOrderKey;
-      // Keep track of withdrawal history
-      withdrawalHistory[_gmxOrderKey] = _withdrawParam;
+      // Keep track of the pending withdrawal
+      pendingWithdrawal[_gmxOrderKey] = _withdrawParam;
 
       emit LogWithdrawalCreated(_gmxOrderKey, _withdrawParam);
 
@@ -211,7 +211,7 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.EventLogData memory _eventData
   ) external onlyGmxDepositHandler {
     // Check
-    DepositParams memory _depositParam = depositHistory[_key];
+    DepositParams memory _depositParam = pendingDeposit[_key];
     if (_depositParam.longToken == address(0) || _depositParam.shortToken == address(0))
       revert IRebalanceHLPv2Service_KeyNotFound();
 
@@ -238,8 +238,8 @@ contract RebalanceHLPv2Service is
 
     emit LogDepositSucceed(_key, _depositParam, _receivedGms);
 
-    // Clear deposit history
-    delete depositHistory[_key];
+    // Clear pending deposit
+    delete pendingDeposit[_key];
   }
 
   /// @notice Called by GMXv2 if a deposit was cancelled/reverted
@@ -250,7 +250,7 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.EventLogData memory /* eventData */
   ) external onlyGmxDepositHandler {
     // Check
-    DepositParams memory _depositParam = depositHistory[_key];
+    DepositParams memory _depositParam = pendingDeposit[_key];
     if (_depositParam.longToken == address(0) || _depositParam.shortToken == address(0))
       revert IRebalanceHLPv2Service_KeyNotFound();
 
@@ -276,8 +276,8 @@ contract RebalanceHLPv2Service is
       vaultStorage.addHLPLiquidity(_depositParam.shortToken, _pulled);
     }
 
-    // Clear deposit history
-    delete depositHistory[_key];
+    // Clear pending deposit
+    delete pendingDeposit[_key];
 
     // Log
     emit LogDepositCancelled(_key, _depositParam, _depositParam.longTokenAmount, _depositParam.shortTokenAmount);
@@ -290,7 +290,7 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.EventLogData memory _eventData
   ) external override onlyGmxWithdrawalHandler {
     // Check
-    WithdrawalParams memory _withdrawParam = withdrawalHistory[_key];
+    WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];
     if (_withdrawParam.market == address(0)) revert IRebalanceHLPv2Service_KeyNotFound();
 
     // Effect
@@ -312,8 +312,8 @@ contract RebalanceHLPv2Service is
 
     // Clear on hold GM(x)
     vaultStorage.clearOnHold(_withdrawParam.market, _withdrawParam.amount);
-    // Clear withdrawal history
-    delete withdrawalHistory[_key];
+    // Clear pending withdrawal
+    delete pendingWithdrawal[_key];
 
     emit LogWithdrawalSucceed(_key, _withdrawParam, _receivedLong, _receivedShort);
   }
@@ -325,7 +325,7 @@ contract RebalanceHLPv2Service is
     IGmxV2Types.EventLogData memory
   ) external override onlyGmxWithdrawalHandler {
     // Check
-    WithdrawalParams memory _withdrawParam = withdrawalHistory[_key];
+    WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];
     if (_withdrawParam.market == address(0)) revert IRebalanceHLPv2Service_KeyNotFound();
 
     // Clear GM(x) on hold and update HLP liquidity
@@ -334,25 +334,25 @@ contract RebalanceHLPv2Service is
     uint256 _pulled = vaultStorage.pullToken(_withdrawParam.market);
     vaultStorage.addHLPLiquidity(_withdrawParam.market, _pulled);
 
-    // Clear withdrawal history
-    delete withdrawalHistory[_key];
+    // Clear pending withdrawal
+    delete pendingWithdrawal[_key];
 
     // Log
     emit LogWithdrawalCancelled(_key, _withdrawParam, _pulled);
   }
 
-  /// @notice Get deposit history
+  /// @notice Get pending deposit
   /// @param _key The key of the deposit
   /// @return DepositParams
-  function getDepositHistory(bytes32 _key) external view override returns (DepositParams memory) {
-    return depositHistory[_key];
+  function getPendingDeposit(bytes32 _key) external view override returns (DepositParams memory) {
+    return pendingDeposit[_key];
   }
 
-  /// @notice Get withdrawal history
+  /// @notice Get pending withdrawal
   /// @param _key The key of the withdrawal
   /// @return WithdrawalParams
-  function getWithdrawalHistory(bytes32 _key) external view override returns (WithdrawalParams memory) {
-    return withdrawalHistory[_key];
+  function getPendingWithdrawal(bytes32 _key) external view override returns (WithdrawalParams memory) {
+    return pendingWithdrawal[_key];
   }
 
   /// @notice Claim returned ETH from GMXv2.

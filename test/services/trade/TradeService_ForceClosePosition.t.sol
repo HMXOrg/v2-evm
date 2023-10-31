@@ -151,9 +151,9 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     uint256[] memory _expectedFees = new uint256[](1);
 
     _checkHlpTokens[0] = _tpToken;
-    _expectedTraderBalances[0] = 199_500 ether;
+    _expectedTraderBalances[0] = 199_500 ether + 500 ether;
     _expectedHlpLiquidities[0] = 900_000 ether;
-    _expectedFees[0] = 500 ether;
+    _expectedFees[0] = 0;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,
@@ -255,9 +255,9 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     uint256[] memory _expectedFees = new uint256[](1);
 
     _checkHlpTokens[0] = _tpToken;
-    _expectedTraderBalances[0] = 182_155.963302752293577981 ether;
+    _expectedTraderBalances[0] = 182_155.963302752293577981 ether + 412.844036697247706422 ether;
     _expectedHlpLiquidities[0] = 917_431.192660550458715597 ether;
-    _expectedFees[0] = 412.844036697247706422 ether;
+    _expectedFees[0] = 0;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,

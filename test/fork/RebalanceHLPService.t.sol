@@ -12,6 +12,7 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { Smoke_Base } from "@hmx-test/fork/smoke-test/Smoke_Base.t.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract RebalanceHLPService_Test is Smoke_Base {
   uint24[] internal publishTimeDiffs;
@@ -200,7 +201,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     params[0] = IRebalanceHLPService.AddGlpParams(
       address(usdc_e),
       address(0),
-      vaultStorage.hlpLiquidity(address(usdc_e)),
+      HMXLib.min(gmxVault.maxUsdgAmounts(address(usdc_e)) / 1e12, vaultStorage.hlpLiquidity(address(usdc_e))),
       0,
       0
     );

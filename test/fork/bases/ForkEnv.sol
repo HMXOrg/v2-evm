@@ -54,6 +54,12 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IHLPStaking } from "@hmx/staking/interfaces/IHLPStaking.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
+/// Dexter
+import { UniswapDexter } from "@hmx/extensions/dexters/UniswapDexter.sol";
+
+/// SwitchRouter
+import { SwitchCollateralRouter } from "@hmx/extensions/switch-collateral/SwitchCollateralRouter.sol";
+
 /// Vendors
 /// Uniswap
 import { IPermit2 } from "@hmx/interfaces/uniswap/IPermit2.sol";
@@ -127,6 +133,11 @@ abstract contract ForkEnv is Test {
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
   /// Staking
   IHLPStaking internal hlpStaking = IHLPStaking(getAddress(".staking.hlp"));
+  /// Dexter
+  UniswapDexter internal uniswapDexter = UniswapDexter(getAddress(".extension.dexter.uniswapV3"));
+  /// SwitchRouter
+  SwitchCollateralRouter internal switchCollateralRouter =
+    SwitchCollateralRouter(getAddress(".extension.switchCollateralRouter"));
 
   /// Vendors
   /// Uniswap
@@ -202,6 +213,7 @@ abstract contract ForkEnv is Test {
     // Tokens
     vm.label(address(weth), "WETH");
     vm.label(address(wbtc), "WBTC");
-    vm.label(address(usdc), "USDC.e");
+    vm.label(address(usdc), "USDC");
+    vm.label(address(usdc_e), "USDC.e");
   }
 }

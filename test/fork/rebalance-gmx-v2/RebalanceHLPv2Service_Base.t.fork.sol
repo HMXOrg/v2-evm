@@ -5,6 +5,7 @@
 pragma solidity 0.8.18;
 
 /// HMX
+import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IGmxV2Oracle } from "@hmx/interfaces/gmx-v2/IGmxV2Oracle.sol";
@@ -31,7 +32,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
   }
   mapping(bytes32 gmMarketAssetId => GmMarketConfig config) internal gmMarketConfigs;
 
-  IRebalanceHLPv2Service rebalanceService;
+  IRebalanceHLPv2Service rebalanceHLPv2Service;
 
   struct SnapshotUint256 {
     uint256 before;
@@ -50,7 +51,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     // Mock EcoPyth
     makeEcoPythMockable();
 
-    rebalanceService = Deployer.deployRebalanceHLPv2Service(
+    rebalanceHLPv2Service = Deployer.deployRebalanceHLPv2Service(
       address(proxyAdmin),
       address(weth),
       address(vaultStorage),
@@ -66,13 +67,15 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     vm.startPrank(proxyAdmin.owner());
     Deployer.upgrade("VaultStorage", address(proxyAdmin), address(vaultStorage));
     Deployer.upgrade("Calculator", address(proxyAdmin), address(calculator));
+    Deployer.upgrade("RebalanceHLPHandler", address(proxyAdmin), address(rebalanceHLPHandler));
+    Deployer.upgrade("RebalanceHLPService", address(proxyAdmin), address(rebalanceHLPService));
     vm.stopPrank();
 
     // Setup
     vm.startPrank(configStorage.owner());
-    vaultStorage.setServiceExecutors(address(rebalanceService), true);
+    vaultStorage.setServiceExecutors(address(rebalanceHLPv2Service), true);
     vaultStorage.setServiceExecutors(address(this), true); // For testing pullToken
-    configStorage.setServiceExecutor(address(rebalanceService), address(address(this)), true);
+    configStorage.setServiceExecutor(address(rebalanceHLPv2Service), address(address(this)), true);
     vm.stopPrank();
 
     // Adding USDC (native), GM(WBTC-USDC), and GM(ETH-USDC) as a liquidity
@@ -115,6 +118,24 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
         isStableCoin: true
       })
     );
+    IConfigStorage.CollateralTokenConfig[]
+      memory newCollateralTokenConfigs = new IConfigStorage.CollateralTokenConfig[](3);
+    newCollateralTokenConfigs[0] = IConfigStorage.CollateralTokenConfig({
+      collateralFactorBPS: 0.8 * 100_00,
+      accepted: true,
+      settleStrategy: address(0)
+    });
+    newCollateralTokenConfigs[1] = IConfigStorage.CollateralTokenConfig({
+      collateralFactorBPS: 0.8 * 100_00,
+      accepted: true,
+      settleStrategy: address(0)
+    });
+    newCollateralTokenConfigs[2] = IConfigStorage.CollateralTokenConfig({
+      collateralFactorBPS: 1 * 100_00,
+      accepted: true,
+      settleStrategy: address(0)
+    });
+    configStorage.setCollateralTokenConfigs(newAssetIds, newCollateralTokenConfigs);
     address[] memory newAssetAddresses = new address[](3);
     newAssetAddresses[0] = address(gmBTCUSD);
     newAssetAddresses[1] = address(gmETHUSD);
@@ -138,6 +159,27 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       maxWeightDiff: 1000 ether,
       accepted: false
     });
+    address[] memory newHlpTokenAddresses = new address[](3);
+    newHlpTokenAddresses[0] = address(gmBTCUSD);
+    newHlpTokenAddresses[1] = address(gmETHUSD);
+    newHlpTokenAddresses[2] = address(usdc);
+    configStorage.addOrUpdateAcceptedToken(newHlpTokenAddresses, newHlpTokenConfigs);
+    vm.stopPrank();
+
+    // Set Dexter for USDC native
+    vm.startPrank(deployer);
+    uniswapDexter.setPathOf(
+      address(usdc),
+      address(usdc_e),
+      abi.encodePacked(address(usdc), uint24(100), address(usdc_e))
+    );
+    uniswapDexter.setPathOf(
+      address(usdc_e),
+      address(usdc),
+      abi.encodePacked(address(usdc_e), uint24(100), address(usdc))
+    );
+    switchCollateralRouter.setDexterOf(address(usdc), address(usdc_e), address(uniswapDexter));
+    switchCollateralRouter.setDexterOf(address(usdc_e), address(usdc), address(uniswapDexter));
     vm.stopPrank();
 
     // Grant required roles
@@ -158,7 +200,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       shortToken: address(usdc)
     });
 
-    vm.label(address(rebalanceService), "RebalanceHLPv2Service");
+    vm.label(address(rebalanceHLPv2Service), "RebalanceHLPv2Service");
 
     // Override prices
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
@@ -189,13 +231,13 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
 
     // Wrap some ETHs for execution fee
     IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
+    // Approve rebalanceHLPv2Service to spend WETH
+    weth.approve(address(rebalanceHLPv2Service), type(uint256).max);
     // Execute deposits
     if (!String.isEmpty(errSignature)) {
       vm.expectRevert(abi.encodeWithSignature(errSignature));
     }
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createDepositOrders(depositParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceHLPv2Service.createDepositOrders(depositParams, executionFee);
 
     if (gmxDepositOrderKeys.length == 0) {
       return bytes32(0);
@@ -236,13 +278,13 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
 
     // Wrap some ETHs for execution fee
     IWNative(address(weth)).deposit{ value: executionFee * withdrawalParams.length }();
-    // Approve rebalanceService to spend WETH
-    weth.approve(address(rebalanceService), type(uint256).max);
+    // Approve rebalanceHLPv2Service to spend WETH
+    weth.approve(address(rebalanceHLPv2Service), type(uint256).max);
     // Execute deposits
     if (!String.isEmpty(errSignature)) {
       vm.expectRevert(abi.encodeWithSignature(errSignature));
     }
-    bytes32[] memory gmxDepositOrderKeys = rebalanceService.createWithdrawalOrders(withdrawalParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceHLPv2Service.createWithdrawalOrders(withdrawalParams, executionFee);
 
     if (gmxDepositOrderKeys.length == 0) {
       return bytes32(0);
@@ -258,6 +300,55 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     uint256 minShortTokens
   ) internal returns (bytes32) {
     return rebalanceHLPv2_createWithdrawalOrder(market, gmTokenAmount, minLongTokens, minShortTokens, "");
+  }
+
+  function rebalanceHLP_withdrawGlp(address tokenOut, uint256 glpAmount) internal returns (uint256 amountOut) {
+    (
+      bytes32[] memory priceData,
+      bytes32[] memory publishedTimeData,
+      uint256 minPublishedTime,
+      bytes32 encodedVaas
+    ) = MockEcoPyth(address(ecoPyth2)).getLastestPriceUpdateData();
+
+    IRebalanceHLPService.WithdrawGlpParams[] memory withdrawParams = new IRebalanceHLPService.WithdrawGlpParams[](1);
+    withdrawParams[0] = IRebalanceHLPService.WithdrawGlpParams({ token: tokenOut, glpAmount: glpAmount, minOut: 0 });
+
+    vm.startPrank(multiSig);
+    IRebalanceHLPService.WithdrawGlpResult[] memory ret = rebalanceHLPHandler.withdrawGlp(
+      withdrawParams,
+      priceData,
+      publishedTimeData,
+      minPublishedTime,
+      encodedVaas
+    );
+    vm.stopPrank();
+
+    if (ret.length == 0) {
+      return 0;
+    }
+
+    return ret[0].amount;
+  }
+
+  function rebalanceHLP_swap(uint256 amountIn, address[] memory path) internal returns (uint256 amountOut) {
+    (
+      bytes32[] memory priceData,
+      bytes32[] memory publishedTimeData,
+      uint256 minPublishedTime,
+      bytes32 encodedVaas
+    ) = MockEcoPyth(address(ecoPyth2)).getLastestPriceUpdateData();
+
+    IRebalanceHLPService.SwapParams memory swapParams = IRebalanceHLPService.SwapParams({
+      amountIn: amountIn,
+      minAmountOut: 0,
+      path: path
+    });
+
+    vm.startPrank(multiSig);
+    amountOut = rebalanceHLPHandler.swap(swapParams, priceData, publishedTimeData, minPublishedTime, encodedVaas);
+    vm.stopPrank();
+
+    return amountOut;
   }
 
   function gmxV2Keeper_executeDepositOrder(bytes32 market, bytes32 depositOrderId) internal {

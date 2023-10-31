@@ -36,9 +36,9 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
   uint8 internal constant SUB_ACCOUNT_ID = 0;
 
   IExt01Handler internal ext01Handler;
-  SwitchCollateralRouter internal switchCollateralRouter;
+  SwitchCollateralRouter internal _switchCollateralRouter;
   GlpDexter internal glpDexter;
-  UniswapDexter internal uniswapDexter;
+  UniswapDexter internal _uniswapDexter;
   CurveDexter internal curveDexter;
 
   MockEntryPoint internal entryPoint;
@@ -96,15 +96,15 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       })
     );
     // Deploy UniswapDexter
-    uniswapDexter = UniswapDexter(
+    _uniswapDexter = UniswapDexter(
       address(Deployer.deployUniswapDexter(address(ForkEnv.uniswapPermit2), address(ForkEnv.uniswapUniversalRouter)))
     );
-    uniswapDexter.setPathOf(
+    _uniswapDexter.setPathOf(
       address(ForkEnv.arb),
       address(ForkEnv.weth),
       abi.encodePacked(ForkEnv.arb, uint24(500), ForkEnv.weth)
     );
-    uniswapDexter.setPathOf(
+    _uniswapDexter.setPathOf(
       address(ForkEnv.weth),
       address(ForkEnv.arb),
       abi.encodePacked(ForkEnv.weth, uint24(500), ForkEnv.arb)
@@ -126,7 +126,7 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
       )
     );
     // Deploy SwitchCollateralRouter
-    switchCollateralRouter = SwitchCollateralRouter(address(Deployer.deploySwitchCollateralRouter()));
+    _switchCollateralRouter = SwitchCollateralRouter(address(Deployer.deploySwitchCollateralRouter()));
     // Deploy Ext01Handler
     ext01Handler = Deployer.deployExt01Handler(
       address(ForkEnv.proxyAdmin),
@@ -156,13 +156,13 @@ contract SwitchCollateralRouter_ForkTest is ForkEnv, Cheats {
     bool[] memory _isAllows = new bool[](1);
     _isAllows[0] = true;
     ForkEnv.configStorage.setServiceExecutors(_services, _handlers, _isAllows);
-    ForkEnv.configStorage.setSwitchCollateralRouter(address(switchCollateralRouter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.sglp), address(ForkEnv.weth), address(glpDexter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.sglp), address(glpDexter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.arb), address(ForkEnv.weth), address(uniswapDexter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.arb), address(uniswapDexter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(curveDexter));
-    switchCollateralRouter.setDexterOf(address(ForkEnv.wstEth), address(ForkEnv.weth), address(curveDexter));
+    ForkEnv.configStorage.setSwitchCollateralRouter(address(_switchCollateralRouter));
+    _switchCollateralRouter.setDexterOf(address(ForkEnv.sglp), address(ForkEnv.weth), address(glpDexter));
+    _switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.sglp), address(glpDexter));
+    _switchCollateralRouter.setDexterOf(address(ForkEnv.arb), address(ForkEnv.weth), address(_uniswapDexter));
+    _switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.arb), address(_uniswapDexter));
+    _switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(curveDexter));
+    _switchCollateralRouter.setDexterOf(address(ForkEnv.wstEth), address(ForkEnv.weth), address(curveDexter));
     vm.stopPrank();
 
     entryPoint = new MockEntryPoint();

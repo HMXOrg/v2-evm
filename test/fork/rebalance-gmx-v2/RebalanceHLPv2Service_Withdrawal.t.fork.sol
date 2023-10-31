@@ -94,7 +94,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     usdcLiquiditySnap.after1 = vaultStorage.hlpLiquidity(address(usdc));
 
     assertEq(
-      rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
+      rebalanceHLPv2Service.getWithdrawalHistory(gmxOrderKey).market,
       address(0),
       "Withdrawal order should be deleted"
     );
@@ -259,7 +259,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     aumSnap.after1 = calculator.getAUME30(false);
 
     assertEq(
-      rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
+      rebalanceHLPv2Service.getWithdrawalHistory(gmxOrderKey).market,
       address(0),
       "Withdrawal order should be deleted"
     );
@@ -372,7 +372,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     usdcBalanceSnap.after1 = usdc.balanceOf(address(vaultStorage));
 
     assertEq(
-      rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
+      rebalanceHLPv2Service.getWithdrawalHistory(gmxOrderKey).market,
       address(0),
       "Withdrawal order should be deleted"
     );
@@ -466,7 +466,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
 
     // Asserts
     assertEq(
-      rebalanceService.getWithdrawalHistory(gmxOrderKey).market,
+      rebalanceHLPv2Service.getWithdrawalHistory(gmxOrderKey).market,
       address(0),
       "Withdrawal order should be deleted"
     );

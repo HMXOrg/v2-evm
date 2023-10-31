@@ -15,17 +15,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+      assetId: ethers.utils.formatBytes32String("USDC-NATIVE"),
       collateralConfig: {
-        collateralFactorBPS: 0.8 * BPS,
-        accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
-      collateralConfig: {
-        collateralFactorBPS: 0.8 * BPS,
+        collateralFactorBPS: 1 * BPS,
         accepted: true,
         settleStrategy: ethers.constants.AddressZero,
       },

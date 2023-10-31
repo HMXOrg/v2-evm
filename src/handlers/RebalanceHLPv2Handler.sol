@@ -13,12 +13,13 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 // interfaces
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IRebalanceHLPv2Handler } from "@hmx/handlers/interfaces/IRebalanceHLPv2Handler.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 /// @title RebalanceHLPv2Handler
 /// @notice This contract act as an entry point for rebalancing HLP to GM(x) tokens
-contract RebalanceHLPv2Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract RebalanceHLPv2Handler is IRebalanceHLPv2Handler, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   error RebalanceHLPv2Handler_AddressIsZero();

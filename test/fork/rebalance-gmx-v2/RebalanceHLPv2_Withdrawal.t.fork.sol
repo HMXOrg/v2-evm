@@ -8,7 +8,7 @@ pragma solidity 0.8.18;
 import { console2 } from "forge-std/console2.sol";
 
 /// HMX Test
-import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx-v2/RebalanceHLPv2Service_Base.t.fork.sol";
+import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx-v2/RebalanceHLPv2_Base.t.fork.sol";
 import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {

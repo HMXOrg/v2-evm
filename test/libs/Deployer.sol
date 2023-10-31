@@ -34,6 +34,7 @@ import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler0
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
+import { IRebalanceHLPv2Handler } from "@hmx/handlers/interfaces/IRebalanceHLPv2Handler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
@@ -611,6 +612,25 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IConvertedGlpStrategy(payable(_proxy));
+  }
+
+  function deployRebalanceHLPv2Handler(
+    address _proxyAdmin,
+    address _rebalanceHLPv2Service,
+    address _weth,
+    uint256 _minExecutionFee
+  ) internal returns (IRebalanceHLPv2Handler) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPv2Handler.sol/RebalanceHLPv2Handler.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _rebalanceHLPv2Service,
+      _weth,
+      _minExecutionFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPv2Handler(payable(_proxy));
   }
 
   function deployRebalanceHLPv2Service(

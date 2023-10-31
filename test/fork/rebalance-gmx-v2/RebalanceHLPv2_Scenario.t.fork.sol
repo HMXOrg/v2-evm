@@ -8,7 +8,7 @@ pragma solidity 0.8.18;
 import { console2 } from "forge-std/console2.sol";
 
 /// HMX test
-import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx-v2/RebalanceHLPv2Service_Base.t.fork.sol";
+import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx-v2/RebalanceHLPv2_Base.t.fork.sol";
 
 contract RebalanceHLPHandler_ScenarioForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {

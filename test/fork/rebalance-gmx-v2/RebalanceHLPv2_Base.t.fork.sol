@@ -6,6 +6,7 @@ pragma solidity 0.8.18;
 
 /// HMX
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
+import { IRebalanceHLPv2Handler } from "@hmx/handlers/interfaces/IRebalanceHLPv2Handler.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IGmxV2Oracle } from "@hmx/interfaces/gmx-v2/IGmxV2Oracle.sol";
@@ -32,6 +33,8 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
   }
   mapping(bytes32 gmMarketAssetId => GmMarketConfig config) internal gmMarketConfigs;
 
+  uint256 internal constant REBALANCE_HLPv2_MIN_EXECUTION_FEE = 0.001 ether;
+  IRebalanceHLPv2Handler rebalanceHLPv2Handler;
   IRebalanceHLPv2Service rebalanceHLPv2Service;
 
   struct SnapshotUint256 {
@@ -62,6 +65,13 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       address(gmxV2WithdrawalVault),
       address(gmxV2WithdrawalHandler)
     );
+    rebalanceHLPv2Handler = Deployer.deployRebalanceHLPv2Handler(
+      address(proxyAdmin),
+      address(rebalanceHLPv2Service),
+      address(weth),
+      REBALANCE_HLPv2_MIN_EXECUTION_FEE
+    );
+    rebalanceHLPv2Handler.setWhitelistExecutor(address(this), true);
 
     // Upgrade dependencies
     vm.startPrank(proxyAdmin.owner());
@@ -75,7 +85,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     vm.startPrank(configStorage.owner());
     vaultStorage.setServiceExecutors(address(rebalanceHLPv2Service), true);
     vaultStorage.setServiceExecutors(address(this), true); // For testing pullToken
-    configStorage.setServiceExecutor(address(rebalanceHLPv2Service), address(address(this)), true);
+    configStorage.setServiceExecutor(address(rebalanceHLPv2Service), address(address(rebalanceHLPv2Handler)), true);
     vm.stopPrank();
 
     // Adding USDC (native), GM(WBTC-USDC), and GM(ETH-USDC) as a liquidity
@@ -200,6 +210,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
       shortToken: address(usdc)
     });
 
+    vm.label(address(rebalanceHLPv2Handler), "RebalanceHLPv2Handler");
     vm.label(address(rebalanceHLPv2Service), "RebalanceHLPv2Service");
 
     // Override prices
@@ -216,7 +227,6 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     string memory errSignature
   ) internal returns (bytes32) {
     // Preps
-    uint256 executionFee = 0.001 ether;
     IRebalanceHLPv2Service.DepositParams memory depositParam = IRebalanceHLPv2Service.DepositParams({
       market: gmMarketConfigs[market].marketAddress,
       longToken: gmMarketConfigs[market].longToken,
@@ -229,15 +239,12 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     IRebalanceHLPv2Service.DepositParams[] memory depositParams = new IRebalanceHLPv2Service.DepositParams[](1);
     depositParams[0] = depositParam;
 
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * depositParams.length }();
-    // Approve rebalanceHLPv2Service to spend WETH
-    weth.approve(address(rebalanceHLPv2Service), type(uint256).max);
-    // Execute deposits
     if (!String.isEmpty(errSignature)) {
       vm.expectRevert(abi.encodeWithSignature(errSignature));
     }
-    bytes32[] memory gmxDepositOrderKeys = rebalanceHLPv2Service.createDepositOrders(depositParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceHLPv2Handler.createDepositOrders{
+      value: REBALANCE_HLPv2_MIN_EXECUTION_FEE
+    }(depositParams, REBALANCE_HLPv2_MIN_EXECUTION_FEE);
 
     if (gmxDepositOrderKeys.length == 0) {
       return bytes32(0);
@@ -276,15 +283,12 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     );
     withdrawalParams[0] = withdrawalParam;
 
-    // Wrap some ETHs for execution fee
-    IWNative(address(weth)).deposit{ value: executionFee * withdrawalParams.length }();
-    // Approve rebalanceHLPv2Service to spend WETH
-    weth.approve(address(rebalanceHLPv2Service), type(uint256).max);
-    // Execute deposits
     if (!String.isEmpty(errSignature)) {
       vm.expectRevert(abi.encodeWithSignature(errSignature));
     }
-    bytes32[] memory gmxDepositOrderKeys = rebalanceHLPv2Service.createWithdrawalOrders(withdrawalParams, executionFee);
+    bytes32[] memory gmxDepositOrderKeys = rebalanceHLPv2Handler.createWithdrawalOrders{
+      value: REBALANCE_HLPv2_MIN_EXECUTION_FEE
+    }(withdrawalParams, executionFee);
 
     if (gmxDepositOrderKeys.length == 0) {
       return bytes32(0);

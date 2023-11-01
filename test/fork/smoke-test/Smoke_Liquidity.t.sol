@@ -13,16 +13,12 @@ import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Smoke_Liquidity is Smoke_Base {
-  function setUp() public virtual override {
-    super.setUp();
-  }
-
-  function testCorrectness_SmokeTest_addLiquidity() external {
+contract Smoke_Liquidity is ForkEnv {
+  function addLiquidity() external {
     _createAndExecuteAddLiquidityOrder();
   }
 
-  function testCorrectness_SmokeTest_removeLiquidity() external {
+  function removeLiquidity() external {
     _createAndExecuteRemoveLiquidityOrder();
   }
 

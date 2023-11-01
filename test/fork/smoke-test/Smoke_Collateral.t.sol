@@ -12,12 +12,11 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 
 import "forge-std/console.sol";
 
-contract Smoke_Collateral is Smoke_Base {
+contract Smoke_Collateral is ForkEnv {
   uint8 internal SUB_ACCOUNT_NO = 1;
   IERC20[] private collateralToken = new IERC20[](7);
 
-  function setUp() public virtual override {
-    super.setUp();
+  constructor() {
     collateralToken[0] = IERC20(address(ForkEnv.usdc_e));
     collateralToken[1] = IERC20(address(ForkEnv.weth));
     collateralToken[2] = IERC20(address(ForkEnv.wbtc));
@@ -27,27 +26,27 @@ contract Smoke_Collateral is Smoke_Base {
     collateralToken[6] = IERC20(address(ForkEnv.sglp));
   }
 
-  function testCorrectness_SmokeTest_depositCollateral() external {
+  function depositCollateral() external {
     _depositCollateral();
   }
 
-  function testCorrectness_SmokeTest_withdrawCollateral() external {
+  function withdrawCollateral() external {
     _depositCollateral();
     _withdrawCollateral();
   }
 
   function _depositCollateral() internal {
-    address subAccount = _getSubAccount(ALICE, SUB_ACCOUNT_NO);
+    address subAccount = _getSubAccount(ForkEnv.ALICE, SUB_ACCOUNT_NO);
     for (uint8 i = 0; i < 7; i++) {
       uint8 tokenDecimal = collateralToken[i].decimals();
       // cannot deal sglp => transfer from whale instead
       if (i == 6) {
         vm.prank(ForkEnv.glpWhale);
-        collateralToken[i].transfer(ALICE, 10 * (10 ** tokenDecimal));
+        collateralToken[i].transfer(ForkEnv.ALICE, 10 * (10 ** tokenDecimal));
       } else {
-        deal(address(collateralToken[i]), ALICE, 10 * (10 ** tokenDecimal));
+        deal(address(collateralToken[i]), ForkEnv.ALICE, 10 * (10 ** tokenDecimal));
       }
-      vm.startPrank(ALICE);
+      vm.startPrank(ForkEnv.ALICE);
       collateralToken[i].approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
       ForkEnv.crossMarginHandler.depositCollateral(
         SUB_ACCOUNT_NO,

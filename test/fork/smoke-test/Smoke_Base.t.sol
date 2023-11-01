@@ -39,19 +39,23 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 
+import { Smoke_Collateral } from "@hmx-test/fork/smoke-test/Smoke_Collateral.t.sol";
+import { Smoke_Liquidate } from "@hmx-test/fork/smoke-test/Smoke_Liquidate.sol";
+import { Smoke_Liquidity } from "@hmx-test/fork/smoke-test/Smoke_Liquidity.t.sol";
+import { Smoke_MaxProfit } from "@hmx-test/fork/smoke-test/Smoke_MaxProfit.t.sol";
+import { Smoke_Trade } from "@hmx-test/fork/smoke-test/Smoke_Trade.t.sol";
+import { Smoke_TriggerOrder } from "@hmx-test/fork/smoke-test/Smoke_TriggerOrder.t.sol";
+import { RebalanceHLPService_Test } from "@hmx-test/fork/RebalanceHLPService.t.sol";
+
 contract Smoke_Base is ForkEnv {
   uint256 internal constant BPS = 10_000;
   uint8 internal constant ASSET_CLASS_CRYPTO = 0;
   uint8 internal constant ASSET_CLASS_FOREX = 2;
   uint8 internal constant ASSET_CLASS_COMMODITIES = 3;
-
-  UncheckedEcoPythCalldataBuilder uncheckedBuilder;
-  OrderReader newOrderReader;
+  uint256 snapshot;
 
   function setUp() public virtual {
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
-
-    uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);
 
     // -- UPGRADE -- //
     vm.startPrank(ForkEnv.proxyAdmin.owner());
@@ -66,12 +70,6 @@ contract Smoke_Base is ForkEnv {
     Deployer.upgrade("PerpStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.perpStorage));
     Deployer.upgrade("LiquidationService", address(ForkEnv.proxyAdmin), address(ForkEnv.liquidationService));
 
-    newOrderReader = new OrderReader(
-      address(ForkEnv.configStorage),
-      address(ForkEnv.perpStorage),
-      address(ForkEnv.oracleMiddleware),
-      address(ForkEnv.limitTradeHandler)
-    );
     vm.stopPrank();
 
     adaptiveFeeCalculator = new AdaptiveFeeCalculator();
@@ -88,141 +86,9 @@ contract Smoke_Base is ForkEnv {
     _setMarketConfig();
   }
 
-  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
-    return address(uint160(primary) ^ uint160(subAccountId));
-  }
-
   function _getPositionId(address _account, uint8 _subAccountId, uint256 _marketIndex) internal pure returns (bytes32) {
     address _subAccount = _getSubAccount(_account, _subAccountId);
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
-  }
-
-  function _setTickPriceZero()
-    internal
-    view
-    returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
-  {
-    int24[] memory tickPrices = new int24[](34);
-    uint24[] memory publishTimeDiffs = new uint24[](34);
-    for (uint i = 0; i < 34; i++) {
-      tickPrices[i] = 0;
-      publishTimeDiffs[i] = 0;
-    }
-
-    priceUpdateData = ForkEnv.ecoPyth2.buildPriceUpdateData(tickPrices);
-    publishTimeUpdateData = ForkEnv.ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
-  }
-
-  function _setPriceData(
-    uint64 _priceE8
-  ) internal view returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) {
-    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
-    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
-    assetIds = new bytes32[](len - 1);
-    prices = new uint64[](len - 1);
-    shouldInverts = new bool[](len - 1);
-
-    for (uint i = 1; i < len; i++) {
-      assetIds[i - 1] = pythRes[i];
-      prices[i - 1] = _priceE8 * 1e8;
-      if (i == 4) {
-        shouldInverts[i - 1] = true; // JPY
-      } else {
-        shouldInverts[i - 1] = false;
-      }
-    }
-  }
-
-  function _buildDataForPrice() internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
-    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
-
-    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
-
-    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
-
-    for (uint i = 1; i < len; i++) {
-      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
-      data[i - 1].assetId = pythRes[i];
-      data[i - 1].priceE8 = _ecoPythPrice.price;
-      data[i - 1].publishTime = uint160(block.timestamp);
-      data[i - 1].maxDiffBps = 15_000;
-    }
-  }
-
-  function _buildDataForPriceWithSpecificPrice(
-    bytes32 assetId,
-    int64 priceE8
-  ) internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
-    bytes32[] memory assetIds = ForkEnv.ecoPyth2.getAssetIds();
-
-    uint256 len = assetIds.length; // 35 - 1(index 0) = 34
-
-    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
-
-    for (uint i = 1; i < len; i++) {
-      data[i - 1].assetId = assetIds[i];
-      if (assetId == assetIds[i]) {
-        data[i - 1].priceE8 = priceE8;
-      } else {
-        data[i - 1].priceE8 = ForkEnv.ecoPyth2.getPriceUnsafe(assetIds[i]).price;
-      }
-      data[i - 1].publishTime = uint160(block.timestamp);
-      data[i - 1].maxDiffBps = 15_000;
-    }
-  }
-
-  function _buildDataForPriceWithSpecificPrice(
-    bytes32[] memory assetIdsToManipulate,
-    int64[] memory pricesE8ToManipulate
-  ) internal view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
-    bytes32[] memory assetIds = ForkEnv.ecoPyth2.getAssetIds();
-
-    uint256 len = assetIds.length; // 35 - 1(index 0) = 34
-
-    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
-
-    for (uint i = 1; i < len; i++) {
-      data[i - 1].assetId = assetIds[i];
-      for (uint j = 0; j < assetIdsToManipulate.length; j++) {
-        if (assetIdsToManipulate[j] == assetIds[i]) {
-          data[i - 1].priceE8 = pricesE8ToManipulate[j];
-        } else {
-          data[i - 1].priceE8 = ForkEnv.ecoPyth2.getPriceUnsafe(assetIds[i]).price;
-        }
-      }
-      data[i - 1].publishTime = uint160(block.timestamp);
-      data[i - 1].maxDiffBps = 15_000;
-    }
-  }
-
-  function _validateClosedPosition(bytes32 _id) internal {
-    IPerpStorage.Position memory _position = ForkEnv.perpStorage.getPositionById(_id);
-    // As the position has been closed, the gotten one should be empty stuct
-    assertEq(_position.primaryAccount, address(0));
-    assertEq(_position.marketIndex, 0);
-    assertEq(_position.avgEntryPriceE30, 0);
-    assertEq(_position.entryBorrowingRate, 0);
-    assertEq(_position.reserveValueE30, 0);
-    assertEq(_position.lastIncreaseTimestamp, 0);
-    assertEq(_position.positionSizeE30, 0);
-    assertEq(_position.realizedPnl, 0);
-    assertEq(_position.lastFundingAccrued, 0);
-    assertEq(_position.subAccountId, 0);
-  }
-
-  function _checkIsUnderMMR(
-    address _primaryAccount,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    uint256
-  ) internal view returns (bool) {
-    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
-    IConfigStorage.MarketConfig memory config = ForkEnv.configStorage.getMarketConfigByIndex(_marketIndex);
-
-    int256 _subAccountEquity = ForkEnv.calculator.getEquity(_subAccount, 0, config.assetId);
-    uint256 _mmr = ForkEnv.calculator.getMMR(_subAccount);
-    if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) return true;
-    return false;
   }
 
   function _setMarketConfig() internal {
@@ -231,13 +97,13 @@ contract Smoke_Base is ForkEnv {
       0,
       IConfigStorage.MarketConfig({
         assetId: "ETH",
-        maxLongPositionSize: 5000000 * 1e30,
-        maxShortPositionSize: 5000000 * 1e30,
+        maxLongPositionSize: 5500000 * 1e30,
+        maxShortPositionSize: 5500000 * 1e30,
         increasePositionFeeRateBPS: 4, // 0.04%
         decreasePositionFeeRateBPS: 4, // 0.04%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -249,13 +115,13 @@ contract Smoke_Base is ForkEnv {
       1,
       IConfigStorage.MarketConfig({
         assetId: "BTC",
-        maxLongPositionSize: 5000000 * 1e30,
-        maxShortPositionSize: 5000000 * 1e30,
+        maxLongPositionSize: 6000000 * 1e30,
+        maxShortPositionSize: 6000000 * 1e30,
         increasePositionFeeRateBPS: 4, // 0.04%
         decreasePositionFeeRateBPS: 4, // 0.04%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -399,7 +265,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -417,7 +283,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -435,7 +301,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -453,7 +319,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -471,7 +337,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -489,7 +355,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -507,7 +373,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -525,7 +391,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -543,7 +409,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -561,7 +427,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -600,7 +466,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -716,68 +582,36 @@ contract Smoke_Base is ForkEnv {
     vm.stopPrank();
   }
 
-  function _setUpOrderbookOracle() internal {
-    uint256[] memory marketIndexes = new uint256[](12);
-    marketIndexes[0] = 12;
-    marketIndexes[1] = 13;
-    marketIndexes[2] = 14;
-    marketIndexes[3] = 15;
-    marketIndexes[4] = 16;
-    marketIndexes[5] = 17;
-    marketIndexes[6] = 20;
-    marketIndexes[7] = 21;
-    marketIndexes[8] = 23;
-    marketIndexes[9] = 25;
-    marketIndexes[10] = 27;
-    marketIndexes[11] = 32;
-    orderbookOracle.insertMarketIndexes(marketIndexes);
-
-    int24[] memory askDepthTicks = new int24[](12);
-    askDepthTicks[0] = 149149;
-    askDepthTicks[1] = 149150;
-    askDepthTicks[2] = 149151;
-    askDepthTicks[3] = 149152;
-    askDepthTicks[4] = 149153;
-    askDepthTicks[5] = 149154;
-    askDepthTicks[6] = 149155;
-    askDepthTicks[7] = 149156;
-    askDepthTicks[8] = 149157;
-    askDepthTicks[9] = 218230;
-    askDepthTicks[10] = 149159;
-    askDepthTicks[11] = 149160;
-
-    int24[] memory bidDepthTicks = new int24[](12);
-    bidDepthTicks[0] = 149149;
-    bidDepthTicks[1] = 149150;
-    bidDepthTicks[2] = 149151;
-    bidDepthTicks[3] = 149152;
-    bidDepthTicks[4] = 149153;
-    bidDepthTicks[5] = 149154;
-    bidDepthTicks[6] = 149155;
-    bidDepthTicks[7] = 149156;
-    bidDepthTicks[8] = 149157;
-    bidDepthTicks[9] = 218230;
-    bidDepthTicks[10] = 149159;
-    bidDepthTicks[11] = 149160;
-
-    int24[] memory coeffVariantTicks = new int24[](12);
-    coeffVariantTicks[0] = -60708;
-    coeffVariantTicks[1] = -60709;
-    coeffVariantTicks[2] = -60710;
-    coeffVariantTicks[3] = -60711;
-    coeffVariantTicks[4] = -60712;
-    coeffVariantTicks[5] = -60713;
-    coeffVariantTicks[6] = -60714;
-    coeffVariantTicks[7] = -60715;
-    coeffVariantTicks[8] = -60716;
-    coeffVariantTicks[9] = -60717;
-    coeffVariantTicks[10] = -60718;
-    coeffVariantTicks[11] = -60719;
-
-    bytes32[] memory askDepths = orderbookOracle.buildUpdateData(askDepthTicks);
-    bytes32[] memory bidDepths = orderbookOracle.buildUpdateData(bidDepthTicks);
-    bytes32[] memory coeffVariants = orderbookOracle.buildUpdateData(coeffVariantTicks);
-    orderbookOracle.setUpdater(address(this), true);
-    orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
+  function test() external {
+    snapshot = vm.snapshot();
+    new Smoke_Collateral().depositCollateral();
+    vm.revertTo(snapshot);
+    new Smoke_Collateral().withdrawCollateral();
+    vm.revertTo(snapshot);
+    new Smoke_Liquidate().liquidate();
+    vm.revertTo(snapshot);
+    new Smoke_Liquidity().addLiquidity();
+    vm.revertTo(snapshot);
+    new Smoke_Liquidity().removeLiquidity();
+    vm.revertTo(snapshot);
+    new Smoke_MaxProfit().forceCloseMaxProfit();
+    vm.revertTo(snapshot);
+    new Smoke_Trade().openClosePosition();
+    vm.revertTo(snapshot);
+    new Smoke_TriggerOrder().executeTriggerOrder();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().reinvestSuccess();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().withdrawSuccess();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().emptyParams();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().overAmount();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().notWhitelisted();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().withdrawExceedingAmount();
+    vm.revertTo(snapshot);
+    new RebalanceHLPService_Test().swapReinvestSuccess();
   }
 }

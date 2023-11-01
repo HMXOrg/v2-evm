@@ -590,23 +590,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
-
-      // Calculate for settlement fee
-      uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _repayValue);
-      uint256 _settlementFeeAmount = (_repayAmount * _settlementFeeRate) / 1e18;
-      uint256 _settlementFeeValue = (_repayValue * _settlementFeeRate) / 1e18;
-
       // book the balances
-      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, _settlementFeeAmount);
-
-      emit LogSettleSettlementFeeAmount(
-        _vars.positionId,
-        _vars.marketIndex,
-        _vars.subAccount,
-        _vars.token,
-        _settlementFeeValue,
-        _settlementFeeAmount
-      );
+      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
 
       // deduct _vars.unrealizedPnlToBeReceived with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.unrealizedPnlToBeReceived -= _repayValue;

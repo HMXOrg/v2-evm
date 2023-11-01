@@ -14,19 +14,16 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { Smoke_Base } from "@hmx-test/fork/smoke-test/Smoke_Base.t.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
-contract RebalanceHLPService_Test is Smoke_Base {
+contract RebalanceHLPService_Test is ForkEnv {
   uint24[] internal publishTimeDiffs;
 
-  uint256 fixedBlock = 121867415;
   int24[] tickPrices;
 
   uint256 _minPublishTime;
   bytes32[] _priceUpdateCalldata;
   bytes32[] _publishTimeUpdateCalldata;
 
-  function setUp() public override {
-    super.setUp();
-
+  constructor() {
     tickPrices = new int24[](3);
     // USDC Price
     tickPrices[0] = 0;
@@ -45,7 +42,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     (_minPublishTime, _priceUpdateCalldata, _publishTimeUpdateCalldata) = ForkEnv.ecoPythBuilder.build(data);
   }
 
-  function testCorrectness_Rebalance_ReinvestSuccess() external {
+  function reinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 10 * 1e18;
@@ -77,7 +74,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     assertEq(IERC20Upgradeable(address(weth)).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 
-  function testCorrectness_Rebalance_WithdrawSuccess() external {
+  function withdrawSuccess() external {
     vm.roll(110369564);
 
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
@@ -138,7 +135,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     assertEq(block.number, 110369564);
   }
 
-  function testRevert_Rebalance_EmptyParams() external {
+  function emptyParams() external {
     IRebalanceHLPService.AddGlpParams[] memory params;
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_ParamsIsEmpty.selector);
     rebalanceHLPHandler.addGlp(
@@ -150,7 +147,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_OverAmount() external {
+  function overAmount() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
     uint256 usdcAmount = vaultStorage.hlpLiquidity(address(usdc_e)) + 1;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
@@ -164,7 +161,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_NotWhitelisted() external {
+  function notWhitelisted() external {
     IRebalanceHLPService.AddGlpParams[] memory params;
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_NotWhiteListed.selector);
     vm.prank(ALICE);
@@ -177,7 +174,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_WithdrawExceedingAmount() external {
+  function withdrawExceedingAmount() external {
     IRebalanceHLPService.WithdrawGlpParams[] memory params = new IRebalanceHLPService.WithdrawGlpParams[](1);
     params[0] = IRebalanceHLPService.WithdrawGlpParams(address(usdc_e), 1e30, 0);
 
@@ -191,7 +188,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_NegativeTotalHLPValue() external {
+  function negativeTotalHLPValue() external {
     vm.warp(block.timestamp + 300 minutes);
     vm.startPrank(rebalanceHLPService.owner());
     rebalanceHLPService.setMinHLPValueLossBPS(1);
@@ -237,7 +234,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testCorrectness_Rebalance_SwapReinvestSuccess() external {
+  function swapReinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
     uint256 arbAmount = 10 * 1e18;
 

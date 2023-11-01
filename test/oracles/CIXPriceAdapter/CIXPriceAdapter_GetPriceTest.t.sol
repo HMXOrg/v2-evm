@@ -123,6 +123,31 @@ contract CIXPriceAdapter_GetPriceTest is CIXPriceAdapter_BaseTest {
     assertApproxEqRel(_priceE18, 100e18, 0.00000001e18, "Price E18 should be 100 USD");
   }
 
+  function testCorrectness_GetPriceFromPriceE8s_PriceShouldBeCorrect() external {
+    /*
+      EURUSD 1.05048
+      USDJPY 149.39
+      GBPUSD 1.2142
+      USDCAD 1.349
+      USDSEK 11.06
+      USDCHF 0.92
+    */
+
+    // Set price along with unreleated asset
+    uint256[] memory _priceE8s = new uint256[](6);
+    _priceE8s[0] = 1.05048e8;
+    _priceE8s[1] = 149.39e8;
+    _priceE8s[2] = 1.2142e8;
+    _priceE8s[3] = 1.349e8;
+    _priceE8s[4] = 11.06e8;
+    _priceE8s[5] = 0.92e8;
+
+    uint256 _priceE18 = cixPriceAdapter.getPrice(_priceE8s);
+
+    // Assert with a very small precision error
+    assertApproxEqRel(_priceE18, 100e18, 0.00000001e18, "Price E18 should be 100 USD");
+  }
+
   function testCorrectness_GetPrice_PriceShouldBeCorrect2() external {
     /*
       EURUSD 1.05048
@@ -166,6 +191,31 @@ contract CIXPriceAdapter_GetPriceTest is CIXPriceAdapter_BaseTest {
     _buildDatas[9].priceE8 = 11.06e8;
 
     uint256 _priceE18 = cixPriceAdapter.getPrice(_buildDatas);
+
+    // Assert with a very small precision error
+    assertApproxEqRel(_priceE18, 102.8354012e18, 0.00000001e18, "Price E18 should be 102.83 USD");
+  }
+
+  function testCorrectness_GetPriceFromPriceE8s_PriceShouldBeCorrect2() external {
+    /*
+      EURUSD 1.05048
+      USDJPY 180.0
+      GBPUSD 1.2142
+      USDCAD 1.349
+      USDSEK 11.06
+      USDCHF 0.92
+    */
+
+    // Set price along with unreleated asset
+    uint256[] memory _priceE8s = new uint256[](6);
+    _priceE8s[0] = 1.05048e8;
+    _priceE8s[1] = 180.00e8;
+    _priceE8s[2] = 1.2142e8;
+    _priceE8s[3] = 1.349e8;
+    _priceE8s[4] = 11.06e8;
+    _priceE8s[5] = 0.92e8;
+
+    uint256 _priceE18 = cixPriceAdapter.getPrice(_priceE8s);
 
     // Assert with a very small precision error
     assertApproxEqRel(_priceE18, 102.8354012e18, 0.00000001e18, "Price E18 should be 102.83 USD");

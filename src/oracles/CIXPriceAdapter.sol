@@ -95,6 +95,29 @@ contract CIXPriceAdapter is Ownable, ICIXPriceAdapter {
     _priceE18 = _convert64x64ToE8(_accum) * 1e10;
   }
 
+  function getPrice(uint256[] memory priceE8s) external view returns (uint256 _priceE18) {
+    // 1. Declare _accum as c
+    int128 _accum = _convertE8To64x64(config.cE8);
+
+    // 2. Loop through input prices
+    //    Reduce the parameter with geometric average calculation.
+    uint256 _len = priceE8s.length;
+    for (uint256 i = 0; i < _len; ) {
+      // Get price from Pyth
+      uint256 _priceE8 = priceE8s[i];
+
+      // Accumulate the _accum with (priceN ^ +-weightN)
+      _accum = _accumulateWeightedPrice(_accum, _priceE8, config.weightsE8[i], config.usdQuoteds[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    // 3. Convert the final result to uint256 in e18 basis
+    _priceE18 = _convert64x64ToE8(_accum) * 1e10;
+  }
+
   function _getPriceE8ByAssetId(
     bytes32 _assetId,
     IEcoPythCalldataBuilder3.BuildData[] memory _buildDatas

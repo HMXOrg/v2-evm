@@ -70,7 +70,7 @@ abstract contract ForkEnv is Test {
   /// Account
   address internal constant deployer = 0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872;
   address internal constant multiSig = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
-  address internal constant glpWhale = 0x97bb6679ae5a6c66fFb105bA427B07E2F7fB561e;
+  address internal constant glpWhale = 0x39aB5960c21578b9ced6a6A6Ed6ceb0547df20A7;
   address internal constant liquidityOrderExecutor = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
   address internal constant positionManager = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
   address internal constant limitOrderExecutor = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;

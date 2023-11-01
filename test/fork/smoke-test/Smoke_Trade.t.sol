@@ -19,18 +19,14 @@ import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/m
 import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
 
-contract Smoke_Trade is Smoke_Base {
+contract Smoke_Trade is ForkEnv {
   using SafeCastUpgradeable for int64;
   uint8 internal constant SUB_ACCOUNT_NO = 0;
   uint256 internal constant MARKET_INDEX = 1;
   // eth | jpy | xag | sol | chf
   uint256[] internal ARRAY_MARKET_INDEX = [0, 3, 9, 21, 26];
 
-  function setUp() public virtual override {
-    super.setUp();
-  }
-
-  function testCorrectness_SmokeTest_openClosePosition() external {
+  function openClosePosition() external {
     _depositCollateral();
     _createAndExecuteMarketBuyOrder();
     _createAndExecuteMarketSellOrder();

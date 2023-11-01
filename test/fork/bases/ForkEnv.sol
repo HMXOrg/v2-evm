@@ -13,6 +13,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// Oracles
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
@@ -56,6 +58,11 @@ import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+
+import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
+import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;
@@ -138,4 +145,112 @@ abstract contract ForkEnv is Test {
   IERC20 internal sglp = IERC20(getAddress(".tokens.sglp"));
   IERC20 internal wstEth = IERC20(getAddress(".tokens.wstEth"));
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
+
+  function _buildDataForPrice() public view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+
+    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
+
+    for (uint i = 1; i < len; i++) {
+      PythStructs.Price memory _ecoPythPrice = ForkEnv.ecoPyth2.getPriceUnsafe(pythRes[i]);
+      data[i - 1].assetId = pythRes[i];
+      data[i - 1].priceE8 = _ecoPythPrice.price;
+      data[i - 1].publishTime = uint160(block.timestamp);
+      data[i - 1].maxDiffBps = 15_000;
+    }
+  }
+
+  function _getSubAccount(address primary, uint8 subAccountId) public pure returns (address) {
+    return address(uint160(primary) ^ uint160(subAccountId));
+  }
+
+  function _setPriceData(
+    uint64 _priceE8
+  ) public view returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) {
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+    assetIds = new bytes32[](len - 1);
+    prices = new uint64[](len - 1);
+    shouldInverts = new bool[](len - 1);
+
+    for (uint i = 1; i < len; i++) {
+      assetIds[i - 1] = pythRes[i];
+      prices[i - 1] = _priceE8 * 1e8;
+      if (i == 4) {
+        shouldInverts[i - 1] = true; // JPY
+      } else {
+        shouldInverts[i - 1] = false;
+      }
+    }
+  }
+
+  function _setTickPriceZero()
+    public
+    view
+    returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
+  {
+    int24[] memory tickPrices = new int24[](34);
+    uint24[] memory publishTimeDiffs = new uint24[](34);
+    for (uint i = 0; i < 34; i++) {
+      tickPrices[i] = 0;
+      publishTimeDiffs[i] = 0;
+    }
+
+    priceUpdateData = ForkEnv.ecoPyth2.buildPriceUpdateData(tickPrices);
+    publishTimeUpdateData = ForkEnv.ecoPyth2.buildPublishTimeUpdateData(publishTimeDiffs);
+  }
+
+  function _buildDataForPriceWithSpecificPrice(
+    bytes32 assetId,
+    int64 priceE8
+  ) public view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
+    bytes32[] memory assetIds = ForkEnv.ecoPyth2.getAssetIds();
+
+    uint256 len = assetIds.length; // 35 - 1(index 0) = 34
+
+    data = new IEcoPythCalldataBuilder.BuildData[](len - 1);
+
+    for (uint i = 1; i < len; i++) {
+      data[i - 1].assetId = assetIds[i];
+      if (assetId == assetIds[i]) {
+        data[i - 1].priceE8 = priceE8;
+      } else {
+        data[i - 1].priceE8 = ForkEnv.ecoPyth2.getPriceUnsafe(assetIds[i]).price;
+      }
+      data[i - 1].publishTime = uint160(block.timestamp);
+      data[i - 1].maxDiffBps = 15_000;
+    }
+  }
+
+  function _validateClosedPosition(bytes32 _id) public {
+    IPerpStorage.Position memory _position = ForkEnv.perpStorage.getPositionById(_id);
+    // As the position has been closed, the gotten one should be empty stuct
+    assertEq(_position.primaryAccount, address(0));
+    assertEq(_position.marketIndex, 0);
+    assertEq(_position.avgEntryPriceE30, 0);
+    assertEq(_position.entryBorrowingRate, 0);
+    assertEq(_position.reserveValueE30, 0);
+    assertEq(_position.lastIncreaseTimestamp, 0);
+    assertEq(_position.positionSizeE30, 0);
+    assertEq(_position.realizedPnl, 0);
+    assertEq(_position.lastFundingAccrued, 0);
+    assertEq(_position.subAccountId, 0);
+  }
+
+  function _checkIsUnderMMR(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256
+  ) public view returns (bool) {
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
+    IConfigStorage.MarketConfig memory config = ForkEnv.configStorage.getMarketConfigByIndex(_marketIndex);
+
+    int256 _subAccountEquity = ForkEnv.calculator.getEquity(_subAccount, 0, config.assetId);
+    uint256 _mmr = ForkEnv.calculator.getMMR(_subAccount);
+    if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) return true;
+    return false;
+  }
 }

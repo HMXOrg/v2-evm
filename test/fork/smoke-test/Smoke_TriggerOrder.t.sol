@@ -13,8 +13,9 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
+import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
-contract Smoke_TriggerOrder is Smoke_Base {
+contract Smoke_TriggerOrder is ForkEnv {
   error Smoke_TriggerOrder_NoOrder();
 
   address[] internal accounts;
@@ -24,12 +25,18 @@ contract Smoke_TriggerOrder is Smoke_Base {
   address[] internal executeAccounts;
   uint8[] internal executeSubAccountIds;
   uint256[] internal executeOrderIndexes;
+  OrderReader newOrderReader;
 
-  function setUp() public virtual override {
-    super.setUp();
+  constructor() {
+    newOrderReader = new OrderReader(
+      address(ForkEnv.configStorage),
+      address(ForkEnv.perpStorage),
+      address(ForkEnv.oracleMiddleware),
+      address(ForkEnv.limitTradeHandler)
+    );
   }
 
-  function testCorrectness_SmokeTest_ExecuteTriggerOrder() external {
+  function executeTriggerOrder() external {
     (, , bool[] memory shouldInverts) = _setPriceData(1);
 
     ILimitTradeHandler.LimitOrder memory _order;

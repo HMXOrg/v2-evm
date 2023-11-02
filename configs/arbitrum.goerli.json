@@ -41,7 +41,8 @@
     "priceAdapters": {
       "glp": "",
       "wstEth": "",
-      "hlp": ""
+      "hlp": "",
+      "dix": ""
     }
   },
   "tokens": {

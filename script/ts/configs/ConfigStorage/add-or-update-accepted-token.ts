@@ -13,9 +13,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.wstEth,
+      tokenAddress: config.tokens.usdcNative,
       config: {
-        targetWeight: ethers.utils.parseEther("0"), // 0%
+        targetWeight: ethers.utils.parseEther("0"),
         bufferLiquidity: 0,
         maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
         accepted: false,

@@ -13,12 +13,12 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("wstETH"),
+      assetId: ethers.utils.formatBytes32String("USDC-NATIVE"),
       config: {
-        assetId: ethers.utils.formatBytes32String("wstETH"),
-        tokenAddress: config.tokens.wstEth,
-        decimals: 18,
-        isStableCoin: false,
+        assetId: ethers.utils.formatBytes32String("USDC-NATIVE"),
+        tokenAddress: config.tokens.usdcNative,
+        decimals: 6,
+        isStableCoin: true,
       },
     },
   ];

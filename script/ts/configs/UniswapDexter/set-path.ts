@@ -18,104 +18,18 @@ async function main(chainId: number) {
   const params: Array<SetPathConfig> = [
     {
       tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.dai,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.usdc, 100, config.tokens.dai]),
-    },
-    {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.wbtc,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.usdc, 500, config.tokens.wbtc]),
-    },
-    {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.weth,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.usdc, 500, config.tokens.weth]),
-    },
-    {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.arb,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.usdc, 500, config.tokens.arb]),
-    },
-    {
-      tokenIn: config.tokens.dai,
-      tokenOut: config.tokens.usdc,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.dai, 100, config.tokens.usdc]),
-    },
-    {
-      tokenIn: config.tokens.wbtc,
-      tokenOut: config.tokens.usdc,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.wbtc, 500, config.tokens.usdc]),
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.usdc,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.weth, 500, config.tokens.usdc]),
-    },
-    {
-      tokenIn: config.tokens.arb,
-      tokenOut: config.tokens.usdc,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.arb, 500, config.tokens.usdc]),
-    },
-    {
-      tokenIn: config.tokens.usdt,
-      tokenOut: config.tokens.weth,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.usdt, 500, config.tokens.weth]),
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.usdt,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.weth, 500, config.tokens.usdt]),
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.wbtc,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.weth, 500, config.tokens.wbtc]),
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.arb,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.weth, 500, config.tokens.arb]),
-    },
-    {
-      tokenIn: config.tokens.wbtc,
-      tokenOut: config.tokens.weth,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.wbtc, 500, config.tokens.weth]),
-    },
-    {
-      tokenIn: config.tokens.arb,
-      tokenOut: config.tokens.weth,
-      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.arb, 500, config.tokens.weth]),
-    },
-    {
-      tokenIn: config.tokens.wstEth,
-      tokenOut: config.tokens.weth,
+      tokenOut: config.tokens.usdcNative,
       path: ethers.utils.solidityPack(
         ["address", "uint24", "address"],
-        [config.tokens.wstEth, 100, config.tokens.weth]
+        [config.tokens.usdc, 100, config.tokens.usdcNative]
       ),
     },
     {
-      tokenIn: config.tokens.wstEth,
+      tokenIn: config.tokens.usdcNative,
       tokenOut: config.tokens.usdc,
       path: ethers.utils.solidityPack(
         ["address", "uint24", "address"],
-        [config.tokens.wstEth, 500, config.tokens.usdc]
-      ),
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.wstEth,
-      path: ethers.utils.solidityPack(
-        ["address", "uint24", "address"],
-        [config.tokens.weth, 100, config.tokens.wstEth]
-      ),
-    },
-    {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.wstEth,
-      path: ethers.utils.solidityPack(
-        ["address", "uint24", "address"],
-        [config.tokens.usdc, 500, config.tokens.wstEth]
+        [config.tokens.usdcNative, 100, config.tokens.usdc]
       ),
     },
   ];

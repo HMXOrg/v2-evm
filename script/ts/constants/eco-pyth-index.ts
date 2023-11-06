@@ -42,6 +42,7 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0x3dd2b63686a450ec7290df3a1e0b583c0481f651351edfa7636f39aed55cf8a3", // BCHUSD
   "GM-BTCUSD",
   "GM-ETHUSD",
+  "0xcd2cee36951a571e035db0dfad138e6ecdb06b517cc3373cd7db5d3609b7927c", // MEMEUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -84,6 +85,7 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("BCH"),
   ethers.utils.formatBytes32String("GM-BTCUSD"),
   ethers.utils.formatBytes32String("GM-ETHUSD"),
+  ethers.utils.formatBytes32String("MEME"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -126,4 +128,5 @@ export const ecoPythHoomanReadableByIndex = [
   "BCH",
   "GM-BTCUSD",
   "GM-ETHUSD",
+  "MEME",
 ];

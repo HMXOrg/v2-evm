@@ -14,6 +14,7 @@ export default [
   "PythAdapter.json",
   "EcoPyth.json",
   "EcoPythCalldataBuilder.json",
+  "EcoPythCalldataBuilder3.json",
   // GMX
   "IGmxGlpManager.json",
   "TradeService.json",

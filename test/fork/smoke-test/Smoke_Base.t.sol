@@ -75,7 +75,7 @@ contract Smoke_Base is ForkEnv {
     adaptiveFeeCalculator = new AdaptiveFeeCalculator();
     orderbookOracle = new OrderbookOracle();
 
-    _setUpOrderbookOracle();
+    // _setUpOrderbookOracle();
 
     vm.startPrank(TradeHelper(address(tradeHelper)).owner());
     tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));

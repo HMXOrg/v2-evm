@@ -179,7 +179,7 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
 
   function setAssetIds(bytes32[] calldata _assetIds) external onlyOwner {
     assetIds = _assetIds;
-    indexCount = assetIds.length + 1;
+    indexCount = assetIds.length;
 
     // Reset all prices to zero,
     // this will prevent anyone from using the prices from here without another price update

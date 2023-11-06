@@ -49,13 +49,16 @@ async function main(chainId: number) {
     "0x434e480000000000000000000000000000000000000000000000000000000000",
     "0x484b440000000000000000000000000000000000000000000000000000000000",
     "0x4243480000000000000000000000000000000000000000000000000000000000",
+    "0x474d2d4254435553440000000000000000000000000000000000000000000000",
+    "0x474d2d4554485553440000000000000000000000000000000000000000000000",
+    "0x4d454d4500000000000000000000000000000000000000000000000000000000",
   ];
 
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
-  console.log(await ecoPyth.getAssetIds());
-  // console.log("[EcoPyth] Setting asset IDs...");
-  // await (await ecoPyth.setAssetIds(assetIds)).wait();
-  // console.log("[EcoPyth] Finished");
+  // console.log(await ecoPyth.getAssetIds());
+  console.log("[EcoPyth] Setting asset IDs...");
+  await (await ecoPyth.setAssetIds(assetIds)).wait();
+  console.log("[EcoPyth] Finished");
 }
 
 const program = new Command();

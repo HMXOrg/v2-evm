@@ -135,7 +135,7 @@ abstract contract ForkEnv is Test {
 
   /// Tokens
   IERC20 internal usdc_e = IERC20(getAddress(".tokens.usdc"));
-  IERC20 internal usdc = IERC20(getAddress(".tokens.usdcCircle"));
+  IERC20 internal usdc = IERC20(getAddress(".tokens.usdcNative"));
   IERC20 internal weth = IERC20(getAddress(".tokens.weth"));
   IERC20 internal wbtc = IERC20(getAddress(".tokens.wbtc"));
   IERC20 internal usdt = IERC20(getAddress(".tokens.usdt"));

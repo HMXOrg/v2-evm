@@ -7,8 +7,8 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("USDC-NATIVE"),
-    pythPriceId: ethers.utils.formatBytes32String("USDC"),
+    assetId: ethers.utils.formatBytes32String("MEME"),
+    pythPriceId: ethers.utils.formatBytes32String("MEME"),
     inverse: false,
   },
 ];

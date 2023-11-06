@@ -8,7 +8,7 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 32,
+      marketIndex: 33,
       tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
       positionSizeLimit: ethers.utils.parseUnits("100000", 30),
     },

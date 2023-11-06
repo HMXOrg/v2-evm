@@ -30,20 +30,20 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("BCH"),
-      maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("2500000", 30),
+      assetId: ethers.utils.formatBytes32String("MEME"),
+      maxLongPositionSize: ethers.utils.parseUnits("2000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("2000000", 30),
       increasePositionFeeRateBPS: 7, // 0.07%
       decreasePositionFeeRateBPS: 7, // 0.07%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 250000, // 2500%
+      maxProfitRateBPS: 300000, // 3000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
     },
   ];

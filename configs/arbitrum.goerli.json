@@ -36,16 +36,17 @@
     "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9",
     "ecoPythCalldataBuilder2": "0x24D4e31f28F9B2Bc9AAeBFe73d253541e4729CF8",
     "unsafeEcoPythCalldataBuilder2": "0xc14B3D8EaA664D521aCB50E845799032F9c95dAA",
-    "ecoPythCalldataBuilder3": "",
-    "unsafeEcoPythCalldataBuilder3": "",
+    "ecoPythCalldataBuilder3": "0x16de08c2bf4E8A32Cd72aD6F9a80E5E2FaeDeF61",
+    "unsafeEcoPythCalldataBuilder3": "0xd6C41CF9394218456E149bF8B675075a4a7eC03b",
+    "uncheckedEcoPythCalldataBuilder3": "0x4F8602E5EF6CF6c8Df3960b45498a740AF2f1d0D",
     "onChainPriceLens": "0x34F3Ae43A4766e35b2c53FE4D6e53F57Eb451B5A",
-    "calcPriceLens": "",
+    "calcPriceLens": "0x61FdE80a4941B1C652eAFC594D40858a4db40EC0",
     "priceAdapters": {
       "glp": "0xDAa9eF42a073fAE417D9668b9bEbE1Ed8a4922E1",
       "wstEth": "0x960a9A6Fc2dd724D0f28f0DDFDd7919CE9C7bD6C",
       "hlp": "",
-      "gmBTCUSD": "",
-      "gmETHUSD": ""
+      "gmBTCUSD": "0x2A6f65A2B43130Bf2055003cB05FCa7798Fd75cB",
+      "gmETHUSD": "0xeeba388EaFC7Fd9bf22e1855D0D0B6f89e15c61E"
     },
     "orderbook": "0x6Dac7923F1DCc7eF968BB4F9234Da610f1e398c9"
   },
@@ -62,7 +63,7 @@
     "wstEth": "0xA31596895931880510cB94c40D54080a4498b724",
     "gmBTCUSD": "0x03d24Da1c09D45D2b41Cf97654b7cd6c422c9198",
     "gmETHUSD": "0x4698dfd87e7f2D0c77B24393eC9F317cbC5B1404",
-    "usdcNative": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    "usdcCircle": "0x536F8241be9Bb5010759648c96E4E1E6Ead4ad0f"
   },
   "vendors": {
     "gmx": {
@@ -76,7 +77,7 @@
       "depositVault": "",
       "depositHandler": "",
       "dataStore": "",
-      "reader": ""
+      "reader": "0xB2e6E4865d7e5a87E65ec9B88707F72e60Bf907F"
     },
     "uniswap": {
       "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",

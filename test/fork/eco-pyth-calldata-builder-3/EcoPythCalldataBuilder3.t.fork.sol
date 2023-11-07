@@ -29,10 +29,14 @@ import { EcoPythCalldataBuilder3 } from "@hmx/oracles/EcoPythCalldataBuilder3.so
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 import { GmPriceAdapter } from "@hmx/oracles/adapters/GmPriceAdapter.sol";
 import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
+import { CIXPriceAdapter } from "@hmx/oracles/CIXPriceAdapter.sol";
+import { UnsafeEcoPythCalldataBuilder3 } from "@hmx/oracles/UnsafeEcoPythCalldataBuilder3.sol";
 
 contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
   uint256 constant MAX_DIFF = 0.001 ether; // 0.1 %
 
+  CIXPriceAdapter internal cix1PriceAdapter;
+  UnsafeEcoPythCalldataBuilder3 internal unsafeEcoPythCalldataBuilder;
   CalcPriceLens internal calcPriceLens;
   EcoPythCalldataBuilder3 internal ecoPythCalldataBuilder;
   GmPriceAdapter internal gmBtcUsdPriceAdapter;
@@ -106,14 +110,6 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     vm.startPrank(ForkEnv.multiSig);
     ForkEnv.ecoPyth2.insertAssetId("CIX1");
     vm.stopPrank();
-  }
-
-  function _setupCalcPriceLens() internal {
-    bytes32[] memory priceIds = new bytes32[](1);
-    priceIds[0] = "CIX1";
-    ICalcPriceAdapter[] memory priceAdapters = new ICalcPriceAdapter[](1);
-    priceAdapters[0] = cix1PriceAdapter;
-    calcPriceLens.setPriceAdapters(priceIds, priceAdapters);
   }
 
   function testCorrectness_CalcPriceLens_getPrice() external {
@@ -224,30 +220,30 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     // Assert GLP
     {
       PythStructs.Price memory _p = ForkEnv.ecoPyth2.getPriceUnsafe("GLP");
-      assertEq(_p.price, 0.96618661e8);
+      assertEq(_p.price, 0.97687279e8);
     }
 
     // Assert wstETH
     {
       PythStructs.Price memory _p = ForkEnv.ecoPyth2.getPriceUnsafe("wstETH");
-      assertEq(_p.price, 1849.59850477e8);
+      assertEq(_p.price, 1828.26818365e8);
     }
 
     // Randomly assert the common assets, to ensure the data sequence
     {
       PythStructs.Price memory _p;
       _p = ForkEnv.ecoPyth2.getPriceUnsafe("BTC");
-      assertEq(_p.price, 27852.78594028e8);
+      assertEq(_p.price, 29619.41090842e8);
       _p = ForkEnv.ecoPyth2.getPriceUnsafe("ETH");
-      assertEq(_p.price, 1621.21388544e8);
+      assertEq(_p.price, 1599.95553880e8);
       _p = ForkEnv.ecoPyth2.getPriceUnsafe("JPY");
       assertEq(_p.price, 149.38840760e8);
       _p = ForkEnv.ecoPyth2.getPriceUnsafe("XAG");
-      assertEq(_p.price, 21.72679030e8);
+      assertEq(_p.price, 23.23692749e8);
       _p = ForkEnv.ecoPyth2.getPriceUnsafe("NVDA");
-      assertEq(_p.price, 457.50770011e8);
+      assertEq(_p.price, 420.90109828e8);
       _p = ForkEnv.ecoPyth2.getPriceUnsafe("BCH");
-      assertEq(_p.price, 226.85902471e8);
+      assertEq(_p.price, 241.27218831e8);
     }
   }
 
@@ -318,12 +314,14 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
   }
 
   function _setupCalcPriceLens() internal {
-    bytes32[] memory priceIds = new bytes32[](2);
+    bytes32[] memory priceIds = new bytes32[](3);
     priceIds[0] = "GM-BTCUSD";
     priceIds[1] = "GM-ETHUSD";
-    ICalcPriceAdapter[] memory priceAdapters = new ICalcPriceAdapter[](2);
+    priceIds[2] = "CIX1";
+    ICalcPriceAdapter[] memory priceAdapters = new ICalcPriceAdapter[](3);
     priceAdapters[0] = gmBtcUsdPriceAdapter;
     priceAdapters[1] = gmEthUsdPriceAdapter;
+    priceAdapters[2] = cix1PriceAdapter;
     calcPriceLens.setPriceAdapters(priceIds, priceAdapters);
   }
 
@@ -842,7 +840,7 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
   }
 
   function testRevert_BadLength() external {
-    IEcoPythCalldataBuilder3.BuildData[] memory buildData = new IEcoPythCalldataBuilder3.BuildData[](39);
+    IEcoPythCalldataBuilder3.BuildData[] memory buildData = new IEcoPythCalldataBuilder3.BuildData[](40);
     buildData[0] = IEcoPythCalldataBuilder3.BuildData({
       assetId: "ETH",
       priceE8: 1800.99 * 1e8,
@@ -1072,6 +1070,12 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
       maxDiffBps: 15000
     });
     buildData[38] = IEcoPythCalldataBuilder3.BuildData({
+      assetId: "BCH",
+      priceE8: 252.09163826 * 1e8,
+      publishTime: uint160(block.timestamp),
+      maxDiffBps: 15000
+    });
+    buildData[39] = IEcoPythCalldataBuilder3.BuildData({
       assetId: "BCH",
       priceE8: 252.09163826 * 1e8,
       publishTime: uint160(block.timestamp),

@@ -55,26 +55,43 @@ contract GmPriceAdapter is ICalcPriceAdapter {
 
   /// @notice Return the price of GM Market Token in 18 decimals
   function getPrice(IEcoPythCalldataBuilder3.BuildData[] calldata _buildDatas) external view returns (uint256 price) {
+    uint256 indexTokenPrice = _convertToGmxV2Decimals(
+      uint256(int256(_buildDatas[indexTokenPriceAssetId].priceE8)),
+      30 - indexTokenDecimals
+    );
+    uint256 longTokenPrice = _convertToGmxV2Decimals(
+      uint256(int256(_buildDatas[longTokenPriceAssetId].priceE8)),
+      30 - longTokenDecimals
+    );
+    uint256 shortTokenPrice = _convertToGmxV2Decimals(
+      uint256(int256(_buildDatas[shortTokenPriceAssetId].priceE8)),
+      30 - shortTokenDecimals
+    );
+
     (int256 gmPrice, ) = reader.getMarketTokenPrice(
       dataStore,
-      IGmxV2Types.MarketProps({
-        marketToken: marketToken,
-        indexToken: indexToken,
-        longToken: longToken,
-        shortToken: shortToken
-      }),
-      IGmxV2Types.PriceProps({
-        min: _convertToGmxV2Decimals(_buildDatas[indexTokenPriceAssetId].priceE8, 30 - indexTokenDecimals),
-        max: _convertToGmxV2Decimals(_buildDatas[indexTokenPriceAssetId].priceE8, 30 - indexTokenDecimals)
-      }),
-      IGmxV2Types.PriceProps({
-        min: _convertToGmxV2Decimals(_buildDatas[longTokenPriceAssetId].priceE8, 30 - longTokenDecimals),
-        max: _convertToGmxV2Decimals(_buildDatas[longTokenPriceAssetId].priceE8, 30 - longTokenDecimals)
-      }),
-      IGmxV2Types.PriceProps({
-        min: _convertToGmxV2Decimals(_buildDatas[shortTokenPriceAssetId].priceE8, 30 - shortTokenDecimals),
-        max: _convertToGmxV2Decimals(_buildDatas[shortTokenPriceAssetId].priceE8, 30 - shortTokenDecimals)
-      }),
+      Market.Props({ marketToken: marketToken, indexToken: indexToken, longToken: longToken, shortToken: shortToken }),
+      Price.Props({ min: indexTokenPrice, max: indexTokenPrice }),
+      Price.Props({ min: longTokenPrice, max: longTokenPrice }),
+      Price.Props({ min: shortTokenPrice, max: shortTokenPrice }),
+      MAX_PNL_FACTOR_FOR_DEPOSITS,
+      true
+    );
+    price = gmPrice > 0 ? uint256(gmPrice) / 1e12 : 0;
+  }
+
+  /// @notice Return the price of GM Market Token in 18 decimals
+  function getPrice(uint256[] memory priceE8s) external view returns (uint256 price) {
+    uint256 indexTokenPrice = _convertToGmxV2Decimals(priceE8s[0], 30 - indexTokenDecimals);
+    uint256 longTokenPrice = _convertToGmxV2Decimals(priceE8s[1], 30 - longTokenDecimals);
+    uint256 shortTokenPrice = _convertToGmxV2Decimals(priceE8s[2], 30 - shortTokenDecimals);
+
+    (int256 gmPrice, ) = reader.getMarketTokenPrice(
+      dataStore,
+      Market.Props({ marketToken: marketToken, indexToken: indexToken, longToken: longToken, shortToken: shortToken }),
+      Price.Props({ min: indexTokenPrice, max: indexTokenPrice }),
+      Price.Props({ min: longTokenPrice, max: longTokenPrice }),
+      Price.Props({ min: shortTokenPrice, max: shortTokenPrice }),
       MAX_PNL_FACTOR_FOR_DEPOSITS,
       true
     );
@@ -82,14 +99,13 @@ contract GmPriceAdapter is ICalcPriceAdapter {
   }
 
   function _convertToGmxV2Decimals(
-    int64 priceE8,
+    uint256 priceE8,
     uint256 targetDecimals
   ) internal pure returns (uint256 adjustedPrice) {
-    uint256 price = uint256(int256(priceE8));
     if (targetDecimals - 8 >= 0) {
-      adjustedPrice = uint256(price) * 10 ** uint32(targetDecimals - 8);
+      adjustedPrice = uint256(priceE8) * 10 ** uint32(targetDecimals - 8);
     } else {
-      adjustedPrice = uint256(price) / 10 ** uint32(8 - targetDecimals);
+      adjustedPrice = uint256(priceE8) / 10 ** uint32(8 - targetDecimals);
     }
   }
 }

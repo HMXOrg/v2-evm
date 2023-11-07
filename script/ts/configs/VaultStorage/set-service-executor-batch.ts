@@ -8,7 +8,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const inputs = [
     {
-      executorAddress: config.services.rebalanceHLP,
+      executorAddress: config.services.rebalanceHLPv2,
       isServiceExecutor: true,
     },
   ];

@@ -30,6 +30,8 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
   CalcPriceLens public cLens;
   bool private l2BlockNumber;
 
+  error BadOrder(uint256 index, bytes32 assetId);
+
   constructor(IEcoPyth ecoPyth_, OnChainPriceLens ocLens_, CalcPriceLens cLens_, bool l2BlockNumber_) {
     ecoPyth = ecoPyth_;
     ocLens = ocLens_;
@@ -48,6 +50,26 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
     return false;
   }
 
+  function validateAssetOrder(BuildData[] calldata _data) internal view {
+    uint _dataLength = _data.length;
+    bytes32[] memory assetIds = ecoPyth.getAssetIds();
+
+    // +1 here because assetIds[0] is blank
+    // check that the buildData should have more assets than ecoPyth's assetIds
+    // it can be less to support adding new assetIds operation
+    require(_dataLength + 1 <= assetIds.length, "BAD_LENGTH");
+
+    for (uint _i = 0; _i < _dataLength; ) {
+      // +1 here because assetIds[0] is blank
+      if (_data[_i].assetId != assetIds[_i + 1]) {
+        revert BadOrder(_i, _data[_i].assetId);
+      }
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
   function build(
     BuildData[] calldata _data
   )
@@ -60,6 +82,7 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
       uint256 blockNumber
     )
   {
+    validateAssetOrder(_data);
     uint _dataLength = _data.length;
 
     // 1. Validation
@@ -118,6 +141,35 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
       blockNumber = ArbSys(ARBSYS_ADDR).arbBlockNumber();
     } else {
       blockNumber = block.number;
+    }
+  }
+
+  function buildAsPrices(BuildData[] calldata _data) external view returns (uint256[] memory priceE8s) {
+    validateAssetOrder(_data);
+    uint _dataLength = _data.length;
+    priceE8s = new uint256[](_dataLength);
+
+    // 2. Build ticks and publish time diffs
+    for (uint _i = 0; _i < _dataLength; ) {
+      IPriceAdapter ocPriceAdapter = ocLens.priceAdapterById(_data[_i].assetId);
+      ICalcPriceAdapter cPriceAdapter = cLens.priceAdapterById(_data[_i].assetId);
+
+      if (address(ocPriceAdapter) != address(0)) {
+        // Use OnChainPriceLens, then make tick
+        uint256 priceE18 = ocPriceAdapter.getPrice();
+        priceE8s[_i] = priceE18 / 1e10;
+      } else if (address(cPriceAdapter) != address(0)) {
+        // Use CIXPriceLens, then make tick
+        uint256 priceE18 = cPriceAdapter.getPrice(_data);
+        priceE8s[_i] = priceE18 / 1e10;
+      } else {
+        // Make tick right away
+        priceE8s[_i] = uint256(int256(_data[_i].priceE8));
+      }
+
+      unchecked {
+        ++_i;
+      }
     }
   }
 }

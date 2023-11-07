@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { RebalanceHLPv2Handler__factory } from "../../../../typechain";
 import signers from "../../entities/signers";
 import SafeWrapper from "../../wrappers/SafeWrapper";
+import { compareAddress } from "../../utils/address";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -10,14 +11,20 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
-  console.log(`[configs/RebalanceHLPv2Handler] Set whitelist to address: ${user}`);
+  console.log(`[configs/RebalanceHLPHandler] Set whitelist to address: ${user}`);
   const handler = RebalanceHLPv2Handler__factory.connect(config.handlers.rebalanceHLPv2, deployer);
-  const tx = await safeWrapper.proposeTransaction(
-    handler.address,
-    0,
-    handler.interface.encodeFunctionData("setWhitelistExecutor", [user, true])
-  );
-  console.log(`[configs/RebalanceHLPv2Handler] Proposed tx: ${tx}`);
+  if (compareAddress(await handler.owner(), config.safe)) {
+    const tx = await safeWrapper.proposeTransaction(
+      handler.address,
+      0,
+      handler.interface.encodeFunctionData("setWhitelistExecutor", [user, true])
+    );
+    console.log(`[configs/RebalanceHLPHandler] Proposed tx: ${tx}`);
+  } else {
+    const tx = await handler.setWhitelistExecutor(user, true);
+    console.log(`[configs/RebalanceHLPHandler] Executed tx: ${tx.hash}`);
+    await tx.wait();
+  }
 }
 
 const prog = new Command();

@@ -10,8 +10,8 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      contractAddress: config.services.rebalanceHLPToGMXV2,
-      executorAddress: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      contractAddress: config.services.rebalanceHLPv2,
+      executorAddress: config.handlers.rebalanceHLPv2,
       isServiceExecutor: true,
     },
   ];

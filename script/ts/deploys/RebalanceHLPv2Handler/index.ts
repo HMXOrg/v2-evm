@@ -6,15 +6,19 @@ const config = getConfig();
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
-
+  const minExecutionFee = ethers.utils.parseEther("0.001");
   const Contract = await ethers.getContractFactory("RebalanceHLPv2Handler", deployer);
-  const contract = await upgrades.deployProxy(Contract, [config.services.rebalanceHLPToGMXV2]);
+  const contract = await upgrades.deployProxy(Contract, [
+    config.services.rebalanceHLPv2,
+    config.tokens.weth,
+    minExecutionFee,
+  ]);
   await contract.deployed();
 
   console.log(`Deploying RebalanceHLPv2Handler Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.handlers.rebalanceHLPToGMXV2 = contract.address;
+  config.handlers.rebalanceHLPv2 = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

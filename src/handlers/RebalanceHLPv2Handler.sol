@@ -34,7 +34,7 @@ contract RebalanceHLPv2Handler is IRebalanceHLPv2Handler, OwnableUpgradeable, Re
   mapping(address => bool) public whitelistExecutors;
 
   event LogSetMinExecutionFee(uint256 _oldValue, uint256 _newValue);
-  event LogSetRebalanceHLPToGMXV2Service(address indexed _oldService, address indexed _newService);
+  event LogSetRebalanceHLPv2Service(address indexed _oldService, address indexed _newService);
   event LogSetWhitelistExecutor(address indexed _executor, bool _prevAllow, bool _isAllow);
 
   modifier onlyWhitelisted() {
@@ -95,7 +95,7 @@ contract RebalanceHLPv2Handler is IRebalanceHLPv2Handler, OwnableUpgradeable, Re
     }
 
     // Effect
-    emit LogSetRebalanceHLPToGMXV2Service(address(service), _newService);
+    emit LogSetRebalanceHLPv2Service(address(service), _newService);
     service = IRebalanceHLPv2Service(_newService);
 
     // Interaction

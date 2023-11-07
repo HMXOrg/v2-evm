@@ -1,11 +1,7 @@
 import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import {
-  CrossMarginHandler__factory,
-  ERC20__factory,
-  RebalanceHLPToGMXV2Service__factory,
-} from "../../../../typechain";
+import { CrossMarginHandler__factory, ERC20__factory, RebalanceHLPv2Service__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
@@ -24,12 +20,12 @@ async function main(chainId: number) {
     },
   ];
 
-  console.log("[cmds/RebalanceHLPToGMXV2Service] depositCollateral...");
-  const service = RebalanceHLPToGMXV2Service__factory.connect(config.services.rebalanceHLPToGMXV2, signer);
+  console.log("[cmds/RebalanceHLPv2Service] depositCollateral...");
+  const service = RebalanceHLPv2Service__factory.connect(config.services.rebalanceHLPv2, signer);
   const tx = await service.executeDeposits(depositParams);
-  console.log(`[cmds/RebalanceHLPToGMXV2Service] Tx: ${tx.hash}`);
+  console.log(`[cmds/RebalanceHLPv2Service] Tx: ${tx.hash}`);
   await tx.wait(1);
-  console.log("[cmds/RebalanceHLPToGMXV2Service] Finished");
+  console.log("[cmds/RebalanceHLPv2Service] Finished");
 }
 
 const prog = new Command();

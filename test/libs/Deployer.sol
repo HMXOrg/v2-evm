@@ -17,8 +17,10 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { ICIXPriceAdapter } from "@hmx/oracles/interfaces/ICIXPriceAdapter.sol";
 import { ILeanPyth } from "@hmx/oracles/interfaces/ILeanPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
@@ -122,11 +124,27 @@ library Deployer {
       );
   }
 
+  function deployEcoPythCalldataBuilder3(
+    address _ecoPyth,
+    address _ocLens,
+    address _cLens,
+    bool _l2BlockNumber
+  ) internal returns (IEcoPythCalldataBuilder3) {
+    return
+      IEcoPythCalldataBuilder3(
+        deployContractWithArguments("EcoPythCalldataBuilder3", abi.encode(_ecoPyth, _ocLens, _cLens, _l2BlockNumber))
+      );
+  }
+
   function deployPythAdapter(address _proxyAdmin, address _pyth) internal returns (IPythAdapter) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/PythAdapter.sol/PythAdapter.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pyth);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IPythAdapter(payable(_proxy));
+  }
+
+  function deployCIXPriceAdapter() internal returns (ICIXPriceAdapter) {
+    return ICIXPriceAdapter(deployContract("CIXPriceAdapter"));
   }
 
   function deployStakedGlpOracleAdapter(

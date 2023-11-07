@@ -55,7 +55,7 @@ contract Smoke_Base is ForkEnv {
   uint256 snapshot;
 
   function setUp() public virtual {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 147907984);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
 
     // -- UPGRADE -- //
     vm.startPrank(ForkEnv.proxyAdmin.owner());

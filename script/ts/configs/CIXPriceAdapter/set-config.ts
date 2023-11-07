@@ -13,7 +13,14 @@ async function main(chainId: number) {
   const cixPriceAdapter = CIXPriceAdapter__factory.connect(config.oracles.priceAdapters.dix, deployer);
 
   const cE8 = ethers.utils.parseUnits("47.46426", 8);
-  const assetIds = ["EUR", "JPY", "GBP", "CAD", "SEK", "CHF"];
+  const assetIds = [
+    ethers.utils.formatBytes32String("EUR"),
+    ethers.utils.formatBytes32String("JPY"),
+    ethers.utils.formatBytes32String("GBP"),
+    ethers.utils.formatBytes32String("CAD"),
+    ethers.utils.formatBytes32String("SEK"),
+    ethers.utils.formatBytes32String("CHF"),
+  ];
   const weightsE8 = [
     ethers.utils.parseUnits("0.560", 8),
     ethers.utils.parseUnits("0.140", 8),
@@ -29,7 +36,7 @@ async function main(chainId: number) {
     true, // GBPUSD
     false, // USDCAD
     false, // USDSEK
-    false, //USDCHF
+    false, // USDCHF
   ];
 
   console.log(`[configs/CIXPriceAdapter] Set Config...`);

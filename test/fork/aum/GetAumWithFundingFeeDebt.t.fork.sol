@@ -31,6 +31,7 @@ contract GetAumWithFundingFeeDebt_ForkTest is ForkEnv {
 
     vm.startPrank(ForkEnv.multiSig);
     Deployer.upgrade("Calculator", address(ForkEnv.proxyAdmin), address(calculator));
+    Deployer.upgrade("VaultStorage", address(ForkEnv.proxyAdmin), address(vaultStorage));
     vm.stopPrank();
 
     uint256 aumAfter = calculator.getAUME30(true);

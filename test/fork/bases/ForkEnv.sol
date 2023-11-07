@@ -4,12 +4,16 @@
 
 pragma solidity 0.8.18;
 
+/// Forge
 import { stdJson } from "forge-std/StdJson.sol";
 import { Test } from "forge-std/Test.sol";
 
 /// OZ
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/// HMX Tests
+import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
 
 /// Oracles
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -44,7 +48,19 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
+/// Helpers
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+
+/// Staking
+import { IHLPStaking } from "@hmx/staking/interfaces/IHLPStaking.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
+
+/// Dexter
+import { UniswapDexter } from "@hmx/extensions/dexters/UniswapDexter.sol";
+
+/// SwitchRouter
+import { SwitchCollateralRouter } from "@hmx/extensions/switch-collateral/SwitchCollateralRouter.sol";
 
 /// Vendors
 /// Uniswap
@@ -54,6 +70,12 @@ import { IUniversalRouter } from "@hmx/interfaces/uniswap/IUniversalRouter.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
+/// GMXv2
+import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
+import { IGmxV2DepositHandler } from "@hmx/interfaces/gmx-v2/IGmxV2DepositHandler.sol";
+import { IGmxV2WithdrawalHandler } from "@hmx/interfaces/gmx-v2/IGmxV2WithdrawalHandler.sol";
+import { IGmxV2ExchangeRouter } from "@hmx/interfaces/gmx-v2/IGmxV2ExchangeRouter.sol";
+import { IGmxV2RoleStore } from "@hmx/interfaces/gmx-v2/IGmxV2RoleStore.sol";
 /// Curve
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
@@ -83,6 +105,7 @@ abstract contract ForkEnv is Test {
   address internal constant multiSig = 0x6409ba830719cd0fE27ccB3051DF1b399C90df4a;
   address internal constant glpWhale = 0x39aB5960c21578b9ced6a6A6Ed6ceb0547df20A7;
   address internal constant liquidityOrderExecutor = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
+  address internal constant crossMarginOrderExecutor = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
   address internal constant positionManager = 0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E;
   address internal constant limitOrderExecutor = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;
 
@@ -106,8 +129,7 @@ abstract contract ForkEnv is Test {
   LiquidityHandler internal liquidityHandler = LiquidityHandler(payable(getAddress(".handlers.liquidity")));
   IBotHandler internal botHandler = IBotHandler(getAddress(".handlers.bot"));
   RebalanceHLPHandler internal rebalanceHLPHandler = RebalanceHLPHandler(getAddress(".handlers.rebalanceHLP"));
-
-  // readers
+  // Readers
   ILiquidationReader internal liquidationReader = ILiquidationReader(getAddress(".reader.liquidation"));
   IPositionReader internal positionReader = IPositionReader(getAddress(".reader.position"));
   IOrderReader internal orderReader = IOrderReader(getAddress(".reader.order"));
@@ -117,15 +139,19 @@ abstract contract ForkEnv is Test {
   LiquidityService internal liquidityService = LiquidityService(getAddress(".services.liquidity"));
   TradeService internal tradeService = TradeService(getAddress(".services.trade"));
   RebalanceHLPService internal rebalanceHLPService = RebalanceHLPService(getAddress(".services.rebalanceHLP"));
-
   /// Storages
   ConfigStorage internal configStorage = ConfigStorage(getAddress(".storages.config"));
   PerpStorage internal perpStorage = PerpStorage(getAddress(".storages.perp"));
   VaultStorage internal vaultStorage = VaultStorage(getAddress(".storages.vault"));
-
+  /// Helpers
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
-
-  ITradingStaking internal hlpStaking = ITradingStaking(getAddress(".staking.hlp"));
+  /// Staking
+  IHLPStaking internal hlpStaking = IHLPStaking(getAddress(".staking.hlp"));
+  /// Dexter
+  UniswapDexter internal uniswapDexter = UniswapDexter(getAddress(".extension.dexter.uniswapV3"));
+  /// SwitchRouter
+  SwitchCollateralRouter internal switchCollateralRouter =
+    SwitchCollateralRouter(getAddress(".extension.switchCollateralRouter"));
 
   /// Vendors
   /// Uniswap
@@ -135,9 +161,27 @@ abstract contract ForkEnv is Test {
   IGmxGlpManager internal glpManager = IGmxGlpManager(getAddress(".vendors.gmx.glpManager"));
   IGmxRewardRouterV2 internal gmxRewardRouterV2 = IGmxRewardRouterV2(getAddress(".vendors.gmx.rewardRouterV2"));
   IGmxVault internal gmxVault = IGmxVault(getAddress(".vendors.gmx.gmxVault"));
-  /// GMX V2
+  /// GMXv2
+  address internal gmxV2Admin = 0xE7BfFf2aB721264887230037940490351700a068;
+  address internal gmxV2Timelock = 0x62aB76Ed722C507f297f2B97920dCA04518fe274;
+  address internal gmxV2Oracle = address(getAddress(".vendors.gmxV2.oracle"));
   IGmxV2Reader internal gmxV2Reader = IGmxV2Reader(getAddress(".vendors.gmxV2.reader"));
+  IGmxV2ExchangeRouter internal gmxV2ExchangeRouter = IGmxV2ExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
+  address internal gmxV2DepositVault = address(getAddress(".vendors.gmxV2.depositVault"));
+  address internal gmxV2DepositUtils = address(getAddress(".vendors.gmxV2.depositUtils"));
+  address internal gmxV2DepositStoreUtils = address(getAddress(".vendors.gmxV2.depositStoreUtils"));
+  address internal gmxV2ExecuteDepositUtils = address(getAddress(".vendors.gmxV2.executeDepositUtils"));
+  IGmxV2DepositHandler internal gmxV2DepositHandler = IGmxV2DepositHandler(getAddress(".vendors.gmxV2.depositHandler"));
+  address internal gmxV2WithdrawalVault = address(getAddress(".vendors.gmxV2.withdrawalVault"));
+  address internal gmxV2WithdrawalUtils = address(getAddress(".vendors.gmxV2.withdrawalUtils"));
+  address internal gmxV2WithdrawalStoreUtils = address(getAddress(".vendors.gmxV2.withdrawalStoreUtils"));
+  address internal gmxV2ExecuteWithdrawalUtils = address(getAddress(".vendors.gmxV2.executeWithdrawalUtils"));
+  IGmxV2WithdrawalHandler internal gmxV2WithdrawalHandler =
+    IGmxV2WithdrawalHandler(getAddress(".vendors.gmxV2.withdrawalHandler"));
+  address internal gmxV2MarketUtils = address(getAddress(".vendors.gmxV2.marketUtils"));
+  address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
+  IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
 
@@ -145,7 +189,7 @@ abstract contract ForkEnv is Test {
 
   /// Tokens
   IERC20 internal usdc_e = IERC20(getAddress(".tokens.usdc"));
-  IERC20 internal usdc = IERC20(getAddress(".tokens.usdcCircle"));
+  IERC20 internal usdc = IERC20(getAddress(".tokens.usdcNative"));
   IERC20 internal weth = IERC20(getAddress(".tokens.weth"));
   IERC20 internal wbtc = IERC20(getAddress(".tokens.wbtc"));
   IERC20 internal usdt = IERC20(getAddress(".tokens.usdt"));

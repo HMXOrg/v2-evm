@@ -15,7 +15,7 @@ async function main() {
       8,
       config.tokens.wbtc,
       8,
-      config.tokens.usdcCircle,
+      config.tokens.usdcNative,
       6,
       1,
       1,

@@ -55,7 +55,7 @@ contract Smoke_Base is ForkEnv {
   uint256 snapshot;
 
   function setUp() public virtual {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 147907984);
 
     // -- UPGRADE -- //
     vm.startPrank(ForkEnv.proxyAdmin.owner());
@@ -69,6 +69,7 @@ contract Smoke_Base is ForkEnv {
     Deployer.upgrade("ConfigStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.configStorage));
     Deployer.upgrade("PerpStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.perpStorage));
     Deployer.upgrade("LiquidationService", address(ForkEnv.proxyAdmin), address(ForkEnv.liquidationService));
+    Deployer.upgrade("VaultStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.vaultStorage));
 
     vm.stopPrank();
 

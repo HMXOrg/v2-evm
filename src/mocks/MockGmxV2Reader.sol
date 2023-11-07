@@ -4,10 +4,10 @@
 
 pragma solidity 0.8.18;
 
-import { Market } from "@hmx/interfaces/gmxV2/Market.sol";
-import { Price } from "@hmx/interfaces/gmxV2/Price.sol";
-import { MarketPoolValueInfo } from "@hmx/interfaces/gmxV2/MarketPoolValueInfo.sol";
-import { IGmxV2Reader } from "@hmx/interfaces/gmxV2/IGmxV2Reader.sol";
+import { Market } from "@hmx/interfaces/gmx-v2/Market.sol";
+import { Price } from "@hmx/interfaces/gmx-v2/Price.sol";
+import { MarketPoolValueInfo } from "@hmx/interfaces/gmx-v2/MarketPoolValueInfo.sol";
+import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
 
 contract MockGmxV2Reader is IGmxV2Reader {
   mapping(address marketAddress => uint256 price) public prices;

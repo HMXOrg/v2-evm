@@ -3,23 +3,32 @@ import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
 const config = getConfig();
+const minHLPValueLossBPS = 50; // 0.5%
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("RebalanceHLPToGMXV2Handler", deployer);
-  const contract = await upgrades.deployProxy(Contract, [config.services.rebalanceHLPToGMXV2]);
-  await contract.deployed();
+  const Contract = await ethers.getContractFactory("RebalanceHLPv2Service", deployer);
 
-  console.log(`Deploying RebalanceHLPToGMXV2Handler Contract`);
+  const contract = await upgrades.deployProxy(Contract, [
+    config.storages.vault,
+    config.storages.config,
+    config.vendors.gmxV2.exchangeRouter,
+    config.vendors.gmxV2.depositVault,
+    config.vendors.gmxV2.depositHandler,
+    minHLPValueLossBPS,
+  ]);
+
+  await contract.deployed();
+  console.log(`Deploying RebalanceHLPv2Service Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.handlers.rebalanceHLPToGMXV2 = contract.address;
+  config.services.rebalanceHLPToGMXV2 = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "RebalanceHLPToGMXV2Handler",
+    name: "RebalanceHLPv2Service",
   });
 }
 

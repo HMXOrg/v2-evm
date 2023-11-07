@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 interface ICalculator {
@@ -109,6 +110,8 @@ interface ICalculator {
   ) external view returns (uint256 _collateralValueE30);
 
   function getFundingRateVelocity(uint256 _marketIndex) external view returns (int256);
+
+  function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) external view returns (bool, uint256);
 
   function getDelta(
     uint256 _size,

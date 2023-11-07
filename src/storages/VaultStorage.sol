@@ -32,6 +32,14 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     bytes4 newFunctionSig
   );
   event LogAddDevFee(address indexed token, uint256 devFeeAmount);
+  event LogClearOnHold(
+    address indexed token,
+    uint256 clearAmount,
+    uint256 prevTotalAmount,
+    uint256 nextTotalAmount,
+    uint256 prevOnHoldAmount,
+    uint256 nextOnHoldAmount
+  );
 
   /**
    * States
@@ -111,18 +119,25 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function _pullToken(address _token) internal returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
-    uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
+    uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this)) + hlpLiquidityOnHold[_token];
 
-    totalAmount[_token] = nextBalance + hlpLiquidityOnHold[_token];
+    totalAmount[_token] = nextBalance;
+
     return nextBalance - prevBalance;
   }
 
-  function pullTokenAndClearOnHold(
-    address _token,
-    uint256 _amount
-  ) external nonReentrant onlyWhitelistedExecutor returns (uint256) {
-    hlpLiquidityOnHold[_token] -= _amount;
-    return _pullToken(_token);
+  /// @notice Clear on hold amount
+  /// @param _token The token to clear on hold amount
+  /// @param _amount The amount to clear on hold amount
+  function clearOnHold(address _token, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
+    emit LogClearOnHold(
+      _token,
+      _amount,
+      totalAmount[_token],
+      totalAmount[_token] -= _amount,
+      hlpLiquidityOnHold[_token],
+      hlpLiquidityOnHold[_token] -= _amount
+    );
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {

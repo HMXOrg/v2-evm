@@ -14,6 +14,7 @@ interface IVaultStorage {
   error IVaultStorage_TargetNotContract();
   error IVaultStorage_BadLen();
   error IVaultStorage_InvalidAddress();
+  error IVaultStorage_InvalidAccounting();
 
   /**
    * Functions
@@ -59,7 +60,7 @@ interface IVaultStorage {
 
   function pullToken(address _token) external returns (uint256);
 
-  function pullTokenAndClearOnHold(address _token, uint256 _amount) external returns (uint256);
+  function clearOnHold(address _token, uint256 _amount) external;
 
   function addFee(address _token, uint256 _amount) external;
 

@@ -5,7 +5,8 @@
 pragma solidity 0.8.18;
 
 import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
-import { IGmxV2Types } from "@hmx/interfaces/gmx-v2/IGmxV2Types.sol";
+import { Price } from "@hmx/interfaces/gmx-v2/Price.sol";
+import { Market } from "@hmx/interfaces/gmx-v2/Market.sol";
 import { ICalcPriceAdapter } from "@hmx/oracles/interfaces/ICalcPriceAdapter.sol";
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 

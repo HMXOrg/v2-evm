@@ -13,16 +13,19 @@ async function main(chainId: number) {
       market: config.tokens.gmBTCUSD,
       longToken: config.tokens.wbtc,
       longTokenAmount: ethers.utils.parseUnits("0.01", 8),
-      shortToken: config.tokens.usdcCircle,
+      shortToken: config.tokens.usdcNative,
       shortTokenAmount: 0,
       minMarketTokens: 0,
-      executionFee: 0,
+      gasLimit: 1000000,
     },
   ];
 
-  console.log("[cmds/RebalanceHLPv2Service] depositCollateral...");
+  console.log("[cmds/RebalanceHLPv2Service] createDepositOrders...");
   const service = RebalanceHLPv2Service__factory.connect(config.services.rebalanceHLPv2, signer);
-  const tx = await service.executeDeposits(depositParams);
+  const tx = await service.createDepositOrders(
+    depositParams,
+    ethers.utils.parseEther("0.001").mul(depositParams.length)
+  );
   console.log(`[cmds/RebalanceHLPv2Service] Tx: ${tx.hash}`);
   await tx.wait(1);
   console.log("[cmds/RebalanceHLPv2Service] Finished");

@@ -8,13 +8,13 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const inputs = [
     {
-      executorAddress: config.services.rebalanceHLP,
+      executorAddress: config.services.rebalanceHLPv2,
       isServiceExecutor: true,
     },
   ];
 
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
 
   console.log("[configs/VaultStorage] Proposing to set service executors...");

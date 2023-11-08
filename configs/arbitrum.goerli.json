@@ -1,60 +1,72 @@
 {
-  "proxyAdmin": "",
+  "proxyAdmin": "0x036934d4a6669287461Aa5a48AC35945d8E25dd4",
   "timelock": "",
   "safe": "",
   "multicall": "0xcA11bde05977b3631167028862bE2a173976CA11",
   "storages": {
-    "config": "0x8923A5e874E4C614f28cb7814D22B65C934f4401",
-    "perp": "0x5a820DCAF28522Bc7a655Ef72687D16B732C27DC",
-    "vault": "0x2171b665B37f3be45b4BEB740728EbF5B8CC6709"
+    "config": "0x439860Bea87C4De1757e30Cb4073578CE450Cbbd",
+    "perp": "0x58120a4f1959D1670e84BBBc1C403e08cD152bae",
+    "vault": "0x6505C486B1b84dd531936fe8CE88f8D8a9699B05"
   },
   "handlers": {
-    "bot": "0xe0cb00Ed6f01226763e74f3f617F952f99643eC7",
-    "crossMargin": "0xF4573e1354ee94eBB5B5C1C2Ae9A8Fa6fF4203dF",
-    "limitTrade": "0x43C3f523d6D17a99A2E59A997dfe059b7a5a95e2",
-    "liquidity": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c",
-    "rebalanceHLP": "0xA02eD38bA283f2A529d0582Ee3cc2f8725765db8",
-    "ext01": ""
+    "bot": "0x4310118114Cb9696C85054905aA07bc4ca971d50",
+    "crossMargin": "0x180248C398729Ff41706eD52503E5A9fc3320d86",
+    "limitTrade": "0xd3b1A8Bd503f83849FF35d72c6EE0127327a9912",
+    "liquidity": "0x83E5FaA30e05e0e1Df94D1b743583DBD8cC23619",
+    "rebalanceHLP": "",
+    "ext01": "0xd3f55a78558A6C0C8945B4c5E6d7c64f50b57481",
+    "rebalanceHLPv2": ""
   },
   "helpers": {
-    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
-    "limitTrade": ""
+    "trade": "0x845cbf46aa4c4d1f0090c949c46294103aef4519",
+    "limitTrade": "0xc55eDcf390B58F79fCFF16bb9349714473e057a3"
   },
   "services": {
-    "crossMargin": "0x932BDbdd8Ea527f1531DCf36b6e10c4138006A14",
-    "liquidity": "0x686fA9AA62A8571Be022ba72f93Da83D8b9814e5",
-    "liquidation": "0x7e7923f809345A919f28cA1dE5a5B375b3B1874b",
-    "trade": "0x937DbD8bB0E155D4c3773dE366E4ae9f421411e2",
-    "rebalanceHLP": "0x0E7D2A832e6087BF45a55e15C5F8D48539cbDD48"
+    "crossMargin": "0x9061B0c73e834ef38082cdC19D7ad385a51871C1",
+    "liquidity": "0xEcb5179Ab2757D8BD858D64B80E2DC8747E77Bdc",
+    "liquidation": "0xeb13641272529B0a26992E56D1dd6Cd607aC473E",
+    "trade": "0x981C901b8aD50Bbf7fC139CB182D947488D52CBe",
+    "rebalanceHLP": "",
+    "rebalanceHLPv2": ""
   },
   "oracles": {
-    "ecoPyth": "0xBaDB27718087B8d2D490479515E6222D9A20CDf4",
-    "ecoPyth2": "",
-    "pythAdapter": "0x9b95A42832aBa0D96AD40F8B6CcC4404924C51c8",
+    "ecoPyth": "0xbDd5809FAc1528491a88d90E4DE8B6782D3dA071",
+    "ecoPyth2": "0xbDd5809FAc1528491a88d90E4DE8B6782D3dA071",
+    "pythAdapter": "0x16450238B44856BBb050Fb77611f79b0dB2f1E37",
     "sglpStakedAdapter": "",
-    "middleware": "0x8146fcc39216c1733C7d075398F5F791729Cfb91",
-    "ecoPythCalldataBuilder": "0x0622DBf2ee42C531AF2AB8Fe4d802B4546D3119a",
-    "unsafeEcoPythCalldataBuilder": "",
-    "ecoPythCalldataBuilder2": "",
-    "unsafeEcoPythCalldataBuilder2": "",
-    "onChainPriceLens": "",
+    "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
+    "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B",
+    "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9",
+    "ecoPythCalldataBuilder2": "0x24D4e31f28F9B2Bc9AAeBFe73d253541e4729CF8",
+    "unsafeEcoPythCalldataBuilder2": "0xc14B3D8EaA664D521aCB50E845799032F9c95dAA",
+    "ecoPythCalldataBuilder3": "0x16de08c2bf4E8A32Cd72aD6F9a80E5E2FaeDeF61",
+    "unsafeEcoPythCalldataBuilder3": "0xd6C41CF9394218456E149bF8B675075a4a7eC03b",
+    "uncheckedEcoPythCalldataBuilder3": "0x4F8602E5EF6CF6c8Df3960b45498a740AF2f1d0D",
+    "onChainPriceLens": "0x34F3Ae43A4766e35b2c53FE4D6e53F57Eb451B5A",
+    "calcPriceLens": "0x61FdE80a4941B1C652eAFC594D40858a4db40EC0",
     "priceAdapters": {
-      "glp": "",
-      "wstEth": "",
-      "hlp": ""
-    }
+      "glp": "0xDAa9eF42a073fAE417D9668b9bEbE1Ed8a4922E1",
+      "wstEth": "0x960a9A6Fc2dd724D0f28f0DDFDd7919CE9C7bD6C",
+      "hlp": "",
+      "gmBTCUSD": "0x2A6f65A2B43130Bf2055003cB05FCa7798Fd75cB",
+      "gmETHUSD": "0xeeba388EaFC7Fd9bf22e1855D0D0B6f89e15c61E"
+    },
+    "orderbook": "0x6Dac7923F1DCc7eF968BB4F9234Da610f1e398c9"
   },
   "tokens": {
-    "hlp": "0x83CC3519fA8F501Cd0C325f4F5e34Ac0B67c22fE",
+    "hlp": "0x9772cE382D33573850f029c56828dff7717b3282",
     "weth": "0xBbCcDa8F9eb6DCb293c63C34055C17a12e3e71E2",
     "wbtc": "0x239088Eb1d4c581A0Afc611651Eb5039053EDBFB",
     "usdt": "0x38C9767ed6fb3FDD81a73af1CCFe233197905434",
     "usdc": "0x38934bDf2462768388829194fD40a43eD9916B4C",
     "dai": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
-    "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08",
-    "arb": "",
-    "wstEth": ""
+    "traderLoyaltyCredit": "0xB8880717681cA218d8f8eF6679a23894a5745473",
+    "arb": "0xCa2d9AB2995dfE4e97E363088954C6eE7CadaA42",
+    "wstEth": "0xA31596895931880510cB94c40D54080a4498b724",
+    "gmBTCUSD": "0x03d24Da1c09D45D2b41Cf97654b7cd6c422c9198",
+    "gmETHUSD": "0x4698dfd87e7f2D0c77B24393eC9F317cbC5B1404",
+    "usdcNative": "0x536F8241be9Bb5010759648c96E4E1E6Ead4ad0f"
   },
   "vendors": {
     "gmx": {
@@ -62,6 +74,25 @@
       "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
       "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6",
       "gmxVault": ""
+    },
+    "gmxV2": {
+      "oracle": "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2",
+      "exchangeRouter": "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8",
+      "depositVault": "0xF89e77e8Dc11691C9e8757e84aaFbCD8A67d7A55",
+      "depositUtils": "0xAA31CF8C39b1C5D56E1d87Fe940128492cC218e4",
+      "depositStoreUtils": "0x556665e81c1516B6028d04EE081518b3818D1453",
+      "executeDepositUtils": "0x527FA75aa16E4835f5298CD2Cb4f91A5b1CfBbd2",
+      "depositHandler": "0x9Dc4f12Eb2d8405b499FB5B8AF79a5f64aB8a457",
+      "withdrawalVault": "0x0628D46b5D145f183AdB6Ef1f2c97eD1C4701C55",
+      "withdrawalUtils": "0x46088fA22988c40CE5aBC0647a7638D27A8bF7d1",
+      "withdrawalStoreUtils": "0x713c6a2479f6C079055A6AD3690D95dEDCEf9e1e",
+      "executeWithdrawalUtils": "0xb54C8fB6B2F143dD58f5B00fDE7dA4FA05077B20",
+      "withdrawalHandler": "0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac",
+      "marketUtils": "0x7ffF7ef2fc8Db5159B0046ad49d018A5aB40dB11",
+      "marketStoreUtils": "0x41613136174912714faF4cF0680fB1Acbe0cC7D1",
+      "dataStore": "0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8",
+      "roleStore": "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72",
+      "reader": "0xf60becbba223EEA9495Da3f606753867eC10d139"
     },
     "uniswap": {
       "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -74,25 +105,29 @@
     "chainlink": {
       "wstEthEthPriceFeed": "0x66765301a65dc76F1eec04494E55d939E23f59Bb",
       "ethUsdPriceFeed": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08"
+    },
+    "oneInch": {
+      "router": ""
     }
   },
   "strategies": {
     "stakedGlpStrategy": "",
-    "convertedGlpStrategy": "0xE0DF60d32011b139B86D03347184A92158BdDCdE"
+    "convertedGlpStrategy": "0x07a3f040738eE35AC2eC236504586A64F801c30E"
   },
   "hooks": {
-    "tradingStaking": "0xf95F018F17e05E68262E69A070d106B63Ce55317",
-    "tlc": "0x85da4D806D53120AF8f3Bd2D328549851Da49617"
+    "tradingStaking": "0x053B1e2aB9B52c3BEb27909940c69217641fa071",
+    "tlc": "0x51461a3d67B2489e4879587404a0B51dA166DFd3"
   },
-  "calculator": "0xf96b8cd6619E22A63E91960e8827B74256c913Ef",
+  "calculator": "0xCd6a5d5D7028D3EF48e25B626180b256EF901C4a",
+  "adaptiveFeeCalculator": "",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": "0x2dC02905A19879Be641f050a9659C47725E5d500"
   },
   "staking": {
-    "trading": "0x3D0Ff2Dc469DB700656d55F384758C1209BFa16A",
-    "tlc": "0xD04d22f868316B510F924ee6749aABf2ef3E1ACD",
-    "hlp": ""
+    "trading": "0x3047b56c38fEbe734610a136f3cDA568aDc86125",
+    "tlc": "0x66C834D1Db278299D69C6C3d93Da910304bbb8Fb",
+    "hlp": "0x3633D9e0C17635E2035BC50e352a5B91b1a9052B"
   },
   "rewardDistributor": "",
   "reader": {
@@ -101,9 +136,9 @@
     "liquidation": "0xC53d0ED402829dA090E609fAA47774ffEDB074fa"
   },
   "extension": {
-    "switchCollateralRouter": "",
+    "switchCollateralRouter": "0x707860F2947706ada261efF84bf632707a2bf815",
     "dexter": {
-      "uniswapV3": "",
+      "uniswapV3": "0x773a4deFa1a6ad36b8E1D70e5a408A7D0902a2f9",
       "curve": "",
       "glp": ""
     }

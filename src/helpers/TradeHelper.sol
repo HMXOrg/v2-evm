@@ -438,7 +438,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Calculate the trading fee
     if (_isAdaptiveFee) {
-      _positionFeeBPS = _getAdaptiveFeeBps(_sizeDelta, _position.marketIndex, _positionFeeBPS);
+      _positionFeeBPS = getAdaptiveFeeBps(_sizeDelta, _position.marketIndex, _positionFeeBPS);
     }
 
     _tradingFee = (_absSizeDelta * _positionFeeBPS) / BPS;
@@ -1010,11 +1010,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     PerpStorage(_perpStorage).getGlobalState();
   }
 
-  function _getAdaptiveFeeBps(
+  function getAdaptiveFeeBps(
     int256 _sizeDelta,
     uint256 _marketIndex,
     uint32 _baseFeeBps
-  ) internal view returns (uint32 feeBps) {
+  ) public view returns (uint32 feeBps) {
     (uint256 askDepth, uint256 bidDepth, uint256 coeffVariants) = orderbookOracle.getData(_marketIndex);
     bool isBuy = _sizeDelta > 0;
     uint256 epochOI = PerpStorage(perpStorage).getEpochVolume(isBuy, _marketIndex);

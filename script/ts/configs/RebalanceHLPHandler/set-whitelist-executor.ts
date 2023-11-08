@@ -6,7 +6,7 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
-  const user = config.safe;
+  const user = "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872";
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 

@@ -181,9 +181,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     VaultStorage _vs = VaultStorage(vaultStorage);
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
-    (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
     uint256 _totalAssets = _vs.hlpLiquidity(_assetConfig.tokenAddress) +
       _vs.hlpLiquidityOnHold(_assetConfig.tokenAddress);
+    if (_totalAssets == 0) return 0;
+
+    (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
+
     value = (_totalAssets * _priceE30) / (10 ** _assetConfig.decimals);
   }
 

@@ -15,8 +15,8 @@ async function main() {
   ]);
   await contract.deployed();
 
-  console.log(`Deploying RebalanceHLPv2Handler Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/RebalanceHLPv2Handler] Deploying RebalanceHLPv2Handler Contract`);
+  console.log(`[deploys/RebalanceHLPv2Handler] Deployed at: ${contract.address}`);
 
   config.handlers.rebalanceHLPv2 = contract.address;
   writeConfigFile(config);

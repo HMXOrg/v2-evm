@@ -21,8 +21,8 @@ async function main() {
   ]);
 
   await contract.deployed();
-  console.log(`Deploying RebalanceHLPv2Service Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/RebalanceHLPv2Service] Deploying RebalanceHLPv2Service Contract`);
+  console.log(`[deploys/RebalanceHLPv2Service] Deployed at: ${contract.address}`);
 
   config.services.rebalanceHLPv2 = contract.address;
   writeConfigFile(config);

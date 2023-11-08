@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-import "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";

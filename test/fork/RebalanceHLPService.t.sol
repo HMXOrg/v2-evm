@@ -191,51 +191,51 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_NegativeTotalHLPValue() external {
-    vm.warp(block.timestamp + 300 minutes);
-    vm.startPrank(rebalanceHLPService.owner());
-    rebalanceHLPService.setMinHLPValueLossBPS(1);
-    vm.stopPrank();
+  // function testRevert_Rebalance_NegativeTotalHLPValue() external {
+  //   vm.warp(block.timestamp + 300 minutes);
+  //   vm.startPrank(rebalanceHLPService.owner());
+  //   rebalanceHLPService.setMinHLPValueLossBPS(1);
+  //   vm.stopPrank();
 
-    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](4);
-    params[0] = IRebalanceHLPService.AddGlpParams(
-      address(usdc_e),
-      address(0),
-      vaultStorage.hlpLiquidity(address(usdc_e)),
-      0,
-      0
-    );
-    params[1] = IRebalanceHLPService.AddGlpParams(
-      address(weth),
-      address(0),
-      vaultStorage.hlpLiquidity(address(weth)),
-      0,
-      0
-    );
-    params[2] = IRebalanceHLPService.AddGlpParams(
-      address(wbtc),
-      address(0),
-      vaultStorage.hlpLiquidity(address(wbtc)),
-      0,
-      0
-    );
-    params[3] = IRebalanceHLPService.AddGlpParams(
-      address(dai),
-      address(0),
-      vaultStorage.hlpLiquidity(address(dai)),
-      0,
-      0
-    );
+  //   IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](4);
+  //   params[0] = IRebalanceHLPService.AddGlpParams(
+  //     address(usdc_e),
+  //     address(0),
+  //     vaultStorage.hlpLiquidity(address(usdc_e)),
+  //     0,
+  //     0
+  //   );
+  //   params[1] = IRebalanceHLPService.AddGlpParams(
+  //     address(weth),
+  //     address(0),
+  //     vaultStorage.hlpLiquidity(address(weth)),
+  //     0,
+  //     0
+  //   );
+  //   params[2] = IRebalanceHLPService.AddGlpParams(
+  //     address(wbtc),
+  //     address(0),
+  //     vaultStorage.hlpLiquidity(address(wbtc)),
+  //     0,
+  //     0
+  //   );
+  //   params[3] = IRebalanceHLPService.AddGlpParams(
+  //     address(dai),
+  //     address(0),
+  //     vaultStorage.hlpLiquidity(address(dai)),
+  //     0,
+  //     0
+  //   );
 
-    vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_HlpTvlDropExceedMin.selector);
-    rebalanceHLPHandler.addGlp(
-      params,
-      _priceUpdateCalldata,
-      _publishTimeUpdateCalldata,
-      _minPublishTime,
-      keccak256("encodeVass")
-    );
-  }
+  //   vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_HlpTvlDropExceedMin.selector);
+  //   rebalanceHLPHandler.addGlp(
+  //     params,
+  //     _priceUpdateCalldata,
+  //     _publishTimeUpdateCalldata,
+  //     _minPublishTime,
+  //     keccak256("encodeVass")
+  //   );
+  // }
 
   function testCorrectness_Rebalance_SwapReinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);

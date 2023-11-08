@@ -49,7 +49,7 @@ contract Smoke_Base is ForkEnv {
   OrderReader newOrderReader;
 
   function setUp() public virtual {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 147907984);
 
     uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);
 
@@ -65,6 +65,7 @@ contract Smoke_Base is ForkEnv {
     Deployer.upgrade("ConfigStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.configStorage));
     Deployer.upgrade("PerpStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.perpStorage));
     Deployer.upgrade("LiquidationService", address(ForkEnv.proxyAdmin), address(ForkEnv.liquidationService));
+    Deployer.upgrade("VaultStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.vaultStorage));
 
     newOrderReader = new OrderReader(
       address(ForkEnv.configStorage),
@@ -231,13 +232,13 @@ contract Smoke_Base is ForkEnv {
       0,
       IConfigStorage.MarketConfig({
         assetId: "ETH",
-        maxLongPositionSize: 5000000 * 1e30,
-        maxShortPositionSize: 5000000 * 1e30,
+        maxLongPositionSize: 5500000 * 1e30,
+        maxShortPositionSize: 5500000 * 1e30,
         increasePositionFeeRateBPS: 4, // 0.04%
         decreasePositionFeeRateBPS: 4, // 0.04%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -249,13 +250,13 @@ contract Smoke_Base is ForkEnv {
       1,
       IConfigStorage.MarketConfig({
         assetId: "BTC",
-        maxLongPositionSize: 5000000 * 1e30,
-        maxShortPositionSize: 5000000 * 1e30,
+        maxLongPositionSize: 6000000 * 1e30,
+        maxShortPositionSize: 6000000 * 1e30,
         increasePositionFeeRateBPS: 4, // 0.04%
         decreasePositionFeeRateBPS: 4, // 0.04%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -399,7 +400,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -417,7 +418,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -435,7 +436,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -453,7 +454,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -471,7 +472,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -489,7 +490,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -507,7 +508,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -525,7 +526,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -543,7 +544,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -561,7 +562,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,
@@ -600,7 +601,7 @@ contract Smoke_Base is ForkEnv {
         decreasePositionFeeRateBPS: 7, // 0.07%
         initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
         maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-        maxProfitRateBPS: 250000, // 2500%
+        maxProfitRateBPS: 300000, // 3000%
         assetClass: ASSET_CLASS_CRYPTO,
         allowIncreasePosition: true,
         active: true,

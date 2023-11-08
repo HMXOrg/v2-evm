@@ -178,6 +178,44 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     _validateHLPValue(totalHlpValueBefore);
   }
 
+  function swap(SwapParams memory _params) external onlyWhitelisted returns (uint256 _amountOut) {
+    // Checks
+    // Check if path is valid
+    if (_params.path.length < 2) revert RebalanceHLPService_InvalidPath();
+    // Cast dependencies to local variables to save on SLOADs.
+    IVaultStorage _vaultStorage = vaultStorage;
+    IConfigStorage _configStorage = configStorage;
+    // Check if swap HLP liquidity from one to another is valid
+    _configStorage.validateAcceptedCollateral(_params.path[0]);
+    _configStorage.validateAcceptedCollateral(_params.path[_params.path.length - 1]);
+    // Check if amountIn is valid.
+    if (_params.amountIn == 0) revert RebalanceHLPService_AmountIsZero();
+    // Cache TVL here to check if HLP value drop too much after swap
+    uint256 tvlBefore = calculator.getHLPValueE30(true);
+
+    // Preps
+    (address _tokenIn, address _tokenOut) = (_params.path[0], _params.path[_params.path.length - 1]);
+
+    // Remove HLP liquidity from tokenIn and push to switchRouter.
+    _vaultStorage.removeHLPLiquidity(_tokenIn, _params.amountIn);
+    _vaultStorage.pushToken(_tokenIn, address(switchRouter), _params.amountIn);
+
+    // Run switchRouter, it will send back _tokenOut to this contract
+    _amountOut = switchRouter.execute(uint256(_params.amountIn), _params.path);
+    // Check slippage
+    if (_amountOut < _params.minAmountOut) revert RebalanceHLPService_Slippage();
+
+    // Send last token to VaultStorage and pull
+    IERC20Upgradeable(_tokenOut).safeTransfer(address(_vaultStorage), _amountOut);
+    uint256 _deltaBalance = _vaultStorage.pullToken(_tokenOut);
+    if (_deltaBalance < _amountOut) revert RebalanceHLPService_InvalidTokenAmount();
+    // Increase HLP's liquidity
+    _vaultStorage.addHLPLiquidity(_tokenOut, _amountOut);
+
+    // Check if HLP value drop too much after swap before return
+    _validateHLPValue(tvlBefore);
+  }
+
   function _validateHLPValue(uint256 _valueBefore) internal view {
     uint256 hlpValue = calculator.getHLPValueE30(true);
     if (_valueBefore > hlpValue) {

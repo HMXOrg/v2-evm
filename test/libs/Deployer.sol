@@ -34,6 +34,7 @@ import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler0
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
+import { IRebalanceHLPv2Handler } from "@hmx/handlers/interfaces/IRebalanceHLPv2Handler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
@@ -61,6 +62,8 @@ import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+
+import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
@@ -609,6 +612,54 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IConvertedGlpStrategy(payable(_proxy));
+  }
+
+  function deployRebalanceHLPv2Handler(
+    address _proxyAdmin,
+    address _rebalanceHLPv2Service,
+    address _weth,
+    uint256 _minExecutionFee
+  ) internal returns (IRebalanceHLPv2Handler) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPv2Handler.sol/RebalanceHLPv2Handler.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _rebalanceHLPv2Service,
+      _weth,
+      _minExecutionFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPv2Handler(payable(_proxy));
+  }
+
+  function deployRebalanceHLPv2Service(
+    address _proxyAdmin,
+    address _weth,
+    address _vaultStorage,
+    address _configStorage,
+    address _exchangeRouter,
+    address _depositVault,
+    address _depositHandler,
+    address _withdrawalVault,
+    address _withdrawalHandler
+  ) internal returns (IRebalanceHLPv2Service) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPv2Service.sol/RebalanceHLPv2Service.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,address,address,address,address)")),
+      _weth,
+      _vaultStorage,
+      _configStorage,
+      _exchangeRouter,
+      _depositVault,
+      _depositHandler,
+      _withdrawalVault,
+      _withdrawalHandler
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPv2Service(payable(_proxy));
   }
 
   /**

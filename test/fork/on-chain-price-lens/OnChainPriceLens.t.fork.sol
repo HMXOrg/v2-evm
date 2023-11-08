@@ -31,7 +31,6 @@ contract OnChainPriceLens_ForkTest is ForkEnv, Cheats {
   WstEthUsdPriceAdapter internal wstEthUsdPriceAdapter;
   GlpPriceAdapter internal glpPriceAdapter;
   HlpPriceAdapter internal hlpPriceAdapter;
-  OnChainPriceLens internal onChainPriceLens;
   EcoPythCalldataBuilder2 internal ecoPythCalldataBuilder;
   UnsafeEcoPythCalldataBuilder2 internal unsafeEcoPythCalldataBuilder;
   address constant wstEthPriceFeed = 0xb523AE262D20A936BC152e6023996e46FDC2A95D;

@@ -6,6 +6,7 @@ pragma solidity 0.8.18;
 
 import { MockCalculator } from "./MockCalculator.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { console } from "forge-std/console.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
@@ -119,6 +120,17 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
       return c.getHLPValueE30(_isMaxPrice);
     } else {
       return super.getHLPValueE30(_isMaxPrice);
+    }
+  }
+
+  function getDelta(
+    IPerpStorage.Position memory position,
+    uint256 _markPrice
+  ) public view override returns (bool, uint256) {
+    if (actualFunction[keccak256("getDelta")]) {
+      return c.getDelta(position, _markPrice);
+    } else {
+      return super.getDelta(position, _markPrice);
     }
   }
 

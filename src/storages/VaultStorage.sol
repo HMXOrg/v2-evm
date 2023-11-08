@@ -32,6 +32,14 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     bytes4 newFunctionSig
   );
   event LogAddDevFee(address indexed token, uint256 devFeeAmount);
+  event LogClearOnHold(
+    address indexed token,
+    uint256 clearAmount,
+    uint256 prevTotalAmount,
+    uint256 nextTotalAmount,
+    uint256 prevOnHoldAmount,
+    uint256 nextOnHoldAmount
+  );
 
   /**
    * States
@@ -65,6 +73,8 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => bool) public serviceExecutors;
   // mapping(token => strategy => target => isAllow?)
   mapping(address token => mapping(address strategy => bytes4 functionSig)) public strategyFunctionSigAllowances;
+  // this mapping keeps track of hlpLiquidity that is on hold while being under rebalancing operation
+  mapping(address token => uint256 amount) public hlpLiquidityOnHold;
 
   /**
    * Modifiers
@@ -109,10 +119,25 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function _pullToken(address _token) internal returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
-    uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
+    uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this)) + hlpLiquidityOnHold[_token];
 
     totalAmount[_token] = nextBalance;
+
     return nextBalance - prevBalance;
+  }
+
+  /// @notice Clear on hold amount
+  /// @param _token The token to clear on hold amount
+  /// @param _amount The amount to clear on hold amount
+  function clearOnHold(address _token, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
+    emit LogClearOnHold(
+      _token,
+      _amount,
+      totalAmount[_token],
+      totalAmount[_token] -= _amount,
+      hlpLiquidityOnHold[_token],
+      hlpLiquidityOnHold[_token] -= _amount
+    );
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
@@ -121,7 +146,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function _pushToken(address _token, address _to, uint256 _amount) internal {
     IERC20Upgradeable(_token).safeTransfer(_to, _amount);
-    totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this));
+    totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this)) + hlpLiquidityOnHold[_token];
   }
 
   /**
@@ -194,6 +219,12 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function removeHLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
     if (hlpLiquidity[_token] < _amount) revert IVaultStorage_HLPBalanceRemaining();
+    hlpLiquidity[_token] -= _amount;
+  }
+
+  function removeHLPLiquidityOnHold(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    if (hlpLiquidity[_token] < _amount) revert IVaultStorage_HLPBalanceRemaining();
+    hlpLiquidityOnHold[_token] += _amount;
     hlpLiquidity[_token] -= _amount;
   }
 

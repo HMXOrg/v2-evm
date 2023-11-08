@@ -10,8 +10,8 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      contractAddress: config.services.crossMargin,
-      executorAddress: config.handlers.ext01,
+      contractAddress: config.services.rebalanceHLPv2,
+      executorAddress: config.handlers.rebalanceHLPv2,
       isServiceExecutor: true,
     },
   ];
@@ -37,7 +37,10 @@ async function main(chainId: number) {
     const tx = await configStorage.setServiceExecutors(
       inputs.map((each) => each.contractAddress),
       inputs.map((each) => each.executorAddress),
-      inputs.map((each) => each.isServiceExecutor)
+      inputs.map((each) => each.isServiceExecutor),
+      {
+        gasLimit: 10000000,
+      }
     );
     console.log(`[config/ConfigStorage] tx: ${tx.hash}`);
     await tx.wait();

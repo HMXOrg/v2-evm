@@ -30,6 +30,14 @@ interface IRebalanceHLPHandler {
     bytes32 _encodedVaas
   ) external returns (IRebalanceHLPService.WithdrawGlpResult[] memory result);
 
+  function swap(
+    IRebalanceHLPService.SwapParams calldata _params,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external returns (uint256 amountOut);
+
   // Setters
   function setRebalanceHLPService(address _newService) external;
 

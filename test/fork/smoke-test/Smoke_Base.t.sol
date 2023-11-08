@@ -43,7 +43,7 @@ import { Smoke_Liquidity } from "@hmx-test/fork/smoke-test/Smoke_Liquidity.t.sol
 import { Smoke_MaxProfit } from "@hmx-test/fork/smoke-test/Smoke_MaxProfit.t.sol";
 import { Smoke_Trade } from "@hmx-test/fork/smoke-test/Smoke_Trade.t.sol";
 import { Smoke_TriggerOrder } from "@hmx-test/fork/smoke-test/Smoke_TriggerOrder.t.sol";
-import { RebalanceHLPService_Test } from "@hmx-test/fork/RebalanceHLPService.t.sol";
+import { RebalanceHLPService_Test } from "@hmx-test/fork/rebalance-hlp/RebalanceHLPService.t.sol";
 
 contract Smoke_Base is ForkEnv {
   uint256 internal constant BPS = 10_000;
@@ -53,7 +53,7 @@ contract Smoke_Base is ForkEnv {
   uint256 snapshot;
 
   function setUp() public virtual {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 147907984);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"));
 
     // -- UPGRADE -- //
     vm.startPrank(ForkEnv.proxyAdmin.owner());

@@ -17,9 +17,9 @@ async function main(chainId: number) {
     {
       market: config.tokens.gmETHUSD,
       longToken: config.tokens.weth,
-      longTokenAmount: ethers.utils.parseUnits("105.985453172372690272", 18),
+      longTokenAmount: ethers.utils.parseUnits("718.558387427580082534", 18),
       shortToken: config.tokens.usdcNative,
-      shortTokenAmount: ethers.utils.parseUnits("199955.982395", 6),
+      shortTokenAmount: ethers.utils.parseUnits("1354682.718869", 6),
       minMarketTokens: 0,
       gasLimit: 1000000,
     },

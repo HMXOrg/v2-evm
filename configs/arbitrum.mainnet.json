@@ -103,6 +103,9 @@
     "chainlink": {
       "wstEthEthPriceFeed": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
       "ethUsdPriceFeed": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+    },
+    "oneInch": {
+      "router": "0x1111111254eeb25477b68fb85ed929f73a960582"
     }
   },
   "strategies": {

@@ -170,6 +170,8 @@ abstract contract ForkEnv is Test {
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
+  /// OneInch
+  address internal oneInchRouter = getAddress(".vendors.oneInch.router");
 
   ITradeHelper internal tradeHelper = ITradeHelper(getAddress(".helpers.trade"));
 

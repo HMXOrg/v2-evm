@@ -10,26 +10,23 @@ import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
-  const PARAMS = {
-    amountIn: "188910.898050073004866763",
-    minAmountOut: "105",
-    path: [config.tokens.sglp, config.tokens.weth],
-  };
+  const PARAMS = [
+    // {
+    //   amountIn: "1281586.724641214767559313",
+    //   minAmountOut: "1354900",
+    //   path: [config.tokens.sglp, config.tokens.usdc],
+    // },
+    {
+      amountIn: "1281586.724641214767559313",
+      minAmountOut: "718",
+      path: [config.tokens.sglp, config.tokens.weth],
+    },
+  ];
 
   const chainInfo = chains[chainId];
   const deployer = signers.deployer(chainId);
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
-  const path0Token = ERC20__factory.connect(PARAMS.path[0], deployer);
-  const pathLastToken = ERC20__factory.connect(PARAMS.path[PARAMS.path.length - 1], deployer);
 
-  const [path0Symbol, path0Decimals, pathLastSymbol, pathLastDecimals] = await Promise.all([
-    path0Token.symbol(),
-    path0Token.decimals(),
-    pathLastToken.symbol(),
-    pathLastToken.decimals(),
-  ]);
-
-  console.log(`[commands/RebalanceHLPHandler] Swapping from ${path0Symbol} to ${pathLastSymbol}...`);
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, chainInfo.jsonRpcProvider);
   console.table(readableTable);
@@ -45,18 +42,31 @@ async function main(chainId: number) {
       return;
   }
 
-  const tx = await handler.swap(
-    {
-      amountIn: ethers.utils.parseUnits(PARAMS.amountIn, path0Decimals),
-      minAmountOut: ethers.utils.parseUnits(PARAMS.minAmountOut, pathLastDecimals),
-      path: PARAMS.path,
-    },
-    priceUpdateData,
-    publishTimeDiffUpdateData,
-    minPublishedTime,
-    hashedVaas
-  );
-  console.log(`[commands/RebalanceHLPHandler] Tx: ${tx.hash}`);
+  for (const p of PARAMS) {
+    const path0Token = ERC20__factory.connect(p.path[0], deployer);
+    const pathLastToken = ERC20__factory.connect(p.path[p.path.length - 1], deployer);
+
+    const [path0Symbol, path0Decimals, pathLastSymbol, pathLastDecimals] = await Promise.all([
+      path0Token.symbol(),
+      path0Token.decimals(),
+      pathLastToken.symbol(),
+      pathLastToken.decimals(),
+    ]);
+
+    console.log(`[commands/RebalanceHLPHandler] Swapping from ${path0Symbol} to ${pathLastSymbol}...`);
+    const tx = await handler.swap(
+      {
+        amountIn: ethers.utils.parseUnits(p.amountIn, path0Decimals),
+        minAmountOut: ethers.utils.parseUnits(p.minAmountOut, pathLastDecimals),
+        path: p.path,
+      },
+      priceUpdateData,
+      publishTimeDiffUpdateData,
+      minPublishedTime,
+      hashedVaas
+    );
+    console.log(`[commands/RebalanceHLPHandler] Tx: ${tx.hash}`);
+  }
 }
 
 const program = new Command();

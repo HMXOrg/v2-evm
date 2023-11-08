@@ -13,8 +13,8 @@ import oneInch from "../../entities/one-inch";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const PARAMS = {
-    amountIn: "5000000",
-    minAmountOut: "0",
+    amountIn: "1355074.620818",
+    minAmountOut: "1354600",
     path: [config.tokens.usdc, config.tokens.usdcNative],
   };
 
@@ -58,22 +58,20 @@ async function main(chainId: number) {
   );
   console.log(`[commands/RebalanceHLPHandler] Received swap data from OneInch`);
 
-  console.log(oneInchData.tx.data);
-
-  // console.log(`[commands/RebalanceHLPHandler] Calling the handler...`);
-  // const tx = await handler.oneInchSwap(
-  //   {
-  //     amountIn: ethers.utils.parseUnits(PARAMS.amountIn, path0Decimals),
-  //     minAmountOut: ethers.utils.parseUnits(PARAMS.minAmountOut, pathLastDecimals),
-  //     path: PARAMS.path,
-  //   },
-  //   oneInchData.tx.data,
-  //   priceUpdateData,
-  //   publishTimeDiffUpdateData,
-  //   minPublishedTime,
-  //   hashedVaas
-  // );
-  // console.log(`[commands/RebalanceHLPHandler] Tx: ${tx.hash}`);
+  console.log(`[commands/RebalanceHLPHandler] Calling the handler...`);
+  const tx = await handler.oneInchSwap(
+    {
+      amountIn: ethers.utils.parseUnits(PARAMS.amountIn, path0Decimals),
+      minAmountOut: ethers.utils.parseUnits(PARAMS.minAmountOut, pathLastDecimals),
+      path: PARAMS.path,
+    },
+    oneInchData.tx.data,
+    priceUpdateData,
+    publishTimeDiffUpdateData,
+    minPublishedTime,
+    hashedVaas
+  );
+  console.log(`[commands/RebalanceHLPHandler] Tx: ${tx.hash}`);
 }
 
 const program = new Command();

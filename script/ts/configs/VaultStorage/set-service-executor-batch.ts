@@ -14,7 +14,7 @@ async function main(chainId: number) {
   ];
 
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
 
   console.log("[configs/VaultStorage] Proposing to set service executors...");

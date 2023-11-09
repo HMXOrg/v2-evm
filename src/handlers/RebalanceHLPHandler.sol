@@ -93,6 +93,20 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     amountOut = service.swap(_params);
   }
 
+  function oneInchSwap(
+    IRebalanceHLPService.SwapParams calldata _params,
+    bytes calldata _oneInchData,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external nonReentrant onlyWhitelisted returns (uint256 amountOut) {
+    // Update the price and publish time data using the Pyth oracle
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    // Execute logic at Service
+    amountOut = service.oneInchSwap(_params, _oneInchData);
+  }
+
   function setWhitelistExecutor(address _executor, bool _isAllow) external onlyOwner {
     if (_executor == address(0)) {
       revert RebalanceHLPHandler_AddressIsZero();

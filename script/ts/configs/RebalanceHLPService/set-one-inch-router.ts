@@ -10,11 +10,12 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   console.log(`[configs/RebalanceHLPHandler] Set one inch router`);
-  const handler = RebalanceHLPService__factory.connect(config.handlers.rebalanceHLP, deployer);
+  const handler = RebalanceHLPService__factory.connect(config.services.rebalanceHLP, deployer);
   const tx = await safeWrapper.proposeTransaction(
     handler.address,
     0,
-    handler.interface.encodeFunctionData("setOneInchRouter", [config.vendors.oneInch.router])
+    handler.interface.encodeFunctionData("setOneInchRouter", [config.vendors.oneInch.router]),
+    { nonce: 381 }
   );
   console.log(`[configs/RebalanceHLPHandler] Proposed tx: ${tx}`);
 }

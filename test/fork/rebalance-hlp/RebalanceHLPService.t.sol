@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-import "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
@@ -12,20 +12,18 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { Smoke_Base } from "@hmx-test/fork/smoke-test/Smoke_Base.t.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
-contract RebalanceHLPService_Test is Smoke_Base {
+contract RebalanceHLPService_Test is ForkEnv {
   uint24[] internal publishTimeDiffs;
 
-  uint256 fixedBlock = 121867415;
   int24[] tickPrices;
 
   uint256 _minPublishTime;
   bytes32[] _priceUpdateCalldata;
   bytes32[] _publishTimeUpdateCalldata;
 
-  function setUp() public override {
-    super.setUp();
-
+  constructor() {
     tickPrices = new int24[](3);
     // USDC Price
     tickPrices[0] = 0;
@@ -44,17 +42,18 @@ contract RebalanceHLPService_Test is Smoke_Base {
     (_minPublishTime, _priceUpdateCalldata, _publishTimeUpdateCalldata) = ForkEnv.ecoPythBuilder.build(data);
   }
 
-  function testCorrectness_Rebalance_ReinvestSuccess() external {
+  function reinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
-    uint256 usdcAmount = 1000 * 1e6;
-    uint256 wethAmount = 10 * 1e18;
-
-    params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 990 * 1e6, 100);
-    params[1] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), wethAmount, 95 * 1e16, 100);
 
     uint256 usdcBefore = vaultStorage.hlpLiquidity(address(usdc_e));
     uint256 wethBefore = vaultStorage.hlpLiquidity(address(weth));
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
+
+    uint256 usdcAmount = HMXLib.min(1000 * 1e6, usdcBefore);
+    uint256 wethAmount = HMXLib.min(10 * 1e18, wethBefore);
+
+    params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), wethAmount, 95 * 1e16, 100);
 
     uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
@@ -76,7 +75,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     assertEq(IERC20Upgradeable(address(weth)).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 
-  function testCorrectness_Rebalance_WithdrawSuccess() external {
+  function withdrawSuccess() external {
     vm.roll(110369564);
 
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
@@ -137,7 +136,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     assertEq(block.number, 110369564);
   }
 
-  function testRevert_Rebalance_EmptyParams() external {
+  function emptyParams() external {
     IRebalanceHLPService.AddGlpParams[] memory params;
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_ParamsIsEmpty.selector);
     rebalanceHLPHandler.addGlp(
@@ -149,7 +148,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_OverAmount() external {
+  function overAmount() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
     uint256 usdcAmount = vaultStorage.hlpLiquidity(address(usdc_e)) + 1;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
@@ -163,7 +162,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_NotWhitelisted() external {
+  function notWhitelisted() external {
     IRebalanceHLPService.AddGlpParams[] memory params;
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_NotWhiteListed.selector);
     vm.prank(ALICE);
@@ -176,7 +175,7 @@ contract RebalanceHLPService_Test is Smoke_Base {
     );
   }
 
-  function testRevert_Rebalance_WithdrawExceedingAmount() external {
+  function withdrawExceedingAmount() external {
     IRebalanceHLPService.WithdrawGlpParams[] memory params = new IRebalanceHLPService.WithdrawGlpParams[](1);
     params[0] = IRebalanceHLPService.WithdrawGlpParams(address(usdc_e), 1e30, 0);
 
@@ -236,20 +235,21 @@ contract RebalanceHLPService_Test is Smoke_Base {
   //   );
   // }
 
-  function testCorrectness_Rebalance_SwapReinvestSuccess() external {
+  function swapReinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
-    uint256 arbAmount = 10 * 1e18;
+
+    uint256 usdcBefore = vaultStorage.hlpLiquidity(address(usdc_e));
+    uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
+
+    uint256 usdcAmount = HMXLib.min(10 * 1e6, usdcBefore);
 
     params[0] = IRebalanceHLPService.AddGlpParams(
-      address(arb), // to be swapped
+      address(usdc_e), // to be swapped
       address(weth), // to be received
-      arbAmount,
-      95 * 1e16,
+      usdcAmount,
+      8 * 1e6,
       100
     );
-
-    uint256 arbBefore = vaultStorage.hlpLiquidity(address(arb));
-    uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
 
     uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
@@ -259,8 +259,8 @@ contract RebalanceHLPService_Test is Smoke_Base {
       keccak256("encodeVass")
     );
 
-    // ARB
-    assertEq(vaultStorage.hlpLiquidity(address(arb)), arbBefore - arbAmount);
+    // USDC
+    assertEq(vaultStorage.hlpLiquidity(address(usdc_e)), usdcBefore - usdcAmount);
     // sGLP
     assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
 

@@ -9,15 +9,11 @@ import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import "forge-std/console.sol";
 
-contract Smoke_Liquidate is Smoke_Base {
+contract Smoke_Liquidate is ForkEnv {
   address[] internal activeSubAccounts;
 
-  function setUp() public virtual override {
-    super.setUp();
-  }
-
   // for shorter time
-  function testCorrectness_SmokeTest_liquidate() external {
+  function liquidate() external {
     (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
     (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
     address[] memory liqSubAccounts = new address[](10);

@@ -7,8 +7,8 @@ import { compareAddress } from "../../utils/address";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
-  const user = config.safe;
   const deployer = signers.deployer(chainId);
+  const user = await deployer.getAddress();
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   console.log(`[configs/RebalanceHLPHandler] Set whitelist to address: ${user}`);

@@ -11,16 +11,20 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { console } from "forge-std/console.sol";
+import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 
-contract Smoke_MaxProfit is Smoke_Base {
+contract Smoke_MaxProfit is ForkEnv {
   error Smoke_MaxProfit_NoPosition();
   error Smoke_MaxProfit_NoFilteredPosition();
 
-  function setUp() public virtual override {
-    super.setUp();
+  UncheckedEcoPythCalldataBuilder uncheckedBuilder;
+
+  constructor() {
+    uncheckedBuilder = new UncheckedEcoPythCalldataBuilder(ForkEnv.ecoPyth2, ForkEnv.glpManager, ForkEnv.sglp);
   }
 
-  function testCorrectness_SmokeTest_forceCloseMaxProfit() external {
+  function forceCloseMaxProfit() external {
     IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(1, 0);
     IPerpStorage.Position memory position = positions[0];
     bool isLong = position.positionSizeE30 > 0;

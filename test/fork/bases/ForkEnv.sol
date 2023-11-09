@@ -246,11 +246,13 @@ abstract contract ForkEnv is Test {
     view
     returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
   {
-    int24[] memory tickPrices = new int24[](34);
-    uint24[] memory publishTimeDiffs = new uint24[](34);
-    for (uint i = 0; i < 34; i++) {
-      tickPrices[i] = 0;
-      publishTimeDiffs[i] = 0;
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+    int24[] memory tickPrices = new int24[](len - 1);
+    uint24[] memory publishTimeDiffs = new uint24[](len - 1);
+    for (uint i = 1; i < len; i++) {
+      tickPrices[i - 1] = 0;
+      publishTimeDiffs[i - 1] = 0;
     }
 
     priceUpdateData = ForkEnv.ecoPyth2.buildPriceUpdateData(tickPrices);

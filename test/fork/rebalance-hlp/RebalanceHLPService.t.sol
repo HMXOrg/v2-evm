@@ -44,15 +44,16 @@ contract RebalanceHLPService_Test is ForkEnv {
 
   function reinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
-    uint256 usdcAmount = 1000 * 1e6;
-    uint256 wethAmount = 10 * 1e18;
-
-    params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 990 * 1e6, 100);
-    params[1] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), wethAmount, 95 * 1e16, 100);
 
     uint256 usdcBefore = vaultStorage.hlpLiquidity(address(usdc_e));
     uint256 wethBefore = vaultStorage.hlpLiquidity(address(weth));
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
+
+    uint256 usdcAmount = HMXLib.min(1000 * 1e6, usdcBefore);
+    uint256 wethAmount = HMXLib.min(10 * 1e18, wethBefore);
+
+    params[0] = IRebalanceHLPService.AddGlpParams(address(usdc_e), address(0), usdcAmount, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.AddGlpParams(address(weth), address(0), wethAmount, 95 * 1e16, 100);
 
     uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
@@ -236,18 +237,19 @@ contract RebalanceHLPService_Test is ForkEnv {
 
   function swapReinvestSuccess() external {
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
-    uint256 arbAmount = 10 * 1e18;
+
+    uint256 usdcBefore = vaultStorage.hlpLiquidity(address(usdc_e));
+    uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
+
+    uint256 usdcAmount = HMXLib.min(10 * 1e6, usdcBefore);
 
     params[0] = IRebalanceHLPService.AddGlpParams(
-      address(arb), // to be swapped
+      address(usdc_e), // to be swapped
       address(weth), // to be received
-      arbAmount,
-      95 * 1e16,
+      usdcAmount,
+      8 * 1e6,
       100
     );
-
-    uint256 arbBefore = vaultStorage.hlpLiquidity(address(arb));
-    uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
 
     uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
@@ -257,8 +259,8 @@ contract RebalanceHLPService_Test is ForkEnv {
       keccak256("encodeVass")
     );
 
-    // ARB
-    assertEq(vaultStorage.hlpLiquidity(address(arb)), arbBefore - arbAmount);
+    // USDC
+    assertEq(vaultStorage.hlpLiquidity(address(usdc_e)), usdcBefore - usdcAmount);
     // sGLP
     assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
 

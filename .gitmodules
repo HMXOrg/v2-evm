@@ -24,6 +24,3 @@
 [submodule "lib/uni-v3-lib"]
 	path = lib/uni-v3-lib
 	url = https://github.com/HMXOrg/uni-v3-lib
-[submodule "lib/balancer-v2-monorepo"]
-	path = lib/balancer-v2-monorepo
-	url = https://github.com/balancer/balancer-v2-monorepo

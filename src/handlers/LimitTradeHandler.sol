@@ -17,6 +17,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { WordCodec } from "@hmx/libraries/WordCodec.sol";
 
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
@@ -352,43 +353,36 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address tpToken;
   }
 
-  /// @notice Batch multiple commands to a one single transaction.
-  /// @dev Support delegate and enforce a hard auth.
-  /// @dev This is useful for a better UX to handle TP/SL.
-  /// @param _mainAccount The owner of these actions.
-  /// @param _subAccountId The sub account id.
-  /// @param _cmds The commands to be executed.
-  /// @param _datas The data for each command.
-  function batch(
-    address _mainAccount,
-    uint8 _subAccountId,
-    Command[] calldata _cmds,
-    bytes[] calldata _datas
-  ) external payable nonReentrant delegate(_mainAccount) {
+  function batch(bytes32 _accountAndSubAccountId, bytes32[] calldata _cmds) external payable nonReentrant {
+    address _mainAccount = address(uint160(_accountAndSubAccountId.decodeUint(0, 160)));
+    uint8 _subAccountId = uint8(_accountAndSubAccountId.decodeUint(160, 8));
+
+    _delegate(_mainAccount);
     // Check if overrided _msgSender() is the same as _mainAccount.
     // If msg.sender is not a delegatee, _msgSender() won't be overrided
     // which then makes _msgSender() to become msg.sender not the _mainAccount.
     if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
-    // Check if _cmds's len match with _data's len
-    if (_cmds.length != _datas.length) revert ILimitTradeHandler_BadCalldata();
 
     // Execute commands
     // _expectedMsgValue is used for check after cmds are executed
     uint256 _expectedMsgValue = 0;
+    TradeService _tradeService = TradeService(tradeService);
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
+    address[] memory _tpTokens = _configStorage.getHlpTokens();
     for (uint i = 0; i < _cmds.length; ) {
-      if (_cmds[i] == Command.Create) {
+      Command _cmd = Command(_cmds[i].decodeUint(0, 3));
+      if (_cmd == Command.Create) {
         // Perform the create order command
         BatchCreateOrderLocalVars memory _localVars;
-        (
-          _localVars.marketIndex,
-          _localVars.sizeDelta,
-          _localVars.triggerPrice,
-          _localVars.acceptablePrice,
-          _localVars.triggerAboveThreshold,
-          _localVars.executionFee,
-          _localVars.reduceOnly,
-          _localVars.tpToken
-        ) = abi.decode(_datas[i], (uint256, int256, uint256, uint256, bool, uint256, bool, address));
+        _localVars.marketIndex = _cmds[i].decodeUint(3, 8);
+        _localVars.sizeDelta = _cmds[i].decodeInt(11, 54);
+        _localVars.triggerPrice = _cmds[i].decodeUint(65, 54);
+        _localVars.acceptablePrice = _cmds[i].decodeUint(119, 54);
+        _localVars.triggerAboveThreshold = _cmds[i].decodeBool(183);
+        _localVars.executionFee = _cmds[i].decodeUint(184, 27);
+        _localVars.reduceOnly = _cmds[i].decodeBool(211);
+        _localVars.tpToken = _tpTokens[uint256(_cmds[i].decodeUint(212, 7))];
+
         // Check execution fee to make sure it is > minExecution before create an order.
         if (_localVars.executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
         // Optimistically create order here w/o checking if provided msg.value
@@ -406,17 +400,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         );
         // Update expectedMsgValue
         _expectedMsgValue += _localVars.executionFee;
-      } else if (_cmds[i] == Command.Update) {
+      } else if (_cmd == Command.Update) {
         BatchUpdateOrderLocalVars memory _localVars;
-        (
-          _localVars.orderIndex,
-          _localVars.sizeDelta,
-          _localVars.triggerPrice,
-          _localVars.acceptablePrice,
-          _localVars.triggerAboveThreshold,
-          _localVars.reduceOnly,
-          _localVars.tpToken
-        ) = abi.decode(_datas[i], (uint256, int256, uint256, uint256, bool, bool, address));
+        _localVars.orderIndex = _cmds[i].decodeUint(3, 32);
+        _localVars.sizeDelta = _cmds[i].decodeInt(35, 54);
+        _localVars.triggerPrice = _cmds[i].decodeUint(89, 54);
+        _localVars.acceptablePrice = _cmds[i].decodeUint(143, 54);
+        _localVars.triggerAboveThreshold = _cmds[i].decodeBool(197);
+        _localVars.reduceOnly = _cmds[i].decodeBool(198);
+        _localVars.tpToken = _tpTokens[uint256(_cmds[i].decodeUint(199, 7))];
         _updateOrder(
           _mainAccount,
           _subAccountId,
@@ -428,9 +420,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           _localVars.reduceOnly,
           _localVars.tpToken
         );
-      } else if (_cmds[i] == Command.Cancel) {
+      } else if (_cmd == Command.Cancel) {
         // Perform the cancel order command
-        uint256 _orderIndex = abi.decode(_datas[i], (uint256));
+        uint256 _orderIndex = _cmds[i].decodeUint(3, 32);
         address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
         LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
         // Check if order still exists
@@ -449,6 +441,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     if (msg.value != _expectedMsgValue) revert ILimitTradeHandler_InsufficientExecutionFee();
     // Transfer in the native token to be used as execution fee
     _transferInETH();
+    senderOverride = address(0);
   }
 
   function _createOrder(

@@ -30,20 +30,20 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("BCH"),
-      maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("2500000", 30),
-      increasePositionFeeRateBPS: 7, // 0.07%
-      decreasePositionFeeRateBPS: 7, // 0.07%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
+      assetId: ethers.utils.formatBytes32String("DIX"),
+      maxLongPositionSize: ethers.utils.parseUnits("3000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("3000000", 30),
+      increasePositionFeeRateBPS: 1, // 0.01%
+      decreasePositionFeeRateBPS: 1, // 0.01%
+      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
+      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
       maxProfitRateBPS: 250000, // 2500%
-      assetClass: assetClasses.crypto,
+      assetClass: assetClasses.forex,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
+        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
+        maxFundingRate: ethers.utils.parseUnits("1", 18), // 800% per day
       },
     },
   ];

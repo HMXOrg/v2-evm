@@ -10,8 +10,9 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  await (await configStorage.removeHlpAssetId(8)).wait();
-  console.log(await configStorage.getHlpAssetIds());
+  console.log(ethers.utils.formatBytes32String("MEME"));
+  console.log(ethers.utils.formatBytes32String("SEK"));
+  console.log(ethers.utils.formatBytes32String("DIX"));
 }
 
 main().catch((error) => {

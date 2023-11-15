@@ -73,6 +73,7 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { LimitTradeOrderBuilder } from "@hmx/helpers/LimitTradeOrderBuilder.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
@@ -157,6 +158,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   // Executor
   IExt01Handler ext01Handler;
+
+  LimitTradeOrderBuilder limitTradeOrderBuilder;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -298,7 +301,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       maxExecutionChuck
     );
 
-
     // deploy executor
     ext01Handler = Deployer.deployExt01Handler(
       address(proxyAdmin),
@@ -396,5 +398,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       crossMarginHandler.setOrderExecutor(address(this), true);
     }
+
+    limitTradeOrderBuilder = new LimitTradeOrderBuilder(address(configStorage));
   }
 }

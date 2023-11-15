@@ -15,14 +15,12 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
-
 contract TC41 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
   uint8 subAccountId = 0;
 
   // Batch cancel multiple order
   function testCorrectness_TC41_batchCancelLimitTradeOrder() external {
-
     address _tokenAddress = address(weth);
 
     // T0: Initialized state
@@ -41,7 +39,7 @@ contract TC41 is BaseIntTest_WithActions {
     // BOB add liquidity
     addLiquidity(BOB, usdc, 10_000_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
-    // Deposit Collateral   
+    // Deposit Collateral
     depositCollateral(ALICE, subAccountId, ERC20(_tokenAddress), 10 ether, true);
 
     address _aliceSubAccount0 = getSubAccount(ALICE, subAccountId);
@@ -49,41 +47,41 @@ contract TC41 is BaseIntTest_WithActions {
     // Create Limit Orders
     {
       createLimitTradeOrder({
-        _account: ALICE, 
-        _subAccountId: subAccountId, 
-        _marketIndex: wethMarketIndex, 
-        _sizeDelta: 1_000 * 1e30, 
-        _triggerPrice: 0, 
-        _acceptablePrice: type(uint256).max, 
-        _triggerAboveThreshold: true, 
-        _executionFee: 0.0001 ether, 
-        _reduceOnly: false, 
+        _account: ALICE,
+        _subAccountId: subAccountId,
+        _marketIndex: wethMarketIndex,
+        _sizeDelta: 1_000 * 1e30,
+        _triggerPrice: 0,
+        _acceptablePrice: type(uint256).max,
+        _triggerAboveThreshold: true,
+        _executionFee: 0.0001 ether,
+        _reduceOnly: false,
         _tpToken: _tokenAddress
-        }); 
+      });
       createLimitTradeOrder({
-        _account: ALICE, 
-        _subAccountId: subAccountId, 
-        _marketIndex: wbtcMarketIndex, 
-        _sizeDelta: 1_000 * 1e30, 
-        _triggerPrice: 0, 
-        _acceptablePrice: type(uint256).max, 
-        _triggerAboveThreshold: true, 
-        _executionFee: 0.0001 ether, 
-        _reduceOnly: false, 
+        _account: ALICE,
+        _subAccountId: subAccountId,
+        _marketIndex: wbtcMarketIndex,
+        _sizeDelta: 1_000 * 1e30,
+        _triggerPrice: 0,
+        _acceptablePrice: type(uint256).max,
+        _triggerAboveThreshold: true,
+        _executionFee: 0.0001 ether,
+        _reduceOnly: false,
         _tpToken: _tokenAddress
-        }); 
+      });
       createLimitTradeOrder({
-        _account: ALICE, 
-        _subAccountId: subAccountId, 
-        _marketIndex: jpyMarketIndex, 
-        _sizeDelta: 1_000 * 1e30, 
-        _triggerPrice: 0, 
-        _acceptablePrice: type(uint256).max, 
-        _triggerAboveThreshold: true, 
-        _executionFee: 0.0001 ether, 
-        _reduceOnly: false, 
+        _account: ALICE,
+        _subAccountId: subAccountId,
+        _marketIndex: jpyMarketIndex,
+        _sizeDelta: 1_000 * 1e30,
+        _triggerPrice: 0,
+        _acceptablePrice: type(uint256).max,
+        _triggerAboveThreshold: true,
+        _executionFee: 0.0001 ether,
+        _reduceOnly: false,
         _tpToken: _tokenAddress
-        }); 
+      });
     }
 
     // Check orders length after create
@@ -94,19 +92,24 @@ contract TC41 is BaseIntTest_WithActions {
     }
 
     // Batch Cancel Order
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(ALICE, 0);
     {
       vm.startPrank(ALICE);
       // Get all limit order
-      ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
-      uint256[] memory _orderIndexes = new uint256[](_orders.length);
+      ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(
+        _aliceSubAccount0,
+        5,
+        0
+      );
+      bytes32[] memory _cmds = new bytes32[](_orders.length);
       // Populate _orderIndexes with order get
-      for (uint256 _i; _i < _orders.length;) {
-        _orderIndexes[_i] = _orders[_i].orderIndex;
+      for (uint256 _i; _i < _orders.length; ) {
+        _cmds[_i] = limitTradeOrderBuilder.buildCancelOrder(_orders[_i].orderIndex);
         unchecked {
           ++_i;
         }
       }
-      limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
+      limitTradeHandler.batch(accountAndSubAccountId, _cmds);
       vm.stopPrank();
     }
 
@@ -143,12 +146,17 @@ contract TC41 is BaseIntTest_WithActions {
     assertEq(limitOrder.account, ALICE);
 
     // Get all limit order
-    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
-    uint256[] memory _orderIndexes = new uint256[](1);
+    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(
+      _aliceSubAccount0,
+      5,
+      0
+    );
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(ALICE, 0);
+    bytes32[] memory _cmds = new bytes32[](1);
     // Populate _orderIndexes with order get
-    _orderIndexes[0] = _orders[0].orderIndex;
+    _cmds[0] = limitTradeOrderBuilder.buildCancelOrder(_orders[0].orderIndex);
     // Cancel Order
-    limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
+    limitTradeHandler.batch(accountAndSubAccountId, _cmds);
 
     (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
@@ -179,16 +187,25 @@ contract TC41 is BaseIntTest_WithActions {
     assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 1);
 
     // Get all limit order
-    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0);
-    uint256[] memory _orderIndexes = new uint256[](2);
+    ILimitTradeHandler.LimitOrder[] memory _orders = limitTradeHandler.getAllActiveOrdersBySubAccount(
+      _aliceSubAccount0,
+      5,
+      0
+    );
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(ALICE, 0);
+    bytes32[] memory _cmds = new bytes32[](2);
     // Populate _orderIndexes with order get
-    _orderIndexes[0] = _orders[0].orderIndex;
-    _orderIndexes[1] = 99;
+    _cmds[0] = limitTradeOrderBuilder.buildCancelOrder(_orders[0].orderIndex);
+    _cmds[1] = limitTradeOrderBuilder.buildCancelOrder(99);
     // Batch cancel orders with one non-existed order
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.batchCancelOrders(ALICE, subAccountId, _orderIndexes);
+    limitTradeHandler.batch(accountAndSubAccountId, _cmds);
 
     // Order still not cancelled
-    assertEq(limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length, 1, "Order should not be cancelled");
+    assertEq(
+      limitTradeHandler.getAllActiveOrdersBySubAccount(_aliceSubAccount0, 5, 0).length,
+      1,
+      "Order should not be cancelled"
+    );
   }
 }

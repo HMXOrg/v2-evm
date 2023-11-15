@@ -48,7 +48,8 @@
       "wstEth": "0x9eD51928Ec61c4e5dc0D48b38C828f89687467E6",
       "hlp": "0x0266868d1c144a7534513F38B816c1aadE4030A2",
       "gmBTCUSD": "0x85680bba8a94c9be1DDd7Be802885DFCe95F8164",
-      "gmETHUSD": "0x700083c72eBc86CbFc865830F5706a2DbC392f26"
+      "gmETHUSD": "0x700083c72eBc86CbFc865830F5706a2DbC392f26",
+      "dix": ""
     },
     "orderbook": ""
   },

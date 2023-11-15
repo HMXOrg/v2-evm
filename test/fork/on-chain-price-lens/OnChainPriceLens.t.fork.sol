@@ -31,6 +31,7 @@ contract OnChainPriceLens_ForkTest is ForkEnv, Cheats {
   WstEthUsdPriceAdapter internal wstEthUsdPriceAdapter;
   GlpPriceAdapter internal glpPriceAdapter;
   HlpPriceAdapter internal hlpPriceAdapter;
+  OnChainPriceLens internal _onChainPriceLens;
   EcoPythCalldataBuilder2 internal ecoPythCalldataBuilder;
   UnsafeEcoPythCalldataBuilder2 internal unsafeEcoPythCalldataBuilder;
   address constant wstEthPriceFeed = 0xb523AE262D20A936BC152e6023996e46FDC2A95D;
@@ -47,7 +48,7 @@ contract OnChainPriceLens_ForkTest is ForkEnv, Cheats {
     glpPriceAdapter = new GlpPriceAdapter(ForkEnv.sglp, ForkEnv.glpManager);
     hlpPriceAdapter = new HlpPriceAdapter(ForkEnv.hlp, ForkEnv.calculator);
 
-    onChainPriceLens = new OnChainPriceLens();
+    _onChainPriceLens = new OnChainPriceLens();
 
     bytes32[] memory priceIds = new bytes32[](2);
     priceIds[0] = "GLP";
@@ -55,10 +56,10 @@ contract OnChainPriceLens_ForkTest is ForkEnv, Cheats {
     IPriceAdapter[] memory priceAdapters = new IPriceAdapter[](2);
     priceAdapters[0] = glpPriceAdapter;
     priceAdapters[1] = wstEthUsdPriceAdapter;
-    onChainPriceLens.setPriceAdapters(priceIds, priceAdapters);
+    _onChainPriceLens.setPriceAdapters(priceIds, priceAdapters);
 
-    ecoPythCalldataBuilder = new EcoPythCalldataBuilder2(ForkEnv.ecoPyth2, onChainPriceLens, false);
-    unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder2(ForkEnv.ecoPyth2, onChainPriceLens, false);
+    ecoPythCalldataBuilder = new EcoPythCalldataBuilder2(ForkEnv.ecoPyth2, _onChainPriceLens, false);
+    unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder2(ForkEnv.ecoPyth2, _onChainPriceLens, false);
 
     vm.startPrank(ForkEnv.multiSig);
     ForkEnv.ecoPyth2.insertAssetId("wstETH");
@@ -81,10 +82,10 @@ contract OnChainPriceLens_ForkTest is ForkEnv, Cheats {
   }
 
   function testCorrectness_OnChainPriceLens_getPrice() external {
-    uint256 wstEthUsdPrice = onChainPriceLens.getPrice("wstETH");
+    uint256 wstEthUsdPrice = _onChainPriceLens.getPrice("wstETH");
     assertEq(wstEthUsdPrice, 1857.620239758899083350 ether);
 
-    uint256 glpPrice = onChainPriceLens.getPrice("GLP");
+    uint256 glpPrice = _onChainPriceLens.getPrice("GLP");
     assertEq(glpPrice, 0.948534563693319704 ether);
   }
 

@@ -371,24 +371,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     MarketConfig calldata _newConfig,
     bool _isAdaptiveFeeEnabled
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
-    return _setMarketConfig(_marketIndex, _newConfig);
-  }
-
-  function setMarketConfigs(uint256[] calldata _marketIndexes, MarketConfig[] calldata _newConfigs) external onlyOwner {
-    if (_marketIndexes.length != _newConfigs.length) revert IConfigStorage_BadLen();
-
-    for (uint256 i = 0; i < _marketIndexes.length; ) {
-      _setMarketConfig(_marketIndexes[i], _newConfigs[i]);
-      unchecked {
-        ++i;
-      }
-    }
-  }
-
-  function _setMarketConfig(
-    uint256 _marketIndex,
-    MarketConfig calldata _newConfig
-  ) internal returns (MarketConfig memory _marketConfig) {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
     if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
@@ -397,7 +379,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
-    // isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
+    isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
     return _newConfig;
   }
 
@@ -631,12 +613,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     delete assetHlpTokenConfigs[_assetId];
 
     emit LogRemoveUnderlying(_token);
-  }
-
-  function removeHlpAssetId(uint256 _i) external {
-    uint256 _len = hlpAssetIds.length;
-    hlpAssetIds[_i] = hlpAssetIds[_len - 1];
-    hlpAssetIds.pop();
   }
 
   function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {

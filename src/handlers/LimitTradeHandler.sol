@@ -31,6 +31,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   using EnumerableSet for EnumerableSet.UintSet;
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for int256;
+  using WordCodec for bytes32;
 
   /**
    * Events
@@ -232,11 +233,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   }
 
   modifier delegate(address _mainAccount) {
+    _delegate(_mainAccount);
+    _;
+    senderOverride = address(0);
+  }
+
+  function _delegate(address _mainAccount) internal {
     if (delegations[_mainAccount] == msg.sender) {
       senderOverride = _mainAccount;
     }
-    _;
-    senderOverride = address(0);
   }
 
   function _msgSender() internal view override returns (address) {
@@ -250,9 +255,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /**
    * Core Functions
    */
-  function setDelegate(address _delegate) external {
-    delegations[msg.sender] = _delegate;
-    emit LogSetDelegate(msg.sender, _delegate);
+  function setDelegate(address _delegateAddress) external {
+    delegations[msg.sender] = _delegateAddress;
+    emit LogSetDelegate(msg.sender, _delegateAddress);
   }
 
   function createOrder(
@@ -375,11 +380,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         // Perform the create order command
         BatchCreateOrderLocalVars memory _localVars;
         _localVars.marketIndex = _cmds[i].decodeUint(3, 8);
-        _localVars.sizeDelta = _cmds[i].decodeInt(11, 54);
-        _localVars.triggerPrice = _cmds[i].decodeUint(65, 54);
-        _localVars.acceptablePrice = _cmds[i].decodeUint(119, 54);
+        _localVars.sizeDelta = _cmds[i].decodeInt(11, 54) * 1e22;
+        _localVars.triggerPrice = _cmds[i].decodeUint(65, 54) * 1e22;
+        _localVars.acceptablePrice = _cmds[i].decodeUint(119, 54) * 1e22;
         _localVars.triggerAboveThreshold = _cmds[i].decodeBool(183);
-        _localVars.executionFee = _cmds[i].decodeUint(184, 27);
+        _localVars.executionFee = _cmds[i].decodeUint(184, 27) * 1e10;
         _localVars.reduceOnly = _cmds[i].decodeBool(211);
         _localVars.tpToken = _tpTokens[uint256(_cmds[i].decodeUint(212, 7))];
 
@@ -403,9 +408,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       } else if (_cmd == Command.Update) {
         BatchUpdateOrderLocalVars memory _localVars;
         _localVars.orderIndex = _cmds[i].decodeUint(3, 32);
-        _localVars.sizeDelta = _cmds[i].decodeInt(35, 54);
-        _localVars.triggerPrice = _cmds[i].decodeUint(89, 54);
-        _localVars.acceptablePrice = _cmds[i].decodeUint(143, 54);
+        _localVars.sizeDelta = _cmds[i].decodeInt(35, 54) * 1e22;
+        _localVars.triggerPrice = _cmds[i].decodeUint(89, 54) * 1e22;
+        _localVars.acceptablePrice = _cmds[i].decodeUint(143, 54) * 1e22;
         _localVars.triggerAboveThreshold = _cmds[i].decodeBool(197);
         _localVars.reduceOnly = _cmds[i].decodeBool(198);
         _localVars.tpToken = _tpTokens[uint256(_cmds[i].decodeUint(199, 7))];
@@ -863,31 +868,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     _cancelOrder(_order, _subAccount, _orderIndex);
-  }
-
-  function batchCancelOrders(
-    address _mainAccount,
-    uint8 _subAccountId,
-    uint256[] calldata _orderIndices
-  ) external nonReentrant delegate(_mainAccount) {
-    // Check if overrided _msgSender() is the same as _mainAccount.
-    // If msg.sender is not a delegatee, _msgSender() won't be overrided
-    // which then makes _msgSender() to become msg.sender not the _mainAccount.
-    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
-
-    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
-    uint256 _len = _orderIndices.length;
-    for (uint256 _i; _i < _len;) {
-      uint256 _orderIndex = _orderIndices[_i];
-      LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
-      // Check if this order still exists
-      if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
-
-      _cancelOrder(_order, _subAccount, _orderIndex);
-      unchecked {
-        ++_i;
-      }
-    }
   }
 
   function _cancelOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {

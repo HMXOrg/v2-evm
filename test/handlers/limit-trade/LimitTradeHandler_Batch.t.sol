@@ -9,11 +9,13 @@ import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";
 
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { LimitTradeOrderBuilder } from "@hmx/helpers/LimitTradeOrderBuilder.sol";
 
 contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
   bytes[] internal priceData;
   bytes32[] internal priceUpdateData;
   bytes32[] internal publishTimeUpdateData;
+  LimitTradeOrderBuilder limitTradeOrderBuilder;
 
   struct Price {
     // Price
@@ -100,109 +102,177 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
+
+    limitTradeOrderBuilder = new LimitTradeOrderBuilder(address(configStorage));
   }
 
   function testRevert_WhenExecutionFeeNotMatchWithMsgValue() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](2);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Create;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    bytes32[] memory _cmds = new bytes32[](2);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1_000 * 1e30,
+      800 * 1e30,
+      true,
+      1 ether,
+      true,
+      address(1)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1_000 * 1e30,
+      800 * 1e30,
+      true,
+      1 ether,
+      true,
+      address(1)
+    );
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InsufficientExecutionFee()"));
-    limitTradeHandler.batch{ value: 10 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 10 ether }(accountAndSubAccountId, _cmds);
   }
 
   function testRevert_WhenBatchWithoutBeingDelegatee() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](2);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Create;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    bytes32[] memory _cmds = new bytes32[](2);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1_000 * 1e30,
+      800 * 1e30,
+      true,
+      1 ether,
+      true,
+      address(1)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1_000 * 1e30,
+      800 * 1e30,
+      true,
+      1 ether,
+      true,
+      address(1)
+    );
 
     vm.deal(ALICE, 100 ether);
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
-    limitTradeHandler.batch{ value: 2 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 2 ether }(accountAndSubAccountId, _cmds);
   }
 
   function testRevert_WhenUpdateNonExistedOrder() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](1);
-    _cmds[0] = ILimitTradeHandler.Command.Update;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](1);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, true, address(1));
+    bytes32[] memory _cmds = new bytes32[](1);
+    _cmds[0] = limitTradeOrderBuilder.buildUpdateOrder(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.batch(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch(accountAndSubAccountId, _cmds);
   }
 
   function testRevert_WhenUpdateOrderWithZeroSizeDelta() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](2);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Update;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 0, 0, 800 * 1e30, true, true, address(1));
+    bytes32[] memory _cmds = new bytes32[](2);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1_000 * 1e30,
+      800 * 1e30,
+      true,
+      1 ether,
+      true,
+      address(1)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildUpdateOrder(0, 0, 0, 800 * 1e30, true, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_BadSizeDelta()"));
-    limitTradeHandler.batch{ value: 1 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 1 ether }(accountAndSubAccountId, _cmds);
   }
 
   function testRevert_WhenUpdateMarketOrder() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](2);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Update;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 100 * 1e30, 0, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 50 * 1e30, 0, 800 * 1e30, true, true, address(1));
+    bytes32[] memory _cmds = new bytes32[](2);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(0, 100 * 1e30, 0, 800 * 1e30, true, 1 ether, true, address(1));
+    _cmds[1] = limitTradeOrderBuilder.buildUpdateOrder(0, 50 * 1e30, 0, 800 * 1e30, true, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketOrderNoUpdate()"));
-    limitTradeHandler.batch{ value: 1 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 1 ether }(accountAndSubAccountId, _cmds);
   }
 
   function testRevert_WhenConvertLimitOrderToMarketOrder() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](2);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Update;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 50 * 1e30, 0, 800 * 1e30, true, false, address(1));
+    bytes32[] memory _cmds = new bytes32[](2);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      1 ether,
+      true,
+      address(1)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildUpdateOrder(0, 50 * 1e30, 0, 800 * 1e30, true, false, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_LimitOrderConvertToMarketOrder()"));
-    limitTradeHandler.batch{ value: 1 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 1 ether }(accountAndSubAccountId, _cmds);
   }
 
   function testRevert_WhenCancelNonExistedOrder() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](1);
-    _cmds[0] = ILimitTradeHandler.Command.Cancel;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](1);
-    _datas[0] = abi.encode(0);
+    bytes32[] memory _cmds = new bytes32[](1);
+    _cmds[0] = limitTradeOrderBuilder.buildCancelOrder(0);
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.batch(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch(accountAndSubAccountId, _cmds);
   }
 
   function testCorrectness_WhenCreateMultipleOrders() external {
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](3);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Create;
-    _cmds[2] = ILimitTradeHandler.Command.Create;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](3);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[1] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[2] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    bytes32[] memory _cmds = new bytes32[](3);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      0.1 ether,
+      true,
+      address(weth)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      0.1 ether,
+      true,
+      address(weth)
+    );
+    _cmds[2] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      0.1 ether,
+      true,
+      address(weth)
+    );
 
-    limitTradeHandler.batch{ value: 0.3 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 0.3 ether }(accountAndSubAccountId, _cmds);
 
     assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 3, "limitOrdersIndex should increase by three.");
     limitOrderTester.assertLimitOrder({
@@ -257,31 +327,65 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
 
   function testCorrectness_WhenCreateUpdateCancel() external {
     // Create 3 orders
-    ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](3);
-    _cmds[0] = ILimitTradeHandler.Command.Create;
-    _cmds[1] = ILimitTradeHandler.Command.Create;
-    _cmds[2] = ILimitTradeHandler.Command.Create;
+    bytes32 accountAndSubAccountId = limitTradeOrderBuilder.buildAccountAndSubAccountId(address(this), 0);
 
-    bytes[] memory _datas = new bytes[](3);
-    _datas[0] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[1] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[2] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    bytes32[] memory _cmds = new bytes32[](3);
+    _cmds[0] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      0.1 ether,
+      true,
+      address(weth)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      0.1 ether,
+      true,
+      address(weth)
+    );
+    _cmds[2] = limitTradeOrderBuilder.buildCreateOrder(
+      0,
+      100 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      0.1 ether,
+      true,
+      address(weth)
+    );
 
-    limitTradeHandler.batch{ value: 0.3 ether }(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch{ value: 0.3 ether }(accountAndSubAccountId, _cmds);
 
     // Update #1 and #2 orders, Cancel #3 orders
-    _cmds = new ILimitTradeHandler.Command[](3);
-    _cmds[0] = ILimitTradeHandler.Command.Update;
-    _cmds[1] = ILimitTradeHandler.Command.Update;
-    _cmds[2] = ILimitTradeHandler.Command.Cancel;
-
-    _datas = new bytes[](3);
-    _datas[0] = abi.encode(0, 50 * 1e30, 1000 * 1e30, 800 * 1e30, true, true, address(weth));
-    _datas[1] = abi.encode(1, 10 * 1e30, 1000 * 1e30, 800 * 1e30, true, true, address(weth));
-    _datas[2] = abi.encode(2);
+    _cmds[0] = limitTradeOrderBuilder.buildUpdateOrder(
+      0,
+      50 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      true,
+      address(weth)
+    );
+    _cmds[1] = limitTradeOrderBuilder.buildUpdateOrder(
+      1,
+      10 * 1e30,
+      1000 * 1e30,
+      800 * 1e30,
+      true,
+      true,
+      address(weth)
+    );
+    _cmds[2] = limitTradeOrderBuilder.buildCancelOrder(2);
 
     uint256 _balanceBefore = address(this).balance;
-    limitTradeHandler.batch(address(this), 0, _cmds, _datas);
+    limitTradeHandler.batch(accountAndSubAccountId, _cmds);
     uint256 _balanceAfter = address(this).balance;
 
     assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 3, "limitOrdersIndex should be 3");

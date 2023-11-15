@@ -12,8 +12,8 @@ contract LimitTradeOrderBuilder {
 
   ConfigStorage configStorage;
 
-  constructor(ConfigStorage configStorage_) {
-    configStorage = configStorage_;
+  constructor(address configStorage_) {
+    configStorage = ConfigStorage(configStorage_);
   }
 
   function buildAccountAndSubAccountId(
@@ -82,6 +82,8 @@ contract LimitTradeOrderBuilder {
   }
 
   function buildCancelOrder(uint256 orderIndex) external pure returns (bytes32 cmd) {
+    // command
+    cmd = cmd.insertUint(2, 0, 3);
     // orderIndex
     cmd = cmd.insertUint(orderIndex, 3, 32);
   }

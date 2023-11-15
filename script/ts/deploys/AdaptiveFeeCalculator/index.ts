@@ -7,11 +7,7 @@ async function main() {
 
   console.log(`Deploying AdaptiveFeeCalculator Contract`);
   const AdaptiveFeeCalculator = await ethers.getContractFactory("AdaptiveFeeCalculator", deployer);
-  const adaptiveFeeCalculator = await AdaptiveFeeCalculator.deploy(
-    config.oracles.ecoPyth2,
-    config.oracles.onChainPriceLens,
-    true
-  );
+  const adaptiveFeeCalculator = await AdaptiveFeeCalculator.deploy();
   await adaptiveFeeCalculator.deployed();
   console.log(`Deployed at: ${adaptiveFeeCalculator.address}`);
 

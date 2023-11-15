@@ -1,31 +1,34 @@
 import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import { CrossMarginHandler__factory, ERC20__factory, RebalanceHLPv2Service__factory } from "../../../../typechain";
+import {
+  RebalanceHLPHandler__factory,
+  RebalanceHLPv2Handler__factory,
+  RebalanceHLPv2Service__factory,
+} from "../../../../typechain";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
+  const executionFee = ethers.utils.parseEther("0.001");
   const depositParams = [
     {
-      market: config.tokens.gmBTCUSD,
-      longToken: config.tokens.wbtc,
-      longTokenAmount: ethers.utils.parseUnits("0.01", 8),
+      market: config.tokens.gmETHUSD,
+      longToken: config.tokens.weth,
+      longTokenAmount: ethers.utils.parseUnits("718.558387427580082534", 18),
       shortToken: config.tokens.usdcNative,
-      shortTokenAmount: 0,
+      shortTokenAmount: ethers.utils.parseUnits("1354682.718869", 6),
       minMarketTokens: 0,
       gasLimit: 1000000,
     },
   ];
 
   console.log("[cmds/RebalanceHLPv2Service] createDepositOrders...");
-  const service = RebalanceHLPv2Service__factory.connect(config.services.rebalanceHLPv2, signer);
-  const tx = await service.createDepositOrders(
-    depositParams,
-    ethers.utils.parseEther("0.001").mul(depositParams.length)
-  );
+  const handler = RebalanceHLPv2Handler__factory.connect(config.handlers.rebalanceHLPv2, signer);
+  const value = executionFee.mul(depositParams.length);
+  const tx = await handler.createDepositOrders(depositParams, executionFee, { value });
   console.log(`[cmds/RebalanceHLPv2Service] Tx: ${tx.hash}`);
   await tx.wait(1);
   console.log("[cmds/RebalanceHLPv2Service] Finished");

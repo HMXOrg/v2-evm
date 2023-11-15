@@ -5,7 +5,7 @@ async function main() {
   const config = getConfig();
   const deployer = (await ethers.getSigners())[0];
 
-  console.log(`Deploying EcoPythCalldataBuilder3 Contract`);
+  console.log(`[deploys/EcoPythCalldataBuilder3] Deploying EcoPythCalldataBuilder3 Contract`);
   const Contract = await ethers.getContractFactory("EcoPythCalldataBuilder3", deployer);
   const contract = await Contract.deploy(
     config.oracles.ecoPyth2,
@@ -14,7 +14,7 @@ async function main() {
     true
   );
   await contract.deployed();
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/EcoPythCalldataBuilder3] Deployed at: ${contract.address}`);
 
   config.oracles.ecoPythCalldataBuilder3 = contract.address;
   writeConfigFile(config);

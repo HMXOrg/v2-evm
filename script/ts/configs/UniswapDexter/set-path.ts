@@ -17,19 +17,11 @@ async function main(chainId: number) {
 
   const params: Array<SetPathConfig> = [
     {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.usdcCircle,
+      tokenIn: config.tokens.usdt,
+      tokenOut: config.tokens.usdcNative,
       path: ethers.utils.solidityPack(
         ["address", "uint24", "address"],
-        [config.tokens.usdc, 100, config.tokens.usdcCircle]
-      ),
-    },
-    {
-      tokenIn: config.tokens.usdcCircle,
-      tokenOut: config.tokens.usdc,
-      path: ethers.utils.solidityPack(
-        ["address", "uint24", "address"],
-        [config.tokens.usdcCircle, 100, config.tokens.usdc]
+        [config.tokens.usdt, 100, config.tokens.usdcNative]
       ),
     },
   ];

@@ -18,14 +18,14 @@ async function main(chainId: number) {
   );
   const params: Array<SetDexter> = [
     {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.usdcCircle,
-      dexter: config.extension.dexter.uniswapV3,
+      tokenIn: config.tokens.sglp,
+      tokenOut: config.tokens.usdcNative,
+      dexter: config.extension.dexter.glp,
     },
     {
-      tokenIn: config.tokens.usdcCircle,
-      tokenOut: config.tokens.usdc,
-      dexter: config.extension.dexter.uniswapV3,
+      tokenIn: config.tokens.usdcNative,
+      tokenOut: config.tokens.sglp,
+      dexter: config.extension.dexter.glp,
     },
   ];
 

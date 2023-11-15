@@ -15,7 +15,7 @@
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
     "rebalanceHLP": "0x3b2AC5d307595726f9fDa14B319fd1497Ac853cc",
     "ext01": "0x04BEF154a57B8e884D53f2B8F141B34825b448Da",
-    "rebalanceHLPv2": ""
+    "rebalanceHLPv2": "0x72233e5498E3FB5fA468497b7E05Dc8B03d41DeC"
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
@@ -27,7 +27,7 @@
     "liquidation": "0x34E89DEd96340A177856fD822366AfC584438750",
     "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
     "rebalanceHLP": "0xD63D4542AA563FdB10f4C3785a4B90e89Be197c0",
-    "rebalanceHLPv2": ""
+    "rebalanceHLPv2": "0x00ad8b677Cff674440Fd9534dB6cBcE60F9075Cb"
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",
@@ -39,19 +39,19 @@
     "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f",
     "ecoPythCalldataBuilder2": "0x7dbf13AD71da2405D73c9bda64B4769620EFfdd6",
     "unsafeEcoPythCalldataBuilder2": "0xCF43C575359D25280672c606E4F7F50bc668a813",
-    "ecoPythCalldataBuilder3": "",
-    "unsafeEcoPythCalldataBuilder3": "",
-    "uncheckedEcoPythCalldataBuilder3": "",
+    "ecoPythCalldataBuilder3": "0xC1353B3bff066C441f631dAEC245b1F5C08a7F07",
+    "unsafeEcoPythCalldataBuilder3": "0x0DFC62854cAE5898Ed10A46Eb4C8Cc947993D3CF",
     "onChainPriceLens": "0x7D8eAa8dF02526c711F4ff1f97F6c5324212DBBa",
-    "calcPriceLens": "",
+    "calcPriceLens": "0x8CE09F789235bdca8EC2EeE990B11c42E35909Fc",
     "priceAdapters": {
       "glp": "0x9934d2Cc22E9905B511E13E35148B9eF9aDa6Cd0",
       "wstEth": "0x9eD51928Ec61c4e5dc0D48b38C828f89687467E6",
       "hlp": "0x0266868d1c144a7534513F38B816c1aadE4030A2",
-      "gmBTCUSD": "",
-      "gmETHUSD": "",
+      "gmBTCUSD": "0x85680bba8a94c9be1DDd7Be802885DFCe95F8164",
+      "gmETHUSD": "0x700083c72eBc86CbFc865830F5706a2DbC392f26",
       "dix": ""
-    }
+    },
+    "orderbook": ""
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
@@ -105,6 +105,9 @@
     "chainlink": {
       "wstEthEthPriceFeed": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
       "ethUsdPriceFeed": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+    },
+    "oneInch": {
+      "router": "0x1111111254eeb25477b68fb85ed929f73a960582"
     }
   },
   "strategies": {

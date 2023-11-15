@@ -85,7 +85,6 @@ import { IGmxV2Reader } from "@hmx/interfaces/gmx-v2/IGmxV2Reader.sol";
 
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
-
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
@@ -184,6 +183,8 @@ abstract contract ForkEnv is Test {
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
+  /// OneInch
+  address internal oneInchRouter = getAddress(".vendors.oneInch.router");
 
   ITradeHelper internal tradeHelper = ITradeHelper(getAddress(".helpers.trade"));
 
@@ -199,11 +200,11 @@ abstract contract ForkEnv is Test {
   IERC20 internal sglp = IERC20(getAddress(".tokens.sglp"));
   IERC20 internal wstEth = IERC20(getAddress(".tokens.wstEth"));
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
-  IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
-  IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
 
   AdaptiveFeeCalculator adaptiveFeeCalculator;
   OrderbookOracle orderbookOracle;
+  IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
+  IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
 
   function _buildDataForPrice() public view returns (IEcoPythCalldataBuilder.BuildData[] memory data) {
     bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
@@ -250,11 +251,13 @@ abstract contract ForkEnv is Test {
     view
     returns (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData)
   {
-    int24[] memory tickPrices = new int24[](34);
-    uint24[] memory publishTimeDiffs = new uint24[](34);
-    for (uint i = 0; i < 34; i++) {
-      tickPrices[i] = 0;
-      publishTimeDiffs[i] = 0;
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+    int24[] memory tickPrices = new int24[](len - 1);
+    uint24[] memory publishTimeDiffs = new uint24[](len - 1);
+    for (uint i = 1; i < len; i++) {
+      tickPrices[i - 1] = 0;
+      publishTimeDiffs[i - 1] = 0;
     }
 
     priceUpdateData = ForkEnv.ecoPyth2.buildPriceUpdateData(tickPrices);
@@ -311,5 +314,34 @@ abstract contract ForkEnv is Test {
     uint256 _mmr = ForkEnv.calculator.getMMR(_subAccount);
     if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) return true;
     return false;
+  }
+
+  constructor() {
+    // Labeling known addresses
+    // Storages
+    vm.label(address(configStorage), "ConfigStorage");
+    vm.label(address(perpStorage), "PerpStorage");
+    vm.label(address(vaultStorage), "VaultStorage");
+    // GMXv2
+    vm.label(address(gmxV2ExchangeRouter), "gmxV2ExchangeRouter");
+    vm.label(gmxV2DepositVault, "gmxV2DepositVault");
+    vm.label(gmxV2DepositUtils, "gmxV2DepositUtils");
+    vm.label(address(gmxV2DepositHandler), "gmxV2DepositHandler");
+    vm.label(gmxV2ExecuteDepositUtils, "gmxV2ExecuteDepositUtils");
+    vm.label(gmxV2DepositStoreUtils, "gmxV2DepositStoreUtils");
+    vm.label(gmxV2WithdrawalVault, "gmxV2WithdrawalVault");
+    vm.label(gmxV2WithdrawalUtils, "gmxV2WithdrawalUtils");
+    vm.label(gmxV2WithdrawalStoreUtils, "gmxV2WithdrawalStoreUtils");
+    vm.label(address(gmxV2WithdrawalHandler), "gmxV2WithdrawalHandler");
+    vm.label(gmxV2MarketUtils, "gmxV2MarketUtils");
+    vm.label(gmxV2MarketStoreUtils, "gmxV2MarketStoreUtils");
+    vm.label(gmxV2DataStore, "gmxV2DataStore");
+    vm.label(address(gmxV2RoleStore), "gmxV2RoleStore");
+    vm.label(gmxV2Oracle, "gmxV2Oracle");
+    // Tokens
+    vm.label(address(weth), "WETH");
+    vm.label(address(wbtc), "WBTC");
+    vm.label(address(usdc), "USDC");
+    vm.label(address(usdc_e), "USDC.e");
   }
 }

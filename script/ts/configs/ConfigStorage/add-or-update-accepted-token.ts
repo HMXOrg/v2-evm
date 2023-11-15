@@ -13,7 +13,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.usdcCircle,
+      tokenAddress: config.tokens.sglp,
       config: {
         targetWeight: ethers.utils.parseEther("0"),
         bufferLiquidity: 0,

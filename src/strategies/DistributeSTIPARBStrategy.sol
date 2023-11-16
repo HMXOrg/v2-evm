@@ -10,6 +10,7 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
+import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
 
 contract DistributeSTIPARBStrategy is OwnableUpgradeable, IDistributeSTIPARBStrategy {
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -18,6 +19,7 @@ contract DistributeSTIPARBStrategy is OwnableUpgradeable, IDistributeSTIPARBStra
   IVaultStorage public vaultStorage;
   IRewarder public rewarder;
   IERC20Upgradeable public arb;
+  IERC20ApproveStrategy public approveStrat;
   uint256 public devFeeBps;
   address public treasury;
   mapping(address => bool) public whitelistedExecutors;
@@ -40,7 +42,8 @@ contract DistributeSTIPARBStrategy is OwnableUpgradeable, IDistributeSTIPARBStra
     address _rewarder,
     address _arb,
     uint256 _devFeeBps,
-    address _treasury
+    address _treasury,
+    address _approveStrat
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     vaultStorage = IVaultStorage(_vaultStorage);
@@ -48,6 +51,7 @@ contract DistributeSTIPARBStrategy is OwnableUpgradeable, IDistributeSTIPARBStra
     arb = IERC20Upgradeable(_arb);
     devFeeBps = _devFeeBps;
     treasury = _treasury;
+    approveStrat = IERC20ApproveStrategy(_approveStrat);
   }
 
   function setWhitelistedExecutor(address _executor, bool _active) external onlyOwner {
@@ -66,19 +70,18 @@ contract DistributeSTIPARBStrategy is OwnableUpgradeable, IDistributeSTIPARBStra
     }
 
     // 2. Approve ARB to rewarder
-    bytes memory _callData = abi.encodeWithSelector(
-      IERC20Upgradeable.approve.selector,
-      address(rewarder),
-      _distributedAmount
-    );
-    vaultStorage.cook(address(arb), address(arb), _callData);
+    approveStrat.execute(address(arb), address(rewarder), _distributedAmount);
 
     // 3. Feed ARB to rewarder
-    _callData = abi.encodeWithSelector(IRewarder.feedWithExpiredAt.selector, _distributedAmount, _expiredAt);
+    bytes memory _callData = abi.encodeWithSelector(
+      IRewarder.feedWithExpiredAt.selector,
+      _distributedAmount,
+      _expiredAt
+    );
     vaultStorage.cook(address(arb), address(rewarder), _callData);
 
     // 4. Update accounting at VaultStorage
-    vaultStorage.pullToken(address(arb));
+    vaultStorage.pushToken(address(arb), address(this), 0);
 
     emit LogDistributeARBRewardsFromSTIP(_distributedAmount, _devFeeAmount, _expiredAt);
   }

@@ -11,6 +11,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { console2 } from "forge-std/console2.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
+import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
 
 contract Smoke_DistributeARBRewardsFromSTIP is ForkEnv {
   function distributeARBRewardsFromSTIP() external {
@@ -28,34 +29,47 @@ contract Smoke_DistributeARBRewardsFromSTIP is ForkEnv {
     ForkEnv.hlpStaking.addRewarders(rewarders);
     vm.stopPrank();
 
-    IDistributeSTIPARBStrategy strat = Deployer.deployDistributeSTIPARBStrategy(
+    IERC20ApproveStrategy approveStrat = Deployer.deployERC20ApproveStrategy(
+      address(ForkEnv.proxyAdmin),
+      address(ForkEnv.vaultStorage)
+    );
+    IDistributeSTIPARBStrategy distributeStrat = Deployer.deployDistributeSTIPARBStrategy(
       address(ForkEnv.proxyAdmin),
       address(ForkEnv.vaultStorage),
       address(arbRewarderForHlp),
       address(ForkEnv.arb),
       500, // 5% dev fee
-      0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872
+      0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872,
+      address(approveStrat)
     );
-    strat.setWhitelistedExecutor(address(this), true);
+
+    approveStrat.setWhitelistedExecutor(address(distributeStrat), true);
+    distributeStrat.setWhitelistedExecutor(address(this), true);
 
     vm.startPrank(ForkEnv.vaultStorage.owner());
+    vaultStorage.setStrategyAllowance(address(ForkEnv.arb), address(approveStrat), address(ForkEnv.arb));
     vaultStorage.setStrategyFunctionSigAllowance(
       address(ForkEnv.arb),
-      address(ForkEnv.arb),
+      address(approveStrat),
       IERC20Upgradeable.approve.selector
     );
+    vaultStorage.setStrategyAllowance(address(ForkEnv.arb), address(distributeStrat), address(arbRewarderForHlp));
     vaultStorage.setStrategyFunctionSigAllowance(
       address(ForkEnv.arb),
-      address(arbRewarderForHlp),
+      address(distributeStrat),
       IRewarder.feedWithExpiredAt.selector
     );
+    vaultStorage.setServiceExecutors(address(distributeStrat), true);
     vm.stopPrank();
 
     uint256 aumBefore = ForkEnv.calculator.getAUME30(false);
 
-    strat.execute(30289413075306806328952, block.timestamp + 7 days);
+    // console2.log(abi.encodeWithSignature("IBotHandler_UnauthorizedSender()"));
+    distributeStrat.execute(30289413075306806328952, block.timestamp + 7 days);
 
-    assertEq(arb.balanceOf(address(arbRewarderForHlp)), 30289413075306806328952);
+    // distributedAmount = (30289413075306806328952 * (10000 - 500)) / 10000
+    // distributedAmount = 28774942421541466012505
+    assertEq(arb.balanceOf(address(arbRewarderForHlp)), 28774942421541466012505);
 
     assertEq(aumBefore, ForkEnv.calculator.getAUME30(false));
   }

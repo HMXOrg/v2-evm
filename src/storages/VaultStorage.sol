@@ -153,6 +153,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function distributeARBRewardsFromSTIP(uint256 amount, address rewarder, uint256 expiredAt) external onlyOwner {
     address arbitrumToken = 0x912CE59144191C1204E64559FE8253a0e49E6548;
+    require(amount < totalAmount[arbitrumToken] && amount < hlpLiquidity[arbitrumToken], "bad amount");
     IERC20Upgradeable(arbitrumToken).safeIncreaseAllowance(rewarder, amount);
     IRewarder(rewarder).feedWithExpiredAt(amount, expiredAt);
     totalAmount[arbitrumToken] =

@@ -9,6 +9,8 @@ import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { console2 } from "forge-std/console2.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
 
 contract Smoke_DistributeARBRewardsFromSTIP is ForkEnv {
   function distributeARBRewardsFromSTIP() external {
@@ -26,15 +28,34 @@ contract Smoke_DistributeARBRewardsFromSTIP is ForkEnv {
     ForkEnv.hlpStaking.addRewarders(rewarders);
     vm.stopPrank();
 
-    uint256 aumBefore = ForkEnv.calculator.getAUME30(false);
+    IDistributeSTIPARBStrategy strat = Deployer.deployDistributeSTIPARBStrategy(
+      address(ForkEnv.proxyAdmin),
+      address(ForkEnv.vaultStorage),
+      address(arbRewarderForHlp),
+      address(ForkEnv.arb),
+      500, // 5% dev fee
+      0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872
+    );
+    strat.setWhitelistedExecutor(address(this), true);
 
     vm.startPrank(ForkEnv.vaultStorage.owner());
-    ForkEnv.vaultStorage.distributeARBRewardsFromSTIP(
-      30289413075306806328952,
+    vaultStorage.setStrategyFunctionSigAllowance(
+      address(ForkEnv.arb),
+      address(ForkEnv.arb),
+      IERC20Upgradeable.approve.selector
+    );
+    vaultStorage.setStrategyFunctionSigAllowance(
+      address(ForkEnv.arb),
       address(arbRewarderForHlp),
-      block.timestamp + 7 days
+      IRewarder.feedWithExpiredAt.selector
     );
     vm.stopPrank();
+
+    uint256 aumBefore = ForkEnv.calculator.getAUME30(false);
+
+    strat.execute(30289413075306806328952, block.timestamp + 7 days);
+
+    assertEq(arb.balanceOf(address(arbRewarderForHlp)), 30289413075306806328952);
 
     assertEq(aumBefore, ForkEnv.calculator.getAUME30(false));
   }

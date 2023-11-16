@@ -12,7 +12,6 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
-import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
@@ -41,7 +40,6 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     uint256 prevOnHoldAmount,
     uint256 nextOnHoldAmount
   );
-  event LogDistributeARBRewardsFromSTIP(uint256 amount, uint256 expiredAt);
 
   /**
    * States
@@ -149,17 +147,6 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   function _pushToken(address _token, address _to, uint256 _amount) internal {
     IERC20Upgradeable(_token).safeTransfer(_to, _amount);
     totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this)) + hlpLiquidityOnHold[_token];
-  }
-
-  function distributeARBRewardsFromSTIP(uint256 amount, address rewarder, uint256 expiredAt) external onlyOwner {
-    address arbitrumToken = 0x912CE59144191C1204E64559FE8253a0e49E6548;
-    require(amount < totalAmount[arbitrumToken], "bad amount");
-    IERC20Upgradeable(arbitrumToken).safeIncreaseAllowance(rewarder, amount);
-    IRewarder(rewarder).feedWithExpiredAt(amount, expiredAt);
-    totalAmount[arbitrumToken] =
-      IERC20Upgradeable(arbitrumToken).balanceOf(address(this)) +
-      hlpLiquidityOnHold[arbitrumToken];
-    emit LogDistributeARBRewardsFromSTIP(amount, expiredAt);
   }
 
   /**

@@ -26,7 +26,7 @@ contract Smoke_DistributeARBRewardsFromSTIP is ForkEnv {
     ForkEnv.hlpStaking.addRewarders(rewarders);
     vm.stopPrank();
 
-    uint256 aumBefore = ForkEnv.calculator.getAUME30(false)
+    uint256 aumBefore = ForkEnv.calculator.getAUME30(false);
 
     vm.startPrank(ForkEnv.vaultStorage.owner());
     ForkEnv.vaultStorage.distributeARBRewardsFromSTIP(

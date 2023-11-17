@@ -26,7 +26,6 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
-
 /**
  * @title CrossMarginService
  * @dev A cross-margin trading service that allows traders to deposit and withdraw collateral tokens.
@@ -177,7 +176,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Update token balance
     uint256 deltaBalance = _vaultStorage.pullToken(_token);
-    if (deltaBalance < _amount) revert ICrossMarginService_InvalidDepositBalance();
+    if (deltaBalance != _amount) revert ICrossMarginService_InvalidDepositBalance();
 
     emit LogDepositCollateral(_primaryAccount, _subAccount, _token, _amount);
   }
@@ -236,14 +235,14 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       address _token,
       uint256 _amount
     ) = (
-      _params.fromPrimaryAccount,
-      _params.fromSubAccountId,
-      _params.toPrimaryAccount,
-      _params.toSubAccountId,
-      _params.token,
-      _params.amount
-    );
-     // SLOAD
+        _params.fromPrimaryAccount,
+        _params.fromSubAccountId,
+        _params.toPrimaryAccount,
+        _params.toSubAccountId,
+        _params.token,
+        _params.amount
+      );
+    // SLOAD
     Calculator _calculator = Calculator(calculator);
 
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -269,7 +268,14 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Increase collateral token balance on target subaccount
     _vaultStorage.increaseTraderBalance(_toSubAccount, _token, _amount);
 
-    emit LogTransferCollateral(_fromPrimaryAccount, _fromSubAccountId, _toPrimaryAccount, _toSubAccountId, _token, _amount);
+    emit LogTransferCollateral(
+      _fromPrimaryAccount,
+      _fromSubAccountId,
+      _toPrimaryAccount,
+      _toSubAccountId,
+      _token,
+      _amount
+    );
   }
 
   /// @notice Check funding fee surplus and transfer to HLP
@@ -384,7 +390,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Send last token to VaultStorage and pull
     ERC20Upgradeable(_tokenOut).safeTransfer(address(_vaultStorage), _toAmount);
     uint256 _deltaBalance = _vaultStorage.pullToken(_tokenOut);
-    if (_deltaBalance < _toAmount) revert ICrossMarginService_InvalidDepositBalance();
+    if (_deltaBalance != _toAmount) revert ICrossMarginService_InvalidDepositBalance();
     // Increase trader's balance
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _toAmount);
 

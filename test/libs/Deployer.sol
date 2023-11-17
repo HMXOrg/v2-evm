@@ -68,6 +68,8 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
+import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -716,6 +718,43 @@ library Deployer {
     address _limitTradeHandler
   ) internal returns (OrderReader) {
     return new OrderReader(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler);
+  }
+
+  function deployDistributeSTIPARBStrategy(
+    address _proxyAdmin,
+    address _vaultStorage,
+    address _rewarder,
+    address _arb,
+    uint256 _devFeeBps,
+    address _treasury,
+    address _approveStrat
+  ) internal returns (IDistributeSTIPARBStrategy) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/DistributeSTIPARBStrategy.sol/DistributeSTIPARBStrategy.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,uint256,address,address)")),
+      _vaultStorage,
+      _rewarder,
+      _arb,
+      _devFeeBps,
+      _treasury,
+      _approveStrat
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IDistributeSTIPARBStrategy(payable(_proxy));
+  }
+
+  function deployERC20ApproveStrategy(
+    address _proxyAdmin,
+    address _vaultStorage
+  ) internal returns (IERC20ApproveStrategy) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/ERC20ApproveStrategy.sol/ERC20ApproveStrategy.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _vaultStorage);
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IERC20ApproveStrategy(payable(_proxy));
   }
 
   /**

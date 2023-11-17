@@ -5,4 +5,8 @@ interface IHLPStaking {
   function calculateShare(address rewarder, address user) external view returns (uint256);
 
   function withdraw(uint256 amount) external;
+
+  function addRewarders(address[] memory newRewarders) external;
+
+  function owner() external returns (address);
 }

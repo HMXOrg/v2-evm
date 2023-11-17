@@ -10,8 +10,8 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const priceAdapters = [
     {
-      priceId: ethers.utils.formatBytes32String("GM-ETHUSD"),
-      adapter: config.oracles.priceAdapters.gmETHUSD,
+      priceId: ethers.utils.formatBytes32String("DIX"),
+      adapter: config.oracles.priceAdapters.dix,
     },
   ];
 

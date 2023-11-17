@@ -84,6 +84,19 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     vm.stopPrank();
   }
 
+  // Try deposit token when there're some exceeded tokens in the vault storage
+  function testRevert_handler_depositCollateral_whenSomeExceededTokens() external {
+    wbtc.mint(ALICE, 1 * 1e8);
+    wbtc.mint(address(vaultStorage), 10 * 1e8);
+
+    vm.startPrank(ALICE);
+    // Alice try deposit 1 WBTC, but there're 10 WBTC in the vault storage
+    wbtc.approve(address(crossMarginHandler), 1 * 1e8);
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InvalidDepositBalance()"));
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, address(wbtc), 1 * 1e8, false);
+    vm.stopPrank();
+  }
+
   /**
    * TEST CORRECTNESS
    */

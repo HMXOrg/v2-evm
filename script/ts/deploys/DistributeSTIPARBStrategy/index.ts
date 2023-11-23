@@ -12,12 +12,13 @@ async function main() {
 
   const contract = await upgrades.deployProxy(Contract, [
     config.storages.vault,
-    "REWARDER", // arb rewarder
+    "0x238DAF7b15342113B00fA9e3F3E60a11Ab4274fD", // arb rewarder <<<<< UPDATE THIS
     config.tokens.arb,
-    500,
+    500, // 5% dev fee
     "0x24D53494Dc9E260A6b2Ddb0b40C1ED222471779C", // treasury
     config.strategies.erc20Approve,
   ]);
+
   await contract.deployed();
   console.log(`Deploying DistributeSTIPARBStrategy Contract`);
   console.log(`Deployed at: ${contract.address}`);

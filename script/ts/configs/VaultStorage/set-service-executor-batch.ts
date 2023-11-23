@@ -2,31 +2,30 @@ import { VaultStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import { Command } from "commander";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const inputs = [
     {
-      executorAddress: config.services.rebalanceHLPv2,
+      executorAddress: config.strategies.distributeSTIPARB,
       isServiceExecutor: true,
     },
   ];
 
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
 
-  console.log("[configs/VaultStorage] Proposing to set service executors...");
-  const tx = await safeWrapper.proposeTransaction(
+  console.log("[configs/VaultStorage] Set the service executors...");
+  await ownerWrapper.authExec(
     vaultStorage.address,
-    0,
     vaultStorage.interface.encodeFunctionData("setServiceExecutorBatch", [
       inputs.map((each) => each.executorAddress),
       inputs.map((each) => each.isServiceExecutor),
     ])
   );
-  console.log(`[configs/VaultStorage] Proposed tx: ${tx}`);
+  console.log(`[configs/VaultStorage] Done`);
 }
 
 const program = new Command();

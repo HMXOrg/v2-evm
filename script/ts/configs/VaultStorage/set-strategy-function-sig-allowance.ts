@@ -1,40 +1,25 @@
-import {
-  DistributeSTIPARBStrategy__factory,
-  ERC20__factory,
-  IRewarder__factory,
-  VaultStorage__factory,
-} from "../../../../typechain";
+import { ERC20__factory, IRewarder__factory, VaultStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
-import { compareAddress } from "../../utils/address";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const token = config.tokens.arb;
-  const strategy = config.strategies.erc20Approve;
-  const sig = ERC20__factory.createInterface().getSighash("approve(address,uint256)");
+  const strategy = config.strategies.distributeSTIPARB;
+  const sig = IRewarder__factory.createInterface().getSighash("feedWithExpiredAt(uint256,uint256)");
 
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
-  const owner = await vaultStorage.owner();
   console.log(`[configs/VaultStorage] setStrategyFunctionSigAllowance`);
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      vaultStorage.address,
-      0,
-      vaultStorage.interface.encodeFunctionData("setStrategyFunctionSigAllowance", [token, strategy, sig])
-    );
-    console.log(`[configs/VaultStorage] Proposed tx: ${tx}`);
-  } else {
-    const tx = await vaultStorage.setStrategyFunctionSigAllowance(token, strategy, sig);
-    console.log(`[configs/VaultStorage] Tx: ${tx}`);
-    await tx.wait();
-  }
-  console.log("[configs/VaultStorage] Finished");
+  await ownerWrapper.authExec(
+    vaultStorage.address,
+    vaultStorage.interface.encodeFunctionData("setStrategyFunctionSigAllowance", [token, strategy, sig])
+  );
+  console.log("[configs/VaultStorage] Done");
 }
 
 const prog = new Command();

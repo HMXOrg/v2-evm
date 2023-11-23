@@ -1,34 +1,24 @@
-import { DistributeSTIPARBStrategy__factory, VaultStorage__factory } from "../../../../typechain";
+import { VaultStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
-import { compareAddress } from "../../utils/address";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const token = config.tokens.arb;
-  const strategy = config.strategies.erc20Approve;
-  const target = config.tokens.arb;
+  const strategy = config.strategies.distributeSTIPARB;
+  const target = "0x238DAF7b15342113B00fA9e3F3E60a11Ab4274fD"; // <-- UPDATE THIS
 
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
-  const owner = await vaultStorage.owner();
   console.log(`[configs/VaultStorage] Set Strategy Allowance`);
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      vaultStorage.address,
-      0,
-      vaultStorage.interface.encodeFunctionData("setStrategyAllowance", [token, strategy, target])
-    );
-    console.log(`[configs/VaultStorage] Proposed tx: ${tx}`);
-  } else {
-    const tx = await vaultStorage.setStrategyAllowance(token, strategy, target);
-    console.log(`[configs/VaultStorage] Tx: ${tx}`);
-    await tx.wait();
-  }
+  await ownerWrapper.authExec(
+    vaultStorage.address,
+    vaultStorage.interface.encodeFunctionData("setStrategyAllowance", [token, strategy, target])
+  );
   console.log("[configs/VaultStorage] Finished");
 }
 

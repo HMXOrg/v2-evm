@@ -10,7 +10,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
-  const whitelistedExecutor = "CALLER";
+  const whitelistedExecutor = config.safe;
 
   const strat = DistributeSTIPARBStrategy__factory.connect(config.strategies.distributeSTIPARB, deployer);
   const owner = await strat.owner();

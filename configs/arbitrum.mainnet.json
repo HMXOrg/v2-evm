@@ -111,7 +111,9 @@
   },
   "strategies": {
     "stakedGlpStrategy": "0x0A4536BE713989a355f77fd46FD21E737C219F5c",
-    "convertedGlpStrategy": "0xF0D92907236418Fa8Ee900E384b4c6928f7cADfc"
+    "convertedGlpStrategy": "0xF0D92907236418Fa8Ee900E384b4c6928f7cADfc",
+    "erc20Approve": "0x51C334d750a126fDaC478986c6522413e2279b59",
+    "distributeSTIPARB": "0x309639f4CC18c5F2aBe9665aA8e6E94aC876A9e1"
   },
   "hooks": {
     "tradingStaking": "0xA2a59aF14eF3e4fFf67C9B536041faee656B96DA",

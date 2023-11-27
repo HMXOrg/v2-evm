@@ -19,7 +19,7 @@ function _priceToPriceE8(price: string, expo: number) {
   return priceBN.div(Math.pow(10, priceDecimals.sub(targetBN).toNumber()));
 }
 
-const assetIdWithPriceAdapters = ["GLP", "wstETH", "GM-BTCUSD", "GM-ETHUSD"];
+const assetIdWithPriceAdapters = ["GLP", "wstETH", "GM-BTCUSD", "GM-ETHUSD", "DIX"];
 
 export async function getUpdatePriceData(
   priceIds: string[],

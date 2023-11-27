@@ -18,7 +18,7 @@ export default class TimelockWrapper {
 
     this.chainId = _chainId;
     this.timelock = new ethers.Contract(config.timelock, TimelockAbi, _signer);
-    this.safe = new SafeWrapper(this.chainId, _signer);
+    this.safe = new SafeWrapper(this.chainId, config.safe, _signer);
     this.signer = _signer;
     this.forkMode = _forkMode || false;
   }

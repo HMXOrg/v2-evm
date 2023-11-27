@@ -281,6 +281,26 @@
       "assetSymbol": "Crypto.BCH",
       "quotedAssetSymbol": "Crypto.BCH",
       "sortIndex": 2004
+    },
+    {
+      "index": 33,
+      "name": "MEMEUSD",
+      "assetId": "0x4d454d4500000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "meme-usd",
+      "assetSymbol": "Crypto.MEME",
+      "quotedAssetSymbol": "Crypto.MEME",
+      "sortIndex": 2004
+    },
+    {
+      "index": 34,
+      "name": "DIX",
+      "assetId": "0x4449580000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "dix",
+      "assetSymbol": "FX.DIX",
+      "quotedAssetSymbol": "FX.DIX",
+      "sortIndex": 2004
     }
   ],
   "assets": {

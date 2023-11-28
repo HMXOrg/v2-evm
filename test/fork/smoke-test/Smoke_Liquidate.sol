@@ -6,6 +6,7 @@ pragma solidity 0.8.18;
 
 import { Smoke_Base } from "./Smoke_Base.t.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
+import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 
 import "forge-std/console.sol";
 
@@ -37,5 +38,78 @@ contract Smoke_Liquidate is ForkEnv {
     }
     ForkEnv.botHandler.updateLiquidityEnabled(true);
     vm.stopPrank();
+  }
+
+  function liquidateWithAdaptiveFee() external {
+    deal(address(ForkEnv.usdc_e), ForkEnv.ALICE, 100_000 * 1e6);
+    deal(ForkEnv.ALICE, 10 ether);
+
+    vm.startPrank(ForkEnv.ALICE);
+    ForkEnv.usdc_e.approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
+    ForkEnv.crossMarginHandler.depositCollateral(0, address(ForkEnv.usdc_e), 1255 * 1e6, false);
+    assertEq(ForkEnv.vaultStorage.traderBalances(ForkEnv.ALICE, address(ForkEnv.usdc_e)), 1255 * 1e6);
+    console.logInt(ForkEnv.calculator.getEquity(ForkEnv.ALICE, 0, ""));
+
+    ForkEnv.limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 21,
+      _sizeDelta: 100_000 * 1e30,
+      _triggerPrice: 0,
+      _acceptablePrice: type(uint256).max,
+      _triggerAboveThreshold: false,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(usdc_e)
+    });
+    vm.stopPrank();
+
+    IEcoPythCalldataBuilder.BuildData[] memory data = _buildDataForPrice();
+    (
+      uint256 _minPublishTime,
+      bytes32[] memory _priceUpdateCalldata,
+      bytes32[] memory _publishTimeUpdateCalldata
+    ) = ForkEnv.ecoPythBuilder.build(data);
+
+    vm.warp(block.timestamp + 30);
+    vm.roll(block.number + 30);
+
+    // Execute Long Increase Order
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = 0;
+    address[] memory accounts = new address[](1);
+    accounts[0] = ForkEnv.ALICE;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = 0;
+
+    vm.prank(ForkEnv.limitOrderExecutor);
+    ForkEnv.limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
+      _feeReceiver: payable(BOB),
+      _priceData: _priceUpdateCalldata,
+      _publishTimeData: _publishTimeUpdateCalldata,
+      _minPublishTime: _minPublishTime,
+      _encodedVaas: keccak256("someEncodedVaas"),
+      _isRevert: true
+    });
+
+    assertEq(ForkEnv.perpStorage.getNumberOfSubAccountPosition(ForkEnv.ALICE), 1);
+    console.logInt(ForkEnv.calculator.getEquity(ForkEnv.ALICE, 0, ""));
+
+    vm.warp(block.timestamp + 5 days);
+    vm.roll(block.number + 30);
+
+    vm.startPrank(ForkEnv.positionManager);
+    ForkEnv.botHandler.liquidate(
+      ForkEnv.ALICE,
+      _priceUpdateCalldata,
+      _publishTimeUpdateCalldata,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
+
+    assertEq(ForkEnv.perpStorage.getNumberOfSubAccountPosition(ForkEnv.ALICE), 0);
+    assertEq(ForkEnv.vaultStorage.traderBalances(ForkEnv.ALICE, address(ForkEnv.usdc_e)), 0);
   }
 }

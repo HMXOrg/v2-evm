@@ -405,5 +405,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));
     tradeHelper.setOrderbookOracle(address(orderbookOracle));
     tradeHelper.setMaxAdaptiveFeeBps(500);
+
+    calculator.setTradeHelper(address(tradeHelper));
   }
 }

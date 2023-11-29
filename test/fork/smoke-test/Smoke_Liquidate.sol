@@ -46,8 +46,11 @@ contract Smoke_Liquidate is ForkEnv {
 
     vm.startPrank(ForkEnv.ALICE);
     ForkEnv.usdc_e.approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
-    ForkEnv.crossMarginHandler.depositCollateral(0, address(ForkEnv.usdc_e), 1255 * 1e6, false);
-    assertEq(ForkEnv.vaultStorage.traderBalances(ForkEnv.ALICE, address(ForkEnv.usdc_e)), 1255 * 1e6);
+
+    uint256 usdcCollateralAmount = 1355 * 1e6;
+
+    ForkEnv.crossMarginHandler.depositCollateral(0, address(ForkEnv.usdc_e), usdcCollateralAmount, false);
+    assertEq(ForkEnv.vaultStorage.traderBalances(ForkEnv.ALICE, address(ForkEnv.usdc_e)), usdcCollateralAmount);
     console.logInt(ForkEnv.calculator.getEquity(ForkEnv.ALICE, 0, ""));
 
     ForkEnv.limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -97,7 +100,7 @@ contract Smoke_Liquidate is ForkEnv {
     assertEq(ForkEnv.perpStorage.getNumberOfSubAccountPosition(ForkEnv.ALICE), 1);
     console.logInt(ForkEnv.calculator.getEquity(ForkEnv.ALICE, 0, ""));
 
-    vm.warp(block.timestamp + 5 days);
+    vm.warp(block.timestamp + 25 days);
     vm.roll(block.number + 30);
 
     vm.startPrank(ForkEnv.positionManager);

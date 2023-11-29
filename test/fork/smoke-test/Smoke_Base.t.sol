@@ -85,6 +85,10 @@ contract Smoke_Base is ForkEnv {
     tradeHelper.setMaxAdaptiveFeeBps(500);
     vm.stopPrank();
 
+    vm.startPrank(Calculator(address(ForkEnv.calculator)).owner());
+    Calculator(address(ForkEnv.calculator)).setTradeHelper(address(tradeHelper));
+    vm.stopPrank();
+
     _setMarketConfig();
   }
 

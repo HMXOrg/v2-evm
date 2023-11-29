@@ -89,6 +89,10 @@ contract Smoke_Base is ForkEnv {
     Calculator(address(ForkEnv.calculator)).setTradeHelper(address(tradeHelper));
     vm.stopPrank();
 
+    vm.startPrank(perpStorage.owner());
+    perpStorage.setMovingWindowConfig(15, 1 minutes);
+    vm.stopPrank();
+
     _setMarketConfig();
   }
 

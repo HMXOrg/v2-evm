@@ -88,6 +88,7 @@ import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;
@@ -142,6 +143,7 @@ abstract contract ForkEnv is Test {
   PerpStorage internal perpStorage = PerpStorage(getAddress(".storages.perp"));
   VaultStorage internal vaultStorage = VaultStorage(getAddress(".storages.vault"));
   /// Helpers
+  LimitTradeHelper internal limitTradeHelper = LimitTradeHelper(getAddress(".helpers.limitTrade"));
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
   /// Staking
   IHLPStaking internal hlpStaking = IHLPStaking(getAddress(".staking.hlp"));

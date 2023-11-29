@@ -5,7 +5,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("GM-BTCUSD"), ethers.utils.formatBytes32String("GM-ETHUSD")];
+const ASSET_IDS = [ethers.utils.formatBytes32String("SEK"), ethers.utils.formatBytes32String("DIX")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);

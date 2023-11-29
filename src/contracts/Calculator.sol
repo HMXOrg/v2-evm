@@ -15,6 +15,7 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
@@ -37,6 +38,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   event LogSetVaultStorage(address indexed oldVaultStorage, address indexed vaultStorage);
   event LogSetConfigStorage(address indexed oldConfigStorage, address indexed configStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address indexed perpStorage);
+  event LogSetTradeHelper(address indexed oldTradeHelper, address indexed tradeHelper);
 
   /**
    * States
@@ -45,6 +47,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   address public vaultStorage;
   address public configStorage;
   address public perpStorage;
+  address public tradeHelper;
 
   function initialize(
     address _oracle,
@@ -471,6 +474,13 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     perpStorage = _perpStorage;
   }
 
+  function setTradeHelper(address _tradeHelper) external onlyOwner {
+    if (_tradeHelper == address(0)) revert ICalculator_InvalidAddress();
+    TradeHelper(_tradeHelper).maxAdaptiveFeeBps();
+    emit LogSetTradeHelper(_tradeHelper, tradeHelper);
+    tradeHelper = _tradeHelper;
+  }
+
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
@@ -692,7 +702,13 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           _unrealizedFeeE30 += getFundingFee(_var.position.positionSizeE30, currentFundingAccrued, lastFundingAccrued);
         }
         // Calculate trading fee
-        _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
+        _unrealizedFeeE30 += int256(
+          _getTradingFee(
+            -_var.position.positionSizeE30,
+            _marketConfig.decreasePositionFeeRateBPS,
+            _var.position.marketIndex
+          )
+        );
       }
 
       unchecked {
@@ -1088,12 +1104,26 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _hlpTVL;
   }
 
-  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) external pure returns (uint256 tradingFee) {
-    return _getTradingFee(_size, _baseFeeRateBPS);
+  function getTradingFee(
+    int256 _size,
+    uint256 _baseFeeRateBPS,
+    uint256 _marketIndex
+  ) external view returns (uint256 tradingFee) {
+    return _getTradingFee(_size, _baseFeeRateBPS, _marketIndex);
   }
 
-  function _getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) internal pure returns (uint256 tradingFee) {
-    return (_size * _baseFeeRateBPS) / BPS;
+  function _getTradingFee(
+    int256 _size,
+    uint256 _baseFeeRateBPS,
+    uint256 _marketIndex
+  ) internal view returns (uint256 tradingFee) {
+    bool isAdaptiveFeeEnabled = ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_marketIndex);
+    if (isAdaptiveFeeEnabled) {
+      uint32 feeBPS = TradeHelper(tradeHelper).getAdaptiveFeeBps(_size, _marketIndex, uint32(_baseFeeRateBPS));
+      return (HMXLib.abs(_size) * feeBPS) / BPS;
+    } else {
+      return (HMXLib.abs(_size) * _baseFeeRateBPS) / BPS;
+    }
   }
 
   function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) public view returns (bool, uint256) {

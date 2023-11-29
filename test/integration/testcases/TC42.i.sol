@@ -76,14 +76,14 @@ contract TC42 is BaseIntTest_WithActions {
       assertVaultTokenBalance(address(usdc), 100_000 * 1e6, "TC38: before deposit collateral");
     }
 
-    usdc.mint(BOB, 100_000 * 1e6);
+    usdc.mint(BOB, 200_000 * 1e6);
     usdc.mint(CAROL, 100_000 * 1e6);
-    depositCollateral(BOB, 0, ERC20(address(usdc)), 100_000 * 1e6);
+    depositCollateral(BOB, 0, ERC20(address(usdc)), 200_000 * 1e6);
     depositCollateral(CAROL, 0, ERC20(address(usdc)), 100_000 * 1e6);
 
     {
-      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
-      assertVaultTokenBalance(address(usdc), 300_000 * 1e6, "TC38: before deposit collateral");
+      // Assert collateral (HLP 100,000 + Collateral 300,000) => 400,000
+      assertVaultTokenBalance(address(usdc), 400_000 * 1e6, "TC38: after deposit collateral");
     }
 
     int24[] memory askDepthTicks = new int24[](1);

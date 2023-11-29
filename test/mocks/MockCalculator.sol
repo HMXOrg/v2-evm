@@ -191,7 +191,7 @@ contract MockCalculator is ICalculator {
     return nextBorrowingRate;
   }
 
-  function getTradingFee(uint256 /*_size*/, uint256 /*_baseFeeRateBPS*/) public view virtual returns (uint256) {
+  function getTradingFee(int256 /*_size*/, uint256 /*_baseFeeRateBPS*/, uint256) public view virtual returns (uint256) {
     return 0;
   }
 
@@ -238,6 +238,8 @@ contract MockCalculator is ICalculator {
   function setConfigStorage(address /*_address*/) external {}
 
   function setPerpStorage(address /*_address*/) external {}
+
+  function setTradeHelper(address /*_address*/) external {}
 
   function calculateMarketAveragePrice(
     int256 /* _marketPositionSize */,

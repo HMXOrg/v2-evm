@@ -46,6 +46,7 @@ import { Smoke_MaxProfit } from "@hmx-test/fork/smoke-test/Smoke_MaxProfit.t.sol
 import { Smoke_Trade } from "@hmx-test/fork/smoke-test/Smoke_Trade.t.sol";
 import { Smoke_TriggerOrder } from "@hmx-test/fork/smoke-test/Smoke_TriggerOrder.t.sol";
 import { RebalanceHLPService_Test } from "@hmx-test/fork/rebalance-hlp/RebalanceHLPService.t.sol";
+import { Smoke_DistributeARBRewardsFromSTIP } from "@hmx-test/fork/smoke-test/Smoke_DistributeARBRewardsFromSTIP.t.sol";
 
 contract Smoke_Base is ForkEnv {
   uint256 internal constant BPS = 10_000;
@@ -82,6 +83,14 @@ contract Smoke_Base is ForkEnv {
     tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));
     tradeHelper.setOrderbookOracle(address(orderbookOracle));
     tradeHelper.setMaxAdaptiveFeeBps(500);
+    vm.stopPrank();
+
+    vm.startPrank(Calculator(address(ForkEnv.calculator)).owner());
+    Calculator(address(ForkEnv.calculator)).setTradeHelper(address(tradeHelper));
+    vm.stopPrank();
+
+    vm.startPrank(perpStorage.owner());
+    perpStorage.setMovingWindowConfig(15, 1 minutes);
     vm.stopPrank();
 
     _setMarketConfig();
@@ -607,7 +616,7 @@ contract Smoke_Base is ForkEnv {
     askDepthTicks[4] = 149153;
     askDepthTicks[5] = 149154;
     askDepthTicks[6] = 149155;
-    askDepthTicks[7] = 149156;
+    askDepthTicks[7] = 124915; // 265899.97059219
     askDepthTicks[8] = 149157;
     askDepthTicks[9] = 218230;
     askDepthTicks[10] = 149159;
@@ -621,7 +630,7 @@ contract Smoke_Base is ForkEnv {
     bidDepthTicks[4] = 149153;
     bidDepthTicks[5] = 149154;
     bidDepthTicks[6] = 149155;
-    bidDepthTicks[7] = 149156;
+    bidDepthTicks[7] = 124915; // 265899.97059219
     bidDepthTicks[8] = 149157;
     bidDepthTicks[9] = 218230;
     bidDepthTicks[10] = 149159;
@@ -656,6 +665,8 @@ contract Smoke_Base is ForkEnv {
     vm.revertTo(snapshot);
     new Smoke_Liquidate().liquidate();
     vm.revertTo(snapshot);
+    new Smoke_Liquidate().liquidateWithAdaptiveFee();
+    vm.revertTo(snapshot);
     new Smoke_Liquidity().addLiquidity();
     vm.revertTo(snapshot);
     new Smoke_Liquidity().removeLiquidity();
@@ -679,5 +690,7 @@ contract Smoke_Base is ForkEnv {
     new RebalanceHLPService_Test().withdrawExceedingAmount();
     vm.revertTo(snapshot);
     new RebalanceHLPService_Test().swapReinvestSuccess();
+    vm.revertTo(snapshot);
+    new Smoke_DistributeARBRewardsFromSTIP().distributeARBRewardsFromSTIP();
   }
 }

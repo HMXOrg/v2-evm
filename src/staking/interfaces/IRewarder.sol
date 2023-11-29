@@ -23,4 +23,6 @@ interface IRewarder {
   function lastRewardTime() external view returns (uint64);
 
   function setFeeder(address feeder_) external;
+
+  function feedWithExpiredAt(uint256 feedAmount, uint256 expiredAt) external;
 }

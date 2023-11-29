@@ -9,15 +9,15 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+      assetId: ethers.utils.formatBytes32String("SEK"),
       confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
+      assetId: ethers.utils.formatBytes32String("DIX"),
       confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
   ];

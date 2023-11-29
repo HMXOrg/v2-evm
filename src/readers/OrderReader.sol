@@ -4,6 +4,9 @@
 
 pragma solidity 0.8.18;
 
+// contracts
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+
 // interfaces
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -14,6 +17,8 @@ import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 
 contract OrderReader {
+  address public configStorageAddress;
+
   IConfigStorage immutable configStorage;
   ILimitTradeHandler immutable limitTradeHandler;
   OracleMiddleware immutable oracleMiddleware;
@@ -24,6 +29,7 @@ contract OrderReader {
     perpStorage = IPerpStorage(_perpStorage);
     limitTradeHandler = ILimitTradeHandler(_limitTradeHandler);
     oracleMiddleware = OracleMiddleware(_oracleMiddleware);
+    configStorageAddress = _configStorage;
   }
 
   struct ExecutableOrderVars {
@@ -86,6 +92,7 @@ contract OrderReader {
     ILimitTradeHandler.LimitOrder memory _order;
     address _subAccount;
     bytes32 _positionId;
+    uint256 _minProfitDuration;
     IPerpStorage.Position memory _position;
     len = vars.orders.length;
     for (uint256 i; i < len; i++) {
@@ -105,8 +112,14 @@ contract OrderReader {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
+          _minProfitDuration = ConfigStorage(configStorageAddress).minProfitDurations(_order.marketIndex);
           // check position
           if (_isPositionClose(_position)) {
+            continue;
+          }
+
+          // validate minProfitDuration
+          if (_isMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
             continue;
           }
         }
@@ -131,6 +144,14 @@ contract OrderReader {
 
   function _isPositionClose(IPerpStorage.Position memory _position) internal pure returns (bool) {
     return _position.primaryAccount == address(0);
+  }
+
+  function _isMinProfitDuration(
+    IPerpStorage.Position memory _position,
+    uint256 _minProfitDuration,
+    uint256 _timestamp
+  ) internal pure returns (bool) {
+    return _timestamp < _position.lastIncreaseTimestamp + _minProfitDuration;
   }
 
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {

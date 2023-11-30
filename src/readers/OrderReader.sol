@@ -4,9 +4,6 @@
 
 pragma solidity 0.8.18;
 
-// contracts
-import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-
 // interfaces
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";

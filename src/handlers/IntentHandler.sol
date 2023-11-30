@@ -13,9 +13,8 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
-import { TradeService } from "@hmx/services/TradeService.sol";
 import { WordCodec } from "@hmx/libraries/WordCodec.sol";
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { TradeOrderHelper } from "@hmx/helpers/TradeOrderHelper.sol";
 
 // interfaces
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -27,16 +26,29 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
   IEcoPyth public pyth;
   ConfigStorage public configStorage;
   VaultStorage public vaultStorage;
-  TradeService public tradeService;
-  PerpStorage public perpStorage;
+  TradeOrderHelper public tradeOrderHelper;
   uint256 public executionFeeInUsd;
   address public executionFeeTreasury;
-  uint256 public maxOrderAge;
+  mapping(bytes32 key => bool executed) executedIntents;
 
   error IntentHandler_NotEnoughCollateral();
   error IntentHandler_BadLength();
   error IntentHandler_OrderStale();
   error IntentHandler_Unauthorized();
+  error IntentHandler_IntentReplay();
+
+  event LogExecuteTradeOrderFail(
+    address indexed account,
+    uint256 indexed subAccountId,
+    uint256 marketIndex,
+    int256 sizeDelta,
+    uint256 triggerPrice,
+    bool triggerAboveThreshold,
+    uint256 executionFee,
+    bool reduceOnly,
+    address tpToken,
+    bytes errMsg
+  );
 
   enum Command {
     ExecuteTradeOrder
@@ -61,40 +73,64 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint8 subAccountId;
   }
 
-  function executeIntent(
-    bytes32[] calldata _accountAndSubAccountIds,
-    bytes32[] calldata _cmds,
-    bytes32[] calldata _priceData,
-    bytes32[] calldata _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external {
-    if (_accountAndSubAccountIds.length != _cmds.length) revert IntentHandler_BadLength();
+  struct ExecuteIntentVars {
+    uint256 cmdsLength;
+    address[] tpTokens;
+    address mainAccount;
+    uint8 subAccountId;
+  }
+
+  struct ExecuteIntentInputs {
+    bytes32[] accountAndSubAccountIds;
+    bytes32[] cmds;
+    uint8[] v;
+    bytes32[] r;
+    bytes32[] s;
+    bytes32[] priceData;
+    bytes32[] publishTimeData;
+    uint256 minPublishTime;
+    bytes32 encodedVaas;
+  }
+
+  function executeIntent(ExecuteIntentInputs memory inputs) external {
+    if (inputs.accountAndSubAccountIds.length != inputs.cmds.length) revert IntentHandler_BadLength();
+
+    ExecuteIntentVars memory _localVars;
 
     // Update price to Pyth
-    pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    pyth.updatePriceFeeds(inputs.priceData, inputs.publishTimeData, inputs.minPublishTime, inputs.encodedVaas);
 
-    uint256 _len = _accountAndSubAccountIds.length;
-    address[] memory _tpTokens = configStorage.getHlpTokens();
+    _localVars.cmdsLength = inputs.accountAndSubAccountIds.length;
+    _localVars.tpTokens = configStorage.getHlpTokens();
 
-    for (uint256 _i; _i < _len; ) {
-      address _mainAccount = address(uint160(_accountAndSubAccountIds[_i].decodeUint(0, 160)));
-      uint8 _subAccountId = uint8(_accountAndSubAccountIds[_i].decodeUint(160, 8));
-      Command _cmd = Command(_cmds[_i].decodeUint(0, 3));
+    for (uint256 _i; _i < _localVars.cmdsLength; ) {
+      _localVars.mainAccount = address(uint160(inputs.accountAndSubAccountIds[_i].decodeUint(0, 160)));
+      _localVars.subAccountId = uint8(inputs.accountAndSubAccountIds[_i].decodeUint(160, 8));
+      Command _cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
 
       if (_cmd == Command.ExecuteTradeOrder) {
-        ExecuteTradeOrderVars memory _localVars;
-        _localVars.marketIndex = _cmds[_i].decodeUint(3, 8);
-        _localVars.sizeDelta = _cmds[_i].decodeInt(11, 54) * 1e22;
-        _localVars.triggerPrice = _cmds[_i].decodeUint(65, 54) * 1e22;
-        _localVars.acceptablePrice = _cmds[_i].decodeUint(119, 54) * 1e22;
-        _localVars.triggerAboveThreshold = _cmds[_i].decodeBool(183);
-        _localVars.executionFee = _cmds[_i].decodeUint(184, 27) * 1e10;
-        _localVars.reduceOnly = _cmds[_i].decodeBool(211);
-        _localVars.tpToken = _tpTokens[uint256(_cmds[_i].decodeUint(212, 7))];
-        _localVars.createdTimestamp = _cmds[_i].decodeUint(219, 32);
-        _localVars.account = _mainAccount;
-        _localVars.subAccountId = _subAccountId;
+        ExecuteTradeOrderVars memory _vars;
+        _vars.marketIndex = inputs.cmds[_i].decodeUint(3, 8);
+        _vars.sizeDelta = inputs.cmds[_i].decodeInt(11, 54) * 1e22;
+        _vars.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
+        _vars.acceptablePrice = inputs.cmds[_i].decodeUint(119, 54) * 1e22;
+        _vars.triggerAboveThreshold = inputs.cmds[_i].decodeBool(183);
+        _vars.executionFee = inputs.cmds[_i].decodeUint(184, 27) * 1e10;
+        _vars.reduceOnly = inputs.cmds[_i].decodeBool(211);
+        _vars.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(212, 7))];
+        _vars.createdTimestamp = inputs.cmds[_i].decodeUint(219, 32);
+        _vars.account = _localVars.mainAccount;
+        _vars.subAccountId = _localVars.subAccountId;
+
+        bytes32 key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
+        if (executedIntents[key]) {
+          revert IntentHandler_IntentReplay();
+        }
+
+        _executeTradeOrder(_vars);
+        _collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
+
+        executedIntents[key] = true;
       }
 
       unchecked {
@@ -104,140 +140,19 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
   }
 
   function _executeTradeOrder(ExecuteTradeOrderVars memory vars) internal {
-    bool isMarketOrder = vars.triggerAboveThreshold && vars.triggerPrice == 0;
-    if (isMarketOrder && vars.createdTimestamp + maxOrderAge > block.timestamp) {
-      revert IntentHandler_OrderStale();
+    // try executing order
+    try tradeOrderHelper.execute(vars) {
+      // Execution succeeded
+    } catch Error(string memory errMsg) {
+      _handleOrderFail(vars, bytes(errMsg));
+    } catch Panic(uint /*errorCode*/) {
+      _handleOrderFail(vars, bytes("Panic occurred while executing trade order"));
+    } catch (bytes memory errMsg) {
+      _handleOrderFail(vars, errMsg);
     }
   }
 
-  function tryExecuteTradeOrder(ExecuteTradeOrderVars memory vars) external {
-    // if not in executing state, then revert
-    if (msg.sender != address(this)) revert IntentHandler_Unauthorized();
-
-    TradeService _tradeService = TradeService(tradeService);
-
-    // Retrieve existing position
-    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.marketIndex);
-    PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
-      vars.positionId
-    );
-
-    // Execute the order
-    if (vars.reduceOnly) {
-      bool isDecreaseShort = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
-      bool isDecreaseLong = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
-      bool isClosePosition = !vars.isNewPosition && (isDecreaseShort || isDecreaseLong);
-      if (isClosePosition) {
-        _tradeService.decreasePosition({
-          _account: vars.account,
-          _subAccountId: vars.subAccountId,
-          _marketIndex: vars.marketIndex,
-          _positionSizeE30ToDecrease: HMXLib.min(
-            HMXLib.abs(vars.sizeDelta),
-            HMXLib.abs(_existingPosition.positionSizeE30)
-          ),
-          _tpToken: vars.tpToken,
-          _limitPriceE30: 0
-        });
-      } else {
-        // Do nothing if the size delta is wrong for reduce-only
-      }
-    } else {
-      if (vars.sizeDelta > 0) {
-        // BUY
-        if (vars.isNewPosition || vars.positionIsLong) {
-          // New position and Long position
-          // just increase position when BUY
-          _tradeService.increasePosition({
-            _primaryAccount: vars.account,
-            _subAccountId: vars.subAccountId,
-            _marketIndex: vars.marketIndex,
-            _sizeDelta: vars.sizeDelta,
-            _limitPriceE30: 0
-          });
-        } else {
-          bool _flipSide = vars.sizeDelta > (-_existingPosition.positionSizeE30);
-          if (_flipSide) {
-            // Flip the position
-            // Fully close Short position
-            _tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-              _tpToken: vars.tpToken,
-              _limitPriceE30: 0
-            });
-            // Flip it to Long position
-            _tradeService.increasePosition({
-              _primaryAccount: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
-              _limitPriceE30: 0
-            });
-          } else {
-            // Not flip
-            _tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _positionSizeE30ToDecrease: uint256(vars.sizeDelta),
-              _tpToken: vars.tpToken,
-              _limitPriceE30: 0
-            });
-          }
-        }
-      } else if (vars.sizeDelta < 0) {
-        // SELL
-        if (vars.isNewPosition || !vars.positionIsLong) {
-          // New position and Short position
-          // just increase position when SELL
-          _tradeService.increasePosition({
-            _primaryAccount: vars.account,
-            _subAccountId: vars.subAccountId,
-            _marketIndex: vars.marketIndex,
-            _sizeDelta: vars.sizeDelta,
-            _limitPriceE30: 0
-          });
-        } else if (vars.positionIsLong) {
-          bool _flipSide = (-vars.sizeDelta) > _existingPosition.positionSizeE30;
-          if (_flipSide) {
-            // Flip the position
-            // Fully close Long position
-            _tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-              _tpToken: vars.tpToken,
-              _limitPriceE30: 0
-            });
-            // Flip it to Short position
-            _tradeService.increasePosition({
-              _primaryAccount: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
-              _limitPriceE30: 0
-            });
-          } else {
-            // Not flip
-            _tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _positionSizeE30ToDecrease: uint256(-vars.sizeDelta),
-              _tpToken: vars.tpToken,
-              _limitPriceE30: 0
-            });
-          }
-        }
-      }
-    }
-  }
-
-  function collectExecutionFeeFromCollateral(address _primaryAccount, uint8 _subAccountId) internal {
+  function _collectExecutionFeeFromCollateral(address _primaryAccount, uint8 _subAccountId) internal {
     bytes32[] memory _hlpAssetIds = configStorage.getHlpAssetIds();
     uint256 _len = _hlpAssetIds.length;
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
@@ -278,6 +193,21 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     if (_executionFeeToBePaidInUsd > 0) {
       revert IntentHandler_NotEnoughCollateral();
     }
+  }
+
+  function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg) internal {
+    emit LogExecuteTradeOrderFail(
+      vars.account,
+      vars.subAccountId,
+      vars.marketIndex,
+      vars.sizeDelta,
+      vars.triggerPrice,
+      vars.triggerAboveThreshold,
+      vars.executionFee,
+      vars.reduceOnly,
+      vars.tpToken,
+      errMsg
+    );
   }
 
   function _getPayAmount(

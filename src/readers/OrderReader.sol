@@ -17,8 +17,6 @@ import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 
 contract OrderReader {
-  address public configStorageAddress;
-
   IConfigStorage immutable configStorage;
   ILimitTradeHandler immutable limitTradeHandler;
   OracleMiddleware immutable oracleMiddleware;
@@ -29,7 +27,6 @@ contract OrderReader {
     perpStorage = IPerpStorage(_perpStorage);
     limitTradeHandler = ILimitTradeHandler(_limitTradeHandler);
     oracleMiddleware = OracleMiddleware(_oracleMiddleware);
-    configStorageAddress = _configStorage;
   }
 
   struct ExecutableOrderVars {
@@ -112,14 +109,14 @@ contract OrderReader {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
-          _minProfitDuration = ConfigStorage(configStorageAddress).minProfitDurations(_order.marketIndex);
+          _minProfitDuration = configStorage.minProfitDurations(_order.marketIndex);
           // check position
           if (_isPositionClose(_position)) {
             continue;
           }
 
           // validate minProfitDuration
-          if (_isMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
+          if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
             continue;
           }
         }
@@ -146,7 +143,7 @@ contract OrderReader {
     return _position.primaryAccount == address(0);
   }
 
-  function _isMinProfitDuration(
+  function _isUnderMinProfitDuration(
     IPerpStorage.Position memory _position,
     uint256 _minProfitDuration,
     uint256 _timestamp

@@ -15,6 +15,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { WordCodec } from "@hmx/libraries/WordCodec.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // interfaces
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -27,6 +28,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
   ConfigStorage public configStorage;
   VaultStorage public vaultStorage;
   TradeService public tradeService;
+  PerpStorage public perpStorage;
   uint256 public executionFeeInUsd;
   address public executionFeeTreasury;
   uint256 public maxOrderAge;
@@ -34,6 +36,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
   error IntentHandler_NotEnoughCollateral();
   error IntentHandler_BadLength();
   error IntentHandler_OrderStale();
+  error IntentHandler_Unauthorized();
 
   enum Command {
     ExecuteTradeOrder
@@ -54,6 +57,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     bool positionIsLong;
     bool isNewPosition;
     bool isMarketOrder;
+    address account;
+    uint8 subAccountId;
   }
 
   function executeIntent(
@@ -75,7 +80,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     for (uint256 _i; _i < _len; ) {
       address _mainAccount = address(uint160(_accountAndSubAccountIds[_i].decodeUint(0, 160)));
       uint8 _subAccountId = uint8(_accountAndSubAccountIds[_i].decodeUint(160, 8));
-      Command _cmd = Command(_cmds[i].decodeUint(0, 3));
+      Command _cmd = Command(_cmds[_i].decodeUint(0, 3));
 
       if (_cmd == Command.ExecuteTradeOrder) {
         ExecuteTradeOrderVars memory _localVars;
@@ -88,6 +93,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         _localVars.reduceOnly = _cmds[_i].decodeBool(211);
         _localVars.tpToken = _tpTokens[uint256(_cmds[_i].decodeUint(212, 7))];
         _localVars.createdTimestamp = _cmds[_i].decodeUint(219, 32);
+        _localVars.account = _mainAccount;
+        _localVars.subAccountId = _subAccountId;
       }
 
       unchecked {
@@ -96,35 +103,41 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
   }
 
-  function _executeTradeOrder(ExecuteTradeOrderVars memory _vars) internal {
+  function _executeTradeOrder(ExecuteTradeOrderVars memory vars) internal {
     bool isMarketOrder = vars.triggerAboveThreshold && vars.triggerPrice == 0;
     if (isMarketOrder && vars.createdTimestamp + maxOrderAge > block.timestamp) {
       revert IntentHandler_OrderStale();
     }
   }
 
-  function tryExecuteTradeOrder(ExecuteTradeOrderVars memory _vars) external {
+  function tryExecuteTradeOrder(ExecuteTradeOrderVars memory vars) external {
     // if not in executing state, then revert
     if (msg.sender != address(this)) revert IntentHandler_Unauthorized();
 
     TradeService _tradeService = TradeService(tradeService);
 
+    // Retrieve existing position
+    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.marketIndex);
+    PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
+      vars.positionId
+    );
+
     // Execute the order
-    if (vars.order.reduceOnly) {
+    if (vars.reduceOnly) {
       bool isDecreaseShort = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
       bool isDecreaseLong = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
       bool isClosePosition = !vars.isNewPosition && (isDecreaseShort || isDecreaseLong);
       if (isClosePosition) {
         _tradeService.decreasePosition({
-          _account: vars.order.account,
-          _subAccountId: vars.order.subAccountId,
-          _marketIndex: vars.order.marketIndex,
+          _account: vars.account,
+          _subAccountId: vars.subAccountId,
+          _marketIndex: vars.marketIndex,
           _positionSizeE30ToDecrease: HMXLib.min(
             HMXLib.abs(vars.sizeDelta),
             HMXLib.abs(_existingPosition.positionSizeE30)
           ),
-          _tpToken: vars.order.tpToken,
-          _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+          _tpToken: vars.tpToken,
+          _limitPriceE30: 0
         });
       } else {
         // Do nothing if the size delta is wrong for reduce-only
@@ -136,11 +149,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
           // New position and Long position
           // just increase position when BUY
           _tradeService.increasePosition({
-            _primaryAccount: vars.order.account,
-            _subAccountId: vars.order.subAccountId,
-            _marketIndex: vars.order.marketIndex,
+            _primaryAccount: vars.account,
+            _subAccountId: vars.subAccountId,
+            _marketIndex: vars.marketIndex,
             _sizeDelta: vars.sizeDelta,
-            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: 0
           });
         } else {
           bool _flipSide = vars.sizeDelta > (-_existingPosition.positionSizeE30);
@@ -148,30 +161,30 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // Flip the position
             // Fully close Short position
             _tradeService.decreasePosition({
-              _account: vars.order.account,
-              _subAccountId: vars.order.subAccountId,
-              _marketIndex: vars.order.marketIndex,
+              _account: vars.account,
+              _subAccountId: vars.subAccountId,
+              _marketIndex: vars.marketIndex,
               _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-              _tpToken: vars.order.tpToken,
-              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+              _tpToken: vars.tpToken,
+              _limitPriceE30: 0
             });
             // Flip it to Long position
             _tradeService.increasePosition({
-              _primaryAccount: vars.order.account,
-              _subAccountId: vars.order.subAccountId,
-              _marketIndex: vars.order.marketIndex,
+              _primaryAccount: vars.account,
+              _subAccountId: vars.subAccountId,
+              _marketIndex: vars.marketIndex,
               _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
-              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+              _limitPriceE30: 0
             });
           } else {
             // Not flip
             _tradeService.decreasePosition({
-              _account: vars.order.account,
-              _subAccountId: vars.order.subAccountId,
-              _marketIndex: vars.order.marketIndex,
+              _account: vars.account,
+              _subAccountId: vars.subAccountId,
+              _marketIndex: vars.marketIndex,
               _positionSizeE30ToDecrease: uint256(vars.sizeDelta),
-              _tpToken: vars.order.tpToken,
-              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+              _tpToken: vars.tpToken,
+              _limitPriceE30: 0
             });
           }
         }
@@ -181,11 +194,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
           // New position and Short position
           // just increase position when SELL
           _tradeService.increasePosition({
-            _primaryAccount: vars.order.account,
-            _subAccountId: vars.order.subAccountId,
-            _marketIndex: vars.order.marketIndex,
+            _primaryAccount: vars.account,
+            _subAccountId: vars.subAccountId,
+            _marketIndex: vars.marketIndex,
             _sizeDelta: vars.sizeDelta,
-            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: 0
           });
         } else if (vars.positionIsLong) {
           bool _flipSide = (-vars.sizeDelta) > _existingPosition.positionSizeE30;
@@ -193,30 +206,30 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             // Flip the position
             // Fully close Long position
             _tradeService.decreasePosition({
-              _account: vars.order.account,
-              _subAccountId: vars.order.subAccountId,
-              _marketIndex: vars.order.marketIndex,
+              _account: vars.account,
+              _subAccountId: vars.subAccountId,
+              _marketIndex: vars.marketIndex,
               _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-              _tpToken: vars.order.tpToken,
-              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+              _tpToken: vars.tpToken,
+              _limitPriceE30: 0
             });
             // Flip it to Short position
             _tradeService.increasePosition({
-              _primaryAccount: vars.order.account,
-              _subAccountId: vars.order.subAccountId,
-              _marketIndex: vars.order.marketIndex,
+              _primaryAccount: vars.account,
+              _subAccountId: vars.subAccountId,
+              _marketIndex: vars.marketIndex,
               _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
-              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+              _limitPriceE30: 0
             });
           } else {
             // Not flip
             _tradeService.decreasePosition({
-              _account: vars.order.account,
-              _subAccountId: vars.order.subAccountId,
-              _marketIndex: vars.order.marketIndex,
+              _account: vars.account,
+              _subAccountId: vars.subAccountId,
+              _marketIndex: vars.marketIndex,
               _positionSizeE30ToDecrease: uint256(-vars.sizeDelta),
-              _tpToken: vars.order.tpToken,
-              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+              _tpToken: vars.tpToken,
+              _limitPriceE30: 0
             });
           }
         }

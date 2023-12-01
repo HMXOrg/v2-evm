@@ -18,9 +18,10 @@ import { TradeOrderHelper } from "@hmx/helpers/TradeOrderHelper.sol";
 
 // interfaces
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 
 /// @title IntentHandler
-contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IIntentHandler {
   using WordCodec for bytes32;
 
   IEcoPyth public pyth;
@@ -30,66 +31,25 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
   uint256 public executionFeeInUsd;
   address public executionFeeTreasury;
   mapping(bytes32 key => bool executed) executedIntents;
+  mapping(address executor => bool isAllow) public intentExecutors; // The allowed addresses to execute intents
 
-  error IntentHandler_NotEnoughCollateral();
-  error IntentHandler_BadLength();
-  error IntentHandler_OrderStale();
-  error IntentHandler_Unauthorized();
-  error IntentHandler_IntentReplay();
+  function initialize(
+    address _pyth,
+    address _configStorage,
+    address _vaultStorage,
+    address _tradeOrderHelper,
+    uint256 _executionFeeInUsd,
+    address _executionFeeTreasury
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-  event LogExecuteTradeOrderFail(
-    address indexed account,
-    uint256 indexed subAccountId,
-    uint256 marketIndex,
-    int256 sizeDelta,
-    uint256 triggerPrice,
-    bool triggerAboveThreshold,
-    uint256 executionFee,
-    bool reduceOnly,
-    address tpToken,
-    bytes errMsg
-  );
-
-  enum Command {
-    ExecuteTradeOrder
-  }
-
-  struct ExecuteTradeOrderVars {
-    uint256 marketIndex;
-    int256 sizeDelta;
-    uint256 triggerPrice;
-    uint256 acceptablePrice;
-    bool triggerAboveThreshold;
-    uint256 executionFee;
-    bool reduceOnly;
-    address tpToken;
-    uint256 createdTimestamp;
-    address subAccount;
-    bytes32 positionId;
-    bool positionIsLong;
-    bool isNewPosition;
-    bool isMarketOrder;
-    address account;
-    uint8 subAccountId;
-  }
-
-  struct ExecuteIntentVars {
-    uint256 cmdsLength;
-    address[] tpTokens;
-    address mainAccount;
-    uint8 subAccountId;
-  }
-
-  struct ExecuteIntentInputs {
-    bytes32[] accountAndSubAccountIds;
-    bytes32[] cmds;
-    uint8[] v;
-    bytes32[] r;
-    bytes32[] s;
-    bytes32[] priceData;
-    bytes32[] publishTimeData;
-    uint256 minPublishTime;
-    bytes32 encodedVaas;
+    pyth = IEcoPyth(_pyth);
+    configStorage = ConfigStorage(_configStorage);
+    vaultStorage = VaultStorage(_vaultStorage);
+    tradeOrderHelper = TradeOrderHelper(_tradeOrderHelper);
+    executionFeeInUsd = _executionFeeInUsd;
+    executionFeeTreasury = _executionFeeTreasury;
   }
 
   function executeIntent(ExecuteIntentInputs memory inputs) external {
@@ -115,10 +75,9 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         _vars.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
         _vars.acceptablePrice = inputs.cmds[_i].decodeUint(119, 54) * 1e22;
         _vars.triggerAboveThreshold = inputs.cmds[_i].decodeBool(183);
-        _vars.executionFee = inputs.cmds[_i].decodeUint(184, 27) * 1e10;
-        _vars.reduceOnly = inputs.cmds[_i].decodeBool(211);
-        _vars.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(212, 7))];
-        _vars.createdTimestamp = inputs.cmds[_i].decodeUint(219, 32);
+        _vars.reduceOnly = inputs.cmds[_i].decodeBool(184);
+        _vars.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(185, 7))];
+        _vars.createdTimestamp = inputs.cmds[_i].decodeUint(192, 32);
         _vars.account = _localVars.mainAccount;
         _vars.subAccountId = _localVars.subAccountId;
 
@@ -203,7 +162,6 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
       vars.sizeDelta,
       vars.triggerPrice,
       vars.triggerAboveThreshold,
-      vars.executionFee,
       vars.reduceOnly,
       vars.tpToken,
       errMsg
@@ -226,5 +184,19 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable {
       uint256 _payerBalanceValue = (_payerBalance * _tokenPrice) / (10 ** _tokenDecimal);
       return (_payerBalance, _payerBalanceValue);
     }
+  }
+
+  /// @notice setIntentExecutor
+  /// @param _executor address who will be executor
+  /// @param _isAllow flag to allow to execute
+  function setIntentExecutor(address _executor, bool _isAllow) external nonReentrant onlyOwner {
+    if (_executor == address(0)) revert IntentHandler_InvalidAddress();
+    intentExecutors[_executor] = _isAllow;
+    emit LogSetIntentExecutor(_executor, _isAllow);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

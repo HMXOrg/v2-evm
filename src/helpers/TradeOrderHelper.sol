@@ -11,24 +11,16 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { IntentHandler } from "@hmx/handlers/IntentHandler.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
+import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 
-contract TradeOrderHelper is Ownable {
-  error TradeOrderHelper_MaxTradeSize();
-  error TradeOrderHelper_MaxPositionSize();
-  error TradeOrderHelper_PriceSlippage();
-  error TradeOrderHelper_MarketIsClosed();
-  error TradeOrderHelper_InvalidPriceForExecution();
-  error TradeOrderHelper_NotWhiteListed();
-  error TradeOrderHelper_OrderStale();
-
-  event LogSetLimit(uint256 _marketIndex, uint256 _positionSizeLimitOf, uint256 _tradeSizeLimitOf);
-
+contract TradeOrderHelper is Ownable, ITradeOrderHelper {
   ConfigStorage public configStorage;
   PerpStorage public perpStorage;
   OracleMiddleware public oracle;
   TradeService public tradeService;
-  uint256 maxOrderAge;
-  address whitelistedCaller;
+  uint256 public maxOrderAge;
+  address public whitelistedCaller;
 
   mapping(uint256 marketIndex => uint256 sizeLimit) public positionSizeLimitOf;
   mapping(uint256 marketIndex => uint256 sizeLimit) public tradeSizeLimitOf;
@@ -43,11 +35,18 @@ contract TradeOrderHelper is Ownable {
     bool isPriceValid;
   }
 
-  constructor(address _configStorage, address _perpStorage, address _oracle, address _tradeService) {
+  constructor(
+    address _configStorage,
+    address _perpStorage,
+    address _oracle,
+    address _tradeService,
+    uint256 _maxOrderAge
+  ) {
     configStorage = ConfigStorage(_configStorage);
     perpStorage = PerpStorage(_perpStorage);
     oracle = OracleMiddleware(_oracle);
     tradeService = TradeService(_tradeService);
+    maxOrderAge = _maxOrderAge;
   }
 
   modifier onlyWhitelistedCaller() {
@@ -67,7 +66,7 @@ contract TradeOrderHelper is Ownable {
     uint256 createdTimestamp
   ) internal view {
     bool isMarketOrder = triggerAboveThreshold && triggerPrice == 0;
-    if (isMarketOrder && createdTimestamp + maxOrderAge > block.timestamp) {
+    if (isMarketOrder && createdTimestamp + maxOrderAge < block.timestamp) {
       revert TradeOrderHelper_OrderStale();
     }
 
@@ -123,7 +122,7 @@ contract TradeOrderHelper is Ownable {
     if (!vars.isPriceValid) revert TradeOrderHelper_PriceSlippage();
   }
 
-  function execute(IntentHandler.ExecuteTradeOrderVars memory vars) external {
+  function execute(IIntentHandler.ExecuteTradeOrderVars memory vars) external {
     _validate(
       vars.account,
       vars.subAccountId,
@@ -277,5 +276,10 @@ contract TradeOrderHelper is Ownable {
         ++i;
       }
     }
+  }
+
+  function setWhitelistedCaller(address _whitelistedCaller) external onlyOwner {
+    emit LogSetWhitelistedCaller(whitelistedCaller, _whitelistedCaller);
+    whitelistedCaller = _whitelistedCaller;
   }
 }

@@ -70,6 +70,8 @@ import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
 import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
 import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
+import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -755,6 +757,45 @@ library Deployer {
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _vaultStorage);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IERC20ApproveStrategy(payable(_proxy));
+  }
+
+  function deployTradeOrderHelper(
+    address _configStorage,
+    address _perpStorage,
+    address _oracle,
+    address _tradeService,
+    uint256 _maxOrderAge
+  ) internal returns (ITradeOrderHelper) {
+    return
+      ITradeOrderHelper(
+        deployContractWithArguments(
+          "TradeOrderHelper",
+          abi.encode(_configStorage, _perpStorage, _oracle, _tradeService, _maxOrderAge)
+        )
+      );
+  }
+
+  function deployIntentHandler(
+    address _proxyAdmin,
+    address _pyth,
+    address _configStorage,
+    address _vaultStorage,
+    address _tradeOrderHelper,
+    uint256 _executionFeeInUsd,
+    address _executionFeeTreasury
+  ) internal returns (IIntentHandler) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/IntentHandler.sol/IntentHandler.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,uint256,address)")),
+      _pyth,
+      _configStorage,
+      _vaultStorage,
+      _tradeOrderHelper,
+      _executionFeeInUsd,
+      _executionFeeTreasury
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IIntentHandler(payable(_proxy));
   }
 
   /**

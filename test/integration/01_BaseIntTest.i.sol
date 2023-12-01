@@ -74,6 +74,10 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
+import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
+import { IntentBuilder } from "@hmx/helpers/IntentBuilder.sol";
+
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant executionOrderFee = 0.0001 ether;
@@ -157,6 +161,10 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   // Executor
   IExt01Handler ext01Handler;
+
+  ITradeOrderHelper tradeOrderHelper;
+  IIntentHandler intentHandler;
+  IntentBuilder intentBuilder;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -298,7 +306,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       maxExecutionChuck
     );
 
-
     // deploy executor
     ext01Handler = Deployer.deployExt01Handler(
       address(proxyAdmin),
@@ -308,6 +315,26 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(tradeService),
       address(pyth)
     );
+
+    tradeOrderHelper = Deployer.deployTradeOrderHelper(
+      address(configStorage),
+      address(perpStorage),
+      address(oracleMiddleWare),
+      address(tradeService),
+      5 minutes
+    );
+
+    intentHandler = Deployer.deployIntentHandler(
+      address(proxyAdmin),
+      address(pyth),
+      address(configStorage),
+      address(vaultStorage),
+      address(tradeOrderHelper),
+      0.1 * 1e30,
+      FEEVER
+    );
+
+    intentBuilder = new IntentBuilder(address(configStorage));
 
     ext01Handler.setOrderExecutor(EXT01_EXECUTOR, true);
     ext01Handler.setMinExecutionFee(2, 0.1 * 1e9);
@@ -366,6 +393,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(liquidationService), true);
       vaultStorage.setServiceExecutors(address(botHandler), true);
+      vaultStorage.setServiceExecutors(address(intentHandler), true);
     }
 
     // Setup PerpStorage
@@ -395,6 +423,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     // Setup Cross Margin Handler
     {
       crossMarginHandler.setOrderExecutor(address(this), true);
+    }
+
+    // Setup Intent Handler
+    {
+      tradeOrderHelper.setWhitelistedCaller(address(intentHandler));
+      intentHandler.setIntentExecutor(address(this), true);
     }
   }
 }

@@ -86,6 +86,7 @@ contract OrderReader {
     ILimitTradeHandler.LimitOrder memory _order;
     address _subAccount;
     bytes32 _positionId;
+    uint256 _minProfitDuration;
     IPerpStorage.Position memory _position;
     len = vars.orders.length;
     for (uint256 i; i < len; i++) {
@@ -105,8 +106,14 @@ contract OrderReader {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
+          _minProfitDuration = configStorage.minProfitDurations(_order.marketIndex);
           // check position
           if (_isPositionClose(_position)) {
+            continue;
+          }
+
+          // validate minProfitDuration
+          if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
             continue;
           }
         }
@@ -131,6 +138,14 @@ contract OrderReader {
 
   function _isPositionClose(IPerpStorage.Position memory _position) internal pure returns (bool) {
     return _position.primaryAccount == address(0);
+  }
+
+  function _isUnderMinProfitDuration(
+    IPerpStorage.Position memory _position,
+    uint256 _minProfitDuration,
+    uint256 _timestamp
+  ) internal pure returns (bool) {
+    return _timestamp < _position.lastIncreaseTimestamp + _minProfitDuration;
   }
 
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {

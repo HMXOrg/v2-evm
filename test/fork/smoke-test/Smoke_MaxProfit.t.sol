@@ -25,8 +25,16 @@ contract Smoke_MaxProfit is ForkEnv {
   }
 
   function forceCloseMaxProfit() external {
-    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(1, 0);
-    IPerpStorage.Position memory position = positions[0];
+    IPerpStorage.Position[] memory positions = ForkEnv.perpStorage.getActivePositions(10, 0);
+
+    IPerpStorage.Position memory position;
+    for (uint256 i; i < positions.length; i++) {
+      // take one long position only, as short position might be impossible for max profit
+      if (positions[i].positionSizeE30 > 0) {
+        position = positions[i];
+        break;
+      }
+    }
     bool isLong = position.positionSizeE30 > 0;
     int256 maxProfitPrice;
     if (isLong) {

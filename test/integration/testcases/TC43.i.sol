@@ -118,5 +118,44 @@ contract TC43 is BaseIntTest_WithActions {
     // 2nd trade's trading fee = 99899.9 - 100 = 99799.9
     // 2nd trade's execution fee = 99799.9 - 0.1 = 99799.8
     assertEq(vaultStorage.traderBalances(BOB, address(usdc)), 99799.8 * 1e6);
+
+    vm.warp(block.timestamp + 5 minutes);
+
+    // Test order stale
+    // Bob will create an order, but the order took too long to be executed
+    executeIntentInputs.accountAndSubAccountIds = new bytes32[](1);
+    executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
+
+    executeIntentInputs.cmds = new bytes32[](1);
+    executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
+      appleMarketIndex, // marketIndex
+      10_000 * 1e30, // sizeDelta
+      0, // triggerPrice
+      4000 * 1e30, // acceptablePrice
+      true, // triggerAboveThreshold
+      false, // reduceOnly
+      address(usdc), // tpToken
+      block.timestamp // minPublishTime
+    );
+
+    (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
+    executeIntentInputs.v = new uint8[](1);
+    executeIntentInputs.r = new bytes32[](1);
+    executeIntentInputs.s = new bytes32[](1);
+    executeIntentInputs.v[0] = v;
+    executeIntentInputs.r[0] = r;
+    executeIntentInputs.s[0] = s;
+
+    executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
+    executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    executeIntentInputs.minPublishTime = block.timestamp;
+    executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
+
+    vm.warp(block.timestamp + 10 minutes);
+
+    intentHandler.executeIntent(executeIntentInputs);
+
+    // New position should not be opened, as the order should be stale
+    assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);
   }
 }

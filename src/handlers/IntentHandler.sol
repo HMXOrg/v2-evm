@@ -121,14 +121,15 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
   }
 
   function _collectExecutionFeeFromCollateral(address _primaryAccount, uint8 _subAccountId) internal {
-    bytes32[] memory _hlpAssetIds = configStorage.getHlpAssetIds();
-    uint256 _len = _hlpAssetIds.length;
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
+    address[] memory _traderTokens = vaultStorage.getTraderTokens(_subAccount);
+    uint256 _len = _traderTokens.length;
     OracleMiddleware _oracle = OracleMiddleware(configStorage.oracle());
 
     uint256 _executionFeeToBePaidInUsd = executionFeeInUsd;
     for (uint256 _i; _i < _len; ) {
-      ConfigStorage.AssetConfig memory _assetConfig = configStorage.getAssetConfig(_hlpAssetIds[_i]);
+      bytes32 _assetId = configStorage.tokenAssetIds(_traderTokens[_i]);
+      ConfigStorage.AssetConfig memory _assetConfig = configStorage.getAssetConfig(_assetId);
       address _token = _assetConfig.tokenAddress;
       uint256 _userBalance = vaultStorage.traderBalances(_subAccount, _token);
 

@@ -111,5 +111,12 @@ contract TC43 is BaseIntTest_WithActions {
     intentHandler.executeIntent(executeIntentInputs);
 
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);
+
+    // Initial collateral = 100,000 usdc
+    // 1st trade's trading fee = 100000 - 100 = 99900
+    // 1st trade's execution fee = 99900 - 0.1 = 99899.9
+    // 2nd trade's trading fee = 99899.9 - 100 = 99799.9
+    // 2nd trade's execution fee = 99799.9 - 0.1 = 99799.8
+    assertEq(vaultStorage.traderBalances(BOB, address(usdc)), 99799.8 * 1e6);
   }
 }

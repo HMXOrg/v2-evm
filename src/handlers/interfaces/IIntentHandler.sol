@@ -35,7 +35,7 @@ interface IIntentHandler {
     // | triggerAboveThreshold | bool      | N/A      | 173 - 173 | 1             |
     // | reduceOnly            | bool      | N/A      | 174 - 174 | 1             |
     // | tpTokenIndex          | uint      | 0        | 175 - 181 | 7             |
-    // | createdTimestamp      | uint      | 0        | 182 - 213 | 32            |
+    // | expiryTimestamp       | uint      | 0        | 182 - 213 | 32            |
     // +-----------------------+-----------+----------+-----------+---------------+
     ExecuteTradeOrder
   }
@@ -48,7 +48,7 @@ interface IIntentHandler {
     bool triggerAboveThreshold;
     bool reduceOnly;
     address tpToken;
-    uint256 createdTimestamp;
+    uint256 expiryTimestamp;
     address subAccount;
     bytes32 positionId;
     bool positionIsLong;

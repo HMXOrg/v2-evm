@@ -763,14 +763,13 @@ library Deployer {
     address _configStorage,
     address _perpStorage,
     address _oracle,
-    address _tradeService,
-    uint256 _maxOrderAge
+    address _tradeService
   ) internal returns (ITradeOrderHelper) {
     return
       ITradeOrderHelper(
         deployContractWithArguments(
           "TradeOrderHelper",
-          abi.encode(_configStorage, _perpStorage, _oracle, _tradeService, _maxOrderAge)
+          abi.encode(_configStorage, _perpStorage, _oracle, _tradeService)
         )
       );
   }

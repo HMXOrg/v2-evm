@@ -19,7 +19,6 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
   PerpStorage public perpStorage;
   OracleMiddleware public oracle;
   TradeService public tradeService;
-  uint256 public maxOrderAge;
   address public whitelistedCaller;
 
   mapping(uint256 marketIndex => uint256 sizeLimit) public positionSizeLimitOf;
@@ -35,18 +34,11 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     bool isPriceValid;
   }
 
-  constructor(
-    address _configStorage,
-    address _perpStorage,
-    address _oracle,
-    address _tradeService,
-    uint256 _maxOrderAge
-  ) {
+  constructor(address _configStorage, address _perpStorage, address _oracle, address _tradeService) {
     configStorage = ConfigStorage(_configStorage);
     perpStorage = PerpStorage(_perpStorage);
     oracle = OracleMiddleware(_oracle);
     tradeService = TradeService(_tradeService);
-    maxOrderAge = _maxOrderAge;
   }
 
   modifier onlyWhitelistedCaller() {
@@ -63,10 +55,9 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     bool triggerAboveThreshold,
     uint256 triggerPrice,
     uint256 acceptablePrice,
-    uint256 createdTimestamp
+    uint256 expiryTimestamp
   ) internal view {
-    bool isMarketOrder = triggerAboveThreshold && triggerPrice == 0;
-    if (isMarketOrder && createdTimestamp + maxOrderAge < block.timestamp) {
+    if (expiryTimestamp < block.timestamp) {
       revert TradeOrderHelper_OrderStale();
     }
 
@@ -132,7 +123,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
       vars.triggerAboveThreshold,
       vars.triggerPrice,
       vars.acceptablePrice,
-      vars.createdTimestamp
+      vars.expiryTimestamp
     );
 
     // Retrieve existing position

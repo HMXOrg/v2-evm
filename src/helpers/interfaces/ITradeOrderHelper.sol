@@ -35,8 +35,6 @@ interface ITradeOrderHelper {
 
   function configStorage() external view returns (ConfigStorage);
 
-  function maxOrderAge() external view returns (uint256);
-
   function whitelistedCaller() external view returns (address);
 
   /**

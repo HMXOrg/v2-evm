@@ -320,8 +320,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(configStorage),
       address(perpStorage),
       address(oracleMiddleWare),
-      address(tradeService),
-      5 minutes
+      address(tradeService)
     );
 
     intentHandler = Deployer.deployIntentHandler(

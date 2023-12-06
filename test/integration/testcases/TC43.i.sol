@@ -77,7 +77,7 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp // minPublishTime
+      block.timestamp + 5 minutes // minPublishTime
     );
     executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
       wbtcMarketIndex, // marketIndex
@@ -87,7 +87,7 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp // minPublishTime
+      block.timestamp + 5 minutes // minPublishTime
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
@@ -138,7 +138,7 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp // minPublishTime
+      block.timestamp + 5 minutes // minPublishTime
     );
 
     (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);

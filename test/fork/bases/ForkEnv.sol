@@ -241,6 +241,30 @@ abstract contract ForkEnv is Test {
     }
   }
 
+  function _setPriceDataForReader(
+    uint64 _priceE8
+  ) public view returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) {
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+    assetIds = new bytes32[](len);
+    prices = new uint64[](len);
+    shouldInverts = new bool[](len);
+
+    for (uint i = 1; i < len; i++) {
+      assetIds[i - 1] = pythRes[i];
+      prices[i - 1] = _priceE8 * 1e8;
+      if (i == 4) {
+        shouldInverts[i - 1] = true; // JPY
+      } else {
+        shouldInverts[i - 1] = false;
+      }
+    }
+
+    assetIds[len - 1] = 0x555344432d4e4154495645000000000000000000000000000000000000000000; // USDC-NATIVE
+    prices[len - 1] = _priceE8 * 1e8;
+    shouldInverts[len - 1] = false;
+  }
+
   function _setTickPriceZero()
     public
     view

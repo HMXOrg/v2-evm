@@ -14,7 +14,7 @@ interface DataRow {
   amount: string;
 }
 
-async function main(chainId: number, inputPath: string) {
+async function main(chainId: number, inputPath: string, nonce: number) {
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, TREASURY_ADDRESS, deployer);
   const bulkSendErc20 = BulkSendErc20__factory.connect("0x80825A51AFa8bFafe6B0640f605C169c5f58d670", deployer);
@@ -28,7 +28,7 @@ async function main(chainId: number, inputPath: string) {
   for (const tokenAddress of distinctTokenAddresses) {
     const erc20 = ERC20__factory.connect(tokenAddress, deployer);
     const allowance = await erc20.allowance(safeWrapper.getAddress(), bulkSendErc20.address);
-    if (!allowance.eq(ethers.constants.MaxUint256)) {
+    if (allowance.eq(0)) {
       console.log(`[cmds/BulkSendErc20] Proposing tx to approve ${bulkSendErc20.address} to spend ${tokenAddress}...`);
       const tx = await safeWrapper.proposeTransaction(
         ethers.utils.getAddress(erc20.address),
@@ -46,7 +46,8 @@ async function main(chainId: number, inputPath: string) {
   const tx = await safeWrapper.proposeTransaction(
     bulkSendErc20.address,
     0,
-    bulkSendErc20.interface.encodeFunctionData("leggo", [tokenAddresses, recepients, tokenAmounts])
+    bulkSendErc20.interface.encodeFunctionData("leggo", [tokenAddresses, recepients, tokenAmounts]),
+    { nonce: nonce++ }
   );
   console.log(`[cmds/BulkSendErc20] Proposed tx: ${tx}`);
 }
@@ -55,10 +56,11 @@ const program = new Command();
 
 program.requiredOption("--chain-id <number>", "chain id", parseInt);
 program.requiredOption("--input-path <string>", "input path");
+program.requiredOption("--nonce <number>", "nonce", parseInt);
 
 const opts = program.parse(process.argv).opts();
 
-main(opts.chainId, opts.inputPath)
+main(opts.chainId, opts.inputPath, opts.nonce)
   .then(() => {
     process.exit(0);
   })

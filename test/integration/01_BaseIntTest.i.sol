@@ -76,7 +76,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
-import { IntentBuilder } from "@hmx/helpers/IntentBuilder.sol";
+import { IntentBuilder } from "@hmx-test/libs/IntentBuilder.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */

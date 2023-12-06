@@ -102,6 +102,11 @@ contract TC43 is BaseIntTest_WithActions {
     executeIntentInputs.minPublishTime = block.timestamp;
     executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
 
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("IntentHandler_Unauthorized()"));
+    intentHandler.execute(executeIntentInputs);
+    vm.stopPrank();
+
     intentHandler.execute(executeIntentInputs);
 
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);

@@ -95,10 +95,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
         }
 
         _validateSignature(inputs.cmds[_i], inputs.signatures[_i], _localVars.mainAccount);
-        _executeTradeOrder(_vars);
         _collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
+        bool _isSuccess = _executeTradeOrder(_vars);
 
-        executedIntents[key] = true;
+        // If the trade order is executed successfully, record the order as executed
+        if (_isSuccess) executedIntents[key] = true;
       }
 
       unchecked {
@@ -107,10 +108,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     }
   }
 
-  function _executeTradeOrder(ExecuteTradeOrderVars memory vars) internal {
+  function _executeTradeOrder(ExecuteTradeOrderVars memory vars) internal returns (bool isSuccess) {
     // try executing order
     try tradeOrderHelper.execute(vars) {
       // Execution succeeded
+      return true;
     } catch Error(string memory errMsg) {
       _handleOrderFail(vars, bytes(errMsg));
     } catch Panic(uint /*errorCode*/) {
@@ -118,6 +120,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     } catch (bytes memory errMsg) {
       _handleOrderFail(vars, errMsg);
     }
+    return false;
   }
 
   function _collectExecutionFeeFromCollateral(address _primaryAccount, uint8 _subAccountId) internal {

@@ -74,10 +74,10 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
         _vars.sizeDelta = inputs.cmds[_i].decodeInt(11, 54) * 1e22;
         _vars.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
         _vars.acceptablePrice = inputs.cmds[_i].decodeUint(119, 54) * 1e22;
-        _vars.triggerAboveThreshold = inputs.cmds[_i].decodeBool(183);
-        _vars.reduceOnly = inputs.cmds[_i].decodeBool(184);
-        _vars.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(185, 7))];
-        _vars.createdTimestamp = inputs.cmds[_i].decodeUint(192, 32);
+        _vars.triggerAboveThreshold = inputs.cmds[_i].decodeBool(173);
+        _vars.reduceOnly = inputs.cmds[_i].decodeBool(174);
+        _vars.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(175, 7))];
+        _vars.createdTimestamp = inputs.cmds[_i].decodeUint(182, 32);
         _vars.account = _localVars.mainAccount;
         _vars.subAccountId = _localVars.subAccountId;
 

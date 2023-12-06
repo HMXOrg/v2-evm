@@ -141,6 +141,9 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
       vars.positionId
     );
 
+    vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
+    vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
+
     // Execute the order
     if (vars.reduceOnly) {
       bool isDecreaseShort = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);

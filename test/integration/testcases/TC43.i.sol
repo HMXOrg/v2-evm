@@ -102,7 +102,7 @@ contract TC43 is BaseIntTest_WithActions {
     executeIntentInputs.minPublishTime = block.timestamp;
     executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
 
-    intentHandler.executeIntent(executeIntentInputs);
+    intentHandler.execute(executeIntentInputs);
 
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);
 
@@ -115,7 +115,7 @@ contract TC43 is BaseIntTest_WithActions {
 
     // Test intent replay, should revert
     vm.expectRevert(abi.encodeWithSignature("IntentHandler_IntentReplay()"));
-    intentHandler.executeIntent(executeIntentInputs);
+    intentHandler.execute(executeIntentInputs);
 
     vm.warp(block.timestamp + 5 minutes);
 
@@ -146,7 +146,7 @@ contract TC43 is BaseIntTest_WithActions {
 
     vm.warp(block.timestamp + 10 minutes);
 
-    intentHandler.executeIntent(executeIntentInputs);
+    intentHandler.execute(executeIntentInputs);
 
     // New position should not be opened, as the order should be stale
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);

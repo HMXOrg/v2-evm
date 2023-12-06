@@ -62,7 +62,7 @@ interface IIntentHandler {
     bytes32 encodedVaas;
   }
 
-  function executeIntent(ExecuteIntentInputs memory inputs) external;
+  function execute(ExecuteIntentInputs memory inputs) external;
 
   function setIntentExecutor(address _executor, bool _isAllow) external;
 }

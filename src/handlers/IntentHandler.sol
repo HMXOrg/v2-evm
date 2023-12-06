@@ -53,7 +53,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     executionFeeTreasury = _executionFeeTreasury;
   }
 
-  function executeIntent(ExecuteIntentInputs memory inputs) external {
+  function execute(ExecuteIntentInputs memory inputs) external {
     if (inputs.accountAndSubAccountIds.length != inputs.cmds.length) revert IntentHandler_BadLength();
 
     ExecuteIntentVars memory _localVars;

@@ -119,6 +119,10 @@ contract TC43 is BaseIntTest_WithActions {
     // 2nd trade's execution fee = 99799.9 - 0.1 = 99799.8
     assertEq(vaultStorage.traderBalances(BOB, address(usdc)), 99799.8 * 1e6);
 
+    // Test intent replay, should revert
+    vm.expectRevert(abi.encodeWithSignature("IntentHandler_IntentReplay()"));
+    intentHandler.executeIntent(executeIntentInputs);
+
     vm.warp(block.timestamp + 5 minutes);
 
     // Test order stale

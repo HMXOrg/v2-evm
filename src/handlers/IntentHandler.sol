@@ -62,6 +62,9 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     if (inputs.accountAndSubAccountIds.length != inputs.cmds.length) revert IntentHandler_BadLength();
 
     ExecuteIntentVars memory _localVars;
+    Command _cmd;
+    ExecuteTradeOrderVars memory _vars;
+    bytes32 key;
 
     // Update price to Pyth
     pyth.updatePriceFeeds(inputs.priceData, inputs.publishTimeData, inputs.minPublishTime, inputs.encodedVaas);
@@ -72,10 +75,9 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     for (uint256 _i; _i < _localVars.cmdsLength; ) {
       _localVars.mainAccount = address(uint160(inputs.accountAndSubAccountIds[_i].decodeUint(0, 160)));
       _localVars.subAccountId = uint8(inputs.accountAndSubAccountIds[_i].decodeUint(160, 8));
-      Command _cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
+      _cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
 
       if (_cmd == Command.ExecuteTradeOrder) {
-        ExecuteTradeOrderVars memory _vars;
         _vars.marketIndex = inputs.cmds[_i].decodeUint(3, 8);
         _vars.sizeDelta = inputs.cmds[_i].decodeInt(11, 54) * 1e22;
         _vars.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
@@ -87,7 +89,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
         _vars.account = _localVars.mainAccount;
         _vars.subAccountId = _localVars.subAccountId;
 
-        bytes32 key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
+        key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
         if (executedIntents[key]) {
           revert IntentHandler_IntentReplay();
         }

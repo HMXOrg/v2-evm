@@ -42,4 +42,24 @@ export default {
     address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
     decimals: 18,
   },
+  wstETH: {
+    assetId: ethers.utils.formatBytes32String("wstETH"),
+    address: "0x5979d7b546e38e414f7e9822514be443a4800529",
+    decimals: 18,
+  },
+  USDC: {
+    assetId: ethers.utils.formatBytes32String("USDC"),
+    address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    decimals: 6,
+  },
+  gmBTCUSDC: {
+    assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+    address: "0x47c031236e19d024b42f8AE6780E44A573170703",
+    decimals: 18,
+  },
+  gmETHUSDC: {
+    assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
+    address: "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
+    decimals: 18,
+  },
 } as { [collateralSymbol: string]: CollateralEntity };

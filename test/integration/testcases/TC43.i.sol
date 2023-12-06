@@ -91,17 +91,11 @@ contract TC43 is BaseIntTest_WithActions {
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
-    executeIntentInputs.v = new uint8[](2);
-    executeIntentInputs.r = new bytes32[](2);
-    executeIntentInputs.s = new bytes32[](2);
-    executeIntentInputs.v[0] = v;
-    executeIntentInputs.r[0] = r;
-    executeIntentInputs.s[0] = s;
+    executeIntentInputs.signatures = new bytes[](2);
+    executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 
     (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[1]);
-    executeIntentInputs.v[1] = v;
-    executeIntentInputs.r[1] = r;
-    executeIntentInputs.s[1] = s;
+    executeIntentInputs.signatures[1] = abi.encodePacked(r, s, v);
 
     executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
     executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
@@ -143,12 +137,7 @@ contract TC43 is BaseIntTest_WithActions {
     );
 
     (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
-    executeIntentInputs.v = new uint8[](1);
-    executeIntentInputs.r = new bytes32[](1);
-    executeIntentInputs.s = new bytes32[](1);
-    executeIntentInputs.v[0] = v;
-    executeIntentInputs.r[0] = r;
-    executeIntentInputs.s[0] = s;
+    executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 
     executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
     executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);

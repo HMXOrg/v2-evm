@@ -55,9 +55,7 @@ interface IIntentHandler {
   struct ExecuteIntentInputs {
     bytes32[] accountAndSubAccountIds;
     bytes32[] cmds;
-    uint8[] v;
-    bytes32[] r;
-    bytes32[] s;
+    bytes[] signatures;
     bytes32[] priceData;
     bytes32[] publishTimeData;
     uint256 minPublishTime;

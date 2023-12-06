@@ -8,6 +8,7 @@ pragma solidity 0.8.18;
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
@@ -86,7 +87,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
           revert IntentHandler_IntentReplay();
         }
 
-        _validateSignature(inputs.cmds[_i], inputs.v[_i], inputs.r[_i], inputs.s[_i], _localVars.mainAccount);
+        _validateSignature(inputs.cmds[_i], inputs.signatures[_i], _localVars.mainAccount);
         _executeTradeOrder(_vars);
         _collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
 
@@ -187,8 +188,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     }
   }
 
-  function _validateSignature(bytes32 message, uint8 v, bytes32 r, bytes32 s, address signer) internal pure {
-    address recoveredSigner = ecrecover(message, v, r, s);
+  function _validateSignature(bytes32 message, bytes memory signature, address signer) internal pure {
+    address recoveredSigner = ECDSA.recover(message, signature);
     if (signer != recoveredSigner) revert IntenHandler_BadSignature();
   }
 

@@ -34,6 +34,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
   mapping(bytes32 key => bool executed) executedIntents;
   mapping(address executor => bool isAllow) public intentExecutors; // The allowed addresses to execute intents
 
+  modifier onlyIntentExecutors() {
+    if (!intentExecutors[msg.sender]) revert IntentHandler_Unauthorized();
+    _;
+  }
+
   function initialize(
     address _pyth,
     address _configStorage,
@@ -53,7 +58,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     executionFeeTreasury = _executionFeeTreasury;
   }
 
-  function execute(ExecuteIntentInputs memory inputs) external {
+  function execute(ExecuteIntentInputs memory inputs) external onlyIntentExecutors {
     if (inputs.accountAndSubAccountIds.length != inputs.cmds.length) revert IntentHandler_BadLength();
 
     ExecuteIntentVars memory _localVars;

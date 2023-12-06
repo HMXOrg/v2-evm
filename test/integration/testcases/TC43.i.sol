@@ -16,6 +16,9 @@ import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 
 contract TC43 is BaseIntTest_WithActions {
   function testCorrectness_TC43_intentHandler_executeMarketOrderSuccess() external {
+    uint256 privateKey = uint256(keccak256(bytes("1")));
+    BOB = vm.addr(privateKey);
+
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
@@ -59,10 +62,13 @@ contract TC43 is BaseIntTest_WithActions {
       assertEq(BOB.balance, 1 ether);
     }
 
+    // Bob will open two positions on ETH and BTC markets
     IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
-    executeIntentInputs.accountAndSubAccountIds = new bytes32[](1);
+    executeIntentInputs.accountAndSubAccountIds = new bytes32[](2);
     executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-    executeIntentInputs.cmds = new bytes32[](1);
+    executeIntentInputs.accountAndSubAccountIds[1] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
+
+    executeIntentInputs.cmds = new bytes32[](2);
     executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
       wethMarketIndex, // marketIndex
       100_000 * 1e30, // sizeDelta
@@ -73,9 +79,30 @@ contract TC43 is BaseIntTest_WithActions {
       address(usdc), // tpToken
       block.timestamp // minPublishTime
     );
-    // uint8[] v;
-    // bytes32[] r;
-    // bytes32[] s;
+    executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
+      wbtcMarketIndex, // marketIndex
+      -100_000 * 1e30, // sizeDelta
+      0, // triggerPrice
+      18000 * 1e30, // acceptablePrice
+      true, // triggerAboveThreshold
+      false, // reduceOnly
+      address(usdc), // tpToken
+      block.timestamp // minPublishTime
+    );
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
+    executeIntentInputs.v = new uint8[](2);
+    executeIntentInputs.r = new bytes32[](2);
+    executeIntentInputs.s = new bytes32[](2);
+    executeIntentInputs.v[0] = v;
+    executeIntentInputs.r[0] = r;
+    executeIntentInputs.s[0] = s;
+
+    (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[1]);
+    executeIntentInputs.v[1] = v;
+    executeIntentInputs.r[1] = r;
+    executeIntentInputs.s[1] = s;
+
     executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
     executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
     executeIntentInputs.minPublishTime = block.timestamp;
@@ -83,96 +110,6 @@ contract TC43 is BaseIntTest_WithActions {
 
     intentHandler.executeIntent(executeIntentInputs);
 
-    assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 1);
-
-    // {
-    //   // after create order, must contain 1 order
-    //   assertEq(limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)), 1);
-    //   assertEq(BOB.balance, 1 ether - executionOrderFee);
-    // }
-
-    // // T3: Test Order stale
-
-    // // warp to exceed minExecutionTimestamp and make order stale
-    // skip(1000);
-
-    // uint256 _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)) - 1;
-    // bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
-    // bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
-
-    // address[] memory accounts = new address[](1);
-    // uint8[] memory subAccountIds = new uint8[](1);
-    // uint256[] memory orderIndexes = new uint256[](1);
-    // accounts[0] = BOB;
-    // subAccountIds[0] = 0;
-    // orderIndexes[0] = _orderIndex;
-
-    // limitTradeHandler.executeOrders(
-    //   accounts,
-    //   subAccountIds,
-    //   orderIndexes,
-    //   payable(FEEVER),
-    //   priceUpdateData,
-    //   publishTimeUpdateData,
-    //   block.timestamp,
-    //   keccak256("someEncodedVaas")
-    // );
-
-    // {
-    //   // after execute market order and fail then refund execution fee
-    //   assertEq(limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)), 1);
-    //   assertEq(BOB.balance, 1 ether);
-    // }
-
-    // // T4: Test Order execution fail
-
-    // vm.prank(BOB);
-    // limitTradeHandler.createOrder{ value: executionOrderFee }(
-    //   0,
-    //   wethMarketIndex,
-    //   100_000_000_000 * 1e30,
-    //   0, // trigger price always be 0
-    //   type(uint256).max,
-    //   true, // trigger above threshold
-    //   executionOrderFee, // 0.0001 ether
-    //   false, // reduce only (allow flip or not)
-    //   address(usdc)
-    // );
-
-    // {
-    //   // after create order, must contain 1 order
-    //   assertEq(limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)), 2);
-    //   assertEq(BOB.balance, 1 ether - executionOrderFee);
-    // }
-
-    // skip(5);
-
-    // _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)) - 1;
-
-    // accounts[0] = BOB;
-    // subAccountIds[0] = 0;
-    // orderIndexes[0] = _orderIndex;
-
-    // limitTradeHandler.executeOrders(
-    //   accounts,
-    //   subAccountIds,
-    //   orderIndexes,
-    //   payable(FEEVER),
-    //   priceUpdateData,
-    //   publishTimeUpdateData,
-    //   block.timestamp,
-    //   keccak256("someEncodedVaas")
-    // );
-
-    // {
-    //   // after execute market order and fail then no refund execution fee
-    //   assertEq(limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)), 2);
-    //   assertEq(BOB.balance, 1 ether - executionOrderFee);
-
-    //   // last position must be deleted
-    //   uint256 orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0));
-    //   (address account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(getSubAccount(BOB, 0), orderIndex);
-    //   assertEq(account, address(0));
-    // }
+    assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);
   }
 }

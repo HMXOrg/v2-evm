@@ -86,6 +86,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
           revert IntentHandler_IntentReplay();
         }
 
+        _validateSignature(inputs.cmds[_i], inputs.v[_i], inputs.r[_i], inputs.s[_i], _localVars.mainAccount);
         _executeTradeOrder(_vars);
         _collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
 
@@ -184,6 +185,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
       uint256 _payerBalanceValue = (_payerBalance * _tokenPrice) / (10 ** _tokenDecimal);
       return (_payerBalance, _payerBalanceValue);
     }
+  }
+
+  function _validateSignature(bytes32 message, uint8 v, bytes32 r, bytes32 s, address signer) internal pure {
+    address recoveredSigner = ecrecover(message, v, r, s);
+    if (signer != recoveredSigner) revert IntenHandler_BadSignature();
   }
 
   /// @notice setIntentExecutor

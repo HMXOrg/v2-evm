@@ -8,6 +8,7 @@ interface IIntentHandler {
   error IntentHandler_Unauthorized();
   error IntentHandler_IntentReplay();
   error IntentHandler_InvalidAddress();
+  error IntenHandler_BadSignature();
 
   event LogExecuteTradeOrderFail(
     address indexed account,

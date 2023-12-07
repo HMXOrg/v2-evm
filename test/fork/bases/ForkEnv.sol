@@ -82,10 +82,13 @@ import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;
@@ -140,6 +143,7 @@ abstract contract ForkEnv is Test {
   PerpStorage internal perpStorage = PerpStorage(getAddress(".storages.perp"));
   VaultStorage internal vaultStorage = VaultStorage(getAddress(".storages.vault"));
   /// Helpers
+  LimitTradeHelper internal limitTradeHelper = LimitTradeHelper(getAddress(".helpers.limitTrade"));
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
   /// Staking
   IHLPStaking internal hlpStaking = IHLPStaking(getAddress(".staking.hlp"));
@@ -198,6 +202,8 @@ abstract contract ForkEnv is Test {
   IERC20 internal wstEth = IERC20(getAddress(".tokens.wstEth"));
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
 
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
   IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
   IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
 
@@ -239,6 +245,30 @@ abstract contract ForkEnv is Test {
         shouldInverts[i - 1] = false;
       }
     }
+  }
+
+  function _setPriceDataForReader(
+    uint64 _priceE8
+  ) public view returns (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) {
+    bytes32[] memory pythRes = ForkEnv.ecoPyth2.getAssetIds();
+    uint256 len = pythRes.length; // 35 - 1(index 0) = 34
+    assetIds = new bytes32[](len);
+    prices = new uint64[](len);
+    shouldInverts = new bool[](len);
+
+    for (uint i = 1; i < len; i++) {
+      assetIds[i - 1] = pythRes[i];
+      prices[i - 1] = _priceE8 * 1e8;
+      if (i == 4) {
+        shouldInverts[i - 1] = true; // JPY
+      } else {
+        shouldInverts[i - 1] = false;
+      }
+    }
+
+    assetIds[len - 1] = 0x555344432d4e4154495645000000000000000000000000000000000000000000; // USDC-NATIVE
+    prices[len - 1] = _priceE8 * 1e8;
+    shouldInverts[len - 1] = false;
   }
 
   function _setTickPriceZero()

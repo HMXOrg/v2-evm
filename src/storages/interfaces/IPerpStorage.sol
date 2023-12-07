@@ -105,4 +105,10 @@ interface IPerpStorage {
   function getActivePositions(uint256 _limit, uint256 _offset) external view returns (Position[] memory _positions);
 
   function getActiveSubAccounts(uint256 _limit, uint256 _offset) external view returns (address[] memory _subAccounts);
+
+  function setMovingWindowConfig(uint256 length, uint256 interval) external;
+
+  function increaseEpochVolume(bool isBuy, uint256 marketIndex, uint256 absSizeDelta) external;
+
+  function getEpochVolume(bool isBuy, uint256 marketIndex) external view returns (uint256 epochVolume);
 }

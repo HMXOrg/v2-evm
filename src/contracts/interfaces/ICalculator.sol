@@ -142,6 +142,8 @@ interface ICalculator {
 
   function setPerpStorage(address _address) external;
 
+  function setTradeHelper(address _address) external;
+
   function proportionalElapsedInDay(uint256 _marketIndex) external view returns (uint256 elapsed);
 
   function getNextBorrowingRate(

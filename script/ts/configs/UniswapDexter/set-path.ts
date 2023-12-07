@@ -17,11 +17,11 @@ async function main(chainId: number) {
 
   const params: Array<SetPathConfig> = [
     {
-      tokenIn: config.tokens.usdt,
-      tokenOut: config.tokens.usdcNative,
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.wstEth,
       path: ethers.utils.solidityPack(
-        ["address", "uint24", "address"],
-        [config.tokens.usdt, 100, config.tokens.usdcNative]
+        ["address", "uint24", "address", "uint24", "address"],
+        [config.tokens.usdc, 500, config.tokens.weth, 100, config.tokens.wstEth]
       ),
     },
   ];

@@ -15,7 +15,7 @@ contract Smoke_Liquidate is ForkEnv {
 
   // for shorter time
   function liquidate() external {
-    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceData(1);
+    (bytes32[] memory assetIds, uint64[] memory prices, bool[] memory shouldInverts) = _setPriceDataForReader(1);
     (bytes32[] memory priceUpdateData, bytes32[] memory publishTimeUpdateData) = _setTickPriceZero();
     address[] memory liqSubAccounts = new address[](10);
 

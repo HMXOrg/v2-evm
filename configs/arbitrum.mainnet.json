@@ -50,7 +50,8 @@
       "gmBTCUSD": "0x85680bba8a94c9be1DDd7Be802885DFCe95F8164",
       "gmETHUSD": "0x700083c72eBc86CbFc865830F5706a2DbC392f26",
       "dix": "0x222918d230c5A29F334fFb3020aD57b8CeBD1B82"
-    }
+    },
+    "orderbook": ""
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
@@ -120,6 +121,7 @@
     "tlc": "0x8E1F4c78BF13273c4D67E5DC3D322b0891254988"
   },
   "calculator": "0x0FdE910552977041Dc8c7ef652b5a07B40B9e006",
+  "adaptiveFeeCalculator": "",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": ""

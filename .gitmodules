@@ -27,3 +27,6 @@
 [submodule "lib/uni-v3-lib"]
 	path = lib/uni-v3-lib
 	url = https://github.com/HMXOrg/uni-v3-lib
+[submodule "lib/abdk-libraries-solidity"]
+	path = lib/abdk-libraries-solidity
+	url = https://github.com/abdk-consulting/abdk-libraries-solidity

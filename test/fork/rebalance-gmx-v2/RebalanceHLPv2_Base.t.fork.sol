@@ -76,6 +76,7 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     // Upgrade dependencies
     vm.startPrank(proxyAdmin.owner());
     Deployer.upgrade("VaultStorage", address(proxyAdmin), address(vaultStorage));
+    Deployer.upgrade("ConfigStorage", address(proxyAdmin), address(configStorage));
     Deployer.upgrade("Calculator", address(proxyAdmin), address(calculator));
     Deployer.upgrade("RebalanceHLPHandler", address(proxyAdmin), address(rebalanceHLPHandler));
     Deployer.upgrade("RebalanceHLPService", address(proxyAdmin), address(rebalanceHLPService));

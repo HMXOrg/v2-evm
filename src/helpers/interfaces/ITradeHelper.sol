@@ -57,17 +57,24 @@ interface ITradeHelper {
     bytes32 _positionId,
     address _subAccount,
     IPerpStorage.Position memory _position,
-    uint256 _sizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool isAdaptiveFee
   ) external returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee);
 
   function settleAllFees(
     bytes32 _positionId,
     IPerpStorage.Position memory position,
-    uint256 _absSizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex
   ) external;
+
+  function setAdaptiveFeeCalculator(address _adaptiveFeeCalculator) external;
+
+  function setOrderbookOracle(address _orderbookOracle) external;
+
+  function setMaxAdaptiveFeeBps(uint32 _maxAdaptiveFeeBps) external;
 }

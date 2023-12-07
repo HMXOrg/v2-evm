@@ -82,10 +82,13 @@ import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
 import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 abstract contract ForkEnv is Test {
   using stdJson for string;
@@ -140,6 +143,7 @@ abstract contract ForkEnv is Test {
   PerpStorage internal perpStorage = PerpStorage(getAddress(".storages.perp"));
   VaultStorage internal vaultStorage = VaultStorage(getAddress(".storages.vault"));
   /// Helpers
+  LimitTradeHelper internal limitTradeHelper = LimitTradeHelper(getAddress(".helpers.limitTrade"));
   ICalculator internal calculator = ICalculator(getAddress(".calculator"));
   /// Staking
   IHLPStaking internal hlpStaking = IHLPStaking(getAddress(".staking.hlp"));
@@ -198,6 +202,8 @@ abstract contract ForkEnv is Test {
   IERC20 internal wstEth = IERC20(getAddress(".tokens.wstEth"));
   IERC20 internal hlp = IERC20(getAddress(".tokens.hlp"));
 
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
   IERC20 internal gmBTCUSD = IERC20(getAddress(".tokens.gmBTCUSD"));
   IERC20 internal gmETHUSD = IERC20(getAddress(".tokens.gmETHUSD"));
 

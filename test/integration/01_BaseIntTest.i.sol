@@ -73,6 +73,8 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 
 import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
@@ -159,7 +161,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   ProxyAdmin proxyAdmin;
 
-  // Executor
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
   IExt01Handler ext01Handler;
 
   ITradeOrderHelper tradeOrderHelper;
@@ -429,5 +432,13 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       tradeOrderHelper.setWhitelistedCaller(address(intentHandler));
       intentHandler.setIntentExecutor(address(this), true);
     }
+    adaptiveFeeCalculator = new AdaptiveFeeCalculator();
+    orderbookOracle = new OrderbookOracle();
+
+    tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));
+    tradeHelper.setOrderbookOracle(address(orderbookOracle));
+    tradeHelper.setMaxAdaptiveFeeBps(500);
+
+    calculator.setTradeHelper(address(tradeHelper));
   }
 }

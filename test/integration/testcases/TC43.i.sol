@@ -77,7 +77,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
     executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
       wbtcMarketIndex, // marketIndex
@@ -87,7 +88,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
@@ -134,7 +136,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
@@ -215,7 +218,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
     executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
       wbtcMarketIndex, // marketIndex
@@ -225,7 +229,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
@@ -323,7 +328,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
     executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
       wbtcMarketIndex, // marketIndex
@@ -333,7 +339,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
@@ -423,7 +430,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
@@ -483,7 +491,7 @@ contract TC43 is BaseIntTest_WithActions {
     }
     dai.mint(BOB, 0.1 * 1e18);
     depositCollateral(BOB, 0, ERC20(address(dai)), 0.1 * 1e18);
-    wbtc.mint(BOB, 100 * 1e8);
+    wbtc.mint(BOB, 1 * 1e8);
     depositCollateral(BOB, 0, ERC20(address(wbtc)), 1 * 1e8);
     // Long ETH
     vm.deal(BOB, 1 ether);
@@ -508,7 +516,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(anotherPivateKey, executeIntentInputs.cmds[0]); // sign the message with other private key that is not BOB
@@ -527,7 +536,7 @@ contract TC43 is BaseIntTest_WithActions {
 
     // No execution fee should be collected
     assertEq(vaultStorage.traderBalances(BOB, address(dai)), 0.1 * 1e18);
-    assertEq(vaultStorage.traderBalances(BOB, address(wbtc)), 100 * 1e8);
+    assertEq(vaultStorage.traderBalances(BOB, address(wbtc)), 1 * 1e8);
   }
 
   function testCorrectness_TC43_intentHandler_notEnoughCollateralForExecutionFee() external {
@@ -588,7 +597,8 @@ contract TC43 is BaseIntTest_WithActions {
       true, // triggerAboveThreshold
       false, // reduceOnly
       address(usdc), // tpToken
-      block.timestamp + 5 minutes // minPublishTime
+      block.timestamp, // createdTimestamp
+      block.timestamp + 5 minutes // expiryTimestamp
     );
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);

@@ -32,6 +32,7 @@ contract IntentBuilder {
     bool triggerAboveThreshold,
     bool reduceOnly,
     address tpToken,
+    uint256 createdTimestamp,
     uint256 expiryTimestamp
   ) external view returns (bytes32 cmd) {
     // command
@@ -50,8 +51,10 @@ contract IntentBuilder {
     cmd = cmd.insertBool(reduceOnly, 174);
     // tpTokenIndex
     cmd = cmd.insertUint(_getTpTokenIndex(tpToken), 175, 7);
+    // createdTimestamp
+    cmd = cmd.insertUint(createdTimestamp, 182, 32);
     // expiryTimestamp
-    cmd = cmd.insertUint(expiryTimestamp, 182, 32);
+    cmd = cmd.insertUint(expiryTimestamp, 214, 32);
   }
 
   function _getTpTokenIndex(address tpToken) internal view returns (uint256 index) {

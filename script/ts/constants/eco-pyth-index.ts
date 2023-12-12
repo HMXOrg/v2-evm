@@ -45,6 +45,10 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xcd2cee36951a571e035db0dfad138e6ecdb06b517cc3373cd7db5d3609b7927c", // MEMEUSD
   "0x8ccb376aa871517e807358d4e3cf0bc7fe4950474dbe6c9ffc21ef64e43fc676", // USDSEK
   "DIX",
+  "0xb43660a5f790c69354b0729a5ef9d50d68f1df92107540210b9cccba1f947cc2", // JTOUSD
+  "0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17", // STXUSD
+  "0x193c739db502aadcef37c2589738b1e37bdb257d58cf1ab3c7ebc8e6df4e3ec0", // ORDIUSD
+  "0x09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723", // TIAUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -90,6 +94,10 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("MEME"),
   ethers.utils.formatBytes32String("SEK"),
   ethers.utils.formatBytes32String("DIX"),
+  ethers.utils.formatBytes32String("JTO"),
+  ethers.utils.formatBytes32String("STX"),
+  ethers.utils.formatBytes32String("ORDI"),
+  ethers.utils.formatBytes32String("TIA"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -135,4 +143,8 @@ export const ecoPythHoomanReadableByIndex = [
   "MEME",
   "SEK",
   "DIX",
+  "JTO",
+  "STX",
+  "ORDI",
+  "TIA",
 ];

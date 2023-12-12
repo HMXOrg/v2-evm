@@ -569,7 +569,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     assetClassConfigs[_index] = _newConfig;
   }
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _newMarketIndex) {
+  function addMarketConfig(
+    MarketConfig calldata _newConfig,
+    bool _isAdaptiveFeeEnabled
+  ) external onlyOwner returns (uint256 _newMarketIndex) {
     // pre-validate
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
@@ -579,6 +582,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
+    isAdaptiveFeeEnabledByMarketIndex[_newMarketIndex] = _isAdaptiveFeeEnabled;
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
   }

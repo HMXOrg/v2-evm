@@ -225,7 +225,10 @@ interface IConfigStorage {
 
   function setTradeServiceHooks(address[] calldata _newHooks) external;
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
+  function addMarketConfig(
+    MarketConfig calldata _newConfig,
+    bool isAdaptiveFeeEnabled
+  ) external returns (uint256 _index);
 
   function delistMarket(uint256 _marketIndex) external;
 

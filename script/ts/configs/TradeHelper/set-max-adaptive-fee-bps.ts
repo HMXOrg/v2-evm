@@ -2,31 +2,21 @@ import { TradeHelper__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
-import { compareAddress } from "../../utils/address";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const maxFeeBps = 500;
+  const maxFeeBps = 200; // 2% max fee
 
   const tradeHelper = TradeHelper__factory.connect(config.helpers.trade, deployer);
-  const owner = await tradeHelper.owner();
   console.log(`[configs/TradeHelper] setMaxAdaptiveFeeBps`);
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      tradeHelper.address,
-      0,
-      tradeHelper.interface.encodeFunctionData("setMaxAdaptiveFeeBps", [maxFeeBps])
-    );
-    console.log(`[configs/TradeHelper] Proposed tx: ${tx}`);
-  } else {
-    const tx = await tradeHelper.setMaxAdaptiveFeeBps(maxFeeBps);
-    console.log(`[configs/TradeHelper] Tx: ${tx}`);
-    await tx.wait();
-  }
+  await ownerWrapper.authExec(
+    tradeHelper.address,
+    tradeHelper.interface.encodeFunctionData("setMaxAdaptiveFeeBps", [maxFeeBps])
+  );
   console.log("[configs/TradeHelper] Finished");
 }
 

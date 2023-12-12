@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { ConfigStorage__factory } from "../../../../typechain";
+import { ConfigStorage__factory, TradeHelper__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
@@ -72,6 +72,7 @@ async function main(chainId: number) {
   ];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
+  const tradeHelper = TradeHelper__factory.connect(config.helpers.trade, deployer);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   console.log("[ConfigStorage] Setting market config...");
@@ -84,10 +85,24 @@ async function main(chainId: number) {
       console.log(`marketIndex ${marketConfigs[i].marketIndex} wrong asset id`);
       throw "bad asset id";
     }
+    await safeWrapper.proposeTransaction(
+      tradeHelper.address,
+      0,
+      tradeHelper.interface.encodeFunctionData("updateBorrowingRate", [marketConfigs[i].assetClass])
+    );
+    await safeWrapper.proposeTransaction(
+      tradeHelper.address,
+      0,
+      tradeHelper.interface.encodeFunctionData("updateFundingRate", [marketConfigs[i].marketIndex])
+    );
     const tx = await safeWrapper.proposeTransaction(
       configStorage.address,
       0,
-      configStorage.interface.encodeFunctionData("setMarketConfig", [marketConfigs[i].marketIndex, marketConfigs[i]])
+      configStorage.interface.encodeFunctionData("setMarketConfig", [
+        marketConfigs[i].marketIndex,
+        marketConfigs[i],
+        marketConfigs[i].isAdaptiveFeeEnabled,
+      ])
     );
     console.log(`[ConfigStorage] Tx: ${tx}`);
   }

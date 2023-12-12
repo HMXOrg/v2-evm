@@ -301,6 +301,46 @@
       "assetSymbol": "FX.DIX",
       "quotedAssetSymbol": "FX.DIX",
       "sortIndex": 2004
+    },
+    {
+      "index": 35,
+      "name": "JTOUSD",
+      "assetId": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "jto-usd",
+      "assetSymbol": "Crypto.JTO",
+      "quotedAssetSymbol": "Crypto.JTO",
+      "sortIndex": 2004
+    },
+    {
+      "index": 36,
+      "name": "STXUSD",
+      "assetId": "0x5354580000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "stx-usd",
+      "assetSymbol": "Crypto.STX",
+      "quotedAssetSymbol": "Crypto.STX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 37,
+      "name": "ORDIUSD",
+      "assetId": "0x4f52444900000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "ordi-usd",
+      "assetSymbol": "Crypto.ORDI",
+      "quotedAssetSymbol": "Crypto.ORDI",
+      "sortIndex": 2004
+    },
+    {
+      "index": 38,
+      "name": "TIAUSD",
+      "assetId": "0x5449410000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "tia-usd",
+      "assetSymbol": "Crypto.TIA",
+      "quotedAssetSymbol": "Crypto.TIA",
+      "sortIndex": 2004
     }
   ],
   "assets": {
@@ -336,6 +376,12 @@
     "QQQ": "0x5151510000000000000000000000000000000000000000000000000000000000",
     "XRP": "0x5852500000000000000000000000000000000000000000000000000000000000",
     "esHMX": "esHMX",
-    "DragonPoint": "DragonPoint"
+    "DragonPoint": "DragonPoint",
+    "DIX": "0x4449580000000000000000000000000000000000000000000000000000000000",
+    "MEME": "0x4d454d4500000000000000000000000000000000000000000000000000000000",
+    "JTO": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
+    "STX": "0x5354580000000000000000000000000000000000000000000000000000000000",
+    "ORDI": "0x4f52444900000000000000000000000000000000000000000000000000000000",
+    "TIA": "0x5449410000000000000000000000000000000000000000000000000000000000"
   }
 }

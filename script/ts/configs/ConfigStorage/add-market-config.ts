@@ -22,6 +22,7 @@ type AddMarketConfig = {
   };
   maxLongPositionSize: ethers.BigNumber;
   maxShortPositionSize: ethers.BigNumber;
+  isAdaptiveFeeEnabled: boolean;
 };
 
 async function main(chainId: number) {
@@ -45,6 +46,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 800% per day
       },
+      isAdaptiveFeeEnabled: false,
     },
   ];
 

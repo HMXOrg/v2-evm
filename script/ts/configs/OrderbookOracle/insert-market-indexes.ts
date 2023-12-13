@@ -9,7 +9,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, signers.deployer(chainId));
 
-  const inputs = [12, 13, 14, 15, 16, 17, 20, 21, 23, 25, 27, 32];
+  const inputs = [39, 40, 41, 42, 43, 44, 45];
 
   const deployer = signers.deployer(chainId);
   const orderbookOracle = OrderbookOracle__factory.connect(config.oracles.orderbook, deployer);

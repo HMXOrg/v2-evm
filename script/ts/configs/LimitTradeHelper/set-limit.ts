@@ -8,24 +8,39 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 35,
-      tradeSizeLimit: ethers.utils.parseUnits("75000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("75000", 30),
+      marketIndex: 39,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("500000", 30),
     },
     {
-      marketIndex: 36,
-      tradeSizeLimit: ethers.utils.parseUnits("75000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("75000", 30),
+      marketIndex: 40,
+      tradeSizeLimit: ethers.utils.parseUnits("300000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("300000", 30),
     },
     {
-      marketIndex: 37,
+      marketIndex: 41,
+      tradeSizeLimit: ethers.utils.parseUnits("300000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("300000", 30),
+    },
+    {
+      marketIndex: 42,
       tradeSizeLimit: ethers.utils.parseUnits("250000", 30),
       positionSizeLimit: ethers.utils.parseUnits("250000", 30),
     },
     {
-      marketIndex: 38,
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+      marketIndex: 43,
+      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
+    },
+    {
+      marketIndex: 44,
+      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
+    },
+    {
+      marketIndex: 45,
+      tradeSizeLimit: ethers.utils.parseUnits("200000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
     },
   ];
 

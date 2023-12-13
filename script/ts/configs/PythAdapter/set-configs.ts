@@ -7,13 +7,38 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("SEK"),
-    pythPriceId: ethers.utils.formatBytes32String("SEK"),
+    assetId: ethers.utils.formatBytes32String("AVAX"),
+    pythPriceId: ethers.utils.formatBytes32String("AVAX"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("DIX"),
-    pythPriceId: ethers.utils.formatBytes32String("DIX"),
+    assetId: ethers.utils.formatBytes32String("INJ"),
+    pythPriceId: ethers.utils.formatBytes32String("INJ"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("SHIB"),
+    pythPriceId: ethers.utils.formatBytes32String("SHIB"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("DOT"),
+    pythPriceId: ethers.utils.formatBytes32String("DOT"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("SEI"),
+    pythPriceId: ethers.utils.formatBytes32String("SEI"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("ATOM"),
+    pythPriceId: ethers.utils.formatBytes32String("ATOM"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("PEPE"),
+    pythPriceId: ethers.utils.formatBytes32String("PEPE"),
     inverse: false,
   },
 ];

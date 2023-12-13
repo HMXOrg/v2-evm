@@ -2,32 +2,22 @@ import { PerpStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
-import { compareAddress } from "../../utils/address";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const windowLength = 15; // 15 invervals per window
   const eachInterval = 60; // each interval is 1 minute
 
   const perpStorage = PerpStorage__factory.connect(config.storages.perp, deployer);
-  const owner = await perpStorage.owner();
   console.log(`[configs/PerpStorage] setMovingWindowConfig`);
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      perpStorage.address,
-      0,
-      perpStorage.interface.encodeFunctionData("setMovingWindowConfig", [windowLength, eachInterval])
-    );
-    console.log(`[configs/PerpStorage] Proposed tx: ${tx}`);
-  } else {
-    const tx = await perpStorage.setMovingWindowConfig(windowLength, eachInterval);
-    console.log(`[configs/PerpStorage] Tx: ${tx}`);
-    await tx.wait();
-  }
+  await ownerWrapper.authExec(
+    perpStorage.address,
+    perpStorage.interface.encodeFunctionData("setMovingWindowConfig", [windowLength, eachInterval])
+  );
   console.log("[configs/PerpStorage] Finished");
 }
 

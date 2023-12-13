@@ -219,38 +219,47 @@ contract TC43 is BaseIntTest_WithActions {
     // Bob will open two positions on ETH and BTC markets
     IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
     executeIntentInputs.accountAndSubAccountIds = new bytes32[](2);
-    executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-    executeIntentInputs.accountAndSubAccountIds[1] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-
     executeIntentInputs.cmds = new bytes32[](2);
-    executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
-      wethMarketIndex, // marketIndex
-      100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      4000 * 1e30, // acceptablePrice
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
-    executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
-      wbtcMarketIndex, // marketIndex
-      -100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      18000 * 1e30, // acceptablePrice
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 4000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    IIntentHandler.TradeOrder memory tradeOrder2 = IIntentHandler.TradeOrder({
+      marketIndex: wbtcMarketIndex, // marketIndex
+      sizeDelta: -100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 18000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (accountAndSubAccountId, cmd) = intentBuilder.buildTradeOrder(tradeOrder2);
+    executeIntentInputs.accountAndSubAccountIds[1] = accountAndSubAccountId;
+    executeIntentInputs.cmds[1] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder1));
     executeIntentInputs.signatures = new bytes[](2);
     executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 
-    (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[1]);
+    (v, r, s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder2));
     executeIntentInputs.signatures[1] = abi.encodePacked(r, s, v);
 
     executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
@@ -329,38 +338,47 @@ contract TC43 is BaseIntTest_WithActions {
     // Bob will open two positions on ETH and BTC markets
     IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
     executeIntentInputs.accountAndSubAccountIds = new bytes32[](2);
-    executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-    executeIntentInputs.accountAndSubAccountIds[1] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-
     executeIntentInputs.cmds = new bytes32[](2);
-    executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
-      wethMarketIndex, // marketIndex
-      100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      0, // acceptablePrice as 0 to make this order fail
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
-    executeIntentInputs.cmds[1] = intentBuilder.buildTradeOrder(
-      wbtcMarketIndex, // marketIndex
-      -100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      18000 * 1e30, // acceptablePrice
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 0 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    IIntentHandler.TradeOrder memory tradeOrder2 = IIntentHandler.TradeOrder({
+      marketIndex: wbtcMarketIndex, // marketIndex
+      sizeDelta: -100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 18000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (accountAndSubAccountId, cmd) = intentBuilder.buildTradeOrder(tradeOrder2);
+    executeIntentInputs.accountAndSubAccountIds[1] = accountAndSubAccountId;
+    executeIntentInputs.cmds[1] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder1));
     executeIntentInputs.signatures = new bytes[](2);
     executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 
-    (v, r, s) = vm.sign(privateKey, executeIntentInputs.cmds[1]);
+    (v, r, s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder2));
     executeIntentInputs.signatures[1] = abi.encodePacked(r, s, v);
 
     executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
@@ -432,22 +450,26 @@ contract TC43 is BaseIntTest_WithActions {
     // Bob will open two positions on ETH and BTC markets
     IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
     executeIntentInputs.accountAndSubAccountIds = new bytes32[](1);
-    executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-
     executeIntentInputs.cmds = new bytes32[](1);
-    executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
-      wethMarketIndex, // marketIndex
-      100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      4000 * 1e30, // acceptablePrice
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 4000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder1));
     executeIntentInputs.signatures = new bytes[](1);
     executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 
@@ -518,24 +540,28 @@ contract TC43 is BaseIntTest_WithActions {
     // Bob will open two positions on ETH and BTC markets
     IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
     executeIntentInputs.accountAndSubAccountIds = new bytes32[](1);
-    executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-
     executeIntentInputs.cmds = new bytes32[](1);
-    executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
-      wethMarketIndex, // marketIndex
-      100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      4000 * 1e30, // acceptablePrice
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(anotherPivateKey, executeIntentInputs.cmds[0]); // sign the message with other private key that is not BOB
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 4000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(anotherPivateKey, intentHandler.getDigest(tradeOrder1)); // sign the message with other private key that is not BOB
     executeIntentInputs.signatures = new bytes[](1);
-    executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v); // supply wrong sinature here
+    executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 
     executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
     executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
@@ -599,22 +625,26 @@ contract TC43 is BaseIntTest_WithActions {
     // Bob will open two positions on ETH and BTC markets
     IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
     executeIntentInputs.accountAndSubAccountIds = new bytes32[](1);
-    executeIntentInputs.accountAndSubAccountIds[0] = intentBuilder.buildAccountAndSubAccountId(BOB, 0);
-
     executeIntentInputs.cmds = new bytes32[](1);
-    executeIntentInputs.cmds[0] = intentBuilder.buildTradeOrder(
-      wethMarketIndex, // marketIndex
-      100_000 * 1e30, // sizeDelta
-      0, // triggerPrice
-      4000 * 1e30, // acceptablePrice
-      true, // triggerAboveThreshold
-      false, // reduceOnly
-      address(usdc), // tpToken
-      block.timestamp, // createdTimestamp
-      block.timestamp + 5 minutes // expiryTimestamp
-    );
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, executeIntentInputs.cmds[0]);
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 4000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder1));
     executeIntentInputs.signatures = new bytes[](1);
     executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
 

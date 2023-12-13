@@ -7,8 +7,9 @@ pragma solidity 0.8.18;
 // base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin-upgradeable/contracts/utils/cryptography/EIP712Upgradeable.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { ECDSAUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
 // contracts
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
@@ -22,7 +23,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 
 /// @title IntentHandler
-contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IIntentHandler {
+contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712Upgradeable, IIntentHandler {
   using WordCodec for bytes32;
 
   IEcoPyth public pyth;
@@ -49,6 +50,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+    EIP712Upgradeable.__EIP712_init("IntentHander", "1.0.0");
 
     pyth = IEcoPyth(_pyth);
     configStorage = ConfigStorage(_configStorage);
@@ -78,24 +80,24 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
       _cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
 
       if (_cmd == Command.ExecuteTradeOrder) {
-        _vars.marketIndex = inputs.cmds[_i].decodeUint(3, 8);
-        _vars.sizeDelta = inputs.cmds[_i].decodeInt(11, 54) * 1e22;
-        _vars.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
-        _vars.acceptablePrice = inputs.cmds[_i].decodeUint(119, 54) * 1e22;
-        _vars.triggerAboveThreshold = inputs.cmds[_i].decodeBool(173);
-        _vars.reduceOnly = inputs.cmds[_i].decodeBool(174);
-        _vars.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(175, 7))];
-        _vars.createdTimestamp = inputs.cmds[_i].decodeUint(182, 32);
-        _vars.expiryTimestamp = inputs.cmds[_i].decodeUint(214, 32);
-        _vars.account = _localVars.mainAccount;
-        _vars.subAccountId = _localVars.subAccountId;
+        _vars.order.marketIndex = inputs.cmds[_i].decodeUint(3, 8);
+        _vars.order.sizeDelta = inputs.cmds[_i].decodeInt(11, 54) * 1e22;
+        _vars.order.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
+        _vars.order.acceptablePrice = inputs.cmds[_i].decodeUint(119, 54) * 1e22;
+        _vars.order.triggerAboveThreshold = inputs.cmds[_i].decodeBool(173);
+        _vars.order.reduceOnly = inputs.cmds[_i].decodeBool(174);
+        _vars.order.tpToken = _localVars.tpTokens[uint256(inputs.cmds[_i].decodeUint(175, 7))];
+        _vars.order.createdTimestamp = inputs.cmds[_i].decodeUint(182, 32);
+        _vars.order.expiryTimestamp = inputs.cmds[_i].decodeUint(214, 32);
+        _vars.order.account = _localVars.mainAccount;
+        _vars.order.subAccountId = _localVars.subAccountId;
 
         key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
         if (executedIntents[key]) {
           revert IntentHandler_IntentReplay();
         }
 
-        _validateSignature(inputs.cmds[_i], inputs.signatures[_i], _localVars.mainAccount);
+        _validateSignature(_vars.order, inputs.signatures[_i], _localVars.mainAccount);
         _collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
         bool _isSuccess = _executeTradeOrder(_vars);
 
@@ -170,14 +172,14 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
 
   function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg) internal {
     emit LogExecuteTradeOrderFail(
-      vars.account,
-      vars.subAccountId,
-      vars.marketIndex,
-      vars.sizeDelta,
-      vars.triggerPrice,
-      vars.triggerAboveThreshold,
-      vars.reduceOnly,
-      vars.tpToken,
+      vars.order.account,
+      vars.order.subAccountId,
+      vars.order.marketIndex,
+      vars.order.sizeDelta,
+      vars.order.triggerPrice,
+      vars.order.triggerAboveThreshold,
+      vars.order.reduceOnly,
+      vars.order.tpToken,
       errMsg
     );
   }
@@ -200,9 +202,36 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IInten
     }
   }
 
-  function _validateSignature(bytes32 message, bytes memory signature, address signer) internal pure {
-    address recoveredSigner = ECDSA.recover(message, signature);
-    if (signer != recoveredSigner) revert IntenHandler_BadSignature();
+  function _validateSignature(
+    IIntentHandler.TradeOrder memory _tradeOrder,
+    bytes memory _signature,
+    address _signer
+  ) internal view {
+    address _recoveredSigner = ECDSAUpgradeable.recover(getDigest(_tradeOrder), _signature);
+    if (_signer != _recoveredSigner) revert IntenHandler_BadSignature();
+  }
+
+  function getDigest(IIntentHandler.TradeOrder memory _tradeOrder) public view returns (bytes32 _digest) {
+    _digest = _hashTypedDataV4(
+      keccak256(
+        abi.encode(
+          keccak256(
+            "TradeOrder(uint256 marketIndex, int256 sizeDelta, uint256 triggerPrice, uint256 acceptablePrice, bool triggerAboveThreshold, bool reduceOnly, address tpToken, uint256 createdTimestamp, uint256 expiryTimestamp, address account, uint8 subAccountId)"
+          ),
+          _tradeOrder.marketIndex,
+          _tradeOrder.sizeDelta,
+          _tradeOrder.triggerPrice,
+          _tradeOrder.acceptablePrice,
+          _tradeOrder.triggerAboveThreshold,
+          _tradeOrder.reduceOnly,
+          _tradeOrder.tpToken,
+          _tradeOrder.createdTimestamp,
+          _tradeOrder.expiryTimestamp,
+          _tradeOrder.account,
+          _tradeOrder.subAccountId
+        )
+      )
+    );
   }
 
   /// @notice setIntentExecutor

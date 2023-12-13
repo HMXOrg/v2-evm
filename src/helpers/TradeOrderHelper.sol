@@ -115,19 +115,19 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
 
   function execute(IIntentHandler.ExecuteTradeOrderVars memory vars) external {
     _validate(
-      vars.account,
-      vars.subAccountId,
-      vars.marketIndex,
-      vars.reduceOnly,
-      vars.sizeDelta,
-      vars.triggerAboveThreshold,
-      vars.triggerPrice,
-      vars.acceptablePrice,
-      vars.expiryTimestamp
+      vars.order.account,
+      vars.order.subAccountId,
+      vars.order.marketIndex,
+      vars.order.reduceOnly,
+      vars.order.sizeDelta,
+      vars.order.triggerAboveThreshold,
+      vars.order.triggerPrice,
+      vars.order.acceptablePrice,
+      vars.order.expiryTimestamp
     );
 
     // Retrieve existing position
-    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.marketIndex);
+    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
     PerpStorage.Position memory _existingPosition = PerpStorage(tradeService.perpStorage()).getPositionById(
       vars.positionId
     );
@@ -136,112 +136,112 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
     // Execute the order
-    if (vars.reduceOnly) {
-      bool isDecreaseShort = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
-      bool isDecreaseLong = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
+    if (vars.order.reduceOnly) {
+      bool isDecreaseShort = (vars.order.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
+      bool isDecreaseLong = (vars.order.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
       bool isClosePosition = !vars.isNewPosition && (isDecreaseShort || isDecreaseLong);
       if (isClosePosition) {
         tradeService.decreasePosition({
-          _account: vars.account,
-          _subAccountId: vars.subAccountId,
-          _marketIndex: vars.marketIndex,
+          _account: vars.order.account,
+          _subAccountId: vars.order.subAccountId,
+          _marketIndex: vars.order.marketIndex,
           _positionSizeE30ToDecrease: HMXLib.min(
-            HMXLib.abs(vars.sizeDelta),
+            HMXLib.abs(vars.order.sizeDelta),
             HMXLib.abs(_existingPosition.positionSizeE30)
           ),
-          _tpToken: vars.tpToken,
+          _tpToken: vars.order.tpToken,
           _limitPriceE30: 0
         });
       } else {
         // Do nothing if the size delta is wrong for reduce-only
       }
     } else {
-      if (vars.sizeDelta > 0) {
+      if (vars.order.sizeDelta > 0) {
         // BUY
         if (vars.isNewPosition || vars.positionIsLong) {
           // New position and Long position
           // just increase position when BUY
           tradeService.increasePosition({
-            _primaryAccount: vars.account,
-            _subAccountId: vars.subAccountId,
-            _marketIndex: vars.marketIndex,
-            _sizeDelta: vars.sizeDelta,
+            _primaryAccount: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
+            _marketIndex: vars.order.marketIndex,
+            _sizeDelta: vars.order.sizeDelta,
             _limitPriceE30: 0
           });
         } else {
-          bool _flipSide = vars.sizeDelta > (-_existingPosition.positionSizeE30);
+          bool _flipSide = vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
           if (_flipSide) {
             // Flip the position
             // Fully close Short position
             tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
               _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-              _tpToken: vars.tpToken,
+              _tpToken: vars.order.tpToken,
               _limitPriceE30: 0
             });
             // Flip it to Long position
             tradeService.increasePosition({
-              _primaryAccount: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
+              _primaryAccount: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
               _limitPriceE30: 0
             });
           } else {
             // Not flip
             tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _positionSizeE30ToDecrease: uint256(vars.sizeDelta),
-              _tpToken: vars.tpToken,
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _positionSizeE30ToDecrease: uint256(vars.order.sizeDelta),
+              _tpToken: vars.order.tpToken,
               _limitPriceE30: 0
             });
           }
         }
-      } else if (vars.sizeDelta < 0) {
+      } else if (vars.order.sizeDelta < 0) {
         // SELL
         if (vars.isNewPosition || !vars.positionIsLong) {
           // New position and Short position
           // just increase position when SELL
           tradeService.increasePosition({
-            _primaryAccount: vars.account,
-            _subAccountId: vars.subAccountId,
-            _marketIndex: vars.marketIndex,
-            _sizeDelta: vars.sizeDelta,
+            _primaryAccount: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
+            _marketIndex: vars.order.marketIndex,
+            _sizeDelta: vars.order.sizeDelta,
             _limitPriceE30: 0
           });
         } else if (vars.positionIsLong) {
-          bool _flipSide = (-vars.sizeDelta) > _existingPosition.positionSizeE30;
+          bool _flipSide = (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
           if (_flipSide) {
             // Flip the position
             // Fully close Long position
             tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
               _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-              _tpToken: vars.tpToken,
+              _tpToken: vars.order.tpToken,
               _limitPriceE30: 0
             });
             // Flip it to Short position
             tradeService.increasePosition({
-              _primaryAccount: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
+              _primaryAccount: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
               _limitPriceE30: 0
             });
           } else {
             // Not flip
             tradeService.decreasePosition({
-              _account: vars.account,
-              _subAccountId: vars.subAccountId,
-              _marketIndex: vars.marketIndex,
-              _positionSizeE30ToDecrease: uint256(-vars.sizeDelta),
-              _tpToken: vars.tpToken,
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _positionSizeE30ToDecrease: uint256(-vars.order.sizeDelta),
+              _tpToken: vars.order.tpToken,
               _limitPriceE30: 0
             });
           }

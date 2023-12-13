@@ -42,6 +42,15 @@ interface IIntentHandler {
   }
 
   struct ExecuteTradeOrderVars {
+    TradeOrder order;
+    address subAccount;
+    bytes32 positionId;
+    bool positionIsLong;
+    bool isNewPosition;
+    bool isMarketOrder;
+  }
+
+  struct TradeOrder {
     uint256 marketIndex;
     int256 sizeDelta;
     uint256 triggerPrice;
@@ -51,11 +60,6 @@ interface IIntentHandler {
     address tpToken;
     uint256 createdTimestamp;
     uint256 expiryTimestamp;
-    address subAccount;
-    bytes32 positionId;
-    bool positionIsLong;
-    bool isNewPosition;
-    bool isMarketOrder;
     address account;
     uint8 subAccountId;
   }
@@ -80,4 +84,6 @@ interface IIntentHandler {
   function execute(ExecuteIntentInputs memory inputs) external;
 
   function setIntentExecutor(address _executor, bool _isAllow) external;
+
+  function getDigest(IIntentHandler.TradeOrder memory _tradeOrder) external view returns (bytes32 _digest);
 }

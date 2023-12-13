@@ -41,6 +41,9 @@ async function main(chainId: number) {
   console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
   await hmxApi.refreshAssetIds();
   console.log("[cmds/EcoPyth] Success!");
+  console.log("[cmds/EcoPyth] Refreshing Market Ids at HMX API...");
+  await hmxApi.refreshMarketIds();
+  console.log("[cmds/EcoPyth] Success!");
   console.log("[cmds/EcoPyth] Feed Price...");
   const tx = await (
     await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas, {

@@ -30,6 +30,25 @@ export default class SafeWrapper {
     return this._safeAddress;
   }
 
+  async executePendingTransactions(): Promise<void> {
+    const safeSdk = await Safe.create({
+      ethAdapter: this._ethAdapter,
+      safeAddress: this._safeAddress,
+    });
+
+    const pendingTxsResp = await this._safeServiceClient.getPendingTransactions(this._safeAddress);
+    let pendingTxs = pendingTxsResp.results.length;
+    let executedTx = 1;
+    for (let i = pendingTxsResp.results.length - 1; i >= 0; i--) {
+      console.log(
+        `[SafeWrapper/executePendingTransactions][${executedTx++}/${pendingTxs}] Executing tx ${
+          pendingTxsResp.results[i].safeTxHash
+        }`
+      );
+      await safeSdk.executeTransaction(pendingTxsResp.results[i]);
+    }
+  }
+
   async proposeTransaction(
     to: string,
     value: ethers.BigNumberish,

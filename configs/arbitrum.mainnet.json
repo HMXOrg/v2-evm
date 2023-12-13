@@ -51,7 +51,7 @@
       "gmETHUSD": "0x700083c72eBc86CbFc865830F5706a2DbC392f26",
       "dix": "0x222918d230c5A29F334fFb3020aD57b8CeBD1B82"
     },
-    "orderbook": ""
+    "orderbook": "0x0f1e64330618eA1BEfE139B7f26A1e04629a8556"
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
@@ -121,7 +121,7 @@
     "tlc": "0x8E1F4c78BF13273c4D67E5DC3D322b0891254988"
   },
   "calculator": "0x0FdE910552977041Dc8c7ef652b5a07B40B9e006",
-  "adaptiveFeeCalculator": "",
+  "adaptiveFeeCalculator": "0x939a2e2331eF6D2E605b7F23b5E431b0d6Cb4415",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": ""

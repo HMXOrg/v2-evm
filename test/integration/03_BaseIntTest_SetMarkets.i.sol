@@ -78,6 +78,6 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newMarketConfig.active = true;
     _newMarketConfig.fundingRate = _newFundingRateConfig;
 
-    return configStorage.addMarketConfig(_newMarketConfig);
+    return configStorage.addMarketConfig(_newMarketConfig, false);
   }
 }

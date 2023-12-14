@@ -19,71 +19,19 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 0, // ETHUSD
-      weightBPS: 2 * BPS,
-    },
-    {
-      marketIndex: 1, // BTCUSD
-      weightBPS: 2 * BPS,
-    },
-    {
-      marketIndex: 12, // ADAUSD
+      marketIndex: 35, // JTOUSD
       weightBPS: 3 * BPS,
     },
     {
-      marketIndex: 13, // MATICUSD
+      marketIndex: 36, // STXUSD
       weightBPS: 3 * BPS,
     },
     {
-      marketIndex: 14, // SUIUSD
+      marketIndex: 37, // ORDIUSD
       weightBPS: 3 * BPS,
     },
     {
-      marketIndex: 15, // ARBUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 16, // OPUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 17, // LTCUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 20, // BNBUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 21, // SOLUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 23, // XRPUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 25, // LINKUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 27, // DOGEUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 32, // BCHUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 33, // MEMEUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 4, // XAUUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 9, // XAGUSD
+      marketIndex: 38, // TIAUSD
       weightBPS: 3 * BPS,
     },
   ];

@@ -37,7 +37,7 @@ export default class SafeWrapper {
     });
 
     const pendingTxsResp = await this._safeServiceClient.getPendingTransactions(this._safeAddress);
-    let pendingTxs = pendingTxsResp.results.length;
+    let pendingTxs = pendingTxsResp.results.length - 1;
     let executedTx = 1;
     for (let i = pendingTxsResp.results.length - 1; i >= 0; i--) {
       console.log(

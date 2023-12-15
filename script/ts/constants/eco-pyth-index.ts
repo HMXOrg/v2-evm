@@ -148,3 +148,7 @@ export const ecoPythHoomanReadableByIndex = [
   "ORDI",
   "TIA",
 ];
+export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
+  [ethers.utils.formatBytes32String("1000SHIB"), 1000],
+  [ethers.utils.formatBytes32String("1000PEPE"), 1000],
+]);

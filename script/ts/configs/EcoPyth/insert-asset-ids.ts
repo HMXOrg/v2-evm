@@ -5,15 +5,8 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
-const ASSET_IDS = [
-  ethers.utils.formatBytes32String("AVAX"),
-  ethers.utils.formatBytes32String("INJ"),
-  ethers.utils.formatBytes32String("SHIB"),
-  ethers.utils.formatBytes32String("DOT"),
-  ethers.utils.formatBytes32String("SEI"),
-  ethers.utils.formatBytes32String("ATOM"),
-  ethers.utils.formatBytes32String("PEPE"),
-];
+const ASSET_IDS = [ethers.utils.formatBytes32String("1000SHIB"), ethers.utils.formatBytes32String("1000PEPE")];
+console.log(ASSET_IDS);
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);

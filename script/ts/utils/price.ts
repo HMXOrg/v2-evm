@@ -5,12 +5,13 @@ import {
   ecoPythAssetIdByIndex,
   ecoPythHoomanReadableByIndex,
   ecoPythPriceFeedIdsByIndex,
+  multiplicationFactorMapByAssetId,
 } from "../constants/eco-pyth-index";
 import { loadConfig } from "./config";
 
-function _priceToPriceE8(price: string, expo: number) {
+function _priceToPriceE8(price: string, expo: number, multiplicationFactor: number) {
   const targetBN = ethers.BigNumber.from(8);
-  const priceBN = ethers.BigNumber.from(price);
+  const priceBN = ethers.BigNumber.from(price).mul(multiplicationFactor);
   const expoBN = ethers.BigNumber.from(expo);
   const priceDecimals = expoBN.mul(-1);
   if (targetBN.sub(priceDecimals).gte(0)) {
@@ -66,15 +67,18 @@ export async function getUpdatePriceData(
       throw new Error(`Failed to get price feed from Pyth ${ecoPythPriceFeedIdsByIndex[i]}`);
     }
     const priceInfo = priceFeed.getPriceUnchecked();
+    const multiplicationFactor = multiplicationFactorMapByAssetId.has(ecoPythAssetIdByIndex[i])
+      ? multiplicationFactorMapByAssetId.get(ecoPythAssetIdByIndex[i])!
+      : 1;
     buildData.push({
       assetId: ecoPythAssetIdByIndex[i],
-      priceE8: _priceToPriceE8(priceInfo.price, priceInfo.expo),
+      priceE8: _priceToPriceE8(priceInfo.price, priceInfo.expo, multiplicationFactor),
       publishTime: ethers.BigNumber.from(priceInfo.publishTime),
       maxDiffBps: MAX_PRICE_DIFF,
     });
     table.push({
       asset: ecoPythHoomanReadableByIndex[i],
-      price: ethers.utils.formatUnits(_priceToPriceE8(priceInfo.price, priceInfo.expo), 8),
+      price: ethers.utils.formatUnits(_priceToPriceE8(priceInfo.price, priceInfo.expo, multiplicationFactor), 8),
     });
   }
   const vaas = await connection.getPriceFeedsUpdateData(

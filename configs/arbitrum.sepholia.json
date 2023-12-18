@@ -1,0 +1,148 @@
+{
+  "proxyAdmin": "",
+  "multicall": "",
+  "timelock": "",
+  "safe": "",
+  "storages": {
+    "config": "",
+    "perp": "",
+    "vault": ""
+  },
+  "handlers": {
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "rebalanceHLP": "",
+    "ext01": "",
+    "rebalanceHLPv2": ""
+  },
+  "helpers": {
+    "trade": "",
+    "limitTrade": ""
+  },
+  "services": {
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": "",
+    "rebalanceHLP": "",
+    "rebalanceHLPv2": ""
+  },
+  "oracles": {
+    "ecoPyth": "",
+    "ecoPyth2": "",
+    "pythAdapter": "",
+    "sglpStakedAdapter": "",
+    "middleware": "",
+    "ecoPythCalldataBuilder": "",
+    "unsafeEcoPythCalldataBuilder": "",
+    "ecoPythCalldataBuilder2": "",
+    "unsafeEcoPythCalldataBuilder2": "",
+    "ecoPythCalldataBuilder3": "",
+    "unsafeEcoPythCalldataBuilder3": "",
+    "onChainPriceLens": "",
+    "calcPriceLens": "",
+    "priceAdapters": {
+      "glp": "",
+      "wstEth": "",
+      "hlp": "",
+      "gmBTCUSD": "",
+      "gmETHUSD": "",
+      "dix": ""
+    },
+    "orderbook": ""
+  },
+  "tokens": {
+    "hlp": "",
+    "weth": "",
+    "wbtc": "",
+    "usdt": "",
+    "usdc": "",
+    "dai": "",
+    "sglp": "",
+    "traderLoyaltyCredit": "",
+    "arb": "",
+    "wstEth": "",
+    "gmBTCUSD": "",
+    "gmETHUSD": "",
+    "usdcNative": ""
+  },
+  "vendors": {
+    "gmx": {
+      "glpManager": "",
+      "rewardRouterV2": "",
+      "rewardTracker": "",
+      "gmxVault": ""
+    },
+    "gmxV2": {
+      "oracle": "",
+      "exchangeRouter": "",
+      "depositVault": "",
+      "depositUtils": "",
+      "depositStoreUtils": "",
+      "executeDepositUtils": "",
+      "depositHandler": "",
+      "withdrawalVault": "",
+      "withdrawalUtils": "",
+      "withdrawalStoreUtils": "",
+      "executeWithdrawalUtils": "",
+      "withdrawalHandler": "",
+      "marketUtils": "",
+      "marketStoreUtils": "",
+      "dataStore": "",
+      "roleStore": "",
+      "reader": ""
+    },
+    "uniswap": {
+      "permit2": "",
+      "universalRouter": ""
+    },
+    "curve": {
+      "wstEthEthPool": "",
+      "usdcUsdtPool": ""
+    },
+    "chainlink": {
+      "wstEthEthPriceFeed": "",
+      "ethUsdPriceFeed": ""
+    },
+    "oneInch": {
+      "router": ""
+    }
+  },
+  "strategies": {
+    "stakedGlpStrategy": "",
+    "convertedGlpStrategy": "",
+    "erc20Approve": "",
+    "distributeSTIPARB": ""
+  },
+  "hooks": {
+    "tradingStaking": "",
+    "tlc": ""
+  },
+  "calculator": "",
+  "adaptiveFeeCalculator": "",
+  "accountAbstraction": {
+    "entryPoint": "",
+    "factory": ""
+  },
+  "staking": {
+    "trading": "",
+    "tlc": "",
+    "hlp": ""
+  },
+  "rewardDistributor": "",
+  "reader": {
+    "order": "",
+    "position": "",
+    "liquidation": ""
+  },
+  "extension": {
+    "switchCollateralRouter": "",
+    "dexter": {
+      "uniswapV3": "",
+      "curve": "",
+      "glp": ""
+    }
+  }
+}

@@ -29,4 +29,11 @@ export default {
     safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
     statSubgraphUrl: "",
   },
+  421614: {
+    name: "arbitrum_sepholia",
+    rpc: process.env.ARBITRUM_SEPHOLIA_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_SEPHOLIA_RPC),
+    safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
+    statSubgraphUrl: "",
+  },
 } as { [chainId: number]: ChainEntity };

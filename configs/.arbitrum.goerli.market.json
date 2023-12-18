@@ -411,6 +411,26 @@
       "assetSymbol": "Crypto.PEPE",
       "quotedAssetSymbol": "Crypto.PEPE",
       "sortIndex": 2004
+    },
+    {
+      "index": 46,
+      "name": "1000SHIB",
+      "assetId": "0x3130303053484942000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "1000shib-usd",
+      "assetSymbol": "Crypto.1000SHIB",
+      "quotedAssetSymbol": "Crypto.1000SHIB",
+      "sortIndex": 2004
+    },
+    {
+      "index": 47,
+      "name": "1000PEPEUSD",
+      "assetId": "0x3130303050455045000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "1000pepe-usd",
+      "assetSymbol": "Crypto.1000PEPE",
+      "quotedAssetSymbol": "Crypto.1000PEPE",
+      "sortIndex": 2004
     }
   ],
   "assets": {

@@ -19,31 +19,11 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 39, // AVAXUSD
+      marketIndex: 46, // AVAXUSD
       weightBPS: 3 * BPS,
     },
     {
-      marketIndex: 40, // INJUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 41, // SHIBUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 42, // DOTUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 43, // SEIUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 44, // ATOMUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 45, // PEPEUSD
+      marketIndex: 47, // INJUSD
       weightBPS: 3 * BPS,
     },
   ];

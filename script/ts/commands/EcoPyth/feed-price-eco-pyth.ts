@@ -16,7 +16,7 @@ async function main(chainId: number) {
   const hmxApi = new HmxApiWrapper(chainId);
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
-  console.log(await pyth.getAssetIds());
+  // console.log(await pyth.getAssetIds());
   // const price = await pyth.getPriceUnsafe(ethers.utils.formatBytes32String("MEME"));
   // console.log(price.price.toString());
   // console.log(await pyth.mapAssetIdToIndex(ethers.utils.formatBytes32String("GM-ETHUSD")));

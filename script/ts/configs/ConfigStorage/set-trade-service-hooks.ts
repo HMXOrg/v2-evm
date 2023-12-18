@@ -7,18 +7,12 @@ import signers from "../../entities/signers";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   console.log("[config/ConfigStorage] ConfigStorage setTradeServiceHooks...");
-  const tx = await safeWrapper.proposeTransaction(
-    configStorage.address,
-    0,
-    configStorage.interface.encodeFunctionData("setTradeServiceHooks", [
-      [config.hooks.tlc, config.hooks.tradingStaking],
-    ])
-  );
-  console.log(`[config/ConfigStorage] Proposed ${tx} to setTradeServiceHooks`);
+
+  await (await configStorage.setTradeServiceHooks([config.hooks.tlc, config.hooks.tradingStaking])).wait();
 }
 
 const program = new Command();

@@ -61,7 +61,7 @@
     "usdc": "0xB853c09b6d03098b841300daD57701ABcFA80228",
     "dai": "0x8D715a015aC0e064a3Cfb88DA755d346Aee65433",
     "sglp": "0x7AAF085e43f059105F7e1ECc525E8142fF962159",
-    "traderLoyaltyCredit": "",
+    "traderLoyaltyCredit": "0x10C1a9541447c54C46cA103A5F65CdAfa3Aa009c",
     "arb": "0x4Dc3c929DDa7451012F408d1f376221621dD2a56",
     "wstEth": "0xFc41505F4e24345E3797b6730a948a2B03a5eC5e",
     "gmBTCUSD": "0xC4605B61675654396f3b77F9D4c3bE661fa0d873",
@@ -117,8 +117,8 @@
     "distributeSTIPARB": ""
   },
   "hooks": {
-    "tradingStaking": "",
-    "tlc": ""
+    "tradingStaking": "0xEA37E047fAf6867Ef38bbB601A25162E5743c6D3",
+    "tlc": "0x58C521332Ed363D30A22B9bC6e4F3d59A8960955"
   },
   "calculator": "0x35A301796949f5235f8fc3311E6013450aaf2354",
   "adaptiveFeeCalculator": "",
@@ -127,8 +127,8 @@
     "factory": ""
   },
   "staking": {
-    "trading": "",
-    "tlc": "",
+    "trading": "0xC47EC36462f9F4cfe64410A4A159CB0b41f54401",
+    "tlc": "0xBe0DEA090588d45EA0615aa5238ED50fA0e65a95",
     "hlp": "0x880676cfcB5895a1B3fA65AD6E5cfc335316901c"
   },
   "rewardDistributor": "",

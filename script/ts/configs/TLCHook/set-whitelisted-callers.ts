@@ -8,7 +8,7 @@ import { compareAddress } from "../../utils/address";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   const whitelistedCallers = [
     {

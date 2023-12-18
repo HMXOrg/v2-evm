@@ -6,10 +6,11 @@ import { Command } from "commander";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 const ASSET_IDS = [
-  ethers.utils.formatBytes32String("JTO"),
-  ethers.utils.formatBytes32String("STX"),
-  ethers.utils.formatBytes32String("ORDI"),
-  ethers.utils.formatBytes32String("TIA"),
+  ethers.utils.formatBytes32String("AUD"),
+  ethers.utils.formatBytes32String("GBP"),
+  ethers.utils.formatBytes32String("ADA"),
+  ethers.utils.formatBytes32String("MATIC"),
+  ethers.utils.formatBytes32String("SUI"),
 ];
 
 async function main(chainId: number) {

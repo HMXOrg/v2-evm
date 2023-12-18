@@ -7,73 +7,28 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("ETH"),
-    pythPriceId: ethers.utils.formatBytes32String("ETH"),
+    assetId: ethers.utils.formatBytes32String("AUD"),
+    pythPriceId: ethers.utils.formatBytes32String("AUD"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("BTC"),
-    pythPriceId: ethers.utils.formatBytes32String("BTC"),
+    assetId: ethers.utils.formatBytes32String("GBP"),
+    pythPriceId: ethers.utils.formatBytes32String("GBP"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("USDC"),
-    pythPriceId: ethers.utils.formatBytes32String("USDC"),
+    assetId: ethers.utils.formatBytes32String("ADA"),
+    pythPriceId: ethers.utils.formatBytes32String("ADA"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("USDT"),
-    pythPriceId: ethers.utils.formatBytes32String("USDT"),
+    assetId: ethers.utils.formatBytes32String("MATIC"),
+    pythPriceId: ethers.utils.formatBytes32String("MATIC"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("DAI"),
-    pythPriceId: ethers.utils.formatBytes32String("DAI"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("AAPL"),
-    pythPriceId: ethers.utils.formatBytes32String("AAPL"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("JPY"),
-    pythPriceId: ethers.utils.formatBytes32String("JPY"),
-    inverse: true,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("XAU"),
-    pythPriceId: ethers.utils.formatBytes32String("XAU"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("AMZN"),
-    pythPriceId: ethers.utils.formatBytes32String("AMZN"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("MSFT"),
-    pythPriceId: ethers.utils.formatBytes32String("MSFT"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("TSLA"),
-    pythPriceId: ethers.utils.formatBytes32String("TSLA"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("EUR"),
-    pythPriceId: ethers.utils.formatBytes32String("EUR"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("XAG"),
-    pythPriceId: ethers.utils.formatBytes32String("XAG"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("GLP"),
-    pythPriceId: ethers.utils.formatBytes32String("GLP"),
+    assetId: ethers.utils.formatBytes32String("SUI"),
+    pythPriceId: ethers.utils.formatBytes32String("SUI"),
     inverse: false,
   },
 ];

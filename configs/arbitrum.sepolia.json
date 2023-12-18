@@ -40,7 +40,7 @@
     "ecoPythCalldataBuilder2": "",
     "unsafeEcoPythCalldataBuilder2": "",
     "ecoPythCalldataBuilder3": "0x5fea0499255e3fC95Ec19C0Cbc2acb4A51729276",
-    "unsafeEcoPythCalldataBuilder3": "",
+    "unsafeEcoPythCalldataBuilder3": "0x11c0f8dc5d9eE6B57fd40031917e2f4d89da5063",
     "onChainPriceLens": "0x2f035c75bE06cdDCA5E23649d9635f649Cb279E5",
     "calcPriceLens": "0x3fADCFbaD794eF3129094A55BEf54e75E0c151Ad",
     "priceAdapters": {
@@ -129,7 +129,7 @@
   "staking": {
     "trading": "",
     "tlc": "",
-    "hlp": ""
+    "hlp": "0x880676cfcB5895a1B3fA65AD6E5cfc335316901c"
   },
   "rewardDistributor": "",
   "reader": {

@@ -9,12 +9,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, signers.deployer(chainId));
 
-  const inputs = [
-    { updater: config.handlers.bot, isUpdater: true },
-    { updater: config.handlers.crossMargin, isUpdater: true },
-    { updater: config.handlers.limitTrade, isUpdater: true },
-    { updater: config.handlers.liquidity, isUpdater: true },
-  ];
+  const inputs = [{ updater: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a", isUpdater: true }];
 
   const deployer = signers.deployer(chainId);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);

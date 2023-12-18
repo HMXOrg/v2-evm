@@ -7,16 +7,12 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   console.log("[configs/LimitTradeHandler] Set Limit Trade Helper...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  const tx = await safeWrapper.proposeTransaction(
-    limitTradeHandler.address,
-    0,
-    limitTradeHandler.interface.encodeFunctionData("setLimitTradeHelper", [config.helpers.limitTrade])
-  );
-  console.log(`[configs/LimitTradeHandler] Proposed tx: ${tx}`);
+
+  await (await limitTradeHandler.setLimitTradeHelper(config.helpers.limitTrade)).wait();
 }
 
 const prog = new Command();

@@ -15,50 +15,10 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ETH"),
+      assetId: ethers.utils.formatBytes32String("ARB"),
       collateralConfig: {
         collateralFactorBPS: 0.85 * BPS,
         accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("BTC"),
-      collateralConfig: {
-        collateralFactorBPS: 0.85 * BPS,
-        accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("DAI"),
-      collateralConfig: {
-        collateralFactorBPS: 1 * BPS,
-        accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("USDC"),
-      collateralConfig: {
-        collateralFactorBPS: 1 * BPS,
-        accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("USDT"),
-      collateralConfig: {
-        collateralFactorBPS: 1 * BPS,
-        accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("GLP"),
-      collateralConfig: {
-        collateralFactorBPS: 0.8 * BPS,
-        accepted: false,
         settleStrategy: ethers.constants.AddressZero,
       },
     },

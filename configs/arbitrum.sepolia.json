@@ -19,7 +19,7 @@
   },
   "helpers": {
     "trade": "0xFd89a05652492D748a94cD24c636e33054E9F4c2",
-    "limitTrade": ""
+    "limitTrade": "0xF738a396c235Ab83bbfE114BdfFD7fC3689215fE"
   },
   "services": {
     "crossMargin": "0xb4D3b20c2AF9dB32ef86f301F1CD4B5E92b1D1e1",
@@ -44,9 +44,9 @@
     "onChainPriceLens": "0x2f035c75bE06cdDCA5E23649d9635f649Cb279E5",
     "calcPriceLens": "0x3fADCFbaD794eF3129094A55BEf54e75E0c151Ad",
     "priceAdapters": {
-      "glp": "",
-      "wstEth": "",
-      "hlp": "",
+      "glp": "0xa3Ad18ed20224f8043C465Dd388b1d40122858f6",
+      "wstEth": "0x54d7818274E4F0E7ef222884c10E852F7cc14276",
+      "hlp": "0xE0F6A9D50420e4415D4d378b2976685Dc7c6a9b3",
       "gmBTCUSD": "",
       "gmETHUSD": "",
       "dix": ""
@@ -103,8 +103,8 @@
       "usdcUsdtPool": ""
     },
     "chainlink": {
-      "wstEthEthPriceFeed": "",
-      "ethUsdPriceFeed": ""
+      "wstEthEthPriceFeed": "0x80EDee6f667eCc9f63a0a6f55578F870651f06A4",
+      "ethUsdPriceFeed": "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165"
     },
     "oneInch": {
       "router": ""

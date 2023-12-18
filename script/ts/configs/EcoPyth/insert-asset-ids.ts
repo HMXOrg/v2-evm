@@ -5,13 +5,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
-const ASSET_IDS = [
-  ethers.utils.formatBytes32String("AUD"),
-  ethers.utils.formatBytes32String("GBP"),
-  ethers.utils.formatBytes32String("ADA"),
-  ethers.utils.formatBytes32String("MATIC"),
-  ethers.utils.formatBytes32String("SUI"),
-];
+const ASSET_IDS = [ethers.utils.formatBytes32String("QQQ"), ethers.utils.formatBytes32String("XRP")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);

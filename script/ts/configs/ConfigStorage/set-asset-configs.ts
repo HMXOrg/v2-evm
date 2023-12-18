@@ -13,55 +13,10 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ETH"),
+      assetId: ethers.utils.formatBytes32String("ARB"),
       config: {
-        assetId: ethers.utils.formatBytes32String("ETH"),
-        tokenAddress: config.tokens.weth,
-        decimals: 18,
-        isStableCoin: false,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("BTC"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("BTC"),
-        tokenAddress: config.tokens.wbtc,
-        decimals: 8,
-        isStableCoin: false,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("DAI"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("DAI"),
-        tokenAddress: config.tokens.dai,
-        decimals: 18,
-        isStableCoin: true,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("USDC"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("USDC"),
-        tokenAddress: config.tokens.usdc,
-        decimals: 6,
-        isStableCoin: true,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("USDT"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("USDT"),
-        tokenAddress: config.tokens.usdt,
-        decimals: 6,
-        isStableCoin: true,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("GLP"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("GLP"),
-        tokenAddress: config.tokens.sglp,
+        assetId: ethers.utils.formatBytes32String("ARB"),
+        tokenAddress: config.tokens.arb,
         decimals: 18,
         isStableCoin: false,
       },

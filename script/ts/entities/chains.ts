@@ -30,9 +30,9 @@ export default {
     statSubgraphUrl: "",
   },
   421614: {
-    name: "arbitrum_sepholia",
-    rpc: process.env.ARBITRUM_SEPHOLIA_RPC,
-    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_SEPHOLIA_RPC),
+    name: "arbitrum_sepolia",
+    rpc: process.env.ARBITRUM_SEPOLIA_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_SEPOLIA_RPC),
     safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
     statSubgraphUrl: "",
   },

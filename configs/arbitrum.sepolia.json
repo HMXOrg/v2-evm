@@ -55,18 +55,18 @@
   },
   "tokens": {
     "hlp": "",
-    "weth": "",
-    "wbtc": "",
-    "usdt": "",
-    "usdc": "",
-    "dai": "",
-    "sglp": "",
+    "weth": "0xc88322Ec9526A7A98B7F58ff773b3B003C91ce71",
+    "wbtc": "0x4c08D11Bc95075AD992Bd7A5776D0D9813E264d5",
+    "usdt": "0x20E58fC5E1ee3C596fb3ebD6de6040e7800e82E6",
+    "usdc": "0xB853c09b6d03098b841300daD57701ABcFA80228",
+    "dai": "0x8D715a015aC0e064a3Cfb88DA755d346Aee65433",
+    "sglp": "0x7AAF085e43f059105F7e1ECc525E8142fF962159",
     "traderLoyaltyCredit": "",
-    "arb": "",
-    "wstEth": "",
-    "gmBTCUSD": "",
-    "gmETHUSD": "",
-    "usdcNative": ""
+    "arb": "0x4Dc3c929DDa7451012F408d1f376221621dD2a56",
+    "wstEth": "0xFc41505F4e24345E3797b6730a948a2B03a5eC5e",
+    "gmBTCUSD": "0xC4605B61675654396f3b77F9D4c3bE661fa0d873",
+    "gmETHUSD": "0x417B34E90990657BF6adC1Ecc2ac4B36069cc927",
+    "usdcNative": "0xEB27B05178515c7E6E51dEE159c8487A011ac030"
   },
   "vendors": {
     "gmx": {

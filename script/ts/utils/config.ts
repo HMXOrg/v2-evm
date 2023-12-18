@@ -2,8 +2,10 @@ import { network } from "hardhat";
 import * as fs from "fs";
 import ArbitrumGoerliConfig from "../../../configs/arbitrum.goerli.json";
 import ArbitrumMainnetConfig from "../../../configs/arbitrum.mainnet.json";
+import ArbitrumSepoliaConfig from "../../../configs/arbitrum.sepolia.json";
 import ArbitrumMainnetMarketConfig from "../../../configs/.arbitrum.one.market.json";
 import ArbitrumGoerliMarketConfig from "../../../configs/.arbitrum.goerli.market.json";
+import ArbitrumSepoliaMarketConfig from "../../../configs/.arbitrum.sepolia.market.json";
 
 export function loadConfig(chainId: number) {
   if (chainId === 42161) {
@@ -38,6 +40,9 @@ export function getConfig() {
   if (network.name === "arb_goerli") {
     return ArbitrumGoerliConfig;
   }
+  if (network.name === "arb_sepolia") {
+    return ArbitrumSepoliaConfig;
+  }
   if (network.name === "arbitrum") {
     return ArbitrumMainnetConfig;
   }
@@ -62,6 +67,9 @@ export function writeConfigFile(config: any) {
       break;
     case "arb_goerli":
       filePath = "./configs/arbitrum.goerli.json";
+      break;
+    case "arb_sepolia":
+      filePath = "./configs/arbitrum.sepolia.json";
       break;
     default:
       throw Error("Unsupported network");

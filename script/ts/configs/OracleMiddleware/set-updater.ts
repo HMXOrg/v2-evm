@@ -4,7 +4,7 @@ import { getConfig } from "../../utils/config";
 
 const config = getConfig();
 
-const updater = "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E";
+const updater = config.handlers.bot; // Market Status Updater
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

@@ -14,6 +14,9 @@ export function loadConfig(chainId: number) {
   if (chainId === 421613) {
     return ArbitrumGoerliConfig;
   }
+  if (chainId === 421614) {
+    return ArbitrumSepoliaConfig;
+  }
   throw new Error("not found config");
 }
 
@@ -23,6 +26,9 @@ export function loadMarketConfig(chainId: number) {
   }
   if (chainId === 421613) {
     return ArbitrumGoerliMarketConfig;
+  }
+  if (chainId === 421614) {
+    return ArbitrumSepoliaMarketConfig;
   }
   throw new Error("not found market config");
 }

@@ -14,16 +14,11 @@ const tradingConfig = {
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   console.log("[ConfigStorage] Set Trading Config...");
-  const tx = await safeWrapper.proposeTransaction(
-    configStorage.address,
-    0,
-    configStorage.interface.encodeFunctionData("setTradingConfig", [tradingConfig])
-  );
-  console.log(`[ConfigStorage] Proposed tx to set trading config: ${tx}`);
+  await (await configStorage.setTradingConfig(tradingConfig)).wait();
 }
 
 const prog = new Command();

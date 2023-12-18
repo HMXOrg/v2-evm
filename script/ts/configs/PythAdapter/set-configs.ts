@@ -7,23 +7,73 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("JTO"),
-    pythPriceId: ethers.utils.formatBytes32String("JTO"),
+    assetId: ethers.utils.formatBytes32String("ETH"),
+    pythPriceId: ethers.utils.formatBytes32String("ETH"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("STX"),
-    pythPriceId: ethers.utils.formatBytes32String("STX"),
+    assetId: ethers.utils.formatBytes32String("BTC"),
+    pythPriceId: ethers.utils.formatBytes32String("BTC"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("ORDI"),
-    pythPriceId: ethers.utils.formatBytes32String("ORDI"),
+    assetId: ethers.utils.formatBytes32String("USDC"),
+    pythPriceId: ethers.utils.formatBytes32String("USDC"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("TIA"),
-    pythPriceId: ethers.utils.formatBytes32String("TIA"),
+    assetId: ethers.utils.formatBytes32String("USDT"),
+    pythPriceId: ethers.utils.formatBytes32String("USDT"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("DAI"),
+    pythPriceId: ethers.utils.formatBytes32String("DAI"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("AAPL"),
+    pythPriceId: ethers.utils.formatBytes32String("AAPL"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("JPY"),
+    pythPriceId: ethers.utils.formatBytes32String("JPY"),
+    inverse: true,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("XAU"),
+    pythPriceId: ethers.utils.formatBytes32String("XAU"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("AMZN"),
+    pythPriceId: ethers.utils.formatBytes32String("AMZN"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("MSFT"),
+    pythPriceId: ethers.utils.formatBytes32String("MSFT"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("TSLA"),
+    pythPriceId: ethers.utils.formatBytes32String("TSLA"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("EUR"),
+    pythPriceId: ethers.utils.formatBytes32String("EUR"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("XAG"),
+    pythPriceId: ethers.utils.formatBytes32String("XAG"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("GLP"),
+    pythPriceId: ethers.utils.formatBytes32String("GLP"),
     inverse: false,
   },
 ];
@@ -35,16 +85,14 @@ async function main(chainId: number) {
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
   console.log("[configs/PythAdapter] Setting configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    pythAdapter.address,
-    0,
-    pythAdapter.interface.encodeFunctionData("setConfigs", [
+
+  await (
+    await pythAdapter.setConfigs(
       inputs.map((each) => each.assetId),
       inputs.map((each) => each.pythPriceId),
-      inputs.map((each) => each.inverse),
-    ])
-  );
-  console.log(`[configs/PythAdapter] Tx: ${tx}`);
+      inputs.map((each) => each.inverse)
+    )
+  ).wait();
 }
 
 const program = new Command();

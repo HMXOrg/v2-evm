@@ -9,27 +9,87 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("JTO"),
+      assetId: ethers.utils.formatBytes32String("ETH"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("STX"),
+      assetId: ethers.utils.formatBytes32String("BTC"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("ORDI"),
+      assetId: ethers.utils.formatBytes32String("USDC"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("TIA"),
+      assetId: ethers.utils.formatBytes32String("USDT"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("DAI"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("AAPL"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("JPY"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("GLP"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("XAU"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("AMZN"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("MSFT"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("TSLA"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("EUR"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("XAG"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
   ];
@@ -39,17 +99,14 @@ async function main(chainId: number) {
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
   console.log("[configs/OracleMiddleware] Setting asset price configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    oracle.address,
-    0,
-    oracle.interface.encodeFunctionData("setAssetPriceConfigs", [
+  await (
+    await oracle.setAssetPriceConfigs(
       assetConfigs.map((each) => each.assetId),
       assetConfigs.map((each) => each.confidenceThreshold),
       assetConfigs.map((each) => each.trustPriceAge),
-      assetConfigs.map((each) => each.adapter),
-    ])
-  );
-  console.log(`[configs/OracleMiddleware] Tx: ${tx}`);
+      assetConfigs.map((each) => each.adapter)
+    )
+  ).wait();
 }
 
 const prog = new Command();

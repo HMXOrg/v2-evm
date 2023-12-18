@@ -13,19 +13,55 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+      assetId: ethers.utils.formatBytes32String("ETH"),
       config: {
-        assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
-        tokenAddress: config.tokens.gmBTCUSD,
+        assetId: ethers.utils.formatBytes32String("ETH"),
+        tokenAddress: config.tokens.weth,
         decimals: 18,
         isStableCoin: false,
       },
     },
     {
-      assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
+      assetId: ethers.utils.formatBytes32String("BTC"),
       config: {
-        assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
-        tokenAddress: config.tokens.gmETHUSD,
+        assetId: ethers.utils.formatBytes32String("BTC"),
+        tokenAddress: config.tokens.wbtc,
+        decimals: 8,
+        isStableCoin: false,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("DAI"),
+      config: {
+        assetId: ethers.utils.formatBytes32String("DAI"),
+        tokenAddress: config.tokens.dai,
+        decimals: 18,
+        isStableCoin: true,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("USDC"),
+      config: {
+        assetId: ethers.utils.formatBytes32String("USDC"),
+        tokenAddress: config.tokens.usdc,
+        decimals: 6,
+        isStableCoin: true,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("USDT"),
+      config: {
+        assetId: ethers.utils.formatBytes32String("USDT"),
+        tokenAddress: config.tokens.usdt,
+        decimals: 6,
+        isStableCoin: true,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("GLP"),
+      config: {
+        assetId: ethers.utils.formatBytes32String("GLP"),
+        tokenAddress: config.tokens.sglp,
         decimals: 18,
         isStableCoin: false,
       },
@@ -33,15 +69,12 @@ async function main(chainId: number) {
   ];
 
   console.log("[configs/ConfigStorage] Set Asset Configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    configStorage.address,
-    0,
-    configStorage.interface.encodeFunctionData("setAssetConfigs", [
+  await (
+    await configStorage.setAssetConfigs(
       inputs.map((each) => each.assetId),
-      inputs.map((each) => each.config),
-    ])
-  );
-  console.log(`[configs/ConfigStorage] Tx: ${tx}`);
+      inputs.map((each) => each.config)
+    )
+  ).wait();
   console.log("[configs/ConfigStorage] Finished");
   console.log("[configs/ConfigStorage] Set Asset Configs success!");
 }

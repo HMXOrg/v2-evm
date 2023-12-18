@@ -13,9 +13,54 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.sglp,
+      tokenAddress: config.tokens.usdc,
+      config: {
+        targetWeight: ethers.utils.parseEther("0.05"), // 5%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.usdt,
       config: {
         targetWeight: ethers.utils.parseEther("0"), // 0%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: false,
+      },
+    },
+    {
+      tokenAddress: config.tokens.dai,
+      config: {
+        targetWeight: ethers.utils.parseEther("0"), // 0%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: false,
+      },
+    },
+    {
+      tokenAddress: config.tokens.weth,
+      config: {
+        targetWeight: ethers.utils.parseEther("0"), // 0%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: false,
+      },
+    },
+    {
+      tokenAddress: config.tokens.wbtc,
+      config: {
+        targetWeight: ethers.utils.parseEther("0"), // 0%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: false,
+      },
+    },
+    {
+      tokenAddress: config.tokens.sglp,
+      config: {
+        targetWeight: ethers.utils.parseEther("0.95"), // 95%
         bufferLiquidity: 0,
         maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
         accepted: false,
@@ -24,15 +69,13 @@ async function main(chainId: number) {
   ];
 
   console.log("[configs/ConfigStorage] AddOrUpdateAcceptedToken...");
-  const tx = await safeWrapper.proposeTransaction(
-    configStorage.address,
-    0,
-    configStorage.interface.encodeFunctionData("addOrUpdateAcceptedToken", [
+
+  await (
+    await configStorage.addOrUpdateAcceptedToken(
       inputs.map((each) => each.tokenAddress),
-      inputs.map((each) => each.config),
-    ])
-  );
-  console.log(`[configs/ConfigStorage] Proposed hash: ${tx}`);
+      inputs.map((each) => each.config)
+    )
+  ).wait();
 }
 
 const prog = new Command();

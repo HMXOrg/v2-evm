@@ -8,7 +8,23 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const inputs = [
     {
-      executorAddress: config.strategies.distributeSTIPARB,
+      executorAddress: config.services.liquidity,
+      isServiceExecutor: true,
+    },
+    {
+      executorAddress: config.services.crossMargin,
+      isServiceExecutor: true,
+    },
+    {
+      executorAddress: config.services.trade,
+      isServiceExecutor: true,
+    },
+    {
+      executorAddress: config.helpers.trade,
+      isServiceExecutor: true,
+    },
+    {
+      executorAddress: config.services.liquidation,
       isServiceExecutor: true,
     },
   ];

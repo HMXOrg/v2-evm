@@ -8,7 +8,7 @@ const config = getConfig();
 
 const assetClassName = "COMMODITY";
 const assetConfig = {
-  baseBorrowingRate: ethers.utils.parseEther("0.000000000002536783"), // 0.008% per hour
+  baseBorrowingRate: ethers.utils.parseEther("0.00000222"), // 0.008% per hour
 };
 
 async function main() {

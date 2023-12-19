@@ -7,23 +7,28 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("JTO"),
-    pythPriceId: ethers.utils.formatBytes32String("JTO"),
+    assetId: ethers.utils.formatBytes32String("AVAX"),
+    pythPriceId: ethers.utils.formatBytes32String("AVAX"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("STX"),
-    pythPriceId: ethers.utils.formatBytes32String("STX"),
+    assetId: ethers.utils.formatBytes32String("INJ"),
+    pythPriceId: ethers.utils.formatBytes32String("INJ"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("ORDI"),
-    pythPriceId: ethers.utils.formatBytes32String("ORDI"),
+    assetId: ethers.utils.formatBytes32String("DOT"),
+    pythPriceId: ethers.utils.formatBytes32String("DOT"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("TIA"),
-    pythPriceId: ethers.utils.formatBytes32String("TIA"),
+    assetId: ethers.utils.formatBytes32String("SEI"),
+    pythPriceId: ethers.utils.formatBytes32String("SEI"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("ATOM"),
+    pythPriceId: ethers.utils.formatBytes32String("ATOM"),
     inverse: false,
   },
 ];

@@ -341,6 +341,56 @@
       "assetSymbol": "Crypto.TIA",
       "quotedAssetSymbol": "Crypto.TIA",
       "sortIndex": 2004
+    },
+    {
+      "index": 39,
+      "name": "AVAXUSD",
+      "assetId": "0x4156415800000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "avax-usd",
+      "assetSymbol": "Crypto.AVAX",
+      "quotedAssetSymbol": "Crypto.AVAX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 40,
+      "name": "INJUSD",
+      "assetId": "0x494e4a0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "inj-usd",
+      "assetSymbol": "Crypto.INJ",
+      "quotedAssetSymbol": "Crypto.INJ",
+      "sortIndex": 2004
+    },
+    {
+      "index": 41,
+      "name": "DOTUSD",
+      "assetId": "0x444f540000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "dot-usd",
+      "assetSymbol": "Crypto.DOT",
+      "quotedAssetSymbol": "Crypto.DOT",
+      "sortIndex": 2004
+    },
+    {
+      "index": 42,
+      "name": "SEIUSD",
+      "assetId": "0x5345490000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "sei-usd",
+      "assetSymbol": "Crypto.SEI",
+      "quotedAssetSymbol": "Crypto.SEI",
+      "sortIndex": 2004
+    },
+    {
+      "index": 43,
+      "name": "ATOMUSD",
+      "assetId": "0x41544f4d00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "atom-usd",
+      "assetSymbol": "Crypto.ATOM",
+      "quotedAssetSymbol": "Crypto.ATOM",
+      "sortIndex": 2004
     }
   ],
   "assets": {
@@ -382,6 +432,11 @@
     "JTO": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
     "STX": "0x5354580000000000000000000000000000000000000000000000000000000000",
     "ORDI": "0x4f52444900000000000000000000000000000000000000000000000000000000",
-    "TIA": "0x5449410000000000000000000000000000000000000000000000000000000000"
+    "TIA": "0x5449410000000000000000000000000000000000000000000000000000000000",
+    "AVAX": "0x4156415800000000000000000000000000000000000000000000000000000000",
+    "INJ": "0x494e4a0000000000000000000000000000000000000000000000000000000000",
+    "DOT": "0x444f540000000000000000000000000000000000000000000000000000000000",
+    "SEI": "0x5345490000000000000000000000000000000000000000000000000000000000",
+    "ATOM": "0x41544f4d00000000000000000000000000000000000000000000000000000000"
   }
 }

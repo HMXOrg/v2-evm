@@ -7,12 +7,15 @@ import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
 import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
+import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
   const hmxApi = new HmxApiWrapper(chainId);
+  console.log(ethers.utils.formatBytes32String("1000PEPE"));
+  return;
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 

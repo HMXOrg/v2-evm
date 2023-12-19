@@ -9,35 +9,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
 
-  const inputs = [
-    { marketIndex: 0, minProfitDuration: 15 },
-    { marketIndex: 1, minProfitDuration: 15 },
-    { marketIndex: 2, minProfitDuration: 60 },
-    { marketIndex: 3, minProfitDuration: 60 },
-    { marketIndex: 4, minProfitDuration: 60 },
-    { marketIndex: 5, minProfitDuration: 60 },
-    { marketIndex: 6, minProfitDuration: 60 },
-    { marketIndex: 7, minProfitDuration: 60 },
-    { marketIndex: 8, minProfitDuration: 60 },
-    { marketIndex: 9, minProfitDuration: 60 },
-    { marketIndex: 10, minProfitDuration: 60 },
-    { marketIndex: 11, minProfitDuration: 60 },
-    { marketIndex: 12, minProfitDuration: 60 },
-    { marketIndex: 13, minProfitDuration: 60 },
-    { marketIndex: 14, minProfitDuration: 300 },
-    { marketIndex: 15, minProfitDuration: 300 },
-    { marketIndex: 16, minProfitDuration: 300 },
-    { marketIndex: 17, minProfitDuration: 300 },
-    { marketIndex: 18, minProfitDuration: 60 },
-    { marketIndex: 19, minProfitDuration: 60 },
-    { marketIndex: 20, minProfitDuration: 60 },
-    { marketIndex: 21, minProfitDuration: 300 },
-    { marketIndex: 22, minProfitDuration: 60 },
-    { marketIndex: 23, minProfitDuration: 60 },
-    { marketIndex: 24, minProfitDuration: 60 },
-    { marketIndex: 25, minProfitDuration: 300 },
-    { marketIndex: 26, minProfitDuration: 60 },
-  ];
+  const inputs = [{ marketIndex: 44, minProfitDuration: 300 }];
 
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);

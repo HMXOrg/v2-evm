@@ -14,8 +14,6 @@ async function main(chainId: number) {
   const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
   const hmxApi = new HmxApiWrapper(chainId);
-  console.log(ethers.utils.formatBytes32String("1000PEPE"));
-  return;
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 

@@ -16,6 +16,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { HLP } from "@hmx/contracts/HLP.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
@@ -427,18 +428,13 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // Validate Max HLP Utilization
     // =====================================
-    // reserveValue / HLP TVL > maxHLPUtilization
-    // Transform to save precision:
-    // reserveValue > maxHLPUtilization * HLP TVL
+    // There should be at lest 2x of Global PnL left in HLP to allow traders to settle their trades
+
     uint256 hlpTVL = _calculator.getHLPValueE30(false);
 
-    if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxHLPUtilizationBPS * hlpTVL) {
+    uint256 _globalPnL = HMXLib.abs(_calculator.getGlobalPNLE30());
+    if (_globalPnL * 2 >= hlpTVL) {
       revert LiquidityService_MaxHLPUtilizationExceeded();
-    }
-
-    // Validate HLP Reserved
-    if (_globalState.reserveValueE30 > hlpTVL) {
-      revert LiquidityService_InsufficientHLPReserved();
     }
   }
 

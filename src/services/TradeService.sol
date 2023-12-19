@@ -375,11 +375,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       // Additionally, if the minimum profit duration is active, increasing the position is not allowed.
       // This is checked by comparing _delta to 0, as it is virtually impossible for _delta to be 0 if the position is active without a minimum profit duration.
       uint256 minProfitDuration = _vars.configStorage.minProfitDurations(_marketIndex);
-      if (
-        _isProfit &&
-        (_delta >= _vars.position.reserveValueE30 ||
-          (block.timestamp < _vars.position.lastIncreaseTimestamp + minProfitDuration))
-      ) {
+      if (_isProfit && (block.timestamp < _vars.position.lastIncreaseTimestamp + minProfitDuration)) {
         revert ITradeService_NotAllowIncrease();
       }
 
@@ -843,11 +839,12 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.position.marketIndex
       );
 
-      // if trader has profit more than our reserved value then trader's profit maximum is reserved value
-      if (isProfit && delta >= _vars.position.reserveValueE30) {
-        delta = _vars.position.reserveValueE30;
-        _isMaxProfit = true;
-      }
+      // Adaptive ADL: Disable thick check to depreciate individual position max profit and use Adaptive ADL instead
+      // // if trader has profit more than our reserved value then trader's profit maximum is reserved value
+      // if (isProfit && delta >= _vars.position.reserveValueE30) {
+      //   delta = _vars.position.reserveValueE30;
+      //   _isMaxProfit = true;
+      // }
 
       uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
       if (isProfit && block.timestamp < (_vars.position.lastIncreaseTimestamp + minProfitDuration)) {
@@ -1106,10 +1103,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _globalState.reserveValueE30 += _reservedValue;
     _assetClass.reserveValueE30 += _reservedValue;
 
-    // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    if ((tvl * _liquidityConfig.maxHLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
-      revert ITradeService_InsufficientLiquidity();
-    }
+    // Adaptive ADL: Disable this check to depreciate borrowing fee and reserveValueE30
+    // // Check if the new reserve value exceeds the % of AUM, and revert if it does
+    // if ((tvl * _liquidityConfig.maxHLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
+    //   revert ITradeService_InsufficientLiquidity();
+    // }
 
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);

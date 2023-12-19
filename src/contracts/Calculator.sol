@@ -666,9 +666,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
 
         if (_var.isProfit) {
-          if (_var.delta >= _var.position.reserveValueE30) {
-            _var.delta = _var.position.reserveValueE30;
-          }
           _unrealizedPnlE30 += int256(_var.delta);
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);

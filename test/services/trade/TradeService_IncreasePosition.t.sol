@@ -151,7 +151,8 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // Increase Long ETH size 2,000,000
     {
       int256 sizeDelta = 2_000_000 * 1e30;
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
+      // Adaptive ADL: there will be no insufficient liquidity as we have depreciated reserveValue at the position level
+      // vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
   }
@@ -190,7 +191,8 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // Reserve value 8,800 * 9 = 79,200
     {
       int256 sizeDelta = 888_000 * 1e30;
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
+      // Adaptive ADL: there will be no insufficient liquidity as we have depreciated reserveValue at the position level
+      // vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
       tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
     }
   }

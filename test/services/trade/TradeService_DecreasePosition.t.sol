@@ -560,7 +560,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                 = +123809.523809523809523809523810348601 USD
     // position realized pnl = decreased position size * (current price - position avg price) / position avg price
     //                       = 1000000 * (1.1 - 1) / 1 = +100000 USD (but reserved value for this position is 90000)
-    // then actual pnl = +90000
+    // Adaptive ADL: position will get actual pnl, no individual max profit
+    // then actual pnl = +100000
     // new global long pnl = global long pnl - position relaized pnl
     //                     = +123809.523809523809523809523810348601 - (+90000)
     //                     = +33809.523809523809523809523810348601 USD
@@ -570,13 +571,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                                 = 1.030330062444246208742194469222 USD
     // ALICE position has profit 90000 USD
     // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // profit in WETH = 90000 / 1.1 = 81818.181818181818181818 ether
+    // profit in WETH = 100000 / 1.1 = 90909.09090909 ether
     // settlement fee rate 0.5% note: from mock
-    // settlement fee = 81818.181818181818181818 * 0.5 / 100 = 409.090909090909090909 ether
-    // then ALICE sub account 0 collateral should be increased by 81818.181818181818181818 - 409.090909090909090909 = 81409.090909090909090909 ether
-    //                             = 100000 + 81409.090909090909090909 = 181409.090909090909090909 ether
+    // settlement fee = 90909.09090909 * 0.5 / 100 = 454.54545455 ether
+    // then ALICE sub account 0 collateral should be increased by 90909.09090909 - 454.54545455 = 90454.54545454 ether
+    //                             = 100000 + 90454.54545454 = 190454.54545454 ether
     // and HLP WETH liquidity should reduced by 81818.181818181818181818 ether
-    //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 81818.181818181818181818 = 918181.818181818181818182 ether
+    //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 90909.09090909 = 909090.90909091 ether
     // finally fee should increased by 409.090909090909090909 ether
     address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
@@ -584,8 +585,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
     uint256[] memory _expectedFees = new uint256[](1);
 
     _checkHlpTokens[0] = _tpToken;
-    _expectedTraderBalances[0] = 181_409.090909090909090909 ether + 409.090909090909090909 ether;
-    _expectedHlpLiquidities[0] = 918_181.818181818181818182 ether;
+    _expectedTraderBalances[0] = 190909.090909090909090909 ether; // 190454.5454545454545454 ether + 454.5454545454545454 ether;
+    _expectedHlpLiquidities[0] = 909090.909090909090909091 ether;
     _expectedFees[0] = 0 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({

@@ -126,8 +126,8 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     uint256[] memory _expectedFees = new uint256[](1);
 
     _checkHlpTokens[0] = _tpToken;
-    _expectedTraderBalances[0] = 200_000 ether;
-    _expectedHlpLiquidities[0] = 900_000 ether;
+    _expectedTraderBalances[0] = 211111111111111111111111;
+    _expectedHlpLiquidities[0] = 888888888888888888888889;
     _expectedFees[0] = 0 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({

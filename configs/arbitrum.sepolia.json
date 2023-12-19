@@ -30,8 +30,8 @@
     "rebalanceHLPv2": ""
   },
   "oracles": {
-    "ecoPyth": "0x029c919Cf951C588819Acb7d95eeC1780E53f89C",
-    "ecoPyth2": "0x029c919Cf951C588819Acb7d95eeC1780E53f89C",
+    "ecoPyth": "0x934dD689e9962427aab71b226b386945F5d190bC",
+    "ecoPyth2": "0x934dD689e9962427aab71b226b386945F5d190bC",
     "pythAdapter": "0x28826219ffb76aa41a56a40e875709391795e512",
     "sglpStakedAdapter": "",
     "middleware": "0x68DaEB1C169d16395Bd03C2d0776A3e54015323e",
@@ -39,8 +39,8 @@
     "unsafeEcoPythCalldataBuilder": "",
     "ecoPythCalldataBuilder2": "",
     "unsafeEcoPythCalldataBuilder2": "",
-    "ecoPythCalldataBuilder3": "0x5fea0499255e3fC95Ec19C0Cbc2acb4A51729276",
-    "unsafeEcoPythCalldataBuilder3": "0x11c0f8dc5d9eE6B57fd40031917e2f4d89da5063",
+    "ecoPythCalldataBuilder3": "0xb9aB4D76c36f5E7BBFcD63A319D8c2A313290EB6",
+    "unsafeEcoPythCalldataBuilder3": "0x1d90c87B1729F850771BC48B170CD2e6C0031bFC",
     "onChainPriceLens": "0x2f035c75bE06cdDCA5E23649d9635f649Cb279E5",
     "calcPriceLens": "0x3fADCFbaD794eF3129094A55BEf54e75E0c151Ad",
     "priceAdapters": {

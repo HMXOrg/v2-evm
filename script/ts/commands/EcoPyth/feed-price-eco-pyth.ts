@@ -16,11 +16,11 @@ async function main(chainId: number) {
   const hmxApi = new HmxApiWrapper(chainId);
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
-  console.log("from config");
-  console.log(ecoPythAssetIdByIndex);
-  console.log("from ecopyth");
-  console.log(await pyth.getAssetIds());
-  return;
+  // console.log("from config");
+  // console.log(ecoPythAssetIdByIndex);
+  // console.log("from ecopyth");
+  // console.log(await pyth.getAssetIds());
+  // return;
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);

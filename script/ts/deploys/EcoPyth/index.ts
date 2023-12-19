@@ -14,7 +14,7 @@ async function main() {
   console.log(`Deploying EcoPyth Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.oracles.ecoPyth = contract.address;
+  config.oracles.ecoPyth2 = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

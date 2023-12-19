@@ -7,18 +7,13 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("DOGE"),
-    pythPriceId: ethers.utils.formatBytes32String("DOGE"),
+    assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+    pythPriceId: ethers.utils.formatBytes32String("GM-BTCUSD"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("CAD"),
-    pythPriceId: ethers.utils.formatBytes32String("CAD"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("SGD"),
-    pythPriceId: ethers.utils.formatBytes32String("SGD"),
+    assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
+    pythPriceId: ethers.utils.formatBytes32String("GM-ETHUSD"),
     inverse: false,
   },
 ];

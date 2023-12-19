@@ -14,7 +14,7 @@
     "limitTrade": "0x676715779e3bFaa9B1a98De4F1F0745cF4E65bcE",
     "liquidity": "0xffaa17A2c9EEe7D44C46b249085558a513583c36",
     "rebalanceHLP": "",
-    "ext01": "",
+    "ext01": "0xaD791B2bFfad66F61A8B721E5B28645E6b079f56",
     "rebalanceHLPv2": ""
   },
   "helpers": {
@@ -47,8 +47,8 @@
       "glp": "0xa3Ad18ed20224f8043C465Dd388b1d40122858f6",
       "wstEth": "0x54d7818274E4F0E7ef222884c10E852F7cc14276",
       "hlp": "0xE0F6A9D50420e4415D4d378b2976685Dc7c6a9b3",
-      "gmBTCUSD": "",
-      "gmETHUSD": "",
+      "gmBTCUSD": "0xe44341Cf84687bDEb7F3a753FBBcfF8c1F26f313",
+      "gmETHUSD": "0x6eBc8C8f67c95a28278E4D2Fa40b93CB305c65c7",
       "dix": ""
     },
     "orderbook": ""
@@ -138,10 +138,10 @@
     "liquidation": ""
   },
   "extension": {
-    "switchCollateralRouter": "",
+    "switchCollateralRouter": "0x3A5D0c9E200c8C2291aB8c5FBbe10338bD2e9A83",
     "dexter": {
       "uniswapV3": "",
-      "curve": "",
+      "curve": "0x372Fe49A05c83b0BbB98200833aF5dC0cbD7E7AA",
       "glp": ""
     }
   }

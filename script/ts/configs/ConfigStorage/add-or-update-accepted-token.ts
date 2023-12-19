@@ -13,7 +13,25 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.arb,
+      tokenAddress: config.tokens.gmBTCUSD,
+      config: {
+        targetWeight: ethers.utils.parseEther("0.4"), // 40%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.gmETHUSD,
+      config: {
+        targetWeight: ethers.utils.parseEther("0.5"), // 50%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.sglp,
       config: {
         targetWeight: ethers.utils.parseEther("0"), // 0%
         bufferLiquidity: 0,

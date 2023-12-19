@@ -4,7 +4,7 @@ import { getConfig, writeConfigFile } from "../../utils/config";
 const config = getConfig();
 
 async function main() {
-  const initialPrice = ethers.utils.parseEther("0.8");
+  const initialPrice = ethers.utils.parseEther("1.1");
   const deployer = (await ethers.getSigners())[0];
   const contract = await ethers.deployContract("MockPriceAdapter", [initialPrice], deployer);
 
@@ -12,7 +12,7 @@ async function main() {
   console.log(`[deploys/MockPriceAdapter] Deploying MockPriceAdapter Contract`);
   console.log(`[deploys/MockPriceAdapter] Deployed at: ${contract.address}`);
 
-  config.oracles.priceAdapters.glp = contract.address;
+  config.oracles.priceAdapters.gmETHUSD = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

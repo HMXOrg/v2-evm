@@ -7,6 +7,7 @@ import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
 import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
+import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -38,6 +39,9 @@ async function main(chainId: number) {
 
   console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
   await hmxApi.refreshAssetIds();
+  console.log("[cmds/EcoPyth] Success!");
+  console.log("[cmds/EcoPyth] Refreshing Market Ids at HMX API...");
+  await hmxApi.refreshMarketIds();
   console.log("[cmds/EcoPyth] Success!");
   console.log("[cmds/EcoPyth] Feed Price...");
   const tx = await (

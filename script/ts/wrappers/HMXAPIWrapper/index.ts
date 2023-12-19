@@ -28,4 +28,16 @@ export default class {
       force: true,
     });
   }
+
+  async refreshMarketIds() {
+    const endpoint = `${this.baseUrl}/arbitrum/v1/internal/market-ids.reload`;
+    try {
+      await axios.post(endpoint);
+    } catch (e: any) {
+      const statusCode = e.response.data.status.code;
+      if (statusCode === 8900) {
+        console.log("lastest market id cache is equal to the contract");
+      }
+    }
+  }
 }

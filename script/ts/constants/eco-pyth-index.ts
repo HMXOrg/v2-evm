@@ -49,6 +49,11 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17", // STXUSD
   "0x193c739db502aadcef37c2589738b1e37bdb257d58cf1ab3c7ebc8e6df4e3ec0", // ORDIUSD
   "0x09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723", // TIAUSD
+  "0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7", // AVAXUSD
+  "0x7a5bc1d2b56ad029048cd63964b3ad2776eadf812edc1a43a31406cb54bff592", // INJUSD
+  "0xca3eed9b267293f6595901c734c7525ce8ef49adafe8284606ceb307afa2ca5b", // DOTUSD
+  "0x53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb", // SEIUSD
+  "0xb00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819", // ATOMUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -98,6 +103,11 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("STX"),
   ethers.utils.formatBytes32String("ORDI"),
   ethers.utils.formatBytes32String("TIA"),
+  ethers.utils.formatBytes32String("AVAX"),
+  ethers.utils.formatBytes32String("INJ"),
+  ethers.utils.formatBytes32String("DOT"),
+  ethers.utils.formatBytes32String("SEI"),
+  ethers.utils.formatBytes32String("ATOM"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -147,6 +157,11 @@ export const ecoPythHoomanReadableByIndex = [
   "STX",
   "ORDI",
   "TIA",
+  "AVAX",
+  "INJ",
+  "DOT",
+  "SEI",
+  "ATOM",
 ];
 export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
   [ethers.utils.formatBytes32String("1000SHIB"), 1000],

@@ -20,99 +20,71 @@ async function main(chainId: number) {
   const weightConfigs: Array<WeightConfig> = [
     {
       marketIndex: 0, // ETHUSD
-      weightBPS: 4 * BPS,
+      weightBPS: 2 * BPS,
     },
     {
       marketIndex: 1, // BTCUSD
-      weightBPS: 4 * BPS,
-    },
-    {
-      marketIndex: 2, // AAPLUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 3, // JPYUSD
-      weightBPS: BPS,
-    },
-    {
-      marketIndex: 4, // XAUUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 5, // AMZNUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 6, // MSFTUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 7, // TSLAUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 8, // EURUSD
-      weightBPS: BPS,
-    },
-    {
-      marketIndex: 9, // XAGUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 10, // AUDUSD
-      weightBPS: BPS,
-    },
-    {
-      marketIndex: 11, // GBPUSD
-      weightBPS: BPS,
+      weightBPS: 2 * BPS,
     },
     {
       marketIndex: 12, // ADAUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 13, // MATICUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 14, // SUIUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 15, // ARBUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 16, // OPUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 17, // LTCUSD
-      weightBPS: 7 * BPS,
-    },
-    {
-      marketIndex: 18, // COINUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 19, // GOOGUSD
-      weightBPS: 5 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 20, // BNBUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 21, // SOLUSD
-      weightBPS: 7 * BPS,
-    },
-    {
-      marketIndex: 22, // QQQUSD
-      weightBPS: 5 * BPS,
+      weightBPS: 3 * BPS,
     },
     {
       marketIndex: 23, // XRPUSD
-      weightBPS: 7 * BPS,
+      weightBPS: 3 * BPS,
+    },
+    {
+      marketIndex: 25, // LINKUSD
+      weightBPS: 3 * BPS,
+    },
+    {
+      marketIndex: 27, // DOGEUSD
+      weightBPS: 3 * BPS,
+    },
+    {
+      marketIndex: 32, // BCHUSD
+      weightBPS: 3 * BPS,
+    },
+    {
+      marketIndex: 33, // MEMEUSD
+      weightBPS: 3 * BPS,
+    },
+    {
+      marketIndex: 4, // XAUUSD
+      weightBPS: 3 * BPS,
+    },
+    {
+      marketIndex: 9, // XAGUSD
+      weightBPS: 3 * BPS,
     },
   ];
 

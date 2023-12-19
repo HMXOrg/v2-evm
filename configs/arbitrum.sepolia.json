@@ -49,9 +49,9 @@
       "hlp": "0xE0F6A9D50420e4415D4d378b2976685Dc7c6a9b3",
       "gmBTCUSD": "0xe44341Cf84687bDEb7F3a753FBBcfF8c1F26f313",
       "gmETHUSD": "0x6eBc8C8f67c95a28278E4D2Fa40b93CB305c65c7",
-      "dix": ""
+      "dix": "0x76473d85404D275F06E5835FFFc6006De0C4F0Ee"
     },
-    "orderbook": ""
+    "orderbook": "0x98908a974e922528ffc5b24cbD8b45f7628D5aEA"
   },
   "tokens": {
     "hlp": "0x8a30913D47FeD617778058201846f5326bC9e65D",
@@ -121,7 +121,7 @@
     "tlc": "0x58C521332Ed363D30A22B9bC6e4F3d59A8960955"
   },
   "calculator": "0x35A301796949f5235f8fc3311E6013450aaf2354",
-  "adaptiveFeeCalculator": "",
+  "adaptiveFeeCalculator": "0x1E7e368b872613F0f6f54234206eDB2fc2B3F2B9",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""
@@ -133,9 +133,9 @@
   },
   "rewardDistributor": "",
   "reader": {
-    "order": "",
-    "position": "",
-    "liquidation": ""
+    "order": "0xf82CA772c66299f95aD3d4A64C3F939368A1bCd2",
+    "position": "0xF4D79112A02A72f71a7Fba3F791b4B42Dd81f395",
+    "liquidation": "0xEc55B65C20421500D80B190e263356aCFE91f63c"
   },
   "extension": {
     "switchCollateralRouter": "0x3A5D0c9E200c8C2291aB8c5FBbe10338bD2e9A83",

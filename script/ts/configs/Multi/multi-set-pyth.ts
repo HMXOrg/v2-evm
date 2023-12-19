@@ -1,6 +1,7 @@
 import {
   BotHandler__factory,
   CrossMarginHandler__factory,
+  Ext01Handler__factory,
   LimitTradeHandler__factory,
   LiquidityHandler__factory,
   PythAdapter__factory,
@@ -9,17 +10,18 @@ import signers from "../../entities/signers";
 import { loadConfig } from "../../utils/config";
 
 async function main() {
-  const config = loadConfig(42161);
+  const config = loadConfig(421614);
 
   const NEW_PYTH = config.oracles.ecoPyth2;
 
-  const deployer = signers.deployer(42161);
+  const deployer = signers.deployer(421614);
 
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
   const botHandler = BotHandler__factory.connect(config.handlers.bot, deployer);
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
+  const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01, deployer);
 
   let nonce = await deployer.getTransactionCount();
 
@@ -30,6 +32,7 @@ async function main() {
   promises.push(crossMarginHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
   promises.push(limitTradeHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
   promises.push(liquidityHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
+  promises.push(ext01Handler.setPyth(NEW_PYTH, { nonce: nonce++ }));
   const txs = await Promise.all(promises);
   console.log(`[config/Multi/setPyth] Txs: ${txs.map((tx) => tx.hash).join(",")}`);
   await txs[txs.length - 1].wait(1);

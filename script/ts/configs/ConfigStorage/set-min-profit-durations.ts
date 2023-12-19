@@ -10,10 +10,11 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
 
   const inputs = [
-    { marketIndex: 35, minProfitDuration: 300 },
-    { marketIndex: 36, minProfitDuration: 300 },
-    { marketIndex: 37, minProfitDuration: 300 },
-    { marketIndex: 38, minProfitDuration: 300 },
+    { marketIndex: 39, minProfitDuration: 300 },
+    { marketIndex: 40, minProfitDuration: 300 },
+    { marketIndex: 41, minProfitDuration: 300 },
+    { marketIndex: 42, minProfitDuration: 300 },
+    { marketIndex: 43, minProfitDuration: 300 },
   ];
 
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);

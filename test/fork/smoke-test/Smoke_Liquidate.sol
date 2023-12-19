@@ -226,7 +226,8 @@ contract Smoke_Liquidate is ForkEnv {
 
     vm.startPrank(orderbookOracle.owner());
     orderbookOracle.setUpdater(address(this), true);
-    orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
     vm.stopPrank();
+
+    orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
   }
 }

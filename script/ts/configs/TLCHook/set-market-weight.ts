@@ -19,19 +19,7 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 35, // JTOUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 36, // STXUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 37, // ORDIUSD
-      weightBPS: 3 * BPS,
-    },
-    {
-      marketIndex: 38, // TIAUSD
+      marketIndex: 44, // 1000PEPEUSD
       weightBPS: 3 * BPS,
     },
   ];

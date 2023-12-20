@@ -7,23 +7,8 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("JTO"),
-    pythPriceId: ethers.utils.formatBytes32String("JTO"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("STX"),
-    pythPriceId: ethers.utils.formatBytes32String("STX"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("ORDI"),
-    pythPriceId: ethers.utils.formatBytes32String("ORDI"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("TIA"),
-    pythPriceId: ethers.utils.formatBytes32String("TIA"),
+    assetId: ethers.utils.formatBytes32String("1000PEPE"),
+    pythPriceId: ethers.utils.formatBytes32String("1000PEPE"),
     inverse: false,
   },
 ];

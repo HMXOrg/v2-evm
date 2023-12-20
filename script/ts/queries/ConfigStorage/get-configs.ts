@@ -3,13 +3,12 @@ import { Command } from "commander";
 import { ConfigStorage__factory } from "../../../../typechain";
 import signers from "../../entities/signers";
 
-async function main(chainId: number) {
-  const config = loadConfig(chainId);
-  const deployer = signers.deployer(chainId);
+const BigNumber = ethers.BigNumber;
+const config = getConfig();
 
-  const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  console.log(await configStorage.getLiquidityConfig());
-  console.log(await configStorage.getMarketConfigByIndex(23));
+async function main() {
+  const deployer = (await ethers.getSigners())[0];
+  console.log(ethers.utils.formatBytes32String("1000SHIB"));
 }
 
 const prog = new Command();

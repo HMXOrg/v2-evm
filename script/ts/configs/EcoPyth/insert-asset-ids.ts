@@ -5,7 +5,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("1000PEPE")];
+const ASSET_IDS = [ethers.utils.formatBytes32String("1000SHIB")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);

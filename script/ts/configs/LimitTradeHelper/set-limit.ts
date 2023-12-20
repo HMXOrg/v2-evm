@@ -9,28 +9,8 @@ async function main(chainId: number) {
   const inputs = [
     {
       marketIndex: 39,
-      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("500000", 30),
-    },
-    {
-      marketIndex: 40,
-      tradeSizeLimit: ethers.utils.parseUnits("300000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("300000", 30),
-    },
-    {
-      marketIndex: 41,
-      tradeSizeLimit: ethers.utils.parseUnits("300000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("300000", 30),
-    },
-    {
-      marketIndex: 42,
-      tradeSizeLimit: ethers.utils.parseUnits("250000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("250000", 30),
-    },
-    {
-      marketIndex: 43,
-      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
+      tradeSizeLimit: ethers.utils.parseUnits("200000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
     },
   ];
 

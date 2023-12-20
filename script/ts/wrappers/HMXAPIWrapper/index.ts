@@ -22,6 +22,13 @@ export default class {
     }
   }
 
+  async feedOrderbookOracle() {
+    const endpoint = `${this.baseUrl}/arbitrum/v1/internal/adaptive-fee.update`;
+    await axios.post(endpoint, {
+      force: true,
+    });
+  }
+
   async refreshMarketIds() {
     const endpoint = `${this.baseUrl}/arbitrum/v1/internal/market-ids.reload`;
     try {

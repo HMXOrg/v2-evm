@@ -31,7 +31,7 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("1000PEPE"),
+      assetId: ethers.utils.formatBytes32String("1000SHIB"),
       maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
       maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
       increasePositionFeeRateBPS: 3, // 0.03%

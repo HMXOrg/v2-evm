@@ -422,8 +422,6 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       revert LiquidityService_InsufficientLiquidityBuffer();
     }
 
-    ConfigStorage.LiquidityConfig memory _liquidityConfig = _configStorage.getLiquidityConfig();
-    PerpStorage.GlobalState memory _globalState = PerpStorage(perpStorage).getGlobalState();
     Calculator _calculator = Calculator(_configStorage.calculator());
 
     // Validate Max HLP Utilization

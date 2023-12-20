@@ -771,7 +771,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _marketIndex,
     DecreasePositionVars memory _vars
-  ) private returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
+  ) private returns (bool /*_isMaxProfit*/, bool isProfit, uint256 delta) {
     PrivateDecreasePositionVars memory _temp;
     // SLOAD
     _temp.tradeHelper = TradeHelper(tradeHelper);
@@ -1086,6 +1086,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) private {
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
+    ICalculator _calculator = calculator;
 
     // Get the total TVL
     uint256 tvl = calculator.getHLPValueE30(true);
@@ -1096,18 +1097,16 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // Retrieve the global asset class
     PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(_assetClassIndex);
 
-    // get the liquidity configuration
-    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
-
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += _reservedValue;
     _assetClass.reserveValueE30 += _reservedValue;
 
-    // Adaptive ADL: Disable this check to depreciate borrowing fee and reserveValueE30
-    // // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    // if ((tvl * _liquidityConfig.maxHLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
-    //   revert ITradeService_InsufficientLiquidity();
-    // }
+    // Adaptive ADL: Check if HLP is enough to settle the current Global PnL
+    // We reserve 2x of the current Global PnL. If it's not enough, the platform can't handle anymore position.
+    uint256 _globalPnL = HMXLib.abs(_calculator.getGlobalPNLE30());
+    if (_globalPnL * 2 >= tvl) {
+      revert ITradeService_InsufficientLiquidity();
+    }
 
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);

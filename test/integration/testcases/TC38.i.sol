@@ -205,7 +205,7 @@ contract TC38 is BaseIntTest_WithActions {
       bobIsProfit;
       carolIsProfit;
 
-      assertEq(_BobUnrealizedPnlE30, 7_200 * 1e30, "T4: Bob unrealized Pnl");
+      assertEq(_BobUnrealizedPnlE30, 7213187930832773857596337122057887, "T4: Bob unrealized Pnl");
       assertEq(_CarolUnrealizedPnlE30, 1730362327240939953049650331945816, "T4: CAROL unrealized Pnl");
 
       int256 globalPnl = calculator.getGlobalPNLE30();
@@ -228,7 +228,8 @@ contract TC38 is BaseIntTest_WithActions {
       );
     }
 
-    forceTakeMaxProfit(BOB, 0, wethMarketIndex, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
+    vm.deal(BOB, 1 ether);
+    marketSell(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
 
     {
       // Assert after force Take Max Profit

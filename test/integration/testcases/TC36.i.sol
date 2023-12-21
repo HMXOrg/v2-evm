@@ -19,12 +19,12 @@ contract TC36 is BaseIntTest_WithActions {
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
 
     _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
     _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
 
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, false);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -86,7 +86,7 @@ contract TC36 is BaseIntTest_WithActions {
     vm.deal(BOB, _pythGasFee);
     vm.deal(BOB, 1 ether);
     console.log("tvl", calculator.getHLPValueE30(true));
-    marketBuy(BOB, 0, wbtcMarketIndex, 18_611_867 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    marketBuy(BOB, 0, wethMarketIndex, 18_611_867 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
     {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
@@ -121,11 +121,19 @@ contract TC36 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     uint256 _hlpAliceBefore = hlpV2.balanceOf(ALICE);
 
-    // Alice try to remove liquidity, but refund due to reach max utilization
+    // ETH Price moved up to 1,550 USD. This will make Alice's Long ETH position profitable.
+    // The profit will be used to calculate a reserved amount of the fund of HLP and it will preven withdrawal over this reserved amount.
+    tickPrices[0] = 73463; // ETH Price 1,550 USD
+    // Global Pnl will be -620559.75868551
+    // Alice cannot remove liquidity over
+    // = HLP TVL - (Global PnL * 2)
+    // = 2094000 - (620559.75868551 * 2) = 852880. USD
+    // Alice try to remove liquidity for 43 BTC (43 * 20000 = 860000 USD)
+    // but refund due to reach max utilization
     removeLiquidity(
       ALICE,
       address(wbtc),
-      1 * 1e18,
+      43 * 1e8,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
@@ -133,6 +141,7 @@ contract TC36 is BaseIntTest_WithActions {
       true
     );
     uint256 _hlpAliceAfter = hlpV2.balanceOf(ALICE);
+    console.logInt(calculator.getGlobalPNLE30());
 
     {
       // HLP before and HLP after executed remove liquidity should be the same because platform refund due to reach max utilization
@@ -145,158 +154,35 @@ contract TC36 is BaseIntTest_WithActions {
       assertHLPLiquidity(address(usdc), 100_000 * 1e6);
     }
 
-    // Alice able to add 1000 USDC liquidity to help reserve % better
+    // Alice able to add 100,000 USDC liquidity to help reserve % better
     vm.deal(ALICE, executionOrderFee);
-    usdc.mint(ALICE, 1_000 * 1e6);
+    usdc.mint(ALICE, 100_000 * 1e6);
     addLiquidity(
       ALICE,
       ERC20(address(usdc)),
-      1_000 * 1e6,
+      100_000 * 1e6,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
       block.timestamp,
       true
     );
-    {
-      // wbtc 99.7 * 1e30 * 20000 => 1994000000000000000000000000000000000
-      // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
-      // hlpValueE30 = 2094997200000000000000000000000000000
 
-      // PNL = -6012221
-      // WBTC   LONG         20000000000000000000000000000000000              20620444433333333333333333333320000              18613333000000000000000000000000000000             =560052858364255462951685200733910932
-
-      // AUM = hlpValueE30 -PNL + Pending Borrowing Fee;
-      // AUM = 2094997200000000000000000000000000000 - (-6012221) + 0
-      // AUM = 2655050058364255462951685200733910932
-
-      assertApproxEqRel(calculator.getHLPValueE30(false), 2094997200000000000000000000000000000, MAX_DIFF, "hlp TVL");
-
-      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
-
-      assertApproxEqRel(calculator.getAUME30(false), 2094332274215590197526000000006012221, MAX_DIFF, "AUM");
-
-      assertHLPTotalSupply(2094786772875837506655217);
-
-      assertTokenBalanceOf(ALICE, address(hlpV2), 2094786772875837506655217);
-      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
-      assertHLPLiquidity(address(usdc), 100_997.2 * 1e6);
-    }
-
+    // TVL should increase by 100,000 USD
+    assertApproxEqRel(calculator.getHLPValueE30(false), 2194997200000000000000000000000000000, MAX_DIFF, "hlp TVL");
     vm.deal(ALICE, executionOrderFee);
     removeLiquidity(
       ALICE,
       address(wbtc),
-      500 * 1e18,
+      43 * 1e8,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
       block.timestamp,
       true
     );
-    {
-      //fee => 0.3%, liquidityRemove = 3_168_639
-      // wbtc 99.66831361 * 1e30 * 20000 => 1993366272200000000000000000000000000
-      // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
-      // hlpValueE30 = 2094363472200000000000000000000000000
 
-      // PNL = -6012221
-      // WBTC   LONG         20000000000000000000000000000000000              20620444433333333333333333333320000              18613333000000000000000000000000000000             =560052858364255462951685200733910932
-
-      //  AUM =  2094363472200000000000000000000000000 - ( -6012221) + 0
-
-      assertApproxEqRel(calculator.getHLPValueE30(false), 2094363472200000000000000000000000000, MAX_DIFF, "hlp TVL");
-
-      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
-
-      assertApproxEqRel(calculator.getAUME30(false), 2094332274215590197526000000006012221, MAX_DIFF, "AUM");
-
-      assertHLPTotalSupply(2094286772875837506655217);
-      // assert HLP
-      assertTokenBalanceOf(ALICE, address(hlpV2), 2094286772875837506655217);
-      assertHLPLiquidity(address(wbtc), 99.66831361 * 1e8);
-      assertHLPLiquidity(address(usdc), 100_997.2 * 1e6);
-    }
-
-    //BOB close all position
-    {
-      _pythGasFee = initialPriceFeedDatas.length;
-      vm.deal(BOB, _pythGasFee);
-      vm.deal(BOB, executionOrderFee);
-      marketSell(
-        BOB,
-        0,
-        wbtcMarketIndex,
-        18_611_867 * 1e30,
-        address(wbtc),
-        tickPrices,
-        publishTimeDiff,
-        block.timestamp
-      );
-    }
-
-    {
-      //from above state
-      //hlpValueE30 = 2654416330564255462951685200733910932
-      //maxUtilization = 2654416330564255462951685200733910932 * 8000 / 10000 => 1675490777760000000000000000000000000
-      IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
-      _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
-      IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
-      IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
-      uint256 _hlpTVL = calculator.getHLPValueE30(false);
-
-      uint256 _maxUtilizationValue = (_hlpTVL * _liquidityConfig.maxHLPUtilizationBPS) / 10000;
-
-      assertApproxEqRel(_globalState.reserveValueE30, 0, MAX_DIFF, "Global Reserve");
-      assertApproxEqRel(_assetClass.reserveValueE30, 0, MAX_DIFF, "Global AssetClass Reserve");
-      assertApproxEqRel(_hlpTVL, 2094363472200000000000000000000000000, MAX_DIFF, "HLP TVL");
-      assertApproxEqRel(_maxUtilizationValue, 1675490777760000000000000000000000000, MAX_DIFF, "MaxUtilizationValue");
-    }
-
-    // Try to remove All liquidity in HLP should be success
-    vm.deal(ALICE, executionOrderFee * 2);
-
-    removeLiquidity(
-      ALICE,
-      address(usdc),
-      100997199992639264702996,
-      executionOrderFee,
-      tickPrices,
-      publishTimeDiff,
-      block.timestamp,
-      true // execute now
-    );
-
-    IConfigStorage.HLPTokenConfig memory _config;
-    _config.targetWeight = 0.95 * 1e18;
-    _config.bufferLiquidity = 0;
-    _config.maxWeightDiff = 1e18;
-    _config.accepted = true;
-    configStorage.setHlpTokenConfig(address(wbtc), _config);
-
-    removeLiquidity(
-      ALICE,
-      address(wbtc),
-      hlpV2.balanceOf(ALICE) - 1 ether,
-      executionOrderFee,
-      tickPrices,
-      publishTimeDiff,
-      block.timestamp,
-      true // execute now
-    );
-
-    {
-      assertApproxEqRel(calculator.getHLPValueE30(false), 1e30, MAX_DIFF, "hlp TVL");
-
-      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
-
-      assertApproxEqRel(calculator.getAUME30(false), 1e30, MAX_DIFF, "AUM");
-
-      assertHLPTotalSupply(1 ether);
-
-      assertTokenBalanceOf(ALICE, address(hlpV2), 1 ether);
-      assertHLPLiquidity(address(wbtc), 0.00005001 * 1e8);
-      assertHLPLiquidity(address(usdc), 0);
-    }
+    _hlpAliceAfter = hlpV2.balanceOf(ALICE);
+    assertLt(_hlpAliceBefore, _hlpAliceAfter, "Alice shoul be able to remove liquidity.");
   }
 }

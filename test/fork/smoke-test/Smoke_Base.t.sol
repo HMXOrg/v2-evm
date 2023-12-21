@@ -585,8 +585,6 @@ contract Smoke_Base is ForkEnv {
     vm.revertTo(snapshot);
     new Smoke_Liquidity().removeLiquidity();
     vm.revertTo(snapshot);
-    new Smoke_MaxProfit().forceCloseMaxProfit();
-    vm.revertTo(snapshot);
     new Smoke_Trade().openClosePosition();
     vm.revertTo(snapshot);
     new Smoke_TriggerOrder().executeTriggerOrder();

@@ -8,14 +8,9 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 46,
-      tradeSizeLimit: ethers.utils.parseUnits("300000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("300000", 30),
-    },
-    {
-      marketIndex: 47,
-      tradeSizeLimit: ethers.utils.parseUnits("200000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
+      marketIndex: 39,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("500000", 30),
     },
   ];
 

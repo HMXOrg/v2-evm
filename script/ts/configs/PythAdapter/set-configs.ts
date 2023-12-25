@@ -11,11 +11,6 @@ const inputs = [
     pythPriceId: ethers.utils.formatBytes32String("1000SHIB"),
     inverse: false,
   },
-  {
-    assetId: ethers.utils.formatBytes32String("1000PEPE"),
-    pythPriceId: ethers.utils.formatBytes32String("1000PEPE"),
-    inverse: false,
-  },
 ];
 
 async function main(chainId: number) {

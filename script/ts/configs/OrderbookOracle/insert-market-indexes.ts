@@ -1,32 +1,23 @@
 import { OrderbookOracle__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
 import { Command } from "commander";
-import { compareAddress } from "../../utils/address";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, signers.deployer(chainId));
-
-  const inputs = [46, 47];
-
   const deployer = signers.deployer(chainId);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
+
+  const inputs = [45];
+
   const orderbookOracle = OrderbookOracle__factory.connect(config.oracles.orderbook, deployer);
 
   console.log("[configs/OrderbookOracle] Proposing to insert market indexes...");
-  const owner = await orderbookOracle.owner();
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      orderbookOracle.address,
-      0,
-      orderbookOracle.interface.encodeFunctionData("insertMarketIndexes", [inputs])
-    );
-    console.log(`[configs/OrderbookOracle] Proposed tx: ${tx}`);
-  } else {
-    const tx = await orderbookOracle.insertMarketIndexes(inputs);
-    console.log(`[configs/OrderbookOracle] tx: ${tx.hash}`);
-  }
+  await ownerWrapper.authExec(
+    orderbookOracle.address,
+    orderbookOracle.interface.encodeFunctionData("insertMarketIndexes", [inputs])
+  );
   console.log("[configs/OrderbookOracle] Insert Market Indexes success!");
 }
 

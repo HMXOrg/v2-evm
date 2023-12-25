@@ -8,11 +8,7 @@ const config = getConfig();
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
-
-  const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  console.log(ethers.utils.formatBytes32String("MEME"));
-  console.log(ethers.utils.formatBytes32String("SEK"));
-  console.log(ethers.utils.formatBytes32String("DIX"));
+  console.log(ethers.utils.formatBytes32String("1000SHIB"));
 }
 
 main().catch((error) => {

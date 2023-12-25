@@ -41,6 +41,8 @@ contract Smoke_Liquidate is ForkEnv {
   }
 
   function liquidateWithAdaptiveFee() external {
+    _setUpOrderbookOracle();
+
     // Set SOLUSD trade limit
     uint256[] memory _marketIndexes = new uint256[](1);
     _marketIndexes[0] = 21;
@@ -171,5 +173,61 @@ contract Smoke_Liquidate is ForkEnv {
 
     assertEq(ForkEnv.perpStorage.getNumberOfSubAccountPosition(ForkEnv.ALICE), 0);
     assertEq(ForkEnv.vaultStorage.traderBalances(ForkEnv.ALICE, address(ForkEnv.usdc_e)), 0);
+  }
+
+  function _setUpOrderbookOracle() internal {
+    uint256[] memory marketIndexes = orderbookOracle.getMarketIndexes();
+
+    int24[] memory askDepthTicks = new int24[](marketIndexes.length);
+    askDepthTicks[0] = 149149;
+    askDepthTicks[1] = 149150;
+    askDepthTicks[2] = 149151;
+    askDepthTicks[3] = 149152;
+    askDepthTicks[4] = 149153;
+    askDepthTicks[5] = 149154;
+    askDepthTicks[6] = 149155;
+    askDepthTicks[7] = 124915; // 265899.97059219
+    askDepthTicks[8] = 149157;
+    askDepthTicks[9] = 218230;
+    askDepthTicks[10] = 149159;
+    askDepthTicks[11] = 149160;
+
+    int24[] memory bidDepthTicks = new int24[](marketIndexes.length);
+    bidDepthTicks[0] = 149149;
+    bidDepthTicks[1] = 149150;
+    bidDepthTicks[2] = 149151;
+    bidDepthTicks[3] = 149152;
+    bidDepthTicks[4] = 149153;
+    bidDepthTicks[5] = 149154;
+    bidDepthTicks[6] = 149155;
+    bidDepthTicks[7] = 124915; // 265899.97059219
+    bidDepthTicks[8] = 149157;
+    bidDepthTicks[9] = 218230;
+    bidDepthTicks[10] = 149159;
+    bidDepthTicks[11] = 149160;
+
+    int24[] memory coeffVariantTicks = new int24[](marketIndexes.length);
+    coeffVariantTicks[0] = -60708;
+    coeffVariantTicks[1] = -60709;
+    coeffVariantTicks[2] = -60710;
+    coeffVariantTicks[3] = -60711;
+    coeffVariantTicks[4] = -60712;
+    coeffVariantTicks[5] = -60713;
+    coeffVariantTicks[6] = -60714;
+    coeffVariantTicks[7] = -60715;
+    coeffVariantTicks[8] = -60716;
+    coeffVariantTicks[9] = -60717;
+    coeffVariantTicks[10] = -60718;
+    coeffVariantTicks[11] = -60719;
+
+    bytes32[] memory askDepths = orderbookOracle.buildUpdateData(askDepthTicks);
+    bytes32[] memory bidDepths = orderbookOracle.buildUpdateData(bidDepthTicks);
+    bytes32[] memory coeffVariants = orderbookOracle.buildUpdateData(coeffVariantTicks);
+
+    vm.startPrank(orderbookOracle.owner());
+    orderbookOracle.setUpdater(address(this), true);
+    vm.stopPrank();
+
+    orderbookOracle.updateData(askDepths, bidDepths, coeffVariants);
   }
 }

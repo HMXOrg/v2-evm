@@ -38,25 +38,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 3, // 0.03%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 300000, // 3000%
-      assetClass: assetClasses.crypto,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: true,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("1000PEPE"),
-      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
-      increasePositionFeeRateBPS: 3, // 0.03%
-      decreasePositionFeeRateBPS: 3, // 0.03%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 300000, // 3000%
+      maxProfitRateBPS: 400000, // 4000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -76,7 +58,15 @@ async function main(chainId: number) {
     console.log(
       `[configs/ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`
     );
-    await (await configStorage.addMarketConfig(marketConfigs[i], marketConfigs[i].isAdaptiveFeeEnabled)).wait();
+    const tx = await safeWrapper.proposeTransaction(
+      configStorage.address,
+      0,
+      configStorage.interface.encodeFunctionData("addMarketConfig", [
+        marketConfigs[i],
+        marketConfigs[i].isAdaptiveFeeEnabled,
+      ])
+    );
+    console.log(`[configs/ConfigStorage] Tx: ${tx}`);
   }
   console.log("[configs/ConfigStorage] Finished");
 }

@@ -111,11 +111,15 @@ contract OrderReader {
           if (_isPositionClose(_position)) {
             continue;
           }
+        }
 
-          // validate minProfitDuration
-          if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
-            continue;
-          }
+        // validate minProfitDuration
+        if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
+          continue;
+        }
+
+        if (!_isUnderMaxOI(vars.marketConfigs[_order.marketIndex], _position, _order)) {
+          continue;
         }
       }
       vars.executableOrders[i] = _order;
@@ -146,6 +150,20 @@ contract OrderReader {
     uint256 _timestamp
   ) internal pure returns (bool) {
     return _timestamp < _position.lastIncreaseTimestamp + _minProfitDuration;
+  }
+
+  function _isUnderMaxOI(
+    IConfigStorage.MarketConfig memory _marketConfig,
+    IPerpStorage.Position memory _position,
+    ILimitTradeHandler.LimitOrder memory _order
+  ) internal view returns (bool) {
+    bool _isLong = _position.positionSizeE30 > 0;
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_order.marketIndex);
+    if (_isLong) {
+      return int256(_marketConfig.maxLongPositionSize) > int256(_market.longPositionSize) + _order.sizeDelta;
+    } else {
+      return int256(_marketConfig.maxShortPositionSize) > int256(_market.shortPositionSize) - _order.sizeDelta;
+    }
   }
 
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {

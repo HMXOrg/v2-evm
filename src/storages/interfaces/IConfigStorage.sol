@@ -193,7 +193,8 @@ interface IConfigStorage {
   function setMarketConfig(
     uint256 _marketIndex,
     MarketConfig calldata _newConfig,
-    bool isAdaptiveFeeEnabled
+    bool isAdaptiveFeeEnabled,
+    uint256 _maxSkewUsd
   ) external returns (MarketConfig memory _marketConfig);
 
   function setHlpTokenConfig(
@@ -227,7 +228,8 @@ interface IConfigStorage {
 
   function addMarketConfig(
     MarketConfig calldata _newConfig,
-    bool isAdaptiveFeeEnabled
+    bool isAdaptiveFeeEnabled,
+    uint256 _maxSkewUsd
   ) external returns (uint256 _index);
 
   function delistMarket(uint256 _marketIndex) external;
@@ -243,4 +245,6 @@ interface IConfigStorage {
   function getAssetClassConfigsLength() external view returns (uint256);
 
   function isAdaptiveFeeEnabledByMarketIndex(uint256 marketIndex) external view returns (bool);
+
+  function maxSkewUsdByMarketIndex(uint256 marketIndex) external view returns (uint256);
 }

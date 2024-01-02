@@ -28,6 +28,7 @@ interface ITradeService {
   error ITradeService_MarketHealthy();
   error ITradeService_InvalidAddress();
   error ITradeService_PositionSizeExceed();
+  error ITradeService_MaxSkewExceed();
 
   /**
    * States

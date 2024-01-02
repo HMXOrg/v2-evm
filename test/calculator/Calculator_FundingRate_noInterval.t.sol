@@ -34,7 +34,8 @@ contract Calculator_FundingRate is Calculator_Base {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e18, maxSkewScaleUSD: 3_000_000 * 1e30 })
       }),
-      false
+      false,
+      0
     );
 
     // Simulate ALICE contains 1 opening LONG position

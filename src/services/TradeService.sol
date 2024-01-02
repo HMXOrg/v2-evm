@@ -258,6 +258,21 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // determine whether the new size delta is for a long position
     _vars.isLong = _sizeDelta > 0;
+
+    // If max skew is 0, skip the check
+    if (_vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex) > 0) {
+      if (_vars.isLong) {
+        uint256 _newSkew = _market.longPositionSize + uint256(_sizeDelta) > _market.shortPositionSize
+          ? _market.longPositionSize + uint256(_sizeDelta) - _market.shortPositionSize
+          : _market.shortPositionSize - _market.longPositionSize + uint256(_sizeDelta);
+        if (_newSkew > _vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex)) revert ITradeService_MaxSkewExceed();
+      } else {
+        uint256 _newSkew = _market.shortPositionSize + uint256(-_sizeDelta) > _market.longPositionSize
+          ? _market.shortPositionSize + uint256(-_sizeDelta) - _market.longPositionSize
+          : _market.longPositionSize - _market.shortPositionSize + uint256(-_sizeDelta);
+        if (_newSkew > _vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex)) revert ITradeService_MaxSkewExceed();
+      }
+    }
     if (
       _vars.isLong
         ? _market.longPositionSize + uint256(_sizeDelta) > _marketConfig.maxLongPositionSize

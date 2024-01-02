@@ -75,7 +75,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       }),
-      false
+      false,
+      0
     );
 
     configStorage.addMarketConfig(
@@ -93,7 +94,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       }),
-      false
+      false,
+      0
     );
 
     configStorage.addMarketConfig(
@@ -111,7 +113,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       }),
-      false
+      false,
+      0
     );
   }
 

@@ -285,8 +285,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
-    ethMarketIndex = configStorage.addMarketConfig(_ethConfig, false);
-    btcMarketIndex = configStorage.addMarketConfig(_btcConfig, false);
+    ethMarketIndex = configStorage.addMarketConfig(_ethConfig, false, 0);
+    btcMarketIndex = configStorage.addMarketConfig(_btcConfig, false, 0);
   }
 
   /// @notice set up all hlp token configs in Perp

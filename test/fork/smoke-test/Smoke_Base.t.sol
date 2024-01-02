@@ -98,7 +98,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 2000000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       1,
@@ -116,7 +117,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 3000000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       3,
@@ -137,7 +139,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       4,
@@ -158,7 +161,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       8,
@@ -179,7 +183,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       9,
@@ -200,7 +205,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       10,
@@ -221,7 +227,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       11,
@@ -242,7 +249,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       12,
@@ -260,7 +268,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 200000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       13,
@@ -278,7 +287,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 200000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       14,
@@ -296,7 +306,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       15,
@@ -314,7 +325,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       16,
@@ -332,7 +344,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       17,
@@ -350,7 +363,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       20,
@@ -368,7 +382,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       21,
@@ -386,7 +401,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       23,
@@ -404,7 +420,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       25,
@@ -422,7 +439,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 100000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       26,
@@ -443,7 +461,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       27,
@@ -461,7 +480,8 @@ contract Smoke_Base is ForkEnv {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxSkewScaleUSD: 200000000 * 1e30, maxFundingRate: 8 * 1e18 })
       }),
-      true
+      true,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       28,
@@ -482,7 +502,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       29,
@@ -503,7 +524,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       30,
@@ -524,7 +546,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       31,
@@ -545,7 +568,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 1e18 // 100% per day
         })
       }),
-      false
+      false,
+      0
     );
     ForkEnv.configStorage.setMarketConfig(
       32,
@@ -566,7 +590,8 @@ contract Smoke_Base is ForkEnv {
           maxFundingRate: 8e18 // 800% per day
         })
       }),
-      false
+      false,
+      0
     );
     vm.stopPrank();
   }

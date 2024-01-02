@@ -99,6 +99,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
   // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
   mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
+  // Mapping of max skew in USD (E30) for each market index
+  mapping(uint256 marketIndex => uint256 maxSkewUsd) public maxSkewUsdByMarketIndex;
 
   /**
    * Modifiers
@@ -369,7 +371,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   function setMarketConfig(
     uint256 _marketIndex,
     MarketConfig calldata _newConfig,
-    bool _isAdaptiveFeeEnabled
+    bool _isAdaptiveFeeEnabled,
+    uint256 _maxSkewUsd
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
@@ -380,6 +383,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
     isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
+    maxSkewUsdByMarketIndex[_marketIndex] = _maxSkewUsd;
     return _newConfig;
   }
 
@@ -571,7 +575,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function addMarketConfig(
     MarketConfig calldata _newConfig,
-    bool _isAdaptiveFeeEnabled
+    bool _isAdaptiveFeeEnabled,
+    uint256 _maxSkewUsd
   ) external onlyOwner returns (uint256 _newMarketIndex) {
     // pre-validate
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
@@ -583,6 +588,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
     isAdaptiveFeeEnabledByMarketIndex[_newMarketIndex] = _isAdaptiveFeeEnabled;
+    maxSkewUsdByMarketIndex[_newMarketIndex] = _maxSkewUsd;
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
   }

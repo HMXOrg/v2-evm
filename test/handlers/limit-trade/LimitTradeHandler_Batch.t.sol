@@ -64,7 +64,8 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
         allowIncreasePosition: true,
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
-      })
+      }),
+      false
     );
 
     configStorage.addMarketConfig(
@@ -81,7 +82,8 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
         allowIncreasePosition: true,
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
-      })
+      }),
+      false
     );
 
     configStorage.addMarketConfig(
@@ -98,7 +100,8 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
         allowIncreasePosition: true,
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
-      })
+      }),
+      false
     );
   }
 

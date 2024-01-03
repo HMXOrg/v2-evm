@@ -301,6 +301,116 @@
       "assetSymbol": "FX.DIX",
       "quotedAssetSymbol": "FX.DIX",
       "sortIndex": 2004
+    },
+    {
+      "index": 35,
+      "name": "JTOUSD",
+      "assetId": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "jto-usd",
+      "assetSymbol": "Crypto.JTO",
+      "quotedAssetSymbol": "Crypto.JTO",
+      "sortIndex": 2004
+    },
+    {
+      "index": 36,
+      "name": "STXUSD",
+      "assetId": "0x5354580000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "stx-usd",
+      "assetSymbol": "Crypto.STX",
+      "quotedAssetSymbol": "Crypto.STX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 37,
+      "name": "ORDIUSD",
+      "assetId": "0x4f52444900000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "ordi-usd",
+      "assetSymbol": "Crypto.ORDI",
+      "quotedAssetSymbol": "Crypto.ORDI",
+      "sortIndex": 2004
+    },
+    {
+      "index": 38,
+      "name": "TIAUSD",
+      "assetId": "0x5449410000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "tia-usd",
+      "assetSymbol": "Crypto.TIA",
+      "quotedAssetSymbol": "Crypto.TIA",
+      "sortIndex": 2004
+    },
+    {
+      "index": 39,
+      "name": "AVAXUSD",
+      "assetId": "0x4156415800000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "avax-usd",
+      "assetSymbol": "Crypto.AVAX",
+      "quotedAssetSymbol": "Crypto.AVAX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 40,
+      "name": "INJUSD",
+      "assetId": "0x494e4a0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "inj-usd",
+      "assetSymbol": "Crypto.INJ",
+      "quotedAssetSymbol": "Crypto.INJ",
+      "sortIndex": 2004
+    },
+    {
+      "index": 41,
+      "name": "DOTUSD",
+      "assetId": "0x444f540000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "dot-usd",
+      "assetSymbol": "Crypto.DOT",
+      "quotedAssetSymbol": "Crypto.DOT",
+      "sortIndex": 2004
+    },
+    {
+      "index": 42,
+      "name": "SEIUSD",
+      "assetId": "0x5345490000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "sei-usd",
+      "assetSymbol": "Crypto.SEI",
+      "quotedAssetSymbol": "Crypto.SEI",
+      "sortIndex": 2004
+    },
+    {
+      "index": 43,
+      "name": "ATOMUSD",
+      "assetId": "0x41544f4d00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "atom-usd",
+      "assetSymbol": "Crypto.ATOM",
+      "quotedAssetSymbol": "Crypto.ATOM",
+      "sortIndex": 2004
+    },
+    {
+      "index": 44,
+      "name": "1000PEPEUSD",
+      "assetId": "0x3130303050455045000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "1000pepe-usd",
+      "assetSymbol": "Crypto.1000PEPE",
+      "quotedAssetSymbol": "Crypto.1000PEPE",
+      "sortIndex": 2004
+    },
+    {
+      "index": 45,
+      "name": "1000SHIBUSD",
+      "assetId": "0x3130303053484942000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "1000shib-usd",
+      "assetSymbol": "Crypto.1000SHIB",
+      "quotedAssetSymbol": "Crypto.1000SHIB",
+      "sortIndex": 2004
     }
   ],
   "assets": {
@@ -336,6 +446,19 @@
     "QQQ": "0x5151510000000000000000000000000000000000000000000000000000000000",
     "XRP": "0x5852500000000000000000000000000000000000000000000000000000000000",
     "esHMX": "esHMX",
-    "DragonPoint": "DragonPoint"
+    "DragonPoint": "DragonPoint",
+    "DIX": "0x4449580000000000000000000000000000000000000000000000000000000000",
+    "MEME": "0x4d454d4500000000000000000000000000000000000000000000000000000000",
+    "JTO": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
+    "STX": "0x5354580000000000000000000000000000000000000000000000000000000000",
+    "ORDI": "0x4f52444900000000000000000000000000000000000000000000000000000000",
+    "TIA": "0x5449410000000000000000000000000000000000000000000000000000000000",
+    "AVAX": "0x4156415800000000000000000000000000000000000000000000000000000000",
+    "INJ": "0x494e4a0000000000000000000000000000000000000000000000000000000000",
+    "DOT": "0x444f540000000000000000000000000000000000000000000000000000000000",
+    "SEI": "0x5345490000000000000000000000000000000000000000000000000000000000",
+    "ATOM": "0x41544f4d00000000000000000000000000000000000000000000000000000000",
+    "1000PEPE": "0x3130303050455045000000000000000000000000000000000000000000000000",
+    "1000SHIB": "0x3130303053484942000000000000000000000000000000000000000000000000"
   }
 }

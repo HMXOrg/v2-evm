@@ -45,6 +45,17 @@ export const ecoPythPriceFeedIdsByIndex = [
   "GM-ETHUSD",
   "0x8ccb376aa871517e807358d4e3cf0bc7fe4950474dbe6c9ffc21ef64e43fc676", // USDSEK
   "DIX",
+  "0xb43660a5f790c69354b0729a5ef9d50d68f1df92107540210b9cccba1f947cc2", // JTOUSD
+  "0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17", // STXUSD
+  "0x193c739db502aadcef37c2589738b1e37bdb257d58cf1ab3c7ebc8e6df4e3ec0", // ORDIUSD
+  "0x09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723", // TIAUSD
+  "0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7", // AVAXUSD
+  "0x7a5bc1d2b56ad029048cd63964b3ad2776eadf812edc1a43a31406cb54bff592", // INJUSD
+  "0xca3eed9b267293f6595901c734c7525ce8ef49adafe8284606ceb307afa2ca5b", // DOTUSD
+  "0x53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb", // SEIUSD
+  "0xb00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819", // ATOMUSD
+  "0xd69731a2e74ac1ce884fc3890f7ee324b6deb66147055249568869ed700882e4", // PEPEUSD
+  "0xf0d57deca57b3da2fe63a493f4c25925fdfd8edf834b20f93e1f84dbd1504d4a", // SHIBUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -90,6 +101,17 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("GM-ETHUSD"),
   ethers.utils.formatBytes32String("SEK"),
   ethers.utils.formatBytes32String("DIX"),
+  ethers.utils.formatBytes32String("JTO"),
+  ethers.utils.formatBytes32String("STX"),
+  ethers.utils.formatBytes32String("ORDI"),
+  ethers.utils.formatBytes32String("TIA"),
+  ethers.utils.formatBytes32String("AVAX"),
+  ethers.utils.formatBytes32String("INJ"),
+  ethers.utils.formatBytes32String("DOT"),
+  ethers.utils.formatBytes32String("SEI"),
+  ethers.utils.formatBytes32String("ATOM"),
+  ethers.utils.formatBytes32String("1000PEPE"),
+  ethers.utils.formatBytes32String("1000SHIB"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -135,4 +157,19 @@ export const ecoPythHoomanReadableByIndex = [
   "GM-ETHUSD",
   "SEK",
   "DIX",
+  "JTO",
+  "STX",
+  "ORDI",
+  "TIA",
+  "AVAX",
+  "INJ",
+  "DOT",
+  "SEI",
+  "ATOM",
+  "1000PEPE",
+  "1000SHIB",
 ];
+export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
+  [ethers.utils.formatBytes32String("1000SHIB"), 1000],
+  [ethers.utils.formatBytes32String("1000PEPE"), 1000],
+]);

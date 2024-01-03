@@ -8,9 +8,7 @@ const config = getConfig();
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
-
-  const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  console.log(await configStorage.getLiquidityConfig());
+  console.log(ethers.utils.formatBytes32String("1000SHIB"));
 }
 
 main().catch((error) => {

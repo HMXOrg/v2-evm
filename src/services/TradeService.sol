@@ -105,6 +105,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     bool currentPositionIsLong;
     uint256 oldSumSe;
     uint256 oldSumS2e;
+    uint256 maxSkew;
     // for SLOAD
     PerpStorage.Position position;
     OracleMiddleware oracle;
@@ -260,17 +261,18 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _vars.isLong = _sizeDelta > 0;
 
     // If max skew is 0, skip the check
-    if (_vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex) > 0) {
+    _vars.maxSkew = _vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex);
+    if (_vars.maxSkew > 0) {
       if (_vars.isLong) {
-        uint256 _newSkew = _market.longPositionSize + uint256(_sizeDelta) > _market.shortPositionSize
-          ? _market.longPositionSize + uint256(_sizeDelta) - _market.shortPositionSize
-          : _market.shortPositionSize - _market.longPositionSize + uint256(_sizeDelta);
-        if (_newSkew > _vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex)) revert ITradeService_MaxSkewExceed();
+        uint256 _newSkew = (_market.longPositionSize + uint256(_sizeDelta)) > _market.shortPositionSize
+          ? (_market.longPositionSize + uint256(_sizeDelta)) - _market.shortPositionSize
+          : _market.shortPositionSize - (_market.longPositionSize + uint256(_sizeDelta));
+        if (_newSkew > _vars.maxSkew) revert ITradeService_MaxSkewExceed();
       } else {
-        uint256 _newSkew = _market.shortPositionSize + uint256(-_sizeDelta) > _market.longPositionSize
-          ? _market.shortPositionSize + uint256(-_sizeDelta) - _market.longPositionSize
-          : _market.longPositionSize - _market.shortPositionSize + uint256(-_sizeDelta);
-        if (_newSkew > _vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex)) revert ITradeService_MaxSkewExceed();
+        uint256 _newSkew = (_market.shortPositionSize + uint256(-_sizeDelta)) > _market.longPositionSize
+          ? (_market.shortPositionSize + uint256(-_sizeDelta)) - _market.longPositionSize
+          : _market.longPositionSize - (_market.shortPositionSize + uint256(-_sizeDelta));
+        if (_newSkew > _vars.maxSkew) revert ITradeService_MaxSkewExceed();
       }
     }
     if (

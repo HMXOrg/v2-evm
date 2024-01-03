@@ -476,4 +476,131 @@ contract TradeService_IncreasePosition is TradeService_Base {
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -int256(12_000_000 * 1e30), 0);
   }
+
+  function testRevert_increasePosition_WhenMaxSkewExceed() external {
+    // Set the Max Skew for BTCUSD to 1M
+    configStorage.setMarketConfig(
+      btcMarketIndex,
+      IConfigStorage.MarketConfig({
+        assetId: wbtcAssetId,
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
+        assetClass: 0,
+        maxProfitRateBPS: 9 * 1e4,
+        initialMarginFractionBPS: 0.01 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
+        allowIncreasePosition: true,
+        active: true,
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
+      }),
+      false,
+      1_000_000 * 1e30
+    );
+
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
+
+    // BTC price 25,000 USD
+    uint256 price = 25_000 * 1e30;
+    mockOracle.setPrice(price);
+
+    vm.warp(100);
+    bytes32 bobPositionId = getPositionId(BOB, 0, btcMarketIndex);
+
+    // Max Skew is 1M, so Bob opening Long 1.2M position is not possible.
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_MaxSkewExceed()"));
+    tradeService.increasePosition(BOB, 0, btcMarketIndex, 1_200_000 * 1e30, 0);
+
+    // Bob can open Long 800k which will result the market skew of 800k USD
+    tradeService.increasePosition(BOB, 0, btcMarketIndex, 800_000 * 1e30, 0);
+    PositionTester02.PositionAssertionData memory positionAssetData = PositionTester02.PositionAssertionData({
+      size: 800_000 * 1e30,
+      avgPrice: 25_000 * 1e30,
+      reserveValue: 72000 * 1e30,
+      lastIncreaseTimestamp: 100
+    });
+    positionTester02.assertPosition(bobPositionId, positionAssetData);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).longPositionSize, 800_000 * 1e30);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).shortPositionSize, 0);
+
+    // Alice open Short 1M, which will make the
+    // Market Skew = 800000 - 1000000 = -200000
+    // This is still possible.
+    bytes32 alicePositionId = getPositionId(ALICE, 0, btcMarketIndex);
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, -1_000_000 * 1e30, 0);
+    positionAssetData = PositionTester02.PositionAssertionData({
+      size: -1_000_000 * 1e30,
+      avgPrice: 25_000 * 1e30,
+      reserveValue: 90000 * 1e30,
+      lastIncreaseTimestamp: 100
+    });
+    positionTester02.assertPosition(alicePositionId, positionAssetData);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).longPositionSize, 800_000 * 1e30);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).shortPositionSize, 1_000_000 * 1e30);
+
+    // Alice increase the Short position by 800k
+    // Market skew = 800000 - 1800000 = -1000000
+    // This is still possible as the market skew is right at the 1M threshold.
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, -800_000 * 1e30, 0);
+    positionAssetData = PositionTester02.PositionAssertionData({
+      size: -1_800_000 * 1e30,
+      avgPrice: 24997.5 * 1e30,
+      reserveValue: 162000 * 1e30,
+      lastIncreaseTimestamp: 100
+    });
+    positionTester02.assertPosition(alicePositionId, positionAssetData);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).longPositionSize, 800_000 * 1e30);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).shortPositionSize, 1_800_000 * 1e30);
+
+    // Alice try to increase the Short position by 1 usd. This is not possible as it exceed the 1M Max Skew.
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_MaxSkewExceed()"));
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, -1 * 1e30, 0);
+
+    // Bob increase his position up by 300k to 1M Long.
+    // Market skew = 1100000 - 1800000 = -700000
+    tradeService.increasePosition(BOB, 0, btcMarketIndex, 300_000 * 1e30, 0);
+    positionAssetData = PositionTester02.PositionAssertionData({
+      size: 1_100_000 * 1e30,
+      avgPrice: 24968.75 * 1e30,
+      reserveValue: 99000 * 1e30,
+      lastIncreaseTimestamp: 100
+    });
+    positionTester02.assertPosition(bobPositionId, positionAssetData);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).longPositionSize, 1_100_000 * 1e30);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).shortPositionSize, 1_800_000 * 1e30);
+
+    // Alice close her 1.8M Short position
+    // Market skew = 1100000
+    // This is possible as we do not validate max skew from decreasing position.
+    tradeService.decreasePosition(ALICE, 0, btcMarketIndex, 1_800_000 * 1e30, address(usdc), 0);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).longPositionSize, 1_100_000 * 1e30);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).shortPositionSize, 0);
+
+    // Bob try to increase the Long position by 1 usd. This is not possible as it exceed the 1M Max Skew.
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_MaxSkewExceed()"));
+    tradeService.increasePosition(BOB, 0, btcMarketIndex, 1 * 1e30, 0);
+
+    // Alice try to increase the Short position by 1 usd. This is not possible as it exceed the 1M Max Skew.
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_MaxSkewExceed()"));
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 1 * 1e30, 0);
+
+    // Alice open Short Position for 100k USD
+    // Market skew = 1100000 - 100000 = 1000000
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, -100_000 * 1e30, 0);
+    positionAssetData = PositionTester02.PositionAssertionData({
+      size: -100_000 * 1e30,
+      avgPrice: 25000 * 1e30,
+      reserveValue: 9000 * 1e30,
+      lastIncreaseTimestamp: 100
+    });
+    positionTester02.assertPosition(alicePositionId, positionAssetData);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).longPositionSize, 1_100_000 * 1e30);
+    assertEq(perpStorage.getMarketByIndex(btcMarketIndex).shortPositionSize, 100_000 * 1e30);
+  }
 }

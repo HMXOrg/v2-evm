@@ -23,6 +23,9 @@ export class OwnerWrapper {
     const timelockAddress = this.timelockWrapper.getAddress();
     const safeWrapperAddress = this.safeWrapper.getAddress();
 
+    console.log(owner);
+    console.log(safeWrapperAddress);
+
     if (owner === signerAddress) {
       console.log(`[wrapper/Owner] Signer is the owner of ${to}`);
       console.log(`[wrapper/Owner] Executing tx right away...`);

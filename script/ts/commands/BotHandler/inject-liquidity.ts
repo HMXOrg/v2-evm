@@ -5,6 +5,8 @@ import { BotHandler__factory, ERC20__factory } from "../../../../typechain";
 import * as readlineSync from "readline-sync";
 import collaterals from "../../entities/collaterals";
 import { ethers } from "ethers";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number, token: string, amount: string) {
   const config = loadConfig(chainId);
@@ -23,20 +25,28 @@ async function main(chainId: number, token: string, amount: string) {
       return;
   }
   const botHandler = BotHandler__factory.connect(config.handlers.bot, deployer);
+  const owner = await botHandler.owner();
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   // Check allowance
   console.log(`[cmds/BotHandler] Checking allowance...`);
   const injectingToken = ERC20__factory.connect(collaterals[token].address, deployer);
-  const allowance = await injectingToken.allowance(await deployer.getAddress(), config.handlers.bot);
+  const allowance = await injectingToken.allowance(owner, config.handlers.bot);
   const amountWei = ethers.utils.parseUnits(amount, collaterals[token].decimals);
   if (allowance.lt(amountWei)) {
     console.log(`[cmds/BotHandler] Approving ${amount} ${token}...`);
-    await injectingToken.approve(config.handlers.bot, ethers.constants.MaxUint256);
+    await safeWrapper.proposeTransaction(
+      injectingToken.address,
+      0,
+      injectingToken.interface.encodeFunctionData("approve", [config.handlers.bot, ethers.constants.MaxUint256])
+    );
   }
   console.log(`[cmds/BotHandler] Approved ${amount} ${token}.`);
 
-  const tx = await botHandler.injectTokenToHlpLiquidity(collaterals[token].address, amountWei, { gasLimit: 1000000 });
-  console.log(`[cmds/BotHandler] Tx: ${tx.hash}`);
-  await tx.wait();
+  await ownerWrapper.authExec(
+    botHandler.address,
+    botHandler.interface.encodeFunctionData("injectTokenToHlpLiquidity", [collaterals[token].address, amountWei])
+  );
   console.log(`[cmds/BotHandler] Injected ${amount} ${token} liquidity to HLP on chain ${chainId}.`);
 }
 

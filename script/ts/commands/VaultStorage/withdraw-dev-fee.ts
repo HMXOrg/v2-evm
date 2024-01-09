@@ -13,7 +13,7 @@ import { IMultiContractCall } from "../../wrappers/MulticallWrapper/interface";
 import { MulticallWrapper } from "../../wrappers/MulticallWrapper";
 import { PythEvmPriceStruct } from "../../entities/pyth";
 
-async function main(chainId: number) {
+async function main(chainId: number, nonce?: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
   const multicallWrapper = new MulticallWrapper(config.multicall, signer);
@@ -67,6 +67,11 @@ async function main(chainId: number) {
   let i = 0;
   for (const [key, c] of Object.entries(collaterals)) {
     const offset = i * 2;
+    if ((ret[offset] as ethers.BigNumber).isZero()) {
+      console.log(`[cmds/VaultStorage] No dev fee for ${key}`);
+      i++;
+      continue;
+    }
     const tx = await safeWrapper.proposeTransaction(
       vaultStorage.address,
       0,
@@ -74,8 +79,12 @@ async function main(chainId: number) {
         c.address,
         ret[offset] as ethers.BigNumber,
         TREASURY_ADDRESS,
-      ])
+      ]),
+      { nonce }
     );
+    if (nonce != undefined) {
+      nonce++;
+    }
     console.log(
       `[cmds/VaultStorage] Proposed tx to withdraw ${ethers.utils.formatUnits(
         ret[offset] as ethers.BigNumber,
@@ -91,10 +100,11 @@ async function main(chainId: number) {
 const program = new Command();
 
 program.requiredOption("--chain-id <chain-id>", "chain id", parseInt);
+program.option("--nonce <nonce>", "nonce", parseInt);
 
 const opts = program.parse(process.argv).opts();
 
-main(opts.chainId)
+main(opts.chainId, opts.nonce)
   .then(() => {
     process.exit(0);
   })

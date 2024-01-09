@@ -10,16 +10,15 @@ async function main(chainId: number) {
   const signer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, signer);
 
-  const amount = "27586065614395872891936";
-  const expiredAt = 1703152800; // Thu Dec 21 2023 10:00:00 GMT+0000
+  const amount = "23570427909533894425920";
+  const expiredAt = 1704362400; // Thu Jan 04 2024 10:00:00 GMT+0000
 
   console.log(`[cmds/DistributeSTIPARBStrategy] Feeding ${ethers.utils.formatEther(amount)} ARB...`);
   const strat = DistributeSTIPARBStrategy__factory.connect(config.strategies.distributeSTIPARB, signer);
   const tx = await safeWrapper.proposeTransaction(
     strat.address,
     0,
-    strat.interface.encodeFunctionData("execute", [amount, expiredAt]),
-    { nonce: 514 }
+    strat.interface.encodeFunctionData("execute", [amount, expiredAt])
   );
   console.log(`[cmds/DistributeSTIPARBStrategy] Proposed tx: ${tx}`);
 }

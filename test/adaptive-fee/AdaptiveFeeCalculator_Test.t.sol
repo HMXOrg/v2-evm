@@ -16,7 +16,7 @@ contract AdaptiveFeeCalculator_Test is BaseTest {
   AdaptiveFeeCalculator adaptiveFeeCalculator;
 
   function setUp() external {
-    adaptiveFeeCalculator = new AdaptiveFeeCalculator();
+    adaptiveFeeCalculator = new AdaptiveFeeCalculator(15000, 500);
   }
 
   function convert64x64ToE8(int128 x) internal view returns (uint256 result) {

@@ -5,9 +5,12 @@ async function main() {
   const config = getConfig();
   const deployer = (await ethers.getSigners())[0];
 
+  const k1 = 15000;
+  const k2 = 500;
+
   console.log(`Deploying AdaptiveFeeCalculator Contract`);
   const AdaptiveFeeCalculator = await ethers.getContractFactory("AdaptiveFeeCalculator", deployer);
-  const adaptiveFeeCalculator = await AdaptiveFeeCalculator.deploy();
+  const adaptiveFeeCalculator = await AdaptiveFeeCalculator.deploy(k1, k2);
   await adaptiveFeeCalculator.deployed();
   console.log(`Deployed at: ${adaptiveFeeCalculator.address}`);
 

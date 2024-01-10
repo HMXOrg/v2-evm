@@ -399,7 +399,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       crossMarginHandler.setOrderExecutor(address(this), true);
     }
 
-    adaptiveFeeCalculator = new AdaptiveFeeCalculator();
+    adaptiveFeeCalculator = new AdaptiveFeeCalculator(15000, 500);
     orderbookOracle = new OrderbookOracle();
 
     tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));

@@ -14,7 +14,7 @@ import "forge-std/console.sol";
 
 contract Smoke_Collateral is ForkEnv {
   uint8 internal SUB_ACCOUNT_NO = 1;
-  IERC20[] private collateralToken = new IERC20[](7);
+  IERC20[] private collateralToken = new IERC20[](10);
 
   constructor() {
     collateralToken[0] = IERC20(address(ForkEnv.usdc_e));
@@ -23,7 +23,10 @@ contract Smoke_Collateral is ForkEnv {
     collateralToken[3] = IERC20(address(ForkEnv.usdt));
     collateralToken[4] = IERC20(address(ForkEnv.dai));
     collateralToken[5] = IERC20(address(ForkEnv.arb));
-    collateralToken[6] = IERC20(address(ForkEnv.sglp));
+    collateralToken[6] = IERC20(address(ForkEnv.usdc));
+    collateralToken[7] = IERC20(address(ForkEnv.gmBTCUSD));
+    collateralToken[8] = IERC20(address(ForkEnv.gmETHUSD));
+    collateralToken[9] = IERC20(address(ForkEnv.wstEth));
   }
 
   function depositCollateral() external {
@@ -37,15 +40,11 @@ contract Smoke_Collateral is ForkEnv {
 
   function _depositCollateral() internal {
     address subAccount = _getSubAccount(ForkEnv.ALICE, SUB_ACCOUNT_NO);
-    for (uint8 i = 0; i < 7; i++) {
+    for (uint8 i = 0; i < collateralToken.length; i++) {
       uint8 tokenDecimal = collateralToken[i].decimals();
-      // cannot deal sglp => transfer from whale instead
-      if (i == 6) {
-        vm.prank(ForkEnv.glpWhale);
-        collateralToken[i].transfer(ForkEnv.ALICE, 10 * (10 ** tokenDecimal));
-      } else {
-        deal(address(collateralToken[i]), ForkEnv.ALICE, 10 * (10 ** tokenDecimal));
-      }
+
+      deal(address(collateralToken[i]), ForkEnv.ALICE, 10 * (10 ** tokenDecimal));
+
       vm.startPrank(ForkEnv.ALICE);
       collateralToken[i].approve(address(ForkEnv.crossMarginHandler), type(uint256).max);
       ForkEnv.crossMarginHandler.depositCollateral(
@@ -67,7 +66,7 @@ contract Smoke_Collateral is ForkEnv {
       bytes32[] memory _priceUpdateCalldata,
       bytes32[] memory _publishTimeUpdateCalldata
     ) = ForkEnv.ecoPythBuilder.build(data);
-    for (uint8 i = 0; i < 7; i++) {
+    for (uint8 i = 0; i < collateralToken.length; i++) {
       uint8 tokenDecimal = collateralToken[i].decimals();
       deal(ALICE, minExecutionFee);
       vm.prank(ALICE);

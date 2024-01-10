@@ -121,7 +121,7 @@
     "tlc": "0x58C521332Ed363D30A22B9bC6e4F3d59A8960955"
   },
   "calculator": "0x35A301796949f5235f8fc3311E6013450aaf2354",
-  "adaptiveFeeCalculator": "0x1E7e368b872613F0f6f54234206eDB2fc2B3F2B9",
+  "adaptiveFeeCalculator": "0x9FcFF0E4AAdaa5537fEDd0680345b2f07CE4cBfC",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""

@@ -1,4 +1,4 @@
-import { TradeHelper__factory } from "../../../../typechain";
+import { AdaptiveFeeCalculator__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
@@ -9,15 +9,16 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const maxFeeBps = 50; // 0.5% max fee
+  const k1 = 12500;
+  const k2 = 50;
 
-  const tradeHelper = TradeHelper__factory.connect(config.helpers.trade, deployer);
-  console.log(`[configs/TradeHelper] setMaxAdaptiveFeeBps`);
+  const adaptiveFeeCalculator = AdaptiveFeeCalculator__factory.connect(config.adaptiveFeeCalculator, deployer);
+  console.log(`[configs/AdaptiveFeeCalculator] setParams`);
   await ownerWrapper.authExec(
-    tradeHelper.address,
-    tradeHelper.interface.encodeFunctionData("setMaxAdaptiveFeeBps", [maxFeeBps])
+    adaptiveFeeCalculator.address,
+    adaptiveFeeCalculator.interface.encodeFunctionData("setParams", [k1, k2])
   );
-  console.log("[configs/TradeHelper] Finished");
+  console.log("[configs/AdaptiveFeeCalculator] Finished");
 }
 
 const prog = new Command();

@@ -79,6 +79,7 @@ import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 import { IntentBuilder } from "@hmx-test/libs/IntentBuilder.sol";
+import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
@@ -168,6 +169,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   ITradeOrderHelper tradeOrderHelper;
   IIntentHandler intentHandler;
   IntentBuilder intentBuilder;
+  IGasService gasService;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -326,14 +328,20 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(tradeService)
     );
 
+    gasService = Deployer.deployGasService(
+      address(proxyAdmin),
+      address(vaultStorage),
+      address(configStorage),
+      0.1 * 1e30,
+      FEEVER
+    );
+
     intentHandler = Deployer.deployIntentHandler(
       address(proxyAdmin),
       address(pyth),
       address(configStorage),
-      address(vaultStorage),
       address(tradeOrderHelper),
-      0.1 * 1e30,
-      FEEVER
+      address(gasService)
     );
 
     intentBuilder = new IntentBuilder(address(configStorage));

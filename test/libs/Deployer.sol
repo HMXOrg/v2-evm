@@ -72,6 +72,7 @@ import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistribu
 import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
+import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -778,23 +779,38 @@ library Deployer {
     address _proxyAdmin,
     address _pyth,
     address _configStorage,
-    address _vaultStorage,
     address _tradeOrderHelper,
-    uint256 _executionFeeInUsd,
-    address _executionFeeTreasury
+    address _gasService
   ) internal returns (IIntentHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/IntentHandler.sol/IntentHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,uint256,address)")),
+      bytes4(keccak256("initialize(address,address,address,address)")),
       _pyth,
       _configStorage,
-      _vaultStorage,
       _tradeOrderHelper,
+      _gasService
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IIntentHandler(payable(_proxy));
+  }
+
+  function deployGasService(
+    address _proxyAdmin,
+    address _vaultStorage,
+    address _configStorage,
+    uint256 _executionFeeInUsd,
+    address _executionFeeTreasury
+  ) internal returns (IGasService) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/GasService.sol/GasService.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256,address)")),
+      _vaultStorage,
+      _configStorage,
       _executionFeeInUsd,
       _executionFeeTreasury
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IIntentHandler(payable(_proxy));
+    return IGasService(payable(_proxy));
   }
 
   /**

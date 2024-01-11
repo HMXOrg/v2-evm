@@ -17,6 +17,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { WordCodec } from "@hmx/libraries/WordCodec.sol";
 import { TradeOrderHelper } from "@hmx/helpers/TradeOrderHelper.sol";
+import { GasService } from "@hmx/services/GasService.sol";
 
 // interfaces
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -28,10 +29,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
 
   IEcoPyth public pyth;
   ConfigStorage public configStorage;
-  VaultStorage public vaultStorage;
   TradeOrderHelper public tradeOrderHelper;
-  uint256 public executionFeeInUsd;
-  address public executionFeeTreasury;
+  GasService public gasService;
   mapping(bytes32 key => bool executed) executedIntents;
   mapping(address executor => bool isAllow) public intentExecutors; // The allowed addresses to execute intents
 
@@ -43,10 +42,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
   function initialize(
     address _pyth,
     address _configStorage,
-    address _vaultStorage,
     address _tradeOrderHelper,
-    uint256 _executionFeeInUsd,
-    address _executionFeeTreasury
+    address _gasService
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -54,10 +51,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
 
     pyth = IEcoPyth(_pyth);
     configStorage = ConfigStorage(_configStorage);
-    vaultStorage = VaultStorage(_vaultStorage);
     tradeOrderHelper = TradeOrderHelper(_tradeOrderHelper);
-    executionFeeInUsd = _executionFeeInUsd;
-    executionFeeTreasury = _executionFeeTreasury;
+    gasService = GasService(_gasService);
   }
 
   function execute(ExecuteIntentInputs memory inputs) external onlyIntentExecutors {
@@ -98,11 +93,21 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
         }
 
         _validateSignature(_vars.order, inputs.signatures[_i], _localVars.mainAccount);
-        _collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
+        gasService.collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
+
+        // pre check for order to die here
+        // 1. Expire
+        // 2. max trade size
+        // 3. max position size
+
         bool _isSuccess = _executeTradeOrder(_vars);
 
         // If the trade order is executed successfully, record the order as executed
-        if (_isSuccess) executedIntents[key] = true;
+        if (_isSuccess) {
+          executedIntents[key] = true;
+        } else if (!_isSuccess && _vars.order.triggerPrice == 0) {
+          executedIntents[key] = true;
+        }
       }
 
       unchecked {
@@ -126,50 +131,6 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     return false;
   }
 
-  function _collectExecutionFeeFromCollateral(address _primaryAccount, uint8 _subAccountId) internal {
-    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
-    address[] memory _traderTokens = vaultStorage.getTraderTokens(_subAccount);
-    uint256 _len = _traderTokens.length;
-    OracleMiddleware _oracle = OracleMiddleware(configStorage.oracle());
-
-    uint256 _executionFeeToBePaidInUsd = executionFeeInUsd;
-    for (uint256 _i; _i < _len; ) {
-      bytes32 _assetId = configStorage.tokenAssetIds(_traderTokens[_i]);
-      ConfigStorage.AssetConfig memory _assetConfig = configStorage.getAssetConfig(_assetId);
-      address _token = _assetConfig.tokenAddress;
-      uint256 _userBalance = vaultStorage.traderBalances(_subAccount, _token);
-
-      if (_userBalance > 0) {
-        (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_assetConfig.assetId, false);
-        uint8 _tokenDecimal = _assetConfig.decimals;
-
-        (uint256 _payAmount, uint256 _payValue) = _getPayAmount(
-          _userBalance,
-          _executionFeeToBePaidInUsd,
-          _tokenPrice,
-          _tokenDecimal
-        );
-
-        vaultStorage.decreaseTraderBalance(_subAccount, _token, _payAmount);
-        vaultStorage.increaseTraderBalance(executionFeeTreasury, _token, _payAmount);
-
-        _executionFeeToBePaidInUsd -= _payValue;
-
-        if (_executionFeeToBePaidInUsd == 0) {
-          break;
-        }
-      }
-
-      unchecked {
-        ++_i;
-      }
-    }
-
-    if (_executionFeeToBePaidInUsd > 0) {
-      revert IntentHandler_NotEnoughCollateral();
-    }
-  }
-
   function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg) internal {
     emit LogExecuteTradeOrderFail(
       vars.order.account,
@@ -182,24 +143,6 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
       vars.order.tpToken,
       errMsg
     );
-  }
-
-  function _getPayAmount(
-    uint256 _payerBalance,
-    uint256 _valueE30,
-    uint256 _tokenPrice,
-    uint8 _tokenDecimal
-  ) internal pure returns (uint256 _payAmount, uint256 _payValueE30) {
-    uint256 _feeAmount = (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
-
-    if (_payerBalance > _feeAmount) {
-      // _payerBalance can cover the rest of the fee
-      return (_feeAmount, _valueE30);
-    } else {
-      // _payerBalance cannot cover the rest of the fee, just take the amount the trader have
-      uint256 _payerBalanceValue = (_payerBalance * _tokenPrice) / (10 ** _tokenDecimal);
-      return (_payerBalance, _payerBalanceValue);
-    }
   }
 
   function _validateSignature(

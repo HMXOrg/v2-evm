@@ -403,7 +403,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(liquidationService), true);
       vaultStorage.setServiceExecutors(address(botHandler), true);
-      vaultStorage.setServiceExecutors(address(intentHandler), true);
+      vaultStorage.setServiceExecutors(address(gasService), true);
     }
 
     // Setup PerpStorage
@@ -439,6 +439,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       tradeOrderHelper.setWhitelistedCaller(address(intentHandler));
       intentHandler.setIntentExecutor(address(this), true);
+      configStorage.setServiceExecutor(address(gasService), address(intentHandler), true);
     }
     adaptiveFeeCalculator = new AdaptiveFeeCalculator();
     orderbookOracle = new OrderbookOracle();

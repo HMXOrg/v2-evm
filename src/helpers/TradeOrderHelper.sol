@@ -24,16 +24,6 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
   mapping(uint256 marketIndex => uint256 sizeLimit) public positionSizeLimitOf;
   mapping(uint256 marketIndex => uint256 sizeLimit) public tradeSizeLimitOf;
 
-  struct ValidatePositionOrderPriceVars {
-    ConfigStorage.MarketConfig marketConfig;
-    OracleMiddleware oracle;
-    PerpStorage.Market globalMarket;
-    uint256 oraclePrice;
-    uint256 adaptivePrice;
-    uint8 marketStatus;
-    bool isPriceValid;
-  }
-
   constructor(address _configStorage, address _perpStorage, address _oracle, address _tradeService) {
     configStorage = ConfigStorage(_configStorage);
     perpStorage = PerpStorage(_perpStorage);
@@ -46,19 +36,16 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     _;
   }
 
-  function _validate(
+  function preValidate(
     address mainAccount,
     uint8 subAccountId,
     uint256 marketIndex,
     bool reduceOnly,
     int256 sizeDelta,
-    bool triggerAboveThreshold,
-    uint256 triggerPrice,
-    uint256 acceptablePrice,
     uint256 expiryTimestamp
-  ) internal view {
+  ) external view returns (bool isSuccess, ResponseCode code) {
     if (expiryTimestamp < block.timestamp) {
-      revert TradeOrderHelper_OrderStale();
+      return (false, ResponseCode.OrderStale);
     }
 
     address _subAccount = HMXLib.getSubAccount(mainAccount, subAccountId);
@@ -68,7 +55,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
 
     // Check trade size limit as per market
     if (tradeSizeLimitOf[marketIndex] > 0 && !reduceOnly && HMXLib.abs(sizeDelta) > tradeSizeLimitOf[marketIndex]) {
-      revert TradeOrderHelper_MaxTradeSize();
+      return (false, ResponseCode.MaxTradeSize);
     }
 
     // Check position size limit as per market
@@ -77,9 +64,23 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
       !reduceOnly &&
       HMXLib.abs(_positionSizeE30 + sizeDelta) > positionSizeLimitOf[marketIndex]
     ) {
-      revert TradeOrderHelper_MaxPositionSize();
+      return (false, ResponseCode.MaxPositionSize);
     }
 
+    return (true, ResponseCode.Success);
+  }
+
+  function _validate(
+    address /*mainAccount*/,
+    uint8 /*subAccountId*/,
+    uint256 marketIndex,
+    bool /*reduceOnly*/,
+    int256 sizeDelta,
+    bool triggerAboveThreshold,
+    uint256 triggerPrice,
+    uint256 acceptablePrice,
+    uint256 /*expiryTimestamp*/
+  ) internal view {
     ValidatePositionOrderPriceVars memory vars;
 
     // SLOADs

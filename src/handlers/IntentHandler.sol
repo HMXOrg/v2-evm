@@ -22,6 +22,7 @@ import { GasService } from "@hmx/services/GasService.sol";
 // interfaces
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 
 /// @title IntentHandler
 contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712Upgradeable, IIntentHandler {
@@ -99,12 +100,31 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
         // 1. Expire
         // 2. max trade size
         // 3. max position size
+        bool _isPreValidateSuccess = _prevalidateExecuteTradeOrder(_vars);
+        if (!_isPreValidateSuccess) {
+          executedIntents[key] = true;
 
+          unchecked {
+            ++_i;
+          }
+          continue;
+        }
         bool _isSuccess = _executeTradeOrder(_vars);
 
         // If the trade order is executed successfully, record the order as executed
         if (_isSuccess) {
           executedIntents[key] = true;
+          emit LogExecuteTradeOrderSuccess(
+            _vars.order.account,
+            _vars.order.subAccountId,
+            _vars.order.marketIndex,
+            _vars.order.sizeDelta,
+            _vars.order.triggerPrice,
+            _vars.order.triggerAboveThreshold,
+            _vars.order.reduceOnly,
+            _vars.order.tpToken,
+            key
+          );
         } else if (!_isSuccess && _vars.order.triggerPrice == 0) {
           executedIntents[key] = true;
         }
@@ -114,6 +134,17 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
         ++_i;
       }
     }
+  }
+
+  function _prevalidateExecuteTradeOrder(ExecuteTradeOrderVars memory vars) internal view returns (bool isSuccess) {
+    (isSuccess, ) = tradeOrderHelper.preValidate(
+      vars.order.account,
+      vars.order.subAccountId,
+      vars.order.marketIndex,
+      vars.order.reduceOnly,
+      vars.order.sizeDelta,
+      vars.order.expiryTimestamp
+    );
   }
 
   function _executeTradeOrder(ExecuteTradeOrderVars memory vars) internal returns (bool isSuccess) {

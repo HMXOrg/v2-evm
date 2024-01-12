@@ -8,6 +8,23 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 
 interface ITradeOrderHelper {
+  struct ValidatePositionOrderPriceVars {
+    ConfigStorage.MarketConfig marketConfig;
+    OracleMiddleware oracle;
+    PerpStorage.Market globalMarket;
+    uint256 oraclePrice;
+    uint256 adaptivePrice;
+    uint8 marketStatus;
+    bool isPriceValid;
+  }
+
+  enum ResponseCode {
+    Success,
+    OrderStale,
+    MaxTradeSize,
+    MaxPositionSize
+  }
+
   /**
    * Errors
    */

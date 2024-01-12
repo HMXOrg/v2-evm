@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
+
 interface IIntentHandler {
   error IntentHandler_NotEnoughCollateral();
   error IntentHandler_BadLength();
@@ -9,6 +11,31 @@ interface IIntentHandler {
   error IntentHandler_IntentReplay();
   error IntentHandler_InvalidAddress();
   error IntenHandler_BadSignature();
+
+  event LogExecuteTradeOrderSuccess(
+    address indexed account,
+    uint256 indexed subAccountId,
+    uint256 marketIndex,
+    int256 sizeDelta,
+    uint256 triggerPrice,
+    bool triggerAboveThreshold,
+    bool reduceOnly,
+    address tpToken,
+    bytes32 indexed key
+  );
+
+  event LogPreValidateExecuteTradeOrderFail(
+    address indexed account,
+    uint256 indexed subAccountId,
+    uint256 marketIndex,
+    int256 sizeDelta,
+    uint256 triggerPrice,
+    bool triggerAboveThreshold,
+    bool reduceOnly,
+    address tpToken,
+    bytes32 indexed key,
+    ITradeOrderHelper.ResponseCode responseCode
+  );
 
   event LogExecuteTradeOrderFail(
     address indexed account,

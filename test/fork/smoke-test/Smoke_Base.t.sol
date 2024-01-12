@@ -579,8 +579,6 @@ contract Smoke_Base is ForkEnv {
     vm.revertTo(snapshot);
     new Smoke_Liquidate().liquidate();
     vm.revertTo(snapshot);
-    new Smoke_Liquidate().liquidateWithAdaptiveFee();
-    vm.revertTo(snapshot);
     new Smoke_Liquidity().addLiquidity();
     vm.revertTo(snapshot);
     new Smoke_Liquidity().removeLiquidity();

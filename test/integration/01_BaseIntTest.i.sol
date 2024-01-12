@@ -441,7 +441,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       intentHandler.setIntentExecutor(address(this), true);
       configStorage.setServiceExecutor(address(gasService), address(intentHandler), true);
     }
-    adaptiveFeeCalculator = new AdaptiveFeeCalculator();
+    adaptiveFeeCalculator = new AdaptiveFeeCalculator(15000, 500);
     orderbookOracle = new OrderbookOracle();
 
     tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));

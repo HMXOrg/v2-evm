@@ -15,11 +15,13 @@
     "liquidity": "0x83E5FaA30e05e0e1Df94D1b743583DBD8cC23619",
     "rebalanceHLP": "",
     "ext01": "0xd3f55a78558A6C0C8945B4c5E6d7c64f50b57481",
-    "rebalanceHLPv2": ""
+    "rebalanceHLPv2": "",
+    "intent": ""
   },
   "helpers": {
     "trade": "0x845cbf46aa4c4d1f0090c949c46294103aef4519",
-    "limitTrade": "0xc55eDcf390B58F79fCFF16bb9349714473e057a3"
+    "limitTrade": "0xc55eDcf390B58F79fCFF16bb9349714473e057a3",
+    "tradeOrder": ""
   },
   "services": {
     "crossMargin": "0x9061B0c73e834ef38082cdC19D7ad385a51871C1",
@@ -27,7 +29,8 @@
     "liquidation": "0xeb13641272529B0a26992E56D1dd6Cd607aC473E",
     "trade": "0x981C901b8aD50Bbf7fC139CB182D947488D52CBe",
     "rebalanceHLP": "",
-    "rebalanceHLPv2": ""
+    "rebalanceHLPv2": "",
+    "gas": ""
   },
   "oracles": {
     "ecoPyth": "0xbDd5809FAc1528491a88d90E4DE8B6782D3dA071",

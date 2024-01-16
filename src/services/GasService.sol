@@ -110,4 +110,11 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
       return (_payerBalance, _payerBalanceValue);
     }
   }
+
+  function setParams(uint256 _executionFeeInUsd, address _executionFeeTreasury) external onlyOwner {
+    executionFeeInUsd = _executionFeeInUsd;
+    executionFeeTreasury = _executionFeeTreasury;
+
+    emit LogSetParams(_executionFeeInUsd, _executionFeeTreasury);
+  }
 }

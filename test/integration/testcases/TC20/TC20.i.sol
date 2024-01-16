@@ -92,7 +92,7 @@ contract TC20 is BaseIntTest_WithActions {
     tickPrices[1] = 99039; // WBTC tick price $20,000
     tickPrices[6] = 50241; // JPY tick price $152
 
-    // When Bob buy APPLE 20,000 USD. It will fail with insufficient liquidity error.
+    // When Bob buy APPLE 20,000 USD. It will not fail because there is no max utilization limit from positions anymore.
     marketBuy(BOB, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
     // The profit from Bob's Short ETH position is
@@ -106,9 +106,9 @@ contract TC20 is BaseIntTest_WithActions {
     assertPositionInfoOf({
       _subAccount: _bobSubAccount0,
       _marketIndex: appleMarketIndex,
-      _positionSize: 0,
-      _avgPrice: 0,
-      _reserveValue: 0,
+      _positionSize: 20_000 * 1e30,
+      _avgPrice: 152000246796009666666666666666616,
+      _reserveValue: 9000000000000000000000000000000000,
       _realizedPnl: 0,
       _entryBorrowingRate: 0,
       _lastFundingAccrued: 0

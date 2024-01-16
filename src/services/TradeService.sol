@@ -1118,13 +1118,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _globalState.reserveValueE30 += _reservedValue;
     _assetClass.reserveValueE30 += _reservedValue;
 
-    // Adaptive ADL: Check if HLP is enough to settle the current Global PnL
-    // We reserve 2x of the current Global PnL. If it's not enough, the platform can't handle anymore position.
-    uint256 _globalPnL = HMXLib.abs(_calculator.getGlobalPNLE30());
-    if (_globalPnL * 2 >= tvl) {
-      revert ITradeService_InsufficientLiquidity();
-    }
-
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);
     _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);

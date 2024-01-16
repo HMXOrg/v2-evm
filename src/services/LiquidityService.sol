@@ -421,19 +421,6 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();
     }
-
-    Calculator _calculator = Calculator(_configStorage.calculator());
-
-    // Validate Max HLP Utilization
-    // =====================================
-    // There should be at lest 2x of Global PnL left in HLP to allow traders to settle their trades
-
-    uint256 hlpTVL = _calculator.getHLPValueE30(false);
-
-    uint256 _globalPnL = HMXLib.abs(_calculator.getGlobalPNLE30());
-    if (_globalPnL * 2 >= hlpTVL) {
-      revert LiquidityService_MaxHLPUtilizationExceeded();
-    }
   }
 
   function _validatePreAddRemoveLiquidity(uint256 _amount) private view {

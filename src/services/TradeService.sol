@@ -1103,10 +1103,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) private {
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    ICalculator _calculator = calculator;
-
-    // Get the total TVL
-    uint256 tvl = calculator.getHLPValueE30(true);
 
     // Retrieve the global state
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();

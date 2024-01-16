@@ -102,7 +102,8 @@ contract OrderReader {
           continue;
         }
         // check Tp/Sl order
-        if (_isTpSlOrder(_order)) {
+        bool _isTpSlOrder = _isTpSlOrder(_order);
+        if (_isTpSlOrder) {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
@@ -111,11 +112,15 @@ contract OrderReader {
           if (_isPositionClose(_position)) {
             continue;
           }
+        }
 
-          // validate minProfitDuration
-          if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
-            continue;
-          }
+        // validate minProfitDuration
+        if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
+          continue;
+        }
+
+        if (!_isTpSlOrder && !_isUnderMaxOI(vars.marketConfigs[_order.marketIndex], _position, _order)) {
+          continue;
         }
       }
       vars.executableOrders[i] = _order;
@@ -146,6 +151,20 @@ contract OrderReader {
     uint256 _timestamp
   ) internal pure returns (bool) {
     return _timestamp < _position.lastIncreaseTimestamp + _minProfitDuration;
+  }
+
+  function _isUnderMaxOI(
+    IConfigStorage.MarketConfig memory _marketConfig,
+    IPerpStorage.Position memory _position,
+    ILimitTradeHandler.LimitOrder memory _order
+  ) internal view returns (bool) {
+    bool _isLong = _position.positionSizeE30 > 0;
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_order.marketIndex);
+    if (_isLong) {
+      return int256(_marketConfig.maxLongPositionSize) > int256(_market.longPositionSize) + _order.sizeDelta;
+    } else {
+      return int256(_marketConfig.maxShortPositionSize) > int256(_market.shortPositionSize) - _order.sizeDelta;
+    }
   }
 
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {

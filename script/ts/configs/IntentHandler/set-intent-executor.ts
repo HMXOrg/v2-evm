@@ -12,7 +12,7 @@ async function main(chainId: number) {
   const intentExecutor = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
   const isAllow = true;
 
-  const intentHandler = IntentHandler__factory.connect(config.hooks.tradingStaking, deployer);
+  const intentHandler = IntentHandler__factory.connect(config.handlers.intent, deployer);
   console.log(`[configs/IntentHandler] Set Intent Executor`);
   await ownerWrapper.authExec(
     intentHandler.address,

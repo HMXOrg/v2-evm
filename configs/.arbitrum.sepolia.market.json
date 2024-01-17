@@ -421,6 +421,16 @@
       "assetSymbol": "FX.SEK",
       "quotedAssetSymbol": "FX.SEK",
       "sortIndex": 2004
+    },
+    {
+      "index": 47,
+      "name": "ICPUSD",
+      "assetId": "0x4943500000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "icp-usd",
+      "assetSymbol": "Crypto.ICP",
+      "quotedAssetSymbol": "Crypto.ICP",
+      "sortIndex": 2004
     }
   ],
   "assets": {

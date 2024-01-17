@@ -19,8 +19,8 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 45, // 1000SHIB
-      weightBPS: 3 * BPS,
+      marketIndex: 47, // ICPUSD
+      weightBPS: 7 * BPS,
     },
   ];
 

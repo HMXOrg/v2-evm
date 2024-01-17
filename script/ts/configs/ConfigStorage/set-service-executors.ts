@@ -9,8 +9,8 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      contractAddress: config.services.crossMargin,
-      executorAddress: config.handlers.ext01,
+      contractAddress: config.services.gas,
+      executorAddress: config.handlers.intent,
       isServiceExecutor: true,
     },
   ];

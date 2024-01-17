@@ -9,7 +9,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const tradeOrderHelper = TradeOrderHelper__factory.connect(config.hooks.tradingStaking, deployer);
+  const tradeOrderHelper = TradeOrderHelper__factory.connect(config.helpers.tradeOrder, deployer);
   console.log(`[configs/TradingStakingHook] Set Whitelisted Callers`);
   await ownerWrapper.authExec(
     tradeOrderHelper.address,

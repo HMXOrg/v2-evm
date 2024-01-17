@@ -128,7 +128,10 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     );
 
     // Retrieve existing position
-    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
+    vars.positionId = HMXLib.getPositionId(
+      HMXLib.getSubAccount(vars.order.account, vars.order.subAccountId),
+      vars.order.marketIndex
+    );
     PerpStorage.Position memory _existingPosition = PerpStorage(tradeService.perpStorage()).getPositionById(
       vars.positionId
     );

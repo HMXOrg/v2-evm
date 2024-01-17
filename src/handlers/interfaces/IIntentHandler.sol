@@ -49,6 +49,7 @@ interface IIntentHandler {
     bytes errMsg
   );
   event LogSetIntentExecutor(address executor, bool isAllow);
+  event LogSetTradeOrderHelper(address oldTradeOrderHelper, address newTradeOrderHelper);
 
   enum Command {
     // +-----------------------+-----------+----------+-----------+---------------+

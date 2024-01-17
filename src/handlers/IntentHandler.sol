@@ -217,6 +217,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     emit LogSetIntentExecutor(_executor, _isAllow);
   }
 
+  function setTradeOrderHelper(address _newTradeOrderHelper) external nonReentrant onlyOwner {
+    emit LogSetTradeOrderHelper(address(tradeOrderHelper), _newTradeOrderHelper);
+    tradeOrderHelper = TradeOrderHelper(_newTradeOrderHelper);
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();

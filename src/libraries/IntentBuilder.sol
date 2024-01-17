@@ -26,39 +26,6 @@ contract IntentBuilder {
   }
 
   function buildTradeOrder(
-    uint256 marketIndex,
-    int256 sizeDelta,
-    uint256 triggerPrice,
-    uint256 acceptablePrice,
-    bool triggerAboveThreshold,
-    bool reduceOnly,
-    address tpToken,
-    uint256 createdTimestamp,
-    uint256 expiryTimestamp
-  ) external view returns (bytes32 cmd) {
-    // command
-    cmd = cmd.insertUint(0, 0, 3);
-    // marketIndex
-    cmd = cmd.insertUint(marketIndex, 3, 8);
-    // sizeDelta e8
-    cmd = cmd.insertInt(sizeDelta / 1e22, 11, 54);
-    // triggerPrice e8
-    cmd = cmd.insertUint(triggerPrice / 1e22, 65, 54);
-    // acceptablePrice e8
-    cmd = cmd.insertUint(acceptablePrice / 1e22, 119, 54);
-    // triggerAboveThreshold
-    cmd = cmd.insertBool(triggerAboveThreshold, 173);
-    // reduceOnly
-    cmd = cmd.insertBool(reduceOnly, 174);
-    // tpTokenIndex
-    cmd = cmd.insertUint(_getTpTokenIndex(tpToken), 175, 7);
-    // createdTimestamp
-    cmd = cmd.insertUint(createdTimestamp, 182, 32);
-    // expiryTimestamp
-    cmd = cmd.insertUint(expiryTimestamp, 214, 32);
-  }
-
-  function buildTradeOrder(
     IIntentHandler.TradeOrder memory tradeOrder
   ) external view returns (bytes32 accountAndSubAccountId, bytes32 cmd) {
     accountAndSubAccountId = buildAccountAndSubAccountId(tradeOrder.account, tradeOrder.subAccountId);

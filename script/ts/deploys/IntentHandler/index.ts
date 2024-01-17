@@ -7,7 +7,7 @@ const config = getConfig();
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("IntentTradeHandler", deployer);
+  const Contract = await ethers.getContractFactory("IntentHandler", deployer);
 
   const contract = await upgrades.deployProxy(Contract, [
     config.oracles.ecoPyth2,
@@ -16,7 +16,7 @@ async function main() {
     config.services.gas,
   ]);
   await contract.deployed();
-  console.log(`Deploying IntentTradeHandler Contract`);
+  console.log(`Deploying IntentHandler Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
   config.handlers.intent = contract.address;
@@ -24,7 +24,7 @@ async function main() {
 
   await tenderly.verify({
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "IntentTradeHandler",
+    name: "IntentHandler",
   });
 }
 

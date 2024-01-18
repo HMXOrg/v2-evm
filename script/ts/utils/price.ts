@@ -33,9 +33,7 @@ export async function getUpdatePriceData(
   const config = loadConfig(chainId);
 
   const MAX_PRICE_DIFF = 1500_00;
-  // https://xc-mainnet.pyth.network
-  // https://xc-testnet.pyth.network
-  const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
+  const connection = new EvmPriceServiceConnection("https://hermes.pyth.network/", {
     logger: console,
   });
 

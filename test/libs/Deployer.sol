@@ -16,6 +16,7 @@ import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IEcoPyth3 } from "@hmx/oracles/interfaces/IEcoPyth3.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
 import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
@@ -113,6 +114,10 @@ library Deployer {
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IEcoPyth(payable(_proxy));
+  }
+
+  function deployEcoPyth3() internal returns (IEcoPyth3) {
+    return IEcoPyth3(deployContract("EcoPyth3"));
   }
 
   function deployEcoPythCalldataBuilder(

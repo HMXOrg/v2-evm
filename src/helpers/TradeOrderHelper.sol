@@ -80,7 +80,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     uint256 triggerPrice,
     uint256 acceptablePrice,
     uint256 /*expiryTimestamp*/
-  ) internal view {
+  ) internal view returns (uint256 _oraclePrice, uint256 _executedPrice) {
     ValidatePositionOrderPriceVars memory vars;
 
     // SLOADs
@@ -112,10 +112,14 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     vars.isPriceValid = isBuy ? vars.adaptivePrice < acceptablePrice : vars.adaptivePrice > acceptablePrice;
 
     if (!vars.isPriceValid) revert TradeOrderHelper_PriceSlippage();
+
+    return (vars.oraclePrice, vars.adaptivePrice);
   }
 
-  function execute(IIntentHandler.ExecuteTradeOrderVars memory vars) external {
-    _validate(
+  function execute(
+    IIntentHandler.ExecuteTradeOrderVars memory vars
+  ) external returns (uint256 _oraclePrice, uint256 _executedPrice) {
+    (_oraclePrice, _executedPrice) = _validate(
       vars.order.account,
       vars.order.subAccountId,
       vars.order.marketIndex,

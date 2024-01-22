@@ -57,7 +57,9 @@ interface ITradeOrderHelper {
   /**
    * Functions
    */
-  function execute(IIntentHandler.ExecuteTradeOrderVars memory vars) external;
+  function execute(
+    IIntentHandler.ExecuteTradeOrderVars memory vars
+  ) external returns (uint256 _oraclePrice, uint256 _executedPrice);
 
   function setLimit(
     uint256[] calldata _marketIndexes,

@@ -21,6 +21,8 @@ interface IIntentHandler {
     bool triggerAboveThreshold,
     bool reduceOnly,
     address tpToken,
+    uint256 oraclePrice,
+    uint256 executedPrice,
     bytes32 indexed key
   );
 
@@ -76,6 +78,8 @@ interface IIntentHandler {
     bool positionIsLong;
     bool isNewPosition;
     bool isMarketOrder;
+    uint256 oraclePrice;
+    uint256 executedPrice;
   }
 
   struct TradeOrder {

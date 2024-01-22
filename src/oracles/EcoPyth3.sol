@@ -247,7 +247,7 @@ contract EcoPyth3 is Ownable, IEcoPyth3 {
           // We shift left 12 bits less due to normal price fit 24 bits,
           // but BTC price uses 32 bits so we need to shift 12 bits less
           uint256 _btcPrice = _priceE18s[i] / 1e16;
-          if (_btcPrice > type(uint32).max) revert EcoPyth_Uint32Overflow();
+          if (_btcPrice > uint256(type(uint32).max)) revert EcoPyth_Uint32Overflow();
           _partialWord = bytes32(_btcPrice << (24 * 8 - 12 + 16));
           _updateData[_outerIndex] |= _partialWord;
         } else {

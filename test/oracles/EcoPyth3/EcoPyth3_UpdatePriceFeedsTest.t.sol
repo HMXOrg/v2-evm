@@ -15,6 +15,15 @@ contract EcoPyth3_UpdatePriceFeedTest is EcoPyth3_BaseTest {
     }
   }
 
+  function testRevert_WhenBtcPriceOverflow() external {
+    uint256[] memory _priceE18s = new uint256[](2);
+    _priceE18s[0] = 2400 ether;
+    _priceE18s[1] = (uint256(type(uint32).max) + 1) * 1e16;
+
+    vm.expectRevert(abi.encodeWithSignature("EcoPyth_Uint32Overflow()"));
+    ecoPyth3.buildPriceUpdateData(_priceE18s);
+  }
+
   function testCorrectess_WhenPriceFeedUpdated() external {
     uint256[] memory _priceE18s = new uint256[](20);
     _priceE18s[0] = 2400 * 1e18;

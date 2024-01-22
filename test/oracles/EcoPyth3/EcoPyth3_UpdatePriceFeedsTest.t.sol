@@ -10,22 +10,9 @@ import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 contract EcoPyth3_UpdatePriceFeedTest is EcoPyth3_BaseTest {
   function setUp() public override {
     super.setUp();
-    ecoPyth3.insertAssetId("ETH2");
-    ecoPyth3.insertAssetId("ETH3");
-    ecoPyth3.insertAssetId("ETH4");
-    ecoPyth3.insertAssetId("ETH5");
-    ecoPyth3.insertAssetId("ETH6");
-    ecoPyth3.insertAssetId("ETH7");
-    ecoPyth3.insertAssetId("ETH8");
-    ecoPyth3.insertAssetId("ETH9");
-    ecoPyth3.insertAssetId("ETH10");
-    ecoPyth3.insertAssetId("ETH11");
-    ecoPyth3.insertAssetId("ETH12");
-    ecoPyth3.insertAssetId("ETH13");
-    ecoPyth3.insertAssetId("ETH14");
-    ecoPyth3.insertAssetId("ETH15");
-    ecoPyth3.insertAssetId("ETH16");
-    ecoPyth3.insertAssetId("ETH17");
+    for (uint i = 0; i < 18; i++) {
+      ecoPyth3.insertAssetId(bytes32(i));
+    }
   }
 
   function testCorrectess_WhenPriceFeedUpdated() external {
@@ -80,9 +67,9 @@ contract EcoPyth3_UpdatePriceFeedTest is EcoPyth3_BaseTest {
 
     PythStructs.Price memory price = ecoPyth3.getPriceUnsafe("ETH");
     PythStructs.Price memory price2 = ecoPyth3.getPriceUnsafe("BTC");
-    PythStructs.Price memory price3 = ecoPyth3.getPriceUnsafe("ETH2");
-    PythStructs.Price memory price4 = ecoPyth3.getPriceUnsafe("ETH17");
-    PythStructs.Price memory price5 = ecoPyth3.getPriceUnsafe("ETH3");
+    PythStructs.Price memory price3 = ecoPyth3.getPriceUnsafe(bytes32(0));
+    PythStructs.Price memory price4 = ecoPyth3.getPriceUnsafe(bytes32(uint256(15)));
+    PythStructs.Price memory price5 = ecoPyth3.getPriceUnsafe(bytes32(uint256(1)));
 
     assertEq(price.price, 239996839126);
     assertEq(price2.price, 4294967295000000);

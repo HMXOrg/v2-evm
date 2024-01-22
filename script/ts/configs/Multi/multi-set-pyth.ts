@@ -7,6 +7,7 @@ import {
 } from "../../../../typechain";
 import signers from "../../entities/signers";
 import { loadConfig } from "../../utils/config";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main() {
   const config = loadConfig(42161);
@@ -14,6 +15,7 @@ async function main() {
   const NEW_PYTH = config.oracles.ecoPyth2;
 
   const deployer = signers.deployer(42161);
+  const ownerWrapper = new OwnerWrapper(42161, deployer);
 
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
   const botHandler = BotHandler__factory.connect(config.handlers.bot, deployer);
@@ -21,19 +23,34 @@ async function main() {
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
 
-  let nonce = await deployer.getTransactionCount();
+  const prepTxs = [
+    {
+      address: pythAdapter.address,
+      calldata: pythAdapter.interface.encodeFunctionData("setPyth", [NEW_PYTH]),
+    },
+    {
+      address: botHandler.address,
+      calldata: botHandler.interface.encodeFunctionData("setPyth", [NEW_PYTH]),
+    },
+    {
+      address: crossMarginHandler.address,
+      calldata: crossMarginHandler.interface.encodeFunctionData("setPyth", [NEW_PYTH]),
+    },
+    {
+      address: limitTradeHandler.address,
+      calldata: limitTradeHandler.interface.encodeFunctionData("setPyth", [NEW_PYTH]),
+    },
+    {
+      address: liquidityHandler.address,
+      calldata: liquidityHandler.interface.encodeFunctionData("setPyth", [NEW_PYTH]),
+    },
+  ];
 
   console.log("[config/Multi/setPyth] Set Pyth on multiple contracts...");
-  const promises = [];
-  promises.push(pythAdapter.setPyth(NEW_PYTH, { nonce: nonce++ }));
-  promises.push(botHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
-  promises.push(crossMarginHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
-  promises.push(limitTradeHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
-  promises.push(liquidityHandler.setPyth(NEW_PYTH, { nonce: nonce++ }));
-  const txs = await Promise.all(promises);
-  console.log(`[config/Multi/setPyth] Txs: ${txs.map((tx) => tx.hash).join(",")}`);
-  await txs[txs.length - 1].wait(1);
-  console.log("[config/Multi/setPyth] Finished");
+  for (const tx of prepTxs) {
+    await ownerWrapper.authExec(tx.address, tx.calldata);
+  }
+  console.log("[config/Multi/setPyth] Done");
 }
 
 main()

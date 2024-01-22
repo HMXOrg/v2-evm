@@ -109,7 +109,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
           }
           continue;
         }
-        bool _isSuccess = _executeTradeOrder(_vars);
+        (bool _isSuccess, uint256 _oraclePrice, uint256 _executedPrice) = _executeTradeOrder(_vars);
 
         // If the trade order is executed successfully, record the order as executed
         if (_isSuccess) {
@@ -123,6 +123,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
             _vars.order.triggerAboveThreshold,
             _vars.order.reduceOnly,
             _vars.order.tpToken,
+            _oraclePrice,
+            _executedPrice,
             key
           );
         } else if (!_isSuccess && _vars.order.triggerPrice == 0) {
@@ -147,11 +149,13 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     );
   }
 
-  function _executeTradeOrder(ExecuteTradeOrderVars memory vars) internal returns (bool isSuccess) {
+  function _executeTradeOrder(
+    ExecuteTradeOrderVars memory vars
+  ) internal returns (bool isSuccess, uint256 oraclePrice, uint256 executedPrice) {
     // try executing order
-    try tradeOrderHelper.execute(vars) {
+    try tradeOrderHelper.execute(vars) returns (uint256 _oraclePrice, uint256 _executedPrice) {
       // Execution succeeded
-      return true;
+      return (true, _oraclePrice, _executedPrice);
     } catch Error(string memory errMsg) {
       _handleOrderFail(vars, bytes(errMsg));
     } catch Panic(uint /*errorCode*/) {
@@ -159,7 +163,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     } catch (bytes memory errMsg) {
       _handleOrderFail(vars, errMsg);
     }
-    return false;
+    return (false, 0, 0);
   }
 
   function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg) internal {

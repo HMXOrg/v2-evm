@@ -102,8 +102,8 @@ contract OrderReader {
           continue;
         }
         // check Tp/Sl order
-        bool _isTpSlOrder = _isTpSlOrder(_order);
-        if (_isTpSlOrder) {
+        bool isTpSlOrder = _isTpSlOrder(_order);
+        if (isTpSlOrder) {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
@@ -114,12 +114,7 @@ contract OrderReader {
           }
         }
 
-        // validate minProfitDuration
-        if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
-          continue;
-        }
-
-        if (!_isTpSlOrder && !_isUnderMaxOI(vars.marketConfigs[_order.marketIndex], _position, _order)) {
+        if (!isTpSlOrder && !_isUnderMaxOI(vars.marketConfigs[_order.marketIndex], _position, _order)) {
           continue;
         }
       }

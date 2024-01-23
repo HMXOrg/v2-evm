@@ -169,6 +169,124 @@ contract TC43 is BaseIntTest_WithActions {
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 2);
   }
 
+  function testCorrectness_TC43_intentHandler_executeMarketOrderSuccess_withDelegation() external {
+    uint256 privateKey = uint256(keccak256(bytes("1")));
+    BOB = vm.addr(privateKey);
+
+    // T0: Initialized state
+    // ALICE as liquidity provider
+    // BOB as trader
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+
+    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
+    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
+    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+
+    // T1: Add liquidity in pool USDC 100_000 , WBTC 100
+    vm.deal(ALICE, executionOrderFee);
+    wbtc.mint(ALICE, 100 * 1e8);
+
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      100 * 1e8,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
+
+    // T2: Create market order
+    {
+      assertVaultTokenBalance(address(usdc), 0, "TC43: before deposit collateral");
+    }
+    usdc.mint(ALICE, 100_000 * 1e6);
+    depositCollateral(ALICE, 0, ERC20(address(usdc)), 100_000 * 1e6);
+    {
+      assertVaultTokenBalance(address(usdc), 100_000 * 1e6, "TC43: after deposit collateral");
+    }
+
+    // Long ETH
+    vm.deal(ALICE, 1 ether);
+
+    {
+      // before create order, must be empty
+      assertEq(limitTradeHandler.limitOrdersIndex(getSubAccount(ALICE, 0)), 0);
+      assertEq(ALICE.balance, 1 ether);
+    }
+
+    // Alice will open two positions on ETH and BTC markets but delegate it to Bob to sign the intents
+    IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
+    executeIntentInputs.accountAndSubAccountIds = new bytes32[](2);
+    executeIntentInputs.cmds = new bytes32[](2);
+
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 4000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: ALICE,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    IIntentHandler.TradeOrder memory tradeOrder2 = IIntentHandler.TradeOrder({
+      marketIndex: wbtcMarketIndex, // marketIndex
+      sizeDelta: -100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 18000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: ALICE,
+      subAccountId: 0
+    });
+    (accountAndSubAccountId, cmd) = intentBuilder.buildTradeOrder(tradeOrder2);
+    executeIntentInputs.accountAndSubAccountIds[1] = accountAndSubAccountId;
+    executeIntentInputs.cmds[1] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder1));
+    executeIntentInputs.signatures = new bytes[](2);
+    executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
+
+    (v, r, s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder2));
+    executeIntentInputs.signatures[1] = abi.encodePacked(r, s, v);
+
+    executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
+    executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    executeIntentInputs.minPublishTime = block.timestamp;
+    executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
+
+    // Alice has not set delegate as Bob, so expect bad signature here
+    vm.expectRevert(abi.encodeWithSignature("IntenHandler_BadSignature()"));
+    intentHandler.execute(executeIntentInputs);
+
+    // Now, Alice set delegate as Bob, order should be able to be executed
+    vm.startPrank(ALICE);
+    intentHandler.setDelegate(BOB);
+    vm.stopPrank();
+    intentHandler.execute(executeIntentInputs);
+
+    assertEq(perpStorage.getNumberOfSubAccountPosition(ALICE), 2);
+
+    // Initial collateral = 100,000 usdc
+    // 1st trade's trading fee = 100000 - 100 = 99900
+    // 1st trade's execution fee = 99900 - 0.1 = 99899.9
+    // 2nd trade's trading fee = 99899.9 - 100 = 99799.9
+    // 2nd trade's execution fee = 99799.9 - 0.1 = 99799.8
+    assertEq(vaultStorage.traderBalances(ALICE, address(usdc)), 99799.8 * 1e6);
+  }
+
   function testRevert_TC43_intentHandler_replayIntent() external {
     uint256 privateKey = uint256(keccak256(bytes("1")));
     BOB = vm.addr(privateKey);

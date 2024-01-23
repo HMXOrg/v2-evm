@@ -34,6 +34,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
   GasService public gasService;
   mapping(bytes32 key => bool executed) executedIntents;
   mapping(address executor => bool isAllow) public intentExecutors; // The allowed addresses to execute intents
+  mapping(address mainAccount => address tradingWallet) public delegations;
 
   modifier onlyIntentExecutors() {
     if (!intentExecutors[msg.sender]) revert IntentHandler_Unauthorized();
@@ -54,6 +55,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     configStorage = ConfigStorage(_configStorage);
     tradeOrderHelper = TradeOrderHelper(_tradeOrderHelper);
     gasService = GasService(_gasService);
+  }
+
+  function setDelegate(address _delegate) external {
+    delegations[msg.sender] = _delegate;
+    emit LogSetDelegate(msg.sender, _delegate);
   }
 
   function execute(ExecuteIntentInputs memory inputs) external onlyIntentExecutors {
@@ -186,7 +192,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     address _signer
   ) internal view {
     address _recoveredSigner = ECDSAUpgradeable.recover(getDigest(_tradeOrder), _signature);
-    if (_signer != _recoveredSigner) revert IntenHandler_BadSignature();
+    address _tradingWallet = delegations[_signer];
+    if (_signer != _recoveredSigner && _tradingWallet != _recoveredSigner) revert IntenHandler_BadSignature();
   }
 
   function getDigest(IIntentHandler.TradeOrder memory _tradeOrder) public view returns (bytes32 _digest) {

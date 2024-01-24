@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { EcoPyth3__factory } from "../../../../typechain";
 
@@ -16,9 +16,9 @@ async function main() {
   config.oracles.ecoPyth3 = ecoPyth3.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: ecoPyth3.address,
-    name: "EcoPyth3",
+    constructorArguments: [],
   });
 }
 

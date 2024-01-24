@@ -1,4 +1,4 @@
-import { EcoPyth__factory } from "../../../../typechain";
+import { EcoPyth3__factory } from "../../../../typechain";
 import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import * as readlineSync from "readline-sync";
 import { Command } from "commander";
@@ -7,7 +7,6 @@ import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
 import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
-import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -15,7 +14,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const hmxApi = new HmxApiWrapper(chainId);
 
-  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
+  const pyth = EcoPyth3__factory.connect(config.oracles.ecoPyth3, deployer);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);

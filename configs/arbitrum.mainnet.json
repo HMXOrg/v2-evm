@@ -32,6 +32,7 @@
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",
     "ecoPyth2": "0x8dc6A40465128B20DC712C6B765a5171EF30bB7B",
+    "ecoPyth3": "",
     "pythAdapter": "0x34338314236df25220b55F90F7E8Fc30B620D242",
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",

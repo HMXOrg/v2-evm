@@ -37,7 +37,7 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
 
   CIXPriceAdapter internal cix1PriceAdapter;
   UnsafeEcoPythCalldataBuilder3 internal unsafeEcoPythCalldataBuilder;
-  CalcPriceLens internal calcPriceLens;
+  CalcPriceLens internal _calcPriceLens;
   EcoPythCalldataBuilder3 internal ecoPythCalldataBuilder;
   GmPriceAdapter internal gmBtcUsdPriceAdapter;
   GmPriceAdapter internal gmEthUsdPriceAdapter;
@@ -48,21 +48,21 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     cix1PriceAdapter = new CIXPriceAdapter();
     _setupCIX1PriceAdapter();
 
-    calcPriceLens = new CalcPriceLens();
+    _calcPriceLens = new CalcPriceLens();
     _setupGmPriceAdapters();
     _setupCalcPriceLens();
 
     ecoPythCalldataBuilder = new EcoPythCalldataBuilder3(
       ForkEnv.ecoPyth2,
       ForkEnv.onChainPriceLens,
-      calcPriceLens,
+      _calcPriceLens,
       false
     );
 
     unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder3(
       ForkEnv.ecoPyth2,
       ForkEnv.onChainPriceLens,
-      calcPriceLens,
+      _calcPriceLens,
       false
     );
   }
@@ -144,7 +144,7 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     _buildDatas[9].assetId = "CNH";
     _buildDatas[9].priceE8 = 11.06e8;
 
-    uint256 p = calcPriceLens.getPrice("CIX1", _buildDatas);
+    uint256 p = _calcPriceLens.getPrice("CIX1", _buildDatas);
     assertApproxEqRel(p, 100e18, 0.00000001e18, "Price E18 should be 100 USD");
   }
 
@@ -322,7 +322,7 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     priceAdapters[0] = gmBtcUsdPriceAdapter;
     priceAdapters[1] = gmEthUsdPriceAdapter;
     priceAdapters[2] = cix1PriceAdapter;
-    calcPriceLens.setPriceAdapters(priceIds, priceAdapters);
+    _calcPriceLens.setPriceAdapters(priceIds, priceAdapters);
   }
 
   function testCorrectness_getGmTokenPrice() external {

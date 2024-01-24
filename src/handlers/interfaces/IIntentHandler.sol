@@ -52,6 +52,7 @@ interface IIntentHandler {
   );
   event LogSetIntentExecutor(address executor, bool isAllow);
   event LogSetTradeOrderHelper(address oldTradeOrderHelper, address newTradeOrderHelper);
+  event LogSetDelegate(address sender, address delegate);
 
   enum Command {
     // +-----------------------+-----------+----------+-----------+---------------+
@@ -112,6 +113,8 @@ interface IIntentHandler {
     uint256 minPublishTime;
     bytes32 encodedVaas;
   }
+
+  function setDelegate(address _delegate) external;
 
   function execute(ExecuteIntentInputs memory inputs) external;
 

@@ -403,7 +403,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         _order.token,
         _order.amount,
         _order.minOut,
-        isNotAutoStake ? _order.account : address(this)
+        (isNotAutoStake || !isHlpStakingDeployed) ? _order.account : address(this)
       );
       if (isHlpStakingDeployed && !isNotAutoStake) {
         // If HLPStaking is live and user want to auto-stake

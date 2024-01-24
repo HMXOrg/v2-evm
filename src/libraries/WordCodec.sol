@@ -14,9 +14,9 @@
 
 pragma solidity 0.8.18;
 
-import "./BalancerErrors.sol";
+import "@hmx/libraries/BalancerErrors.sol";
 
-import { Math } from "./BalancerV2Math.sol";
+import { Math } from "@hmx/libraries/BalancerV2Math.sol";
 
 /**
  * @dev Library for encoding and decoding values stored inside a 256 bit word. Typically used to pack multiple values in

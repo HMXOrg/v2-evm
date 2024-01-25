@@ -97,7 +97,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
   ISurgeStaking public hlpStaking;
-  mapping(address user => mapping(uint256 orderId => bool isSurge)) isSurge;
+  mapping(address user => mapping(uint256 orderId => bool isSurge)) isSurge; // isSurge is repurposed to isNotAutoStake to indicate if user want to auto-stake HLP or not
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
   /// @param _liquidityService Address of the LiquidityService contract.
@@ -168,16 +168,16 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _minOut minHLP out
   /// @param _executionFee The execution fee of order
   /// @param _shouldWrap in case of sending native token
-  /// @param _isSurge true will participate this liquidity into HLP Surge
+  /// @param _isNotAutoStake If false, HLP will be auto-staked to HLP Staking. If true, HLP will go to user's wallet
   function createAddLiquidityOrder(
     address _tokenIn,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap,
-    bool _isSurge
+    bool _isNotAutoStake
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
-    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isSurge);
+    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isNotAutoStake);
   }
 
   function _createAddLiquidityOrder(
@@ -186,7 +186,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap,
-    bool _isSurge
+    bool _isNotAutoStake
   ) internal returns (uint256 _orderId) {
     // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
@@ -218,7 +218,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         status: LiquidityOrderStatus.PENDING
       })
     );
-    isSurge[msg.sender][_orderId] = _isSurge;
+    isSurge[msg.sender][_orderId] = _isNotAutoStake;
     emit LogCreateAddLiquidityOrder(
       msg.sender,
       _orderId,
@@ -396,22 +396,19 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     if (_order.isAdd) {
       bool isHlpStakingDeployed = address(hlpStaking) != address(0);
+      bool isNotAutoStake = isSurge[_order.account][_order.orderId]; // isSurge is repurposed to isNotAutoStake
       IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
       _amountOut = LiquidityService(liquidityService).addLiquidity(
         _order.account,
         _order.token,
         _order.amount,
         _order.minOut,
-        isHlpStakingDeployed ? address(this) : _order.account
+        (isNotAutoStake || !isHlpStakingDeployed) ? _order.account : address(this)
       );
-      if (isHlpStakingDeployed) {
-        // If HLPStaking is live
+      if (isHlpStakingDeployed && !isNotAutoStake) {
+        // If HLPStaking is live and user want to auto-stake
         // Auto stake into HLPStaking
-        if (isSurge[_order.account][_order.orderId]) {
-          ISurgeStaking(hlpStaking).depositSurge(_order.account, _amountOut);
-        } else {
-          ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
-        }
+        ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
       }
       return _amountOut;
     } else {

@@ -201,7 +201,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
       keccak256(
         abi.encode(
           keccak256(
-            "TradeOrder(uint256 marketIndex, int256 sizeDelta, uint256 triggerPrice, uint256 acceptablePrice, bool triggerAboveThreshold, bool reduceOnly, address tpToken, uint256 createdTimestamp, uint256 expiryTimestamp, address account, uint8 subAccountId)"
+            "TradeOrder(uint256 marketIndex,int256 sizeDelta,uint256 triggerPrice,uint256 acceptablePrice,bool triggerAboveThreshold,bool reduceOnly,address tpToken,uint256 createdTimestamp,uint256 expiryTimestamp,address account,uint8 subAccountId)"
           ),
           _tradeOrder.marketIndex,
           _tradeOrder.sizeDelta,

@@ -9,7 +9,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const maxFeeBps = 200; // 2% max fee
+  const maxFeeBps = 50; // 0.5% max fee
 
   const tradeHelper = TradeHelper__factory.connect(config.helpers.trade, deployer);
   console.log(`[configs/TradeHelper] setMaxAdaptiveFeeBps`);

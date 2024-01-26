@@ -114,11 +114,6 @@ contract OrderReader {
           }
         }
 
-        // validate minProfitDuration
-        if (_isUnderMinProfitDuration(_position, _minProfitDuration, block.timestamp)) {
-          continue;
-        }
-
         if (!isTpSlOrder && !_isUnderMaxOI(vars.marketConfigs[_order.marketIndex], _position, _order)) {
           continue;
         }

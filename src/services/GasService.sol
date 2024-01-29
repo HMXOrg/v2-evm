@@ -55,6 +55,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     uint256 _len = _traderTokens.length;
     OracleMiddleware _oracle = OracleMiddleware(configStorage.oracle());
 
+    emit LogCollectExecutionFeeValue(executionFeeInUsd);
     uint256 _executionFeeToBePaidInUsd = executionFeeInUsd;
     for (uint256 _i; _i < _len; ) {
       bytes32 _assetId = configStorage.tokenAssetIds(_traderTokens[_i]);
@@ -72,6 +73,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
           _tokenPrice,
           _tokenDecimal
         );
+        emit LogCollectExecutionFeeAmount(_token, _payAmount);
 
         vaultStorage.decreaseTraderBalance(_subAccount, _token, _payAmount);
         vaultStorage.increaseTraderBalance(executionFeeTreasury, _token, _payAmount);

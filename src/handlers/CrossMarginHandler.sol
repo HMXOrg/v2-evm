@@ -22,6 +22,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 /// @title CrossMarginHandler
 /// @notice This contract handles the deposit and withdrawal of collateral tokens for the Cross Margin Trading module.
+/// @dev Specifically adjusted for Blast deployment.
 contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginHandler {
   using SafeERC20Upgradeable for ERC20Upgradeable;
 

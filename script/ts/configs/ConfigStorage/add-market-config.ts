@@ -31,11 +31,11 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("ICP"),
+      assetId: ethers.utils.formatBytes32String("MANTA"),
       maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
       maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
-      increasePositionFeeRateBPS: 7, // 0.07%
-      decreasePositionFeeRateBPS: 7, // 0.07%
+      increasePositionFeeRateBPS: 3, // 0.03%
+      decreasePositionFeeRateBPS: 3, // 0.03%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
       maxProfitRateBPS: 400000, // 4000%

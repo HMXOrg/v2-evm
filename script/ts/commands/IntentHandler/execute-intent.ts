@@ -16,16 +16,16 @@ async function main(chainId: number) {
   const intentHandler = IntentHandler__factory.connect(config.handlers.intent, signer);
 
   const account = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
-  const subAccountId = 0;
-  const marketIndex = 0;
-  const sizeDelta = ethers.utils.parseUnits("-220", 30);
+  const subAccountId = 1;
+  const marketIndex = 47;
+  const sizeDelta = ethers.utils.parseUnits("-900", 30);
   const triggerPrice = 0;
-  const acceptablePrice = ethers.utils.parseUnits("0", 30);
+  const acceptablePrice = ethers.utils.parseUnits("11.648282969", 30);
   const triggerAboveThreshold = true;
   const reduceOnly = false;
-  const tpToken = config.tokens.usdc;
-  const createdTimestamp = Math.round(new Date().valueOf() / 1000);
-  const expiryTimestamp = Math.round(new Date().valueOf() / 1000) + 60 * 60 * 5;
+  const tpToken = "0xB853c09b6d03098b841300daD57701ABcFA80228";
+  const createdTimestamp = 1706689694;
+  const expiryTimestamp = 1706689994;
 
   const tradeOrder = {
     marketIndex,
@@ -42,7 +42,9 @@ async function main(chainId: number) {
   };
   const compressedTradeOrder = await intentBuilder.buildTradeOrder(tradeOrder);
   const digest = await intentHandler.getDigest(tradeOrder);
-  const rawSignature = new ethers.utils.SigningKey("0x" + process.env.MAINNET_PRIVATE_KEY!).signDigest(digest);
+  // const privateKey = process.env.MAINNET_PRIVATE_KEY!;
+  const privateKey = "29cc242e5fadfa606000198dc067434e0d04b98620e1d059cb98c8a364467ca9";
+  const rawSignature = new ethers.utils.SigningKey("0x" + privateKey).signDigest(digest);
   const signature = ethers.utils.solidityPack(
     ["bytes32", "bytes32", "uint8"],
     [rawSignature.r, rawSignature.s, rawSignature.v]
@@ -51,17 +53,6 @@ async function main(chainId: number) {
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
   console.table(readableTable);
-  const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
-  switch (confirm) {
-    case "y":
-      break;
-    case "n":
-      console.log("Feed Price cancelled!");
-      return;
-    default:
-      console.log("Invalid input!");
-      return;
-  }
 
   const executeInputs = {
     accountAndSubAccountIds: [compressedTradeOrder.accountAndSubAccountId],

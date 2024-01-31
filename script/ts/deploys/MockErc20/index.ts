@@ -9,11 +9,11 @@ async function main() {
 
   console.log(`Deploying MockErc20 Contract`);
   const MockErc20 = new MockErc20__factory(deployer);
-  const mockErc20 = await MockErc20.deploy("GM-ETHUSD", "GM-ETHUSD", 18);
+  const mockErc20 = await MockErc20.deploy("PYTH", "PYTH", 6);
   await mockErc20.deployed();
   console.log(`Deployed at: ${mockErc20.address}`);
 
-  config.tokens.gmETHUSD = mockErc20.address;
+  config.tokens.pyth = mockErc20.address;
   writeConfigFile(config);
 
   await tenderly.verify({

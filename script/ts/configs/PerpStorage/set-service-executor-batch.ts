@@ -1,18 +1,24 @@
 import { ethers } from "hardhat";
-import {
-  ConfigStorage__factory,
-  EcoPyth__factory,
-  PerpStorage__factory,
-  PythAdapter__factory,
-  VaultStorage__factory,
-} from "../../../../typechain";
+import { PerpStorage__factory } from "../../../../typechain";
 import { getConfig } from "../../utils/config";
 
 const config = getConfig();
 
 const inputs = [
   {
-    executorAddress: config.rewardDistributor,
+    executorAddress: config.services.crossMargin,
+    isServiceExecutor: true,
+  },
+  {
+    executorAddress: config.services.trade,
+    isServiceExecutor: true,
+  },
+  {
+    executorAddress: config.helpers.trade,
+    isServiceExecutor: true,
+  },
+  {
+    executorAddress: config.services.liquidation,
     isServiceExecutor: true,
   },
 ];

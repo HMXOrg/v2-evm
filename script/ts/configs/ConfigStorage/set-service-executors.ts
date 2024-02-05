@@ -9,8 +9,48 @@ async function main(chainId: number) {
 
   const inputs = [
     {
+      contractAddress: config.services.crossMargin,
+      executorAddress: config.handlers.crossMargin,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.services.liquidity,
+      executorAddress: config.handlers.liquidity,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.services.liquidation,
+      executorAddress: config.handlers.bot,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.services.trade,
+      executorAddress: config.handlers.bot,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.helpers.trade,
+      executorAddress: config.services.trade,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.helpers.trade,
+      executorAddress: config.services.liquidation,
+      isServiceExecutor: true,
+    },
+    {
       contractAddress: config.services.gas,
       executorAddress: config.handlers.intent,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.services.trade,
+      executorAddress: config.helpers.tradeOrder,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.services.trade,
+      executorAddress: config.handlers.limitTrade,
       isServiceExecutor: true,
     },
   ];

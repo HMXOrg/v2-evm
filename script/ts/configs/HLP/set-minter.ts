@@ -1,7 +1,5 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { EcoPyth__factory, HLP__factory } from "../../../../typechain";
+import { HLP__factory } from "../../../../typechain";
 import { getConfig } from "../../utils/config";
 
 const config = getConfig();

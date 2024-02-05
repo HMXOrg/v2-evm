@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
+import { ConfigStorage__factory } from "../../../../typechain";
 import { getConfig } from "../../utils/config";
 
 const config = getConfig();

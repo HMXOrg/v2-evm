@@ -10,7 +10,7 @@
   },
   "handlers": {
     "bot": "0x34eFfFEdbD326796256B4C253dC3F8F1dfe23D63",
-    "crossMargin": "",
+    "crossMargin": "0xd408a7CFA86e1fa233037970F6CDfCA7d753067e",
     "limitTrade": "0xF1b49fd29240a6f91988f18322e7851cB9a88BEe",
     "liquidity": "0xFc99D238c7A20895ba3756Ee04FD8BfD442c18fD",
     "intent": "0xC4F51bc480154e5B270967C70B64b53d0C189079"
@@ -41,12 +41,13 @@
       "hlp": "",
       "dix": ""
     },
-    "orderbook": ""
+    "orderbook": "0x23628f0C68b3B77Ec2F5Cb3eeB480099c41c2cea"
   },
   "tokens": {
     "hlp": "0xCB1EaA1E9Fd640c3900a4325440c80FEF4b1b16d",
     "weth": "0x4200000000000000000000000000000000000023",
     "usdb": "0x4200000000000000000000000000000000000022",
+    "usdt": "0xfAE1131D79E9B13CA11c3Fb3D7b588D8Fa44401c",
     "traderLoyaltyCredit": ""
   },
   "vendors": {},
@@ -56,7 +57,7 @@
     "tlc": ""
   },
   "calculator": "0xf944690f3B7436161BA27B47799Bd06EA4154C0e",
-  "adaptiveFeeCalculator": "",
+  "adaptiveFeeCalculator": "0x5337672c258E5D7AFabe3104EA330C4CB2c6e44f",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""

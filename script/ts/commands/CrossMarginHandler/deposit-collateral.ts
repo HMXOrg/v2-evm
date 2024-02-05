@@ -8,7 +8,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
-  const tokenAddress = config.tokens.usdc;
+  const tokenAddress = config.tokens.usdt;
   const amountIn = ethers.utils.parseUnits("500", 6);
   const subAccountId = 0;
   const shouldWrap = false;

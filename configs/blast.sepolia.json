@@ -33,9 +33,8 @@
     "gas": ""
   },
   "oracles": {
-    "ecoPyth": "",
-    "ecoPyth2": "",
-    "pythAdapter": "",
+    "ecoPyth2": "0xc88322Ec9526A7A98B7F58ff773b3B003C91ce71",
+    "pythAdapter": "0x20E58fC5E1ee3C596fb3ebD6de6040e7800e82E6",
     "sglpStakedAdapter": "",
     "middleware": "",
     "ecoPythCalldataBuilder": "",

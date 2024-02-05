@@ -1,0 +1,138 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xEB27B05178515c7E6E51dEE159c8487A011ac030",
+    "txHash": "0xdd008bd9c0133586f968102a57cc024c687917a650c332a073808d49e6f6d5a2"
+  },
+  "proxies": [
+    {
+      "address": "0x20E58fC5E1ee3C596fb3ebD6de6040e7800e82E6",
+      "txHash": "0x08e440c5f00c7f497179a046dd941c5d056efb862140b3159ac807c356ae738f",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "8f1b61670603faac415cc98d7113e22ea9850f1437c3433808fc309557ffdca3": {
+      "address": "0xB853c09b6d03098b841300daD57701ABcFA80228",
+      "txHash": "0x1edf5360372d783ea790185f99810793348251927f9274928983b19b1356aed1",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "pyth",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IReadablePyth)54509",
+            "contract": "PythAdapter",
+            "src": "src/oracles/PythAdapter.sol:21"
+          },
+          {
+            "label": "configs",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_bytes32,t_struct(PythPriceConfig)54461_storage)",
+            "contract": "PythAdapter",
+            "src": "src/oracles/PythAdapter.sol:23"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IReadablePyth)54509": {
+            "label": "contract IReadablePyth",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_bytes32,t_struct(PythPriceConfig)54461_storage)": {
+            "label": "mapping(bytes32 => struct IPythAdapter.PythPriceConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(PythPriceConfig)54461_storage": {
+            "label": "struct IPythAdapter.PythPriceConfig",
+            "members": [
+              {
+                "label": "pythPriceId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "inverse",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

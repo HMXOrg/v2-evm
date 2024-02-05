@@ -1,4 +1,4 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
+import { ethers, run, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
@@ -8,7 +8,7 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const Contract = await ethers.getContractFactory("PythAdapter", deployer);
-  const contract = await upgrades.deployProxy(Contract, [config.oracles.ecoPyth]);
+  const contract = await upgrades.deployProxy(Contract, [config.oracles.ecoPyth2]);
   await contract.deployed();
   console.log(`Deploying PythAdapter Contract`);
   console.log(`Deployed at: ${contract.address}`);
@@ -16,9 +16,9 @@ async function main() {
   config.oracles.pythAdapter = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "PythAdapter",
+    constructorArguments: [],
   });
 }
 

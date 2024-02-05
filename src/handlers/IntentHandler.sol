@@ -115,7 +115,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
           }
           continue;
         }
-        (bool _isSuccess, uint256 _oraclePrice, uint256 _executedPrice) = _executeTradeOrder(_vars);
+        (bool _isSuccess, uint256 _oraclePrice, uint256 _executedPrice) = _executeTradeOrder(_vars, key);
 
         // If the trade order is executed successfully, record the order as executed
         if (_isSuccess) {
@@ -156,23 +156,24 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
   }
 
   function _executeTradeOrder(
-    ExecuteTradeOrderVars memory vars
+    ExecuteTradeOrderVars memory vars,
+    bytes32 key
   ) internal returns (bool isSuccess, uint256 oraclePrice, uint256 executedPrice) {
     // try executing order
     try tradeOrderHelper.execute(vars) returns (uint256 _oraclePrice, uint256 _executedPrice) {
       // Execution succeeded
       return (true, _oraclePrice, _executedPrice);
     } catch Error(string memory errMsg) {
-      _handleOrderFail(vars, bytes(errMsg));
+      _handleOrderFail(vars, bytes(errMsg), key);
     } catch Panic(uint /*errorCode*/) {
-      _handleOrderFail(vars, bytes("Panic occurred while executing trade order"));
+      _handleOrderFail(vars, bytes("Panic occurred while executing trade order"), key);
     } catch (bytes memory errMsg) {
-      _handleOrderFail(vars, errMsg);
+      _handleOrderFail(vars, errMsg, key);
     }
     return (false, 0, 0);
   }
 
-  function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg) internal {
+  function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg, bytes32 key) internal {
     emit LogExecuteTradeOrderFail(
       vars.order.account,
       vars.order.subAccountId,
@@ -182,7 +183,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
       vars.order.triggerAboveThreshold,
       vars.order.reduceOnly,
       vars.order.tpToken,
-      errMsg
+      errMsg,
+      key
     );
   }
 

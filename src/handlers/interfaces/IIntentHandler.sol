@@ -48,7 +48,8 @@ interface IIntentHandler {
     bool triggerAboveThreshold,
     bool reduceOnly,
     address tpToken,
-    bytes errMsg
+    bytes errMsg,
+    bytes32 indexed key
   );
   event LogSetIntentExecutor(address executor, bool isAllow);
   event LogSetTradeOrderHelper(address oldTradeOrderHelper, address newTradeOrderHelper);

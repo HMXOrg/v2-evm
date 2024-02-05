@@ -1,4 +1,4 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
+import { ethers, run, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
@@ -25,9 +25,9 @@ async function main() {
   config.services.gas = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "GasService",
+    constructorArguments: [],
   });
 }
 

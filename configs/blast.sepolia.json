@@ -4,125 +4,58 @@
   "timelock": "",
   "safe": "",
   "storages": {
-    "config": "",
-    "perp": "",
-    "vault": ""
+    "config": "0x4Dc3c929DDa7451012F408d1f376221621dD2a56",
+    "perp": "0x029c919Cf951C588819Acb7d95eeC1780E53f89C",
+    "vault": "0x3f78cEc168AdF9242a3d2F04A0ab1E312c26b3Ec"
   },
   "handlers": {
-    "bot": "",
+    "bot": "0x34eFfFEdbD326796256B4C253dC3F8F1dfe23D63",
     "crossMargin": "",
-    "limitTrade": "",
-    "liquidity": "",
-    "rebalanceHLP": "",
-    "ext01": "",
-    "rebalanceHLPv2": "",
-    "intent": ""
+    "limitTrade": "0xF1b49fd29240a6f91988f18322e7851cB9a88BEe",
+    "liquidity": "0xFc99D238c7A20895ba3756Ee04FD8BfD442c18fD",
+    "intent": "0xC4F51bc480154e5B270967C70B64b53d0C189079"
   },
   "helpers": {
-    "trade": "",
+    "trade": "0xA227221350f1D0Ca119be424710aCD9df89151c3",
     "limitTrade": "",
-    "tradeOrder": ""
+    "tradeOrder": "0xC9C61E8b1695c816Ac5C398639d7a459df5aE000"
   },
   "services": {
-    "crossMargin": "",
-    "liquidity": "",
-    "liquidation": "",
-    "trade": "",
-    "rebalanceHLP": "",
-    "rebalanceHLPv2": "",
-    "gas": ""
+    "crossMargin": "0x35A301796949f5235f8fc3311E6013450aaf2354",
+    "liquidity": "0xC98966b9A3236e4d82FBcDe94f0Df257b5033c4C",
+    "liquidation": "0xb88771661eFE5a1577Ce0366540dCe33279aD8Cd",
+    "trade": "0xFd89a05652492D748a94cD24c636e33054E9F4c2",
+    "gas": "0x230764c6c192C0313bea5E5fa7118Fb46268443c"
   },
   "oracles": {
     "ecoPyth2": "0xc88322Ec9526A7A98B7F58ff773b3B003C91ce71",
     "pythAdapter": "0x20E58fC5E1ee3C596fb3ebD6de6040e7800e82E6",
     "sglpStakedAdapter": "",
-    "middleware": "",
-    "ecoPythCalldataBuilder": "",
-    "unsafeEcoPythCalldataBuilder": "",
-    "ecoPythCalldataBuilder2": "",
-    "unsafeEcoPythCalldataBuilder2": "",
-    "ecoPythCalldataBuilder3": "",
-    "unsafeEcoPythCalldataBuilder3": "",
-    "onChainPriceLens": "",
-    "calcPriceLens": "",
+    "middleware": "0x8D715a015aC0e064a3Cfb88DA755d346Aee65433",
+    "ecoPythCalldataBuilder3": "0xffaa17A2c9EEe7D44C46b249085558a513583c36",
+    "unsafeEcoPythCalldataBuilder3": "0x2f035c75bE06cdDCA5E23649d9635f649Cb279E5",
+    "onChainPriceLens": "0xF21405bA59E79762C306c83298dbD10a8A285f2F",
+    "calcPriceLens": "0xDaCFEaAB00C8F008cA253e371659E8b470114AB3",
     "priceAdapters": {
-      "glp": "",
       "wstEth": "",
       "hlp": "",
-      "gmBTCUSD": "",
-      "gmETHUSD": "",
       "dix": ""
     },
     "orderbook": ""
   },
   "tokens": {
-    "hlp": "",
-    "weth": "",
-    "wbtc": "",
-    "usdt": "",
-    "usdc": "",
-    "dai": "",
-    "sglp": "",
-    "traderLoyaltyCredit": "",
-    "arb": "",
-    "wstEth": "",
-    "gmBTCUSD": "",
-    "gmETHUSD": "",
-    "usdcNative": ""
+    "hlp": "0xCB1EaA1E9Fd640c3900a4325440c80FEF4b1b16d",
+    "weth": "0x4200000000000000000000000000000000000023",
+    "usdb": "0x4200000000000000000000000000000000000022",
+    "traderLoyaltyCredit": ""
   },
-  "vendors": {
-    "gmx": {
-      "glpManager": "",
-      "rewardRouterV2": "",
-      "rewardTracker": "",
-      "gmxVault": ""
-    },
-    "gmxV2": {
-      "oracle": "",
-      "exchangeRouter": "",
-      "depositVault": "",
-      "depositUtils": "",
-      "depositStoreUtils": "",
-      "executeDepositUtils": "",
-      "depositHandler": "",
-      "withdrawalVault": "",
-      "withdrawalUtils": "",
-      "withdrawalStoreUtils": "",
-      "executeWithdrawalUtils": "",
-      "withdrawalHandler": "",
-      "marketUtils": "",
-      "marketStoreUtils": "",
-      "dataStore": "",
-      "roleStore": "",
-      "reader": ""
-    },
-    "uniswap": {
-      "permit2": "",
-      "universalRouter": ""
-    },
-    "curve": {
-      "wstEthEthPool": "",
-      "usdcUsdtPool": ""
-    },
-    "chainlink": {
-      "wstEthEthPriceFeed": "",
-      "ethUsdPriceFeed": ""
-    },
-    "oneInch": {
-      "router": ""
-    }
-  },
-  "strategies": {
-    "stakedGlpStrategy": "",
-    "convertedGlpStrategy": "",
-    "erc20Approve": "",
-    "distributeSTIPARB": ""
-  },
+  "vendors": {},
+  "strategies": {},
   "hooks": {
     "tradingStaking": "",
     "tlc": ""
   },
-  "calculator": "",
+  "calculator": "0xf944690f3B7436161BA27B47799Bd06EA4154C0e",
   "adaptiveFeeCalculator": "",
   "accountAbstraction": {
     "entryPoint": "",

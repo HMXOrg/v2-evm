@@ -1,8 +1,7 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
+import { ethers, run, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
-const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 const maxTrustPriceAge = 60 * 60 * 24 * 7; // 7 Days
@@ -19,9 +18,9 @@ async function main() {
   config.oracles.middleware = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "OracleMiddleware",
+    constructorArguments: [],
   });
 }
 

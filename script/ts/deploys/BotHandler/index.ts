@@ -1,8 +1,7 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
+import { ethers, run, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
-const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 async function main() {
@@ -13,7 +12,7 @@ async function main() {
     config.services.trade,
     config.services.liquidation,
     config.services.crossMargin,
-    config.oracles.ecoPyth,
+    config.oracles.ecoPyth2,
   ]);
   await contract.deployed();
   console.log(`Deploying BotHandler Contract`);
@@ -22,9 +21,9 @@ async function main() {
   config.handlers.bot = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "BotHandler",
+    constructorArguments: [],
   });
 }
 

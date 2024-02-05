@@ -4,6 +4,8 @@ import ArbitrumGoerliConfig from "../../../configs/arbitrum.goerli.json";
 import ArbitrumMainnetConfig from "../../../configs/arbitrum.mainnet.json";
 import ArbitrumMainnetMarketConfig from "../../../configs/.arbitrum.one.market.json";
 import ArbitrumGoerliMarketConfig from "../../../configs/.arbitrum.goerli.market.json";
+import BlastSepoliaMarketConfig from "../../../configs/.blast.sepolia.market.json";
+import BlastSepoliaConfig from "../../../configs/blast.sepolia.json";
 
 export function loadConfig(chainId: number) {
   if (chainId === 42161) {
@@ -11,6 +13,9 @@ export function loadConfig(chainId: number) {
   }
   if (chainId === 421613) {
     return ArbitrumGoerliConfig;
+  }
+  if (chainId === 168587773) {
+    return BlastSepoliaConfig;
   }
   throw new Error("not found config");
 }
@@ -21,6 +26,9 @@ export function loadMarketConfig(chainId: number) {
   }
   if (chainId === 421613) {
     return ArbitrumGoerliMarketConfig;
+  }
+  if (chainId === 168587773) {
+    return BlastSepoliaMarketConfig;
   }
   throw new Error("not found market config");
 }
@@ -40,6 +48,9 @@ export function getConfig() {
   }
   if (network.name === "arbitrum") {
     return ArbitrumMainnetConfig;
+  }
+  if (network.name === "blast_sepolia") {
+    return BlastSepoliaConfig;
   }
 
   throw new Error("not found config");
@@ -62,6 +73,9 @@ export function writeConfigFile(config: any) {
       break;
     case "arb_goerli":
       filePath = "./configs/arbitrum.goerli.json";
+      break;
+    case "blast_sepolia":
+      filePath = "./configs/blast.sepolia.json";
       break;
     default:
       throw Error("Unsupported network");

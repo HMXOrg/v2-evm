@@ -37,6 +37,11 @@ const config: HardhatUserConfig = {
       chainId: 421613,
       accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
+    blast_sepolia: {
+      url: process.env.BLAST_SEPOLIA_RPC || "",
+      chainId: 168587773,
+      accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
+    },
   },
   solidity: {
     version: "0.8.18",

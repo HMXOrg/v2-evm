@@ -5,7 +5,7 @@ const config = getConfig();
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
-  const contract = await ethers.deployContract("IntentBuilder", [], deployer);
+  const contract = await ethers.deployContract("IntentBuilder", [config.storages.config], deployer);
 
   await contract.deployed();
   console.log(`[deploys/Dexter] Deploying IntentBuilder Contract`);

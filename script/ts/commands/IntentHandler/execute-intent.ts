@@ -23,7 +23,7 @@ async function main(chainId: number) {
   const acceptablePrice = ethers.utils.parseUnits("50000", 30);
   const triggerAboveThreshold = true;
   const reduceOnly = false;
-  const tpToken = config.tokens["m.usdc"];
+  const tpToken = config.tokens.usdt;
   const createdTimestamp = Math.round(new Date().valueOf() / 1000);
   const expiryTimestamp = Math.round(new Date().valueOf() / 1000) + 60 * 60 * 5;
 
@@ -51,17 +51,6 @@ async function main(chainId: number) {
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
   console.table(readableTable);
-  // const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
-  // switch (confirm) {
-  //   case "y":
-  //     break;
-  //   case "n":
-  //     console.log("Feed Price cancelled!");
-  //     return;
-  //   default:
-  //     console.log("Invalid input!");
-  //     return;
-  // }
 
   const executeInputs = {
     accountAndSubAccountIds: [compressedTradeOrder.accountAndSubAccountId],

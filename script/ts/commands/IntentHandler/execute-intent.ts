@@ -42,13 +42,17 @@ async function main(chainId: number) {
   };
   const compressedTradeOrder = await intentBuilder.buildTradeOrder(tradeOrder);
   const digest = await intentHandler.getDigest(tradeOrder);
-  // const privateKey = process.env.MAINNET_PRIVATE_KEY!;
-  const privateKey = "29cc242e5fadfa606000198dc067434e0d04b98620e1d059cb98c8a364467ca9";
+  const privateKey = process.env.TRADING_WALLET_PRIVATE_KEY!;
   const rawSignature = new ethers.utils.SigningKey("0x" + privateKey).signDigest(digest);
   const signature = ethers.utils.solidityPack(
     ["bytes32", "bytes32", "uint8"],
     [rawSignature.r, rawSignature.s, rawSignature.v]
   );
+
+  const pk = ethers.utils.recoverPublicKey(digest, signature);
+  const recoveredAddress = ethers.utils.computeAddress(ethers.utils.arrayify(pk));
+
+  console.log("recoveredAddress", recoveredAddress);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);

@@ -16,9 +16,9 @@ async function main(chainId: number) {
   const acceptablePrice = ethers.utils.parseUnits("100000000000", 30);
   const triggerAboveThreshold = true;
   const reduceOnly = false;
-  const tpToken = config.tokens.usdc;
+  const tpToken = config.tokens.usdt;
 
-  console.log("[LimitTradeHandler] createAddLiquidityOrder...");
+  console.log("[LimitTradeHandler] Create Trade Order...");
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, signer);
   const executionFee = await handler.minExecutionFee();
   const tx = await handler["createOrder(address,uint8,uint256,int256,uint256,uint256,bool,uint256,bool,address)"](

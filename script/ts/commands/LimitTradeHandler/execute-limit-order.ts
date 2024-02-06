@@ -14,7 +14,7 @@ async function main(chainId: number) {
 
   const accounts = ["0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a"];
   const subAccountIds = [0];
-  const orderIndexes = [2];
+  const orderIndexes = [1];
   const feeReceiver = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
@@ -43,7 +43,7 @@ async function main(chainId: number) {
     publishTimeDiffUpdateData,
     minPublishedTime,
     hashedVaas,
-    { gasLimit: 50000000 }
+    { gasLimit: 10000000 }
   );
   console.log(`[LimitTradeHandler] Tx: ${tx.hash}`);
   await tx.wait(1);

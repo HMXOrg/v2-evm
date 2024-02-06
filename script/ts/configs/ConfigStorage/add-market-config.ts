@@ -4,7 +4,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
 import assetClasses from "../../entities/asset-classes";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 type AddMarketConfig = {
   assetId: string;
@@ -31,26 +31,44 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("MANTA"),
-      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
-      increasePositionFeeRateBPS: 3, // 0.03%
-      decreasePositionFeeRateBPS: 3, // 0.03%
+      assetId: ethers.utils.formatBytes32String("ETH"),
+      maxLongPositionSize: ethers.utils.parseUnits("5500000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("5500000", 30),
+      increasePositionFeeRateBPS: 2, // 0.02%
+      decreasePositionFeeRateBPS: 2, // 0.02%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 350000, // 3500%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("2000000000", 30), // 2000 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("BTC"),
+      maxLongPositionSize: ethers.utils.parseUnits("6000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("6000000", 30),
+      increasePositionFeeRateBPS: 2, // 0.02%
+      decreasePositionFeeRateBPS: 2, // 0.02%
+      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
+      maxProfitRateBPS: 350000, // 3500%
+      assetClass: assetClasses.crypto,
+      allowIncreasePosition: true,
+      active: true,
+      fundingRate: {
+        maxSkewScaleUSD: ethers.utils.parseUnits("3000000000", 30), // 3000 M
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
+      },
+      isAdaptiveFeeEnabled: false,
     },
   ];
 
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   console.log("[configs/ConfigStorage] Adding new market config...");
@@ -58,15 +76,13 @@ async function main(chainId: number) {
     console.log(
       `[configs/ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`
     );
-    const tx = await safeWrapper.proposeTransaction(
+    await ownerWrapper.authExec(
       configStorage.address,
-      0,
       configStorage.interface.encodeFunctionData("addMarketConfig", [
         marketConfigs[i],
         marketConfigs[i].isAdaptiveFeeEnabled,
       ])
     );
-    console.log(`[configs/ConfigStorage] Tx: ${tx}`);
   }
   console.log("[configs/ConfigStorage] Finished");
 }

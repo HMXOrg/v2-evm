@@ -118,19 +118,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
 
   function execute(
     IIntentHandler.ExecuteTradeOrderVars memory vars
-  ) external returns (uint256 _oraclePrice, uint256 _executedPrice) {
-    (_oraclePrice, _executedPrice) = _validate(
-      vars.order.account,
-      vars.order.subAccountId,
-      vars.order.marketIndex,
-      vars.order.reduceOnly,
-      vars.order.sizeDelta,
-      vars.order.triggerAboveThreshold,
-      vars.order.triggerPrice,
-      vars.order.acceptablePrice,
-      vars.order.expiryTimestamp
-    );
-
+  ) external returns (uint256 _oraclePrice, uint256 _executedPrice, bool _isFullClose) {
     // Retrieve existing position
     vars.positionId = HMXLib.getPositionId(
       HMXLib.getSubAccount(vars.order.account, vars.order.subAccountId),
@@ -143,10 +131,33 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
+    int256 revisedSizeDelta = vars.order.sizeDelta;
+    bool isDecreasePosition = !vars.isNewPosition &&
+      ((vars.positionIsLong && vars.order.sizeDelta < 0) || (!vars.positionIsLong && vars.order.sizeDelta > 0));
+    if (isDecreasePosition && HMXLib.abs(vars.order.sizeDelta) > HMXLib.abs(_existingPosition.positionSizeE30)) {
+      if (vars.order.sizeDelta > 0) {
+        revisedSizeDelta = int256(HMXLib.abs(_existingPosition.positionSizeE30));
+      } else {
+        revisedSizeDelta = -int256(HMXLib.abs(_existingPosition.positionSizeE30));
+      }
+    }
+
+    (_oraclePrice, _executedPrice) = _validate(
+      vars.order.account,
+      vars.order.subAccountId,
+      vars.order.marketIndex,
+      vars.order.reduceOnly,
+      revisedSizeDelta,
+      vars.order.triggerAboveThreshold,
+      vars.order.triggerPrice,
+      vars.order.acceptablePrice,
+      vars.order.expiryTimestamp
+    );
+
     // Execute the order
     if (vars.order.reduceOnly) {
-      bool isDecreaseShort = (vars.order.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
-      bool isDecreaseLong = (vars.order.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
+      bool isDecreaseShort = (revisedSizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
+      bool isDecreaseLong = (revisedSizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
       bool isClosePosition = !vars.isNewPosition && (isDecreaseShort || isDecreaseLong);
       if (isClosePosition) {
         tradeService.decreasePosition({
@@ -154,7 +165,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _positionSizeE30ToDecrease: HMXLib.min(
-            HMXLib.abs(vars.order.sizeDelta),
+            HMXLib.abs(revisedSizeDelta),
             HMXLib.abs(_existingPosition.positionSizeE30)
           ),
           _tpToken: vars.order.tpToken,
@@ -164,7 +175,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
         // Do nothing if the size delta is wrong for reduce-only
       }
     } else {
-      if (vars.order.sizeDelta > 0) {
+      if (revisedSizeDelta > 0) {
         // BUY
         if (vars.isNewPosition || vars.positionIsLong) {
           // New position and Long position
@@ -173,11 +184,11 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.order.sizeDelta,
+            _sizeDelta: revisedSizeDelta,
             _limitPriceE30: 0
           });
         } else {
-          bool _flipSide = vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
+          bool _flipSide = revisedSizeDelta > (-_existingPosition.positionSizeE30);
           if (_flipSide) {
             // Flip the position
             // Fully close Short position
@@ -194,7 +205,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
               _primaryAccount: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
+              _sizeDelta: revisedSizeDelta + _existingPosition.positionSizeE30,
               _limitPriceE30: 0
             });
           } else {
@@ -203,13 +214,13 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
               _account: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _positionSizeE30ToDecrease: uint256(vars.order.sizeDelta),
+              _positionSizeE30ToDecrease: uint256(revisedSizeDelta),
               _tpToken: vars.order.tpToken,
               _limitPriceE30: 0
             });
           }
         }
-      } else if (vars.order.sizeDelta < 0) {
+      } else if (revisedSizeDelta < 0) {
         // SELL
         if (vars.isNewPosition || !vars.positionIsLong) {
           // New position and Short position
@@ -218,11 +229,11 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.order.sizeDelta,
+            _sizeDelta: revisedSizeDelta,
             _limitPriceE30: 0
           });
         } else if (vars.positionIsLong) {
-          bool _flipSide = (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
+          bool _flipSide = (-revisedSizeDelta) > _existingPosition.positionSizeE30;
           if (_flipSide) {
             // Flip the position
             // Fully close Long position
@@ -239,7 +250,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
               _primaryAccount: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
+              _sizeDelta: revisedSizeDelta + _existingPosition.positionSizeE30,
               _limitPriceE30: 0
             });
           } else {
@@ -248,7 +259,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
               _account: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _positionSizeE30ToDecrease: uint256(-vars.order.sizeDelta),
+              _positionSizeE30ToDecrease: uint256(-revisedSizeDelta),
               _tpToken: vars.order.tpToken,
               _limitPriceE30: 0
             });
@@ -256,6 +267,9 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
         }
       }
     }
+
+    _existingPosition = PerpStorage(tradeService.perpStorage()).getPositionById(vars.positionId);
+    _isFullClose = _existingPosition.positionSizeE30 == 0;
   }
 
   function setLimit(

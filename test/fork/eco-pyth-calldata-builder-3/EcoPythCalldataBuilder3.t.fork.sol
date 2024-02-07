@@ -52,18 +52,12 @@ contract EcoPythCalldataBuilder3_ForkTest is ForkEnv, Cheats {
     _setupGmPriceAdapters();
     _setupCalcPriceLens();
 
-    ecoPythCalldataBuilder = new EcoPythCalldataBuilder3(
-      ForkEnv.ecoPyth2,
-      ForkEnv.onChainPriceLens,
-      calcPriceLens,
-      false
-    );
+    ecoPythCalldataBuilder = new EcoPythCalldataBuilder3(ForkEnv.ecoPyth2, ForkEnv.onChainPriceLens, calcPriceLens);
 
     unsafeEcoPythCalldataBuilder = new UnsafeEcoPythCalldataBuilder3(
       ForkEnv.ecoPyth2,
       ForkEnv.onChainPriceLens,
-      calcPriceLens,
-      false
+      calcPriceLens
     );
   }
 

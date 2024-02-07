@@ -21,7 +21,7 @@
   "helpers": {
     "trade": "0xFd89a05652492D748a94cD24c636e33054E9F4c2",
     "limitTrade": "0xF738a396c235Ab83bbfE114BdfFD7fC3689215fE",
-    "tradeOrder": "0xBD3505Ee747966b4354f9723F5Bb8B6f32B9BA45",
+    "tradeOrder": "0x271138E30281e1c2E0b97dEC848c7E50ff609976",
     "intentBuilder": "0x57086ef989B3707Bee64C83Caa539aE993158B09"
   },
   "services": {

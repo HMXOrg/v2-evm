@@ -28,6 +28,8 @@ export class OwnerWrapper {
       console.log(`[wrapper/Owner] Executing tx right away...`);
       const tx = await this.signer.sendTransaction({ to, data });
       console.log(`[wrapper/Owner] Tx: ${tx.hash}`);
+      await tx.wait();
+      console.log(`[wrapper/Owner] Tx has been confirmed.`);
     } else if (owner === timelockAddress) {
       throw new Error("Not implemented when owner is Timelock yet");
     } else if (owner === safeWrapperAddress) {

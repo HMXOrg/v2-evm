@@ -23,6 +23,7 @@ interface IIntentHandler {
     address tpToken,
     uint256 oraclePrice,
     uint256 executedPrice,
+    bool isFullClose,
     bytes32 indexed key
   );
 
@@ -103,6 +104,12 @@ interface IIntentHandler {
     address[] tpTokens;
     address mainAccount;
     uint8 subAccountId;
+    bool isSuccess;
+    uint256 oraclePrice;
+    uint256 executedPrice;
+    bool isFullClose;
+    bytes32 key;
+    Command cmd;
   }
 
   struct ExecuteIntentInputs {

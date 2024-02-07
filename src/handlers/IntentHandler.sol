@@ -66,9 +66,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     if (inputs.accountAndSubAccountIds.length != inputs.cmds.length) revert IntentHandler_BadLength();
 
     ExecuteIntentVars memory _localVars;
-    Command _cmd;
     ExecuteTradeOrderVars memory _vars;
-    bytes32 key;
 
     // Update price to Pyth
     pyth.updatePriceFeeds(inputs.priceData, inputs.publishTimeData, inputs.minPublishTime, inputs.encodedVaas);
@@ -79,9 +77,9 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     for (uint256 _i; _i < _localVars.cmdsLength; ) {
       _localVars.mainAccount = address(uint160(inputs.accountAndSubAccountIds[_i].decodeUint(0, 160)));
       _localVars.subAccountId = uint8(inputs.accountAndSubAccountIds[_i].decodeUint(160, 8));
-      _cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
+      _localVars.cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
 
-      if (_cmd == Command.ExecuteTradeOrder) {
+      if (_localVars.cmd == Command.ExecuteTradeOrder) {
         _vars.order.marketIndex = inputs.cmds[_i].decodeUint(3, 8);
         _vars.order.sizeDelta = inputs.cmds[_i].decodeInt(11, 54) * 1e22;
         _vars.order.triggerPrice = inputs.cmds[_i].decodeUint(65, 54) * 1e22;
@@ -94,8 +92,8 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
         _vars.order.account = _localVars.mainAccount;
         _vars.order.subAccountId = _localVars.subAccountId;
 
-        key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
-        if (executedIntents[key]) {
+        _localVars.key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
+        if (executedIntents[_localVars.key]) {
           revert IntentHandler_IntentReplay();
         }
 
@@ -108,18 +106,23 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
         // 3. max position size
         bool _isPreValidateSuccess = _prevalidateExecuteTradeOrder(_vars);
         if (!_isPreValidateSuccess) {
-          executedIntents[key] = true;
+          executedIntents[_localVars.key] = true;
 
           unchecked {
             ++_i;
           }
           continue;
         }
-        (bool _isSuccess, uint256 _oraclePrice, uint256 _executedPrice) = _executeTradeOrder(_vars, key);
+        (
+          _localVars.isSuccess,
+          _localVars.oraclePrice,
+          _localVars.executedPrice,
+          _localVars.isFullClose
+        ) = _executeTradeOrder(_vars, _localVars.key);
 
         // If the trade order is executed successfully, record the order as executed
-        if (_isSuccess) {
-          executedIntents[key] = true;
+        if (_localVars.isSuccess) {
+          executedIntents[_localVars.key] = true;
           emit LogExecuteTradeOrderSuccess(
             _vars.order.account,
             _vars.order.subAccountId,
@@ -129,12 +132,13 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
             _vars.order.triggerAboveThreshold,
             _vars.order.reduceOnly,
             _vars.order.tpToken,
-            _oraclePrice,
-            _executedPrice,
-            key
+            _localVars.oraclePrice,
+            _localVars.executedPrice,
+            _localVars.isFullClose,
+            _localVars.key
           );
-        } else if (!_isSuccess && _vars.order.triggerPrice == 0) {
-          executedIntents[key] = true;
+        } else if (!_localVars.isSuccess && _vars.order.triggerPrice == 0) {
+          executedIntents[_localVars.key] = true;
         }
       }
 
@@ -158,11 +162,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
   function _executeTradeOrder(
     ExecuteTradeOrderVars memory vars,
     bytes32 key
-  ) internal returns (bool isSuccess, uint256 oraclePrice, uint256 executedPrice) {
+  ) internal returns (bool isSuccess, uint256 oraclePrice, uint256 executedPrice, bool isFullClose) {
     // try executing order
-    try tradeOrderHelper.execute(vars) returns (uint256 _oraclePrice, uint256 _executedPrice) {
+    try tradeOrderHelper.execute(vars) returns (uint256 _oraclePrice, uint256 _executedPrice, bool _isFullClose) {
       // Execution succeeded
-      return (true, _oraclePrice, _executedPrice);
+      return (true, _oraclePrice, _executedPrice, _isFullClose);
     } catch Error(string memory errMsg) {
       _handleOrderFail(vars, bytes(errMsg), key);
     } catch Panic(uint /*errorCode*/) {
@@ -170,7 +174,7 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     } catch (bytes memory errMsg) {
       _handleOrderFail(vars, errMsg, key);
     }
-    return (false, 0, 0);
+    return (false, 0, 0, false);
   }
 
   function _handleOrderFail(ExecuteTradeOrderVars memory vars, bytes memory errMsg, bytes32 key) internal {

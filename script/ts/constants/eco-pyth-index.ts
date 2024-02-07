@@ -54,46 +54,91 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("USDT"),
   ethers.utils.formatBytes32String("DAI"),
   ethers.utils.formatBytes32String("JPY"),
-  ethers.utils.formatBytes32String("XAU"), // XAUUSD
-  ethers.utils.formatBytes32String("EUR"), // EURUSD
-  ethers.utils.formatBytes32String("XAG"), // XAGUSD
-  ethers.utils.formatBytes32String("AUD"), // AUDUSD
-  ethers.utils.formatBytes32String("GBP"), // GBPUSD
-  ethers.utils.formatBytes32String("ADA"), // ADAUSD
-  ethers.utils.formatBytes32String("MATIC"), // MATICUSD
-  ethers.utils.formatBytes32String("SUI"), // SUIUSD
-  ethers.utils.formatBytes32String("ARB"), // ARBUSD
-  ethers.utils.formatBytes32String("OP"), // OPUSD
-  ethers.utils.formatBytes32String("LTC"), // LTCUSD
-  ethers.utils.formatBytes32String("BNB"), // BNBUSD
-  ethers.utils.formatBytes32String("SOL"), // SOLUSD
-  ethers.utils.formatBytes32String("XRP"), // XRPUSD
-  ethers.utils.formatBytes32String("LINK"), // LINKUSD
-  ethers.utils.formatBytes32String("CHF"), // USDCHF
-  ethers.utils.formatBytes32String("DOGE"), // DOGEUSD
-  ethers.utils.formatBytes32String("CAD"), // USDCAD
-  ethers.utils.formatBytes32String("SGD"), // USDSGD
-  ethers.utils.formatBytes32String("CNH"), // USDCNH
-  ethers.utils.formatBytes32String("HKD"), // USDHKD
-  ethers.utils.formatBytes32String("BCH"), // BCHUSD
-  ethers.utils.formatBytes32String("MEME"), // MEMEUSD
-  ethers.utils.formatBytes32String("SEK"), // USDSEK
+  ethers.utils.formatBytes32String("XAU"),
+  ethers.utils.formatBytes32String("EUR"),
+  ethers.utils.formatBytes32String("XAG"),
+  ethers.utils.formatBytes32String("AUD"),
+  ethers.utils.formatBytes32String("GBP"),
+  ethers.utils.formatBytes32String("ADA"),
+  ethers.utils.formatBytes32String("MATIC"),
+  ethers.utils.formatBytes32String("SUI"),
+  ethers.utils.formatBytes32String("ARB"),
+  ethers.utils.formatBytes32String("OP"),
+  ethers.utils.formatBytes32String("LTC"),
+  ethers.utils.formatBytes32String("BNB"),
+  ethers.utils.formatBytes32String("SOL"),
+  ethers.utils.formatBytes32String("XRP"),
+  ethers.utils.formatBytes32String("LINK"),
+  ethers.utils.formatBytes32String("CHF"),
+  ethers.utils.formatBytes32String("DOGE"),
+  ethers.utils.formatBytes32String("CAD"),
+  ethers.utils.formatBytes32String("SGD"),
+  ethers.utils.formatBytes32String("CNH"),
+  ethers.utils.formatBytes32String("HKD"),
+  ethers.utils.formatBytes32String("BCH"),
+  ethers.utils.formatBytes32String("MEME"),
+  ethers.utils.formatBytes32String("SEK"),
   ethers.utils.formatBytes32String("DIX"),
-  ethers.utils.formatBytes32String("JTO"), // JTOUSD
-  ethers.utils.formatBytes32String("STX"), // STXUSD
-  ethers.utils.formatBytes32String("ORDI"), // ORDIUSD
-  ethers.utils.formatBytes32String("TIA"), // TIAUSD
-  ethers.utils.formatBytes32String("AVAX"), // AVAXUSD
-  ethers.utils.formatBytes32String("INJ"), // INJUSD
-  ethers.utils.formatBytes32String("DOT"), // DOTUSD
-  ethers.utils.formatBytes32String("SEI"), // SEIUSD
-  ethers.utils.formatBytes32String("ATOM"), // ATOMUSD
-  ethers.utils.formatBytes32String("1000PEPE"), // PEPEUSD
-  ethers.utils.formatBytes32String("1000SHIB"), // SHIBUSD
-  ethers.utils.formatBytes32String("ICP"), // ICPUSD
-  ethers.utils.formatBytes32String("MANTA"), // MANTAUSD
+  ethers.utils.formatBytes32String("JTO"),
+  ethers.utils.formatBytes32String("STX"),
+  ethers.utils.formatBytes32String("ORDI"),
+  ethers.utils.formatBytes32String("TIA"),
+  ethers.utils.formatBytes32String("AVAX"),
+  ethers.utils.formatBytes32String("INJ"),
+  ethers.utils.formatBytes32String("DOT"),
+  ethers.utils.formatBytes32String("SEI"),
+  ethers.utils.formatBytes32String("ATOM"),
+  ethers.utils.formatBytes32String("1000PEPE"),
+  ethers.utils.formatBytes32String("1000SHIB"),
+  ethers.utils.formatBytes32String("ICP"),
+  ethers.utils.formatBytes32String("MANTA"),
 ];
-export const ecoPythHoomanReadableByIndex = ["ETH", "BTC", "USDC", "USDT"];
+export const ecoPythHoomanReadableByIndex = [
+  "ETH",
+  "BTC",
+  "USDC",
+  "USDT",
+  "DAI",
+  "JPY",
+  "XAU",
+  "EUR",
+  "XAG",
+  "AUD",
+  "GBP",
+  "ADA",
+  "MATIC",
+  "SUI",
+  "ARB",
+  "OP",
+  "LTC",
+  "BNB",
+  "SOL",
+  "XRP",
+  "LINK",
+  "CHF",
+  "DOGE",
+  "CAD",
+  "SGD",
+  "CNH",
+  "HKD",
+  "BCH",
+  "MEME",
+  "SEK",
+  "DIX",
+  "JTO",
+  "STX",
+  "ORDI",
+  "TIA",
+  "AVAX",
+  "INJ",
+  "DOT",
+  "SEI",
+  "ATOM",
+  "1000PEPE",
+  "1000SHIB",
+  "ICP",
+  "MANTA",
+];
 export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
   [ethers.utils.formatBytes32String("1000SHIB"), 1000],
   [ethers.utils.formatBytes32String("1000PEPE"), 1000],

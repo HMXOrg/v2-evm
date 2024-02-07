@@ -39,7 +39,7 @@
     "priceAdapters": {
       "wstEth": "",
       "hlp": "",
-      "dix": ""
+      "dix": "0x832a59773e7a0896cF348C5EA72670D7CD37572D"
     },
     "orderbook": "0x23628f0C68b3B77Ec2F5Cb3eeB480099c41c2cea"
   },

@@ -12,7 +12,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const signer = signers.deployer(chainId);
-  const intentBuilder = IntentBuilder__factory.connect(config.helpers.intentBuilder, signer);
+  const intentBuilder = IntentBuilder__factory.connect("0x2fDE86903B987CA4FB3Ccfe9bc97CED9E297D361", signer);
   const intentHandler = IntentHandler__factory.connect(config.handlers.intent, signer);
 
   const account = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";

@@ -8,8 +8,8 @@ async function main() {
   const contract = await ethers.deployContract("IntentBuilder", [config.storages.config], deployer);
 
   await contract.deployed();
-  console.log(`[deploys/Dexter] Deploying IntentBuilder Contract`);
-  console.log(`[deploys/Dexter] Deployed at: ${contract.address}`);
+  console.log(`[deploys/IntentBuilder] Deploying IntentBuilder Contract`);
+  console.log(`[deploys/IntentBuilder] Deployed at: ${contract.address}`);
 }
 
 main().catch((error) => {

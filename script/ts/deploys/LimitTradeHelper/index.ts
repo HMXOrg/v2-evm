@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 
 async function main() {
@@ -14,9 +14,9 @@ async function main() {
   config.helpers.limitTrade = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: contract.address,
-    name: "LimitTradeHelper",
+    constructorArguments: [config.storages.config, config.storages.perp],
   });
 }
 

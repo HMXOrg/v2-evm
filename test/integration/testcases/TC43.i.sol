@@ -13,8 +13,12 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
+import { IntentHandler } from "@hmx/handlers/IntentHandler.sol";
 
 contract TC43 is BaseIntTest_WithActions {
+  event LogBadSignature(bytes32 indexed key);
+  event LogIntentReplay(bytes32 indexed key);
+
   function testCorrectness_TC43_intentHandler_executeMarketOrderSuccess() external {
     uint256 privateKey = uint256(keccak256(bytes("1")));
     BOB = vm.addr(privateKey);
@@ -268,7 +272,13 @@ contract TC43 is BaseIntTest_WithActions {
     executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
 
     // Alice has not set delegate as Bob, so expect bad signature here
-    vm.expectRevert(abi.encodeWithSignature("IntenHandler_BadSignature()"));
+    vm.expectEmit(true, false, false, false, address(intentHandler));
+    emit LogBadSignature(
+      keccak256(abi.encode(executeIntentInputs.accountAndSubAccountIds[0], executeIntentInputs.cmds[0]))
+    );
+    emit LogBadSignature(
+      keccak256(abi.encode(executeIntentInputs.accountAndSubAccountIds[1], executeIntentInputs.cmds[1]))
+    );
     intentHandler.execute(executeIntentInputs);
 
     // Now, Alice set delegate as Bob, order should be able to be executed
@@ -402,7 +412,10 @@ contract TC43 is BaseIntTest_WithActions {
     assertEq(vaultStorage.traderBalances(BOB, address(usdc)), 99799.8 * 1e6);
 
     // Test intent replay, should revert
-    vm.expectRevert(abi.encodeWithSignature("IntentHandler_IntentReplay()"));
+    vm.expectEmit(true, false, false, false, address(intentHandler));
+    emit LogIntentReplay(
+      keccak256(abi.encode(executeIntentInputs.accountAndSubAccountIds[0], executeIntentInputs.cmds[0]))
+    );
     intentHandler.execute(executeIntentInputs);
   }
 
@@ -686,7 +699,10 @@ contract TC43 is BaseIntTest_WithActions {
     executeIntentInputs.minPublishTime = block.timestamp;
     executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
 
-    vm.expectRevert(abi.encodeWithSignature("IntenHandler_BadSignature()"));
+    vm.expectEmit(true, false, false, false, address(intentHandler));
+    emit LogBadSignature(
+      keccak256(abi.encode(executeIntentInputs.accountAndSubAccountIds[0], executeIntentInputs.cmds[0]))
+    );
     intentHandler.execute(executeIntentInputs);
 
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 0);

@@ -32,12 +32,12 @@ contract Calculator_IMR is Calculator_Base {
 
   // Try get collateral values with contain depositing collateral tokens on trader's sub account
   function testCorrectness_getCollateralValue_withDepositCollateral() external {
-    // First, Assume ALICE only has one collateral token, WETH
-    mockVaultStorage.setTraderTokens(ALICE, address(weth));
-    mockVaultStorage.setTraderBalance(ALICE, address(weth), 10 ether);
+    // First, Assume ALICE only has one collateral token, ybETH
+    mockVaultStorage.setTraderTokens(ALICE, address(ybeth));
+    mockVaultStorage.setTraderBalance(ALICE, address(ybeth), 10 ether);
 
-    // WETH CollateralValue = amount * price * collateralFactor
-    // WETH CollateralValue = 10 ether * 1E30 * 0.8 = 8 ether
+    // ybETH CollateralValue = amount * price * collateralFactor
+    // ybETH CollateralValue = 10 ether * 1E30 * 0.8 = 8 ether
     assertEq(calculator.getCollateralValue(ALICE, 0, 0), 8 * 1e30);
 
     // Second, Assume ALICE deposit more new collateral, WBTC

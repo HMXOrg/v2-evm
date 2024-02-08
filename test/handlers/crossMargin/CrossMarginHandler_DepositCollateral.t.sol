@@ -25,23 +25,20 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
    * TEST REVERT
    */
 
-  // Try deposit token collateral with not accepted token (Ex. Fx, Equity)
-  function testRevert_handler_depositCollateral_onlyAcceptedToken() external {
+  function testRevert_Handler_DepositCollateral_WhenDepositUnacceptedCollateral() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
     crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, address(dai), 10 ether, false);
   }
 
-  // Try deposit token collateral with insufficient allowance
-  function testRevert_handler_depositCollateral_InsufficientAllowance() external {
+  function testRevert_Handler_DepositCollateral_WhenInsufficientAllowance() external {
     vm.startPrank(ALICE);
     vm.expectRevert("ERC20: insufficient allowance");
     crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, address(wbtc), 10 ether, false);
     vm.stopPrank();
   }
 
-  // Try deposit token collateral with exceed trader's balance
-  function testRevert_handler_depositCollateral_TransferExceedBalance() external {
+  function testRevert_Handler_DepositCollateral_WhenTransferExceedBalance() external {
     uint256 depositAmount = 10 ether;
 
     vm.startPrank(ALICE);
@@ -51,8 +48,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     vm.stopPrank();
   }
 
-  // Try deposit native token as collateral, but with mismatch msg.value
-  function testRevert_handler_depositCollateral_wNativeToken_withBadMsgValue() external {
+  function testRevert_Handler_DepositCollateral_WhenWrappedNative_WithBadMsgValue() external {
     vm.deal(ALICE, 20 ether);
 
     vm.startPrank(ALICE);
@@ -63,7 +59,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
   }
 
   // Try deposit native token as collateral, but has not enough native balance
-  function testRevert_handler_depositCollateral_wNativeToken_withInsufficientNativeBalance() external {
+  function testRevert_Handler_DepositCollateral_WhenNative_WithInsufficientNativeBalance() external {
     // Give Alice 19 ETH, but Alice will try to deposit 20 ETH
     vm.deal(ALICE, 19 ether);
 
@@ -74,7 +70,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
   }
 
   // Try deposit token with _shouldWrap = true, but with non-wNative token
-  function testRevert_handler_depositCollateral_withShouldWrap_butWithNonWNativeToken() external {
+  function testRevert_Handler_DepositCollateral_WhenShouldWrapTrue_ButWithNonWNativeToken() external {
     vm.deal(ALICE, 20 ether);
 
     vm.startPrank(ALICE);
@@ -85,7 +81,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
   }
 
   // Try deposit token when there're some exceeded tokens in the vault storage
-  function testRevert_handler_depositCollateral_whenSomeExceededTokens() external {
+  function testRevert_Handler_DepositCollateral_WhenSomeExceededTokens() external {
     wbtc.mint(ALICE, 1 * 1e8);
     wbtc.mint(address(vaultStorage), 10 * 1e8);
 
@@ -101,40 +97,41 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
    * TEST CORRECTNESS
    */
 
-  // Try deposit token collateral with initial balance and test accounting balance
-  function testCorrectness_handler_depositCollateral_newDepositingToken() external {
+  // Deposit collateral that's already yb or no need to wrap to yb
+  function testCorrectness_Handler_DepositCollateral_SimpleDeposit() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
-    // Before start depositing, ALICE must has 0 amount of WETH token
-    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 0);
-    assertEq(weth.balanceOf(address(vaultStorage)), 0);
+    // Before start depositing, ALICE must has 0 amount of ybETH token
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 0);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 0);
 
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
-    // After deposited, ALICE's sub account must has 10 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 10 ether);
-    assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
+    // After deposited, ALICE's sub account must has 10 ybETH as collateral token
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 10 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 10 ether);
   }
 
-  // Try deposit token collateral with initial balance and test deposit token lists
-  function testCorrectness_handler_depositCollateral_newDepositingToken_traderTokenList() external {
+  // Deposit collateral that's already yb or no need to wrap to yb, assert trader token list
+  function testCorrectness_Handler_DepositCollateral_SimpleDeposit_AssertTraderTokenList() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
     // Before ALICE start depositing, token lists must contains no token
     address[] memory traderTokenBefore = vaultStorage.getTraderTokens(subAccount);
     assertEq(traderTokenBefore.length, 0);
 
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
     address[] memory traderTokenAfter = vaultStorage.getTraderTokens(subAccount);
     assertEq(traderTokenAfter.length, 1);
+    assertEq(traderTokenAfter[0], address(ybeth));
   }
 
-  // Try deposit token collateral with existing balance and test deposit token lists + balance
-  function testCorrectness_handler_depositCollateral_oldDepositingToken_traderTokenList() external {
+  // Deposit collateral twice and assert deposit token lists + balance
+  function testCorrectness_Handler_DepositCollateral_SimpleDeposit_DepositSameAsset_AssertTraderTokenList() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
     // Before ALICE start depositing, token lists must contains no token
@@ -142,25 +139,53 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     assertEq(traderTokenBefore.length, 0);
 
     // ALICE deposits first time
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
     // ALICE deposits second time
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
     address[] memory traderTokenAfter = vaultStorage.getTraderTokens(subAccount);
     assertEq(traderTokenAfter.length, 1);
+    assertEq(traderTokenAfter[0], address(ybeth));
 
     // After deposited, ALICE must has 20 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 20 ether);
-    assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 20 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 20 ether);
+    assertEq(ybeth.balanceOf(ALICE), 0);
+  }
+
+  // Deposit collateral that's wrapable to yb, assert balance and trader token list
+  function testCorrectness_Handler_DepositCollateral_WrapableDeposit() external {
+    address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
+
+    // Before ALICE start depositing, token lists must contains no token
+    address[] memory traderTokenBefore = vaultStorage.getTraderTokens(subAccount);
+    assertEq(traderTokenBefore.length, 0);
+
+    // Alice deposits first time
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
+    // Alice deposits second time
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
+    // After Alice's account
+    address[] memory traderTokenAfter = vaultStorage.getTraderTokens(subAccount);
+    assertEq(traderTokenAfter.length, 1);
+    assertEq(traderTokenAfter[0], address(ybeth));
+
+    // After deposited, ALICE must has 20 ybETH as collateral token
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 20 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 20 ether);
     assertEq(weth.balanceOf(ALICE), 0);
   }
 
   // Try deposit native token as collateral
-  function testCorrectness_handler_depositCollateral_wNativeToken() external {
+  function testCorrectness_handler_depositEthAsCollateral_ShouldWrapToYbETH() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
     // Before start depositing, ALICE must has 0 amount of WETH token
@@ -172,9 +197,9 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     crossMarginHandler.depositCollateral{ value: 20 ether }(SUB_ACCOUNT_NO, address(weth), 20 ether, true);
     vm.stopPrank();
 
-    // After deposited, ALICE's sub account must has 20 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 20 ether);
-    assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
+    // After deposited, ALICE's sub account must has 20 ybETH as collateral token
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 20 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 20 ether);
     assertEq(ALICE.balance, 0 ether);
   }
 }

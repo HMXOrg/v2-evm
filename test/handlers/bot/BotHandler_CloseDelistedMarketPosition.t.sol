@@ -50,14 +50,14 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // mock HLP token for profitable trader
-    // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
+    // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 ybETH (price 1$)
     //                                                        - 10,000 WBTC (price 100$)
-    vaultStorage.addHLPLiquidity(address(weth), 1_000_000 ether);
+    vaultStorage.addHLPLiquidity(address(ybeth), 1_000_000 ether);
     vaultStorage.addHLPLiquidity(address(wbtc), 10_000 ether);
 
     // assume ALICE sub-account 0 has collateral
-    // weth - 100,000 ether
-    vaultStorage.increaseTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    // ybeth - 100,000 ether
+    vaultStorage.increaseTraderBalance(_getSubAccount(ALICE, 0), address(ybeth), 100_000 ether);
   }
 
   /**
@@ -96,7 +96,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     // BOB open SHORT position
     tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30, 0);
 
-    address _tpToken = address(weth); // take profit token
+    address _tpToken = address(ybeth); // take profit token
 
     // let position tester watch this position
     bytes32 _positionId = _getPositionId(ALICE, 0, ethMarketIndex);
@@ -163,7 +163,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     // BOB open LONG position
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-    address _tpToken = address(weth); // take profit token
+    address _tpToken = address(ybeth); // take profit token
 
     // let position tester watch this position
     bytes32 _positionId = _getPositionId(ALICE, 0, ethMarketIndex);

@@ -7,13 +7,14 @@ import { SafeTransferLib } from "lib/solmate/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "lib/solmate/src/utils/FixedPointMathLib.sol";
 
 // Interfaces
-import { IBlast, YieldMode } from "src/interfaces/blast/IBlast.sol";
+import { IERC20Rebasing, YieldMode } from "src/interfaces/blast/IERC20Rebasing.sol";
 import { IWNative } from "src/interfaces/IWNative.sol";
 
 /// @title MockYbETH - Copied from HMXORg/yb-blast with compatiability adjustments
 contract MockYbETH is ERC20 {
   using SafeTransferLib for address;
   using SafeTransferLib for ERC20;
+  using SafeTransferLib for IERC20Rebasing;
   using FixedPointMathLib for uint256;
 
   // Errors
@@ -21,8 +22,7 @@ contract MockYbETH is ERC20 {
   error ZeroShares();
 
   // Configs
-  IWNative public immutable weth;
-  IBlast public immutable blast;
+  IERC20Rebasing public immutable asset;
 
   // States
   uint256 internal _totalAssets;
@@ -37,22 +37,17 @@ contract MockYbETH is ERC20 {
     uint256 shares
   );
 
-  constructor(IWNative _weth, IBlast _blast) ERC20("ybETH", "ybETH", 18) {
+  constructor(IERC20Rebasing _weth) ERC20("ybETH", "ybETH", 18) {
     // Effect
-    weth = _weth;
-    blast = _blast;
+    asset = _weth;
 
     // Interaction
-    blast.configureClaimableYield();
-  }
-
-  function asset() external pure returns (address) {
-    return 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    asset.configure(YieldMode.CLAIMABLE);
   }
 
   /// @notice Claim all pending yield and update _totalAssets.
   function claimAllYield() public {
-    _totalAssets += blast.claimAllYield(address(this), address(this));
+    _totalAssets += asset.claim(address(this), asset.getClaimableAmount(address(this)));
   }
 
   /// @notice Deposit ETH to mint ybETH.
@@ -71,6 +66,9 @@ contract MockYbETH is ERC20 {
     // Mint ybETH
     _mint(_receiver, _shares);
 
+    // Wrap ETH
+    address(asset).safeTransferETH(msg.value);
+
     // Log
     emit Deposit(msg.sender, _receiver, msg.value, _shares);
   }
@@ -87,8 +85,7 @@ contract MockYbETH is ERC20 {
     if ((_shares = previewDeposit(_assets)) == 0) revert ZeroShares();
 
     // Transfer from depositor
-    weth.transferFrom(msg.sender, address(this), _assets);
-    weth.withdraw(_assets);
+    asset.transferFrom(msg.sender, address(this), _assets);
 
     // Effect
     // Update totalAssets
@@ -111,8 +108,7 @@ contract MockYbETH is ERC20 {
     _assets = previewMint(_shares);
 
     // Transfer from depositor
-    weth.transferFrom(msg.sender, address(this), _assets);
-    weth.withdraw(_assets);
+    asset.transferFrom(msg.sender, address(this), _assets);
 
     // Effect
     // Update totalAssets
@@ -160,10 +156,10 @@ contract MockYbETH is ERC20 {
     // Interaction
     // Transfer assets out
     if (_isEthOut) {
+      IWNative(address(asset)).withdraw(_assets);
       address(_receiver).safeTransferETH(_assets);
     } else {
-      address(weth).safeTransferETH(_assets);
-      weth.transfer(_receiver, _assets);
+      asset.transfer(_receiver, _assets);
     }
 
     emit Withdraw(msg.sender, _receiver, _owner, _assets, _shares);
@@ -221,10 +217,10 @@ contract MockYbETH is ERC20 {
     // Interaction
     // Transfer assets out
     if (_isEthOut) {
+      IWNative(address(asset)).withdraw(_assets);
       address(_receiver).safeTransferETH(_assets);
     } else {
-      address(weth).safeTransferETH(_assets);
-      weth.transfer(_receiver, _assets);
+      asset.transfer(_receiver, _assets);
     }
 
     emit Withdraw(msg.sender, _receiver, _owner, _assets, _shares);
@@ -234,7 +230,7 @@ contract MockYbETH is ERC20 {
   /// @param _assets The amount of assets that user wishes to receive.
   /// @param _receiver The receiver of the assets.
   /// @param _owner The owner of the ybETH.
-  function withdrawETH(uint256 _assets, address _receiver, address _owner) public returns (uint256 _shares) {
+  function withdrawETH(uint256 _assets, address _receiver, address _owner) external returns (uint256 _shares) {
     return _withdraw(true, _assets, _receiver, _owner);
   }
 
@@ -243,14 +239,14 @@ contract MockYbETH is ERC20 {
   /// @param _assets The amount of assets that user wishes to receive.
   /// @param _receiver The receiver of the assets.
   /// @param _owner The owner of the ybETH.
-  function withdraw(uint256 _assets, address _receiver, address _owner) public returns (uint256 _shares) {
+  function withdraw(uint256 _assets, address _receiver, address _owner) external returns (uint256 _shares) {
     return _withdraw(false, _assets, _receiver, _owner);
   }
 
   /// @notice Return the total assets managed by this contract.
   /// @dev Unclaimed yield is included.
   function totalAssets() public view returns (uint256) {
-    return _totalAssets + blast.readClaimableYield(address(this));
+    return _totalAssets + asset.getClaimableAmount(address(this));
   }
 
   /// @notice Preview the amount of ybETH to mint by specifying the amount of assets to deposit.
@@ -298,29 +294,29 @@ contract MockYbETH is ERC20 {
   }
 
   /// @notice Return the amount of assets that can be deposited to ybETH.
-  function maxDeposit(address) public pure returns (uint256) {
+  function maxDeposit(address) external pure returns (uint256) {
     return type(uint256).max;
   }
 
   /// @notice Return the amount of ybETH that can be minted.
-  function maxMint(address) public pure returns (uint256) {
+  function maxMint(address) external pure returns (uint256) {
     return type(uint256).max;
   }
 
   /// @notice Return the amount of ETH/WETH that can be withdrawn from ybETH.
   /// @param _owner The owner of the ybETH.
-  function maxWithdraw(address _owner) public view returns (uint256) {
+  function maxWithdraw(address _owner) external view returns (uint256) {
     return convertToAssets(balanceOf[_owner]);
   }
 
   /// @notice Return the amount of ybETH that can be redeemed.
   /// @param _owner The owner of the ybETH.
-  function maxRedeem(address _owner) public view returns (uint256) {
+  function maxRedeem(address _owner) external view returns (uint256) {
     return balanceOf[_owner];
   }
 
   receive() external payable {
-    if (msg.sender != address(weth)) {
+    if (msg.sender != address(asset)) {
       depositETH(msg.sender);
     }
   }

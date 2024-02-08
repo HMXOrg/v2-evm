@@ -243,4 +243,9 @@ interface IConfigStorage {
   function getAssetClassConfigsLength() external view returns (uint256);
 
   function isAdaptiveFeeEnabledByMarketIndex(uint256 marketIndex) external view returns (bool);
+
+  /// CHAIN:BLAST
+  function ybTokenOf(address _token) external view returns (address);
+
+  function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external;
 }

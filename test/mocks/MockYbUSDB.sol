@@ -10,7 +10,7 @@ import { FixedPointMathLib } from "lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IERC20Rebasing, YieldMode } from "src/interfaces/blast/IERC20Rebasing.sol";
 
 /// @title MockYbUSDB - Copied from HMXORg/yb-blast with compatiability adjustments
-contract ybUSDB is ERC20 {
+contract MockYbUSDB is ERC20 {
   using SafeTransferLib for address;
   using FixedPointMathLib for uint256;
 

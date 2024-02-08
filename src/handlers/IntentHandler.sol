@@ -94,16 +94,30 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
 
         _localVars.key = keccak256(abi.encode(inputs.accountAndSubAccountIds[_i], inputs.cmds[_i]));
         if (executedIntents[_localVars.key]) {
-          revert IntentHandler_IntentReplay();
+          emit LogIntentReplay(_localVars.key);
+
+          unchecked {
+            ++_i;
+          }
+          continue;
         }
 
-        _validateSignature(_vars.order, inputs.signatures[_i], _localVars.mainAccount);
-        gasService.collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId);
+        if (!_validateSignature(_vars.order, inputs.signatures[_i], _localVars.mainAccount)) {
+          emit LogBadSignature(_localVars.key);
+          unchecked {
+            ++_i;
+          }
+          continue;
+        }
+        try gasService.collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId) {} catch {
+          emit LogCollectExecutionFeeFailed(_localVars.key);
+          unchecked {
+            ++_i;
+          }
+          continue;
+        }
 
-        // pre check for order to die here
-        // 1. Expire
-        // 2. max trade size
-        // 3. max position size
+        // Pre-validate order here and if fail, the order will be canceled and marked as executed.
         bool _isPreValidateSuccess = _prevalidateExecuteTradeOrder(_vars);
         if (!_isPreValidateSuccess) {
           executedIntents[_localVars.key] = true;
@@ -196,10 +210,13 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     IIntentHandler.TradeOrder memory _tradeOrder,
     bytes memory _signature,
     address _signer
-  ) internal view {
+  ) internal view returns (bool) {
     address _recoveredSigner = ECDSAUpgradeable.recover(getDigest(_tradeOrder), _signature);
     address _tradingWallet = delegations[_signer];
-    if (_signer != _recoveredSigner && _tradingWallet != _recoveredSigner) revert IntenHandler_BadSignature();
+    if (_signer != _recoveredSigner && _tradingWallet != _recoveredSigner) {
+      return false;
+    }
+    return true;
   }
 
   function getDigest(IIntentHandler.TradeOrder memory _tradeOrder) public view returns (bytes32 _digest) {

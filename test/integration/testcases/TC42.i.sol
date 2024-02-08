@@ -26,7 +26,7 @@ contract TC42 is BaseIntTest_WithActions {
     _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
     _marketConfig.increasePositionFeeRateBPS = 7;
     _marketConfig.decreasePositionFeeRateBPS = 7;
-    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, true);
+    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, true, 0);
 
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
     configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);
@@ -218,7 +218,7 @@ contract TC42 is BaseIntTest_WithActions {
     _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
     _marketConfig.increasePositionFeeRateBPS = 7;
     _marketConfig.decreasePositionFeeRateBPS = 7;
-    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, true);
+    configStorage.setMarketConfig(wethMarketIndex, _marketConfig, true, 0);
 
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
     configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);

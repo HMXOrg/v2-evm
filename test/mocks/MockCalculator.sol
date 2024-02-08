@@ -85,6 +85,10 @@ contract MockCalculator is ICalculator {
     fundingRateShort = _fundingRateShort;
   }
 
+  function setGlobalPnLE30(int256 _globalPnlE30) external {
+    globalPnlE30 = _globalPnlE30;
+  }
+
   // =========================================
   // | ---------- Getter ------------------- |
   // =========================================

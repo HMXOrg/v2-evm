@@ -55,7 +55,7 @@ contract TradeService_FundingFee is TradeService_Base {
     _marketConfig.maxLongPositionSize = 100_000_000 * 1e30;
     _marketConfig.maxShortPositionSize = 100_000_000 * 1e30;
 
-    configStorage.setMarketConfig(ethMarketIndex, _marketConfig, false);
+    configStorage.setMarketConfig(ethMarketIndex, _marketConfig, false, 0);
   }
 
   function testCorrectness_fundingFee() external {

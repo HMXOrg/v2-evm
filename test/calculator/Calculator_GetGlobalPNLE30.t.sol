@@ -28,7 +28,8 @@ contract Calculator_GetGlobalPNLE30Test is Calculator_Base {
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e18, maxSkewScaleUSD: 300_000_000 * 1e30 })
       }),
-      false
+      false,
+      0
     );
   }
 

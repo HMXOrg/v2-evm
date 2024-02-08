@@ -105,6 +105,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     bool currentPositionIsLong;
     uint256 oldSumSe;
     uint256 oldSumS2e;
+    uint256 maxSkew;
     // for SLOAD
     PerpStorage.Position position;
     OracleMiddleware oracle;
@@ -258,6 +259,22 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // determine whether the new size delta is for a long position
     _vars.isLong = _sizeDelta > 0;
+
+    // If max skew is 0, skip the check
+    _vars.maxSkew = _vars.configStorage.maxSkewUsdByMarketIndex(_marketIndex);
+    if (_vars.maxSkew > 0) {
+      if (_vars.isLong) {
+        uint256 _newSkew = (_market.longPositionSize + uint256(_sizeDelta)) > _market.shortPositionSize
+          ? (_market.longPositionSize + uint256(_sizeDelta)) - _market.shortPositionSize
+          : _market.shortPositionSize - (_market.longPositionSize + uint256(_sizeDelta));
+        if (_newSkew > _vars.maxSkew) revert ITradeService_MaxSkewExceed();
+      } else {
+        uint256 _newSkew = (_market.shortPositionSize + uint256(-_sizeDelta)) > _market.longPositionSize
+          ? (_market.shortPositionSize + uint256(-_sizeDelta)) - _market.longPositionSize
+          : _market.longPositionSize - (_market.shortPositionSize + uint256(-_sizeDelta));
+        if (_newSkew > _vars.maxSkew) revert ITradeService_MaxSkewExceed();
+      }
+    }
     if (
       _vars.isLong
         ? _market.longPositionSize + uint256(_sizeDelta) > _marketConfig.maxLongPositionSize
@@ -375,11 +392,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       // Additionally, if the minimum profit duration is active, increasing the position is not allowed.
       // This is checked by comparing _delta to 0, as it is virtually impossible for _delta to be 0 if the position is active without a minimum profit duration.
       uint256 minProfitDuration = _vars.configStorage.minProfitDurations(_marketIndex);
-      if (
-        _isProfit &&
-        (_delta >= _vars.position.reserveValueE30 ||
-          (block.timestamp < _vars.position.lastIncreaseTimestamp + minProfitDuration))
-      ) {
+      if (_isProfit && (block.timestamp < _vars.position.lastIncreaseTimestamp + minProfitDuration)) {
         revert ITradeService_NotAllowIncrease();
       }
 
@@ -775,7 +788,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _marketIndex,
     DecreasePositionVars memory _vars
-  ) private returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
+  ) private returns (bool /*_isMaxProfit*/, bool isProfit, uint256 delta) {
     PrivateDecreasePositionVars memory _temp;
     // SLOAD
     _temp.tradeHelper = TradeHelper(tradeHelper);
@@ -843,11 +856,12 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.position.marketIndex
       );
 
-      // if trader has profit more than our reserved value then trader's profit maximum is reserved value
-      if (isProfit && delta >= _vars.position.reserveValueE30) {
-        delta = _vars.position.reserveValueE30;
-        _isMaxProfit = true;
-      }
+      // Adaptive ADL: Disable thick check to depreciate individual position max profit and use Adaptive ADL instead
+      // // if trader has profit more than our reserved value then trader's profit maximum is reserved value
+      // if (isProfit && delta >= _vars.position.reserveValueE30) {
+      //   delta = _vars.position.reserveValueE30;
+      //   _isMaxProfit = true;
+      // }
 
       uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
       if (isProfit && block.timestamp < (_vars.position.lastIncreaseTimestamp + minProfitDuration)) {
@@ -1090,26 +1104,15 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
-    // Get the total TVL
-    uint256 tvl = calculator.getHLPValueE30(true);
-
     // Retrieve the global state
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
 
     // Retrieve the global asset class
     PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(_assetClassIndex);
 
-    // get the liquidity configuration
-    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
-
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += _reservedValue;
     _assetClass.reserveValueE30 += _reservedValue;
-
-    // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    if ((tvl * _liquidityConfig.maxHLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
-      revert ITradeService_InsufficientLiquidity();
-    }
 
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);

@@ -600,7 +600,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   function toggleMarket(uint256 _marketIndex) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
     _marketConfig.active = !_marketConfig.active;
-    configStorage.setMarketConfig(_marketIndex, _marketConfig, false);
+    configStorage.setMarketConfig(_marketIndex, _marketConfig, false, 0);
   }
 
   function isStringNotEmpty(string memory str) public pure returns (bool) {

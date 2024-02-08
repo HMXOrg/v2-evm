@@ -201,7 +201,7 @@ contract TC07 is BaseIntTest_WithActions {
       assertEq(_marketConfig.initialMarginFractionBPS, 100);
       _marketConfig.initialMarginFractionBPS = 500; // adjust IMF from 100 BPS => 500 BPS
 
-      configStorage.setMarketConfig(wethMarketIndex, _marketConfig, false);
+      configStorage.setMarketConfig(wethMarketIndex, _marketConfig, false, 0);
 
       // Check after admin updated IMF number
       IConfigStorage.MarketConfig memory _marketConfigAf = configStorage.getMarketConfigByIndex(wethMarketIndex);
@@ -244,7 +244,7 @@ contract TC07 is BaseIntTest_WithActions {
       assertEq(_marketConfig.initialMarginFractionBPS, 500);
       _marketConfig.initialMarginFractionBPS = 100; // adjust IMF from 500 BPS => 100 BPS
 
-      configStorage.setMarketConfig(wethMarketIndex, _marketConfig, false);
+      configStorage.setMarketConfig(wethMarketIndex, _marketConfig, false, 0);
 
       // Check after admin updated IMF number
       IConfigStorage.MarketConfig memory _marketConfigAf = configStorage.getMarketConfigByIndex(wethMarketIndex);

@@ -34,6 +34,8 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     //       borrowing fee  - 0
     // aum = tvl + unrealized pnl + borrowing fee = 99.7 e30 + 0 + 0
     mockCalculator.setAUM(99.7e18);
+    mockCalculator.setHLPValue(1e18);
+    mockCalculator.setGlobalPnLE30(1);
   }
 
   function testCorrectness_WhenHLPRemoveLiquidity() external {

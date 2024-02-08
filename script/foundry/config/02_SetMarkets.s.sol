@@ -65,6 +65,6 @@ contract SetMarkets is ConfigJsonRepo {
     _newMarketConfig.maxLongPositionSize = 10_000_000 * 1e30;
     _newMarketConfig.maxShortPositionSize = 10_000_000 * 1e30;
 
-    return configStorage.addMarketConfig(_newMarketConfig, false);
+    return configStorage.addMarketConfig(_newMarketConfig, false, 0);
   }
 }

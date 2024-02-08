@@ -26,7 +26,7 @@ contract TradeService_TradingFee is TradeService_Base {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(ethMarketIndex);
     _marketConfig.increasePositionFeeRateBPS = 0.0001 * 1e4;
     _marketConfig.decreasePositionFeeRateBPS = 0.0001 * 1e4;
-    configStorage.setMarketConfig(ethMarketIndex, _marketConfig, false);
+    configStorage.setMarketConfig(ethMarketIndex, _marketConfig, false, 0);
   }
 
   function testCorrectness_tradingFee_usedOneCollateral() external {

@@ -59,14 +59,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   /**
    * REVERT
    */
-  function test_revert_directCall_executeLiquidity() external {
+  function testRevert_WhenCallExecuteLiquidityDirectly() external {
     _createAddLiquidityWBTCOrder();
     ILiquidityHandler.LiquidityOrder[] memory aliceOrders = liquidityHandler.getLiquidityOrders();
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_Unauthorized()"));
     liquidityHandler.executeLiquidity(aliceOrders[0]);
   }
 
-  function test_revert_executeOrder_notOrderExecutor() external {
+  function testRevert_WhenCallerNotWhitelisted() external {
     _createAddLiquidityWBTCOrder();
 
     ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
@@ -83,7 +83,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     );
   }
 
-  function test_revert_cancelOrder_notOwnerOrder() external {
+  function testRevert_WhenCancelOrder_WhenNotOrderOwner() external {
     uint256 _orderIndex = _createAddLiquidityWBTCOrder();
 
     vm.prank(BOB);
@@ -91,13 +91,13 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     liquidityHandler.cancelLiquidityOrder(_orderIndex);
   }
 
-  function test_revert_cancelOrder_uncreatedOrder() external {
+  function testRevert_WhenCancelOrder_WhenOrderNotCreated() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NoOrder()"));
     liquidityHandler.cancelLiquidityOrder(0);
   }
 
-  function test_correctness_userRefund_addLiquidity_revertAsMessage() external {
+  function testCorrectness_WhenAddLiquidity_WhenRevertAsMessage_UserShouldGetRefund() external {
     mockLiquidityService.setReverted(true);
     mockLiquidityService.setRevertAsMessage(true);
 
@@ -118,13 +118,13 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     // Assertion after Executed Order
     _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
     ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-    //user have to get refund
+    // User have to get refund
     assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
     assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
     assertEq(wbtc.balanceOf(ALICE), 1 ether);
   }
 
-  function test_correctness_userRefund_addLiquidity_revertAsBytes() external {
+  function testCorrectness_WhenAddLiquidity_WhenRevertAsBytes_UserShouldGetRefund() external {
     mockLiquidityService.setReverted(true);
     mockLiquidityService.setRevertAsMessage(false);
 
@@ -151,7 +151,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(wbtc.balanceOf(ALICE), 1 ether);
   }
 
-  function test_correctness_userRefund_removeLiquidity_revertAsMessage() external {
+  function testCorrectness_WhenRemoveLiquidity_WhenRevertAsMessage_UserShouldGetRefund() external {
     mockLiquidityService.setReverted(true);
     mockLiquidityService.setRevertAsMessage(true);
 
@@ -178,7 +178,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(hlp.balanceOf(ALICE), 5 ether);
   }
 
-  function test_correctness_userRefund_removeLiquidity_revertAsBytes() external {
+  function testCorrectness_WhenRemoveLiquidity_WhenRevertAsBytes_UserShouldGetRefund() external {
     mockLiquidityService.setReverted(true);
     mockLiquidityService.setRevertAsMessage(false);
 
@@ -209,7 +209,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
    * CORRECTNESS
    */
 
-  function test_correctness_executeOrder_IncreaseOneOrder() external {
+  function testCorrectness_WhenAddLiquidity_AssertNextExecutionOrderIndex() external {
     uint256 _orderIndex = _createAddLiquidityWBTCOrder();
     uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
 
@@ -233,7 +233,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   }
 
   /// @dev hlp burn and receive tokenOut in service
-  function test_correctness_executeOrder_createRemoveLiquidityOrder() external {
+  function testCorrectness_WhenRemoveLiquidity() external {
     _createRemoveLiquidityOrder();
 
     // Handler executor
@@ -256,7 +256,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_ordersAfter.length, _nextExecutionOrderIndex, "OrderAfter size != lastExecutedOrderIndex");
   }
 
-  function test_correctness_executeOrder_createRemoveLiquidityOrders() external {
+  function testCorrectness_WhenMultipleRemoveLiquidityOrders() external {
     _createRemoveLiquidityOrder();
     _createRemoveLiquidityOrder();
 
@@ -278,7 +278,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   }
 
   /// @dev hlp burn and receive tokenOut in service
-  function test_correctness_executeOrder_native_createRemoveLiquidityOrder() external {
+  function testCorrectness_WhenRemoveLiquidityAsEth() external {
     // 1 Create Native add liquidity
     vm.deal(ALICE, 10 ether); //5 for executeOrderFee , 5 for create liquidity position
     vm.startPrank(ALICE);
@@ -294,7 +294,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
     vm.stopPrank();
 
-    // 2 Assert LIquidity Order
+    // 2 Assert liquidity Order
     assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Created Order");
 
@@ -344,7 +344,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(ALICE.balance, 5 ether, "ALICE received balance");
   }
 
-  function test_correctness_executeOrder_native_refundCreateLiquidityOrder() external {
+  function testCorrectness_WhenRefundLiquidityOrderAsEth() external {
     mockLiquidityService.setReverted(true);
     mockLiquidityService.setRevertAsMessage(false);
 
@@ -396,7 +396,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(ALICE.balance, _beforeExecuteOrders[_orderIndex].amount, "Alice refund Balance");
   }
 
-  function test_correctness_cancelOrder() external {
+  function testCorrectness_WhenUserCancelOrder() external {
     uint256 _orderIndex = _createAddLiquidityWBTCOrder();
     _createAddLiquidityWBTCOrder();
     _createAddLiquidityWBTCOrder();
@@ -419,7 +419,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 3);
   }
 
-  function test_correctness_refunding_when_cancelOrder() external {
+  function testCorrectness_WhenUserCancelOrder_UserShouldGetRefund() external {
     uint256 _orderIndex = _createAddLiquidityWBTCOrder();
 
     // Check Alice balance before cancel
@@ -433,6 +433,66 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     // Check Alice balance after cancel
     assertEq(wbtc.balanceOf(ALICE), 1 ether);
     assertEq(ALICE.balance, 5 ether);
+  }
+
+  function testCorrectness_WhenAddLiquidityWithEth() external {
+    vm.deal(ALICE, 10 ether);
+
+    vm.startPrank(ALICE);
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 10 ether }(
+      address(weth),
+      5 ether,
+      0,
+      5 ether,
+      true
+    );
+    vm.stopPrank();
+
+    uint256 ethBefore = FEEVER.balance;
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
+    uint256 ethAfter = FEEVER.balance;
+
+    assertEq(ethAfter - ethBefore, 5 ether);
+    assertEq(weth.balanceOf(address(ybeth)), 5 ether);
+    assertEq(ybeth.balanceOf(mockLiquidityService.vaultStorage()), 5 ether);
+  }
+
+  function testCorrectness_WhenAddLiquidityWithWeth() external {
+    vm.deal(ALICE, 10 ether);
+
+    vm.startPrank(ALICE);
+    weth.deposit{ value: 5 ether }();
+    weth.approve(address(liquidityHandler), 5 ether);
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
+      address(weth),
+      5 ether,
+      0,
+      5 ether,
+      false
+    );
+    vm.stopPrank();
+
+    uint256 ethBefore = FEEVER.balance;
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
+    uint256 ethAfter = FEEVER.balance;
+
+    assertEq(ethAfter - ethBefore, 5 ether);
+    assertEq(weth.balanceOf(address(ybeth)), 5 ether);
+    assertEq(ybeth.balanceOf(mockLiquidityService.vaultStorage()), 5 ether);
   }
 
   function _createAddLiquidityWBTCOrder() internal returns (uint256) {

@@ -14,8 +14,8 @@ abstract contract BaseIntTest_SetHLPTokens is BaseIntTest_SetAssetConfigs {
     address[] memory _tokens = new address[](5);
     _tokens[0] = address(usdc);
     _tokens[1] = address(usdt);
-    _tokens[2] = address(dai);
-    _tokens[3] = address(weth);
+    _tokens[2] = address(ybusdb);
+    _tokens[3] = address(ybeth);
     _tokens[4] = address(wbtc);
 
     IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](_tokens.length);

@@ -72,6 +72,7 @@ contract TradeService_FundingFee is TradeService_Base {
     // ETH price 1600 USD
     mockOracle.setPrice(usdtAssetId, 1 * 1e30);
     mockOracle.setPrice(wethAssetId, 1600 * 1e30);
+    mockOracle.setPrice(ybethAssetId, 1600 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 1_000_000 * 1e6);

@@ -49,14 +49,14 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
 
   function testCorrectness_WhenGetSettlementFeeRateAndMakePoolWorst() external {
     // usd debt
-    vaultStorage.addHLPLiquidity(address(dai), 1_000 ether);
-    vaultStorage.addHLPLiquidity(address(weth), 9_000 ether);
+    vaultStorage.addHLPLiquidity(address(ybusdb), 1_000 ether);
+    vaultStorage.addHLPLiquidity(address(ybeth), 9_000 ether);
 
     // liquidity config
     // tax fee rate = 0.5%
     // total weight = 100%
     // hlp DAI pool weigh = 10%
-    uint256 _rate = calculator.getSettlementFeeRate(address(dai), 200 * 1e30);
+    uint256 _rate = calculator.getSettlementFeeRate(address(ybusdb), 200 * 1e30);
 
     // calculation
     // usd debt = 1000

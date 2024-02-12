@@ -43,8 +43,8 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
 
   // Try deposit token collateral with transfer amount to VaultStorage less than state accounting
   function testRevert_service_depositCollateral_invalidDepositBalance() external {
-    address token = address(weth);
-    weth.mint(ALICE, 1 ether);
+    address token = address(ybeth);
+    dealyb(payable(address(ybeth)), ALICE, 1 ether);
 
     vm.startPrank(ALICE);
     // simulate transfer from Handler to VaultStorage
@@ -62,16 +62,16 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
 
   // Try deposit token collateral with initial balance and test accounting balance
   function testCorrectness_service_depositCollateral_newDepositingToken() external {
-    // Before start depositing, ALICE must has 0 amount of WETH token
-    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 0);
-    assertEq(weth.balanceOf(address(vaultStorage)), 0);
+    // Before start depositing, ALICE must has 0 amount of ybETH
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(ybeth)), 0);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 0);
 
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
-    // After deposited, ALICE must has 10 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 10 ether);
-    assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
+    // After deposited, ALICE must has 10 ybETH as collateral token
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(ybeth)), 10 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 10 ether);
   }
 
   // Try deposit token collateral with initial balance and test deposit token lists
@@ -80,8 +80,8 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     address[] memory traderTokenBefore = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
     assertEq(traderTokenBefore.length, 0);
 
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
     address[] memory traderTokenAfter = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
@@ -95,19 +95,19 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     assertEq(traderTokenBefore.length, 0);
 
     // ALICE deposits first time
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
     // ALICE deposits second time
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
     address[] memory traderTokenAfter = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
     assertEq(traderTokenAfter.length, 1);
 
-    // After deposited, ALICE must has 20 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 20 ether);
-    assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
+    // After deposited, ALICE must has 20 ybETH as collateral token
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(ybeth)), 20 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 20 ether);
   }
 }

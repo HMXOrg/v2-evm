@@ -99,6 +99,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
   // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
   mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
+  // ybToken mapping
+  mapping(address token => address ybToken) public ybTokenOf;
 
   /**
    * Modifiers
@@ -646,6 +648,21 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
       minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
 
       emit LogMinProfitDuration(_marketIndexs[i], _minProfitDurations[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  /// @notice Set ybToken for a token
+  /// @param _tokens The token address to set ybToken
+  /// @param _ybTokens The ybToken address to set
+  function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external onlyOwner {
+    if (_tokens.length != _ybTokens.length) revert IConfigStorage_BadArgs();
+
+    for (uint256 i = 0; i < _tokens.length; ) {
+      ybTokenOf[_tokens[i]] = _ybTokens[i];
 
       unchecked {
         ++i;

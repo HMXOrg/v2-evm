@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-import { LiquidityHandler_Base02, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base02.t.sol";
+import { LiquidityHandler02_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler02_Base.t.sol";
 import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 
 // - revert
@@ -19,7 +19,7 @@ import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler0
 //   - Try executeOrder_createRemoveLiquidityOrder
 //   - Try executeOrder_createRemoveLiquidityOrder_multiple
 
-contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base02 {
+contract LiquidityHandler02_CreateRemoveLiquidityOrder is LiquidityHandler02_Base {
   function setUp() public override {
     super.setUp();
 

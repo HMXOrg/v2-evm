@@ -11,7 +11,7 @@ import { BaseTest, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol"
 
 import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 
-contract LiquidityHandler_Base02 is BaseTest {
+contract LiquidityHandler02_Base is BaseTest {
   ILiquidityHandler02 liquidityHandler;
   uint8 internal constant SUB_ID = 0;
 

@@ -31,6 +31,9 @@ import { MockCrossMarginService } from "../mocks/MockCrossMarginService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 import { MockGmxRewardRouterV2 } from "../mocks/MockGmxRewardRouterV2.sol";
+import { MockYbETH } from "../mocks/MockYbETH.sol";
+import { MockYbUSDB } from "../mocks/MockYbUSDB.sol";
+import { MockErc20Rebasing } from "../mocks/MockErc20Rebasing.sol";
 
 // Interfaces
 import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
@@ -89,7 +92,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   // strategy
   IConvertedGlpStrategy convertedGlpStrategy;
 
-  MockWNative internal weth;
+  MockErc20Rebasing internal weth;
+  MockErc20Rebasing internal usdb;
   MockErc20 internal wbtc;
   MockErc20 internal dai;
   MockErc20 internal usdc;
@@ -97,6 +101,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockErc20 internal sglp;
 
   MockErc20 internal bad;
+
+  MockYbETH internal ybeth;
+  MockYbUSDB internal ybusdb;
 
   ProxyAdmin internal proxyAdmin;
 
@@ -110,6 +117,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
   bytes32 internal constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
+  bytes32 internal constant ybethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000006;
+  bytes32 internal constant ybusdbPriceId = 0x0000000000000000000000000000000000000000000000000000000000000007;
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
   bytes32 internal constant eurPriceId = 0x0000000000000000000000000000000000000000000000000000000000000102;
@@ -133,6 +142,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant sekAssetId = "SEK";
   bytes32 internal constant chfAssetId = "CHF";
   bytes32 internal constant cix1AssetId = "CIX1";
+  bytes32 internal constant ybethAssetId = "ybETH";
+  bytes32 internal constant ybusdbAssetId = "ybUSDB";
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -141,7 +152,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     DAVE = makeAddr("DAVE");
     FEEVER = makeAddr("FEEVER");
 
-    weth = new MockWNative();
+    weth = new MockErc20Rebasing();
+    ybeth = new MockYbETH(weth);
+    usdb = new MockErc20Rebasing();
+    ybusdb = new MockYbUSDB(usdb);
     wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
@@ -199,6 +213,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpHlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
+    _setUpBlastConfigs();
 
     // set general config
     configStorage.setCalculator(address(mockCalculator));
@@ -296,7 +311,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
     // add Accepted Token for LP config
     IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](5);
-    // WETH
+    // ybETH
     _hlpTokenConfig[0] = IConfigStorage.HLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
@@ -310,7 +325,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       maxWeightDiff: 1e18,
       accepted: true
     });
-    // DAI
+    // ybUSDB
     _hlpTokenConfig[2] = IConfigStorage.HLPTokenConfig({
       targetWeight: 1e17,
       bufferLiquidity: 0,
@@ -333,9 +348,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     });
 
     address[] memory _tokens = new address[](5);
-    _tokens[0] = address(weth);
+    _tokens[0] = address(ybeth);
     _tokens[1] = address(wbtc);
-    _tokens[2] = address(dai);
+    _tokens[2] = address(ybusdb);
     _tokens[3] = address(usdc);
     _tokens[4] = address(usdt);
 
@@ -344,13 +359,13 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
-    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigYbEth = IConfigStorage.CollateralTokenConfig({
       collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(wethAssetId, _collatTokenConfigWeth);
+    configStorage.setCollateralTokenConfig(ybethAssetId, _collatTokenConfigYbEth);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
       collateralFactorBPS: 0.9 * 1e4,
@@ -368,13 +383,13 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
     configStorage.setCollateralTokenConfig(usdtAssetId, _collatTokenConfigUsdt);
 
-    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdc = IConfigStorage.CollateralTokenConfig({
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigYbUsdb = IConfigStorage.CollateralTokenConfig({
       collateralFactorBPS: 1 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(usdcAssetId, _collatTokenConfigUsdc);
+    configStorage.setCollateralTokenConfig(ybusdbAssetId, _collatTokenConfigYbUsdb);
   }
 
   function _setUpLiquidationConfig() private {
@@ -386,13 +401,13 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   }
 
   function _setUpAssetConfigs() private {
-    IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
-      tokenAddress: address(weth),
-      assetId: wethAssetId,
+    IConfigStorage.AssetConfig memory _assetConfigYbEth = IConfigStorage.AssetConfig({
+      tokenAddress: address(ybeth),
+      assetId: ybethAssetId,
       decimals: 18,
       isStableCoin: false
     });
-    configStorage.setAssetConfig(wethAssetId, _assetConfigWeth);
+    configStorage.setAssetConfig(ybethAssetId, _assetConfigYbEth);
 
     IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
       tokenAddress: address(wbtc),
@@ -418,13 +433,30 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     });
     configStorage.setAssetConfig(usdcAssetId, _assetConfigUsdc);
 
-    IConfigStorage.AssetConfig memory _assetConfigDai = IConfigStorage.AssetConfig({
-      tokenAddress: address(dai),
-      assetId: daiAssetId,
+    IConfigStorage.AssetConfig memory _assetConfigYbUsdb = IConfigStorage.AssetConfig({
+      tokenAddress: address(ybusdb),
+      assetId: ybusdbAssetId,
       decimals: 18,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(daiAssetId, _assetConfigDai);
+    configStorage.setAssetConfig(ybusdbAssetId, _assetConfigYbUsdb);
+  }
+
+  function _setUpBlastConfigs() private {
+    address[] memory _tokens = new address[](1);
+    _tokens[0] = address(weth);
+
+    address[] memory _ybs = new address[](1);
+    _ybs[0] = address(ybeth);
+
+    configStorage.setYbTokenOfMany(_tokens, _ybs);
+  }
+
+  function dealyb(address payable _yb, address _user, uint256 _amount) internal {
+    MockErc20Rebasing underlying = MockErc20Rebasing(payable(address(MockYbETH(_yb).asset())));
+    underlying.mint(address(this), _amount);
+    underlying.approve(address(_yb), _amount);
+    MockYbETH(_yb).deposit(_amount, _user);
   }
 
   function abs(int256 x) external pure returns (uint256) {

@@ -10,9 +10,9 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetAssetConfigs is BaseIntTest_SetCollateralTokens {
   constructor() {
-    _addAssetConfig(wethAssetId, address(weth), 18, false);
+    _addAssetConfig(ybethAssetId, address(ybeth), 18, false);
     _addAssetConfig(wbtcAssetId, address(wbtc), 8, false);
-    _addAssetConfig(daiAssetId, address(dai), 18, true);
+    _addAssetConfig(ybusdbAssetId, address(ybusdb), 18, true);
     _addAssetConfig(usdcAssetId, address(usdc), 6, true);
     _addAssetConfig(usdtAssetId, address(usdt), 6, true);
   }

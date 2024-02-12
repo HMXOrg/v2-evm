@@ -4,9 +4,14 @@
 
 pragma solidity 0.8.18;
 
+import { StdStorage, stdStorage } from "forge-std/StdStorage.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { MockErc20 } from "./MockErc20.sol";
 
 contract MockLiquidityService {
+  using stdStorage for StdStorage;
+
+  StdStorage internal stdStore;
   address public configStorage;
   address public perpStorage;
   address public vaultStorage;
@@ -99,7 +104,16 @@ contract MockLiquidityService {
       }
     }
 
-    MockErc20(_tokenOut).mint(msg.sender, _amount);
+    uint256 vaultStorageBal = IERC20(_tokenOut).balanceOf(vaultStorage);
+    uint256 msgSenderBal = IERC20(_tokenOut).balanceOf(msg.sender);
+    if (vaultStorageBal >= _amount) {
+      stdStore.target(_tokenOut).sig(IERC20.balanceOf.selector).with_key(vaultStorage).checked_write(
+        vaultStorageBal - _amount
+      );
+    }
+    stdStore.target(_tokenOut).sig(IERC20.balanceOf.selector).with_key(msg.sender).checked_write(
+      msgSenderBal + _amount
+    );
 
     return _amount;
   }

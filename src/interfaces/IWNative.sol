@@ -10,5 +10,7 @@ interface IWNative {
 
   function mint(address to, uint256 value) external;
 
-  function balanceOf(address wallet) external returns (uint256);
+  function balanceOf(address account) external view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value) external returns (bool);
 }

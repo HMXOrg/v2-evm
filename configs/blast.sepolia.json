@@ -70,9 +70,9 @@
   },
   "rewardDistributor": "",
   "reader": {
-    "order": "",
-    "position": "",
-    "liquidation": ""
+    "order": "0x08a5f5D8696AAfa48192aaA86ec3C2e1952A48f0",
+    "position": "0xd111F40B015A6B0cC7F376af20894656c33C0Cd7",
+    "liquidation": "0x0b3E70B2dAe86C7ceAE8Bb4a1F2388eb48887f3E"
   },
   "extension": {
     "switchCollateralRouter": "",

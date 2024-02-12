@@ -24,8 +24,7 @@ contract CrossMarginService_Base is BaseTest {
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),
-      address(mockCalculator),
-      address(convertedGlpStrategy)
+      address(mockCalculator)
     );
 
     // Set whitelist for service executor

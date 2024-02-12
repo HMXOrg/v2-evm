@@ -461,17 +461,15 @@ library Deployer {
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
-    address _calculator,
-    address _convertedGlpStrategy
+    address _calculator
   ) internal returns (ICrossMarginService) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/CrossMarginService.sol/CrossMarginService.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address,address)")),
       _configStorage,
       _vaultStorage,
       _perpStorage,
-      _calculator,
-      _convertedGlpStrategy
+      _calculator
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ICrossMarginService(payable(_proxy));

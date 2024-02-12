@@ -30,8 +30,7 @@ contract DeployCrossMarginService is ConfigJsonRepo {
         configStorageAddress,
         vaultStorageAddress,
         perpStorageAddress,
-        calculatorAddress,
-        stakedGLPStrategy
+        calculatorAddress
       )
     );
 

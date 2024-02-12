@@ -4,7 +4,9 @@
 
 pragma solidity 0.8.18;
 
-import { CrossMarginHandler_Base, IPerpStorage } from "./CrossMarginHandler_Base.t.sol";
+import { CrossMarginHandler02_Base, IPerpStorage } from "./CrossMarginHandler02_Base.t.sol";
+
+import { MockAccountAbstraction } from "../../mocks/MockAccountAbstraction.sol";
 
 // What is this test DONE
 // - revert
@@ -15,19 +17,23 @@ import { CrossMarginHandler_Base, IPerpStorage } from "./CrossMarginHandler_Base
 //   - Try deposit and withdraw collateral with happy case and check on token list of sub account
 //   - Try deposit and withdraw multi tokens and checks on  token list of sub account
 
-contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
+contract CrossMarginHandler02_WithdrawCollateral is CrossMarginHandler02_Base {
   function setUp() public virtual override {
     super.setUp();
   }
 
-  function testCorrectness_Handler_WhenWithdrawWETH() external {
+  /**
+   * TEST CORRECTNESS
+   */
+
+  function testCorrectness_Handler02_WhenWithdrawWETH() external {
     vm.startPrank(BOB, BOB);
     vm.deal(BOB, 20 ether);
     vm.stopPrank();
 
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
-    // Before start depositing, Alice must have 0 amount of ybETH token
+    // Before start depositing, Alice must have 0 ybETH
     assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 0);
     assertEq(ybeth.balanceOf(address(vaultStorage)), 0);
     assertEq(ybeth.balanceOf(ALICE), 0 ether);
@@ -38,7 +44,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
       simulateAliceDepositToken(address(weth), (7 ether));
       vm.deal(ALICE, 3 ether);
       vm.startPrank(ALICE);
-      crossMarginHandler.depositCollateral{ value: 3 ether }(SUB_ACCOUNT_NO, address(weth), 3 ether, true);
+      crossMarginHandler.depositCollateral{ value: 3 ether }(ALICE, SUB_ACCOUNT_NO, address(weth), 3 ether, true);
       vm.stopPrank();
     }
 
@@ -47,7 +53,6 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(ybeth.balanceOf(address(vaultStorage)), 10 ether);
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
-    // Alice try to withdraw 3 WETH. The protocol should unwrap ybETH to 3 WETH and send it to Alice
     simulateAliceWithdrawToken(address(weth), 3 ether, tickPrices, publishTimeDiffs, block.timestamp, false);
 
     // After withdrawn, Alice must have 7 ybETH as collateral token and 3 WETH in her wallet.
@@ -55,7 +60,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(ybeth.balanceOf(address(vaultStorage)), 7 ether);
     assertEq(weth.balanceOf(ALICE), 3 ether);
 
-    // Try withdraw 1.5 WETH, but with unwrap option.
+    // Try withdraw WETH, but with unwrap option
     simulateAliceWithdrawToken(address(weth), 1.5 ether, tickPrices, publishTimeDiffs, block.timestamp, true);
 
     // After withdrawn with unwrap,
@@ -69,7 +74,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(ALICE.balance, 1.5 ether);
   }
 
-  function testCorrectness_Handler_WhenRebased_WhenWithdrawWETH() external {
+  function testCorrectness_Handler02_WhenRebased_WhenWithdrawWETH() external {
     vm.startPrank(BOB, BOB);
     vm.deal(BOB, 20 ether);
     vm.stopPrank();
@@ -105,35 +110,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(ALICE), 20 ether);
   }
 
-  function testCorrectness_Handler_WhenWithdrawNormalErc20() external {
-    address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
-
-    // Before start depositing, Alice must have 0 amount of USDC
-    assertEq(vaultStorage.traderBalances(subAccount, address(usdc)), 0);
-    assertEq(usdc.balanceOf(address(vaultStorage)), 0);
-    assertEq(usdc.balanceOf(ALICE), 0 ether);
-
-    // Deposit 1_000 USDC
-    {
-      usdc.mint(ALICE, 1_000 * 1e6);
-      simulateAliceDepositToken(address(usdc), 1_000 * 1e6);
-    }
-
-    // After deposited, Alice's sub account must have 1_000 USDC as collateral token
-    assertEq(vaultStorage.traderBalances(subAccount, address(usdc)), 1_000 * 1e6);
-    assertEq(usdc.balanceOf(address(vaultStorage)), 1_000 * 1e6);
-    assertEq(usdc.balanceOf(ALICE), 0);
-
-    // Alice try to withdraw 300 USDC. The protocol should return 300 USDC to Alice
-    simulateAliceWithdrawToken(address(usdc), 300 * 1e6, tickPrices, publishTimeDiffs, block.timestamp, false);
-
-    // After withdrawn, Alice must have 700 USDC as collaterals and 300 USDC in her wallet.
-    assertEq(vaultStorage.traderBalances(subAccount, address(usdc)), 700 * 1e6);
-    assertEq(usdc.balanceOf(address(vaultStorage)), 700 * 1e6);
-    assertEq(usdc.balanceOf(ALICE), 300 * 1e6);
-  }
-
-  function testCorrectness_Handler_WhenWithdrawWETH_AssetTraderTokenList() external {
+  function testCorrectness_Handler02_WhenWithdrawWETH_AssetTraderTokenList() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
     // Before ALICE start depositing, token lists must contains no token
@@ -161,5 +138,123 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
 
     // After ALICE withdrawn all of WETH, list of token must be 0
     assertEq(vaultStorage.getTraderTokens(subAccount).length, 0);
+  }
+
+  function testCorrectness_Handler02_WhenUserCancelWithdrawOrder() external {
+    // Open an order
+    uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 1);
+    // cancel, should have 0 active
+    uint256 balanceBefore = ALICE.balance;
+    vm.prank(ALICE);
+    crossMarginHandler.cancelWithdrawOrder(ALICE, SUB_ACCOUNT_NO, orderIndex);
+    assertEq(ALICE.balance - balanceBefore, 0.0001 ether);
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+  }
+
+  function testCorrectness_Handler02_WhenWithdrawOrderFail() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    // Open an order
+    uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 1);
+
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ACCOUNT_NO;
+    orderIndexes[0] = orderIndex;
+    simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+
+    assertEq(crossMarginHandler.getAllExecutedOrders(5, 0).length, 0);
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+  }
+
+  function testCorrectnes_Handler02_WhenWithdrawSuccess_AssertGas() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(1, 0).length, 0);
+
+    address[] memory accounts = new address[](5);
+    uint8[] memory subAccountIds = new uint8[](5);
+    uint256[] memory orderIndexes = new uint256[](5);
+
+    // Open 2, failed
+    for (uint256 i = 0; i < 2; i++) {
+      uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+      accounts[i] = ALICE;
+      subAccountIds[i] = SUB_ACCOUNT_NO;
+      orderIndexes[i] = orderIndex;
+    }
+
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
+    // Open 3, success
+    for (uint256 i = 2; i < 5; i++) {
+      uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+      accounts[i] = ALICE;
+      subAccountIds[i] = SUB_ACCOUNT_NO;
+      orderIndexes[i] = orderIndex;
+    }
+
+    assertEq(crossMarginHandler.getAllActiveOrders(10, 0).length, 5);
+
+    // Execute them, and open 2 more orders
+    // total fee = 5 * 0.0001 ETH = 0.0005 ETH
+    uint256 balanceBefore = FEEVER.balance;
+    simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+    assertEq(crossMarginHandler.getAllActiveOrders(10, 0).length, 0);
+    uint256 receivedFee = FEEVER.balance - balanceBefore;
+    assertEq(crossMarginHandler.getAllExecutedOrders(10, 0).length, 5);
+    assertEq(receivedFee, 0.0005 ether);
+  }
+
+  function testCorrectnes_Handler02_WhenDelegate() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(1, 0).length, 0);
+
+    address delegatee = makeAddr("aliceDelegatee");
+
+    vm.prank(ALICE);
+    crossMarginHandler.setDelegate(delegatee);
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
+    address[] memory accounts = new address[](5);
+    uint8[] memory subAccountIds = new uint8[](5);
+    uint256[] memory orderIndexes = new uint256[](5);
+
+    // Open 5 orders
+    for (uint256 i = 0; i < 5; i++) {
+      vm.deal(delegatee, 0.0001 ether);
+      vm.prank(delegatee);
+      uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: 0.0001 ether }(
+        ALICE,
+        SUB_ACCOUNT_NO,
+        address(weth),
+        1 ether,
+        0.0001 ether,
+        false
+      );
+
+      accounts[i] = ALICE;
+      subAccountIds[i] = SUB_ACCOUNT_NO;
+      orderIndexes[i] = orderIndex;
+    }
+
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 5);
+
+    uint256 balanceBeforeDel = weth.balanceOf(delegatee);
+    uint256 balanceBeforeAl = weth.balanceOf(ALICE);
+
+    // Execute them, and open 2 more orders
+    simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+
+    uint256 balanceAfterDel = weth.balanceOf(delegatee);
+    uint256 balanceAfterAl = weth.balanceOf(ALICE);
+
+    assertEq(balanceAfterAl - balanceBeforeAl, 5 ether);
+    assertEq(balanceAfterDel, balanceBeforeDel);
+    // assertEq(balanceBeforeDel, balanceAfterDel);
+
+    assertEq(crossMarginHandler.getAllExecutedOrders(5, 0).length, 5);
   }
 }

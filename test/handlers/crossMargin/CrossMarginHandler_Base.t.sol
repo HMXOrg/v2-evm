@@ -57,6 +57,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
     oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60, address(pythAdapter));
     oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(usdcAssetId, 1e6, 60, address(pythAdapter));
     oracleMiddleware.setAssetPriceConfig(ybethAssetId, 1e6, 60, address(pythAdapter));
 
     calculator = Deployer.deployCalculator(

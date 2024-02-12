@@ -6,11 +6,11 @@ pragma solidity 0.8.18;
 
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { CrossMarginHandler_Base02 } from "./CrossMarginHandler_Base02.t.sol";
+import { CrossMarginHandler02_Base } from "./CrossMarginHandler02_Base.t.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
-contract CrossMarginHandler_Initialization is CrossMarginHandler_Base02 {
+contract CrossMarginHandler02_Initialization is CrossMarginHandler02_Base {
   function setUp() public virtual override {
     super.setUp();
   }

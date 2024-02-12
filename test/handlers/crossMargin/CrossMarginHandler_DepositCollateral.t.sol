@@ -185,7 +185,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
   }
 
   // Try deposit native token as collateral
-  function testCorrectness_handler_depositEthAsCollateral_ShouldWrapToYbETH() external {
+  function testCorrectness_Handler_depositEthAsCollateral_ShouldWrapToYbETH() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
     // Before start depositing, ALICE must has 0 amount of WETH token

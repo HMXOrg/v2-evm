@@ -24,9 +24,9 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
 
-    dai.mint(address(this), 100 ether);
-    dai.transfer(address(vaultStorage), 100 ether);
-    liquidityService.addLiquidity(address(this), address(dai), 100 ether, 0);
+    dealyb(payable(address(ybusdb)), address(this), 100 ether);
+    ybusdb.transfer(address(vaultStorage), 100 ether);
+    liquidityService.addLiquidity(address(this), address(ybusdb), 100 ether, 0);
 
     // total supply = 10 ether after add liquidity for ALICE
     // given Total Supply   - 99.7 ether, then TvL = 99.7 e30
@@ -37,8 +37,7 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   }
 
   function testCorrectness_WhenHLPRemoveLiquidity() external {
-    liquidityService.removeLiquidity(address(this), address(dai), 50 ether, 0);
-
+    liquidityService.removeLiquidity(address(this), address(ybusdb), 50 ether, 0);
     assertEq(hlp.totalSupply(), 49.7 ether, "HLP Total Supply");
   }
 
@@ -50,20 +49,16 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     configStorage.setLiquidityConfig(_liquidityConfig);
 
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
-    liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, 0);
+    liquidityService.removeLiquidity(ALICE, address(ybusdb), 5 ether, 0);
   }
 
   function testRevert_WhenHLPRemoveLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
-    liquidityService.removeLiquidity(ALICE, address(dai), 0, 0);
+    liquidityService.removeLiquidity(ALICE, address(ybusdb), 0, 0);
   }
 
   function testRevert_WhenHLPRemoveLiquidity_AndSlippageCheckFail() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_Slippage()"));
-    liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, type(uint256).max);
+    liquidityService.removeLiquidity(ALICE, address(ybusdb), 5 ether, type(uint256).max);
   }
-
-  // function testRevert_WhenHLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()
-  //   external
-  // {}
 }

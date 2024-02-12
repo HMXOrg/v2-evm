@@ -4,10 +4,10 @@
 
 pragma solidity 0.8.18;
 
-import { LiquidityHandler_Base02, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base02.t.sol";
+import { LiquidityHandler02_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler02_Base.t.sol";
 import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 
-contract LiquidityHandler_Getter is LiquidityHandler_Base02 {
+contract LiquidityHandler02_Getter is LiquidityHandler02_Base {
   bytes32[] internal priceUpdateData;
   bytes32[] internal publishTimeUpdateData;
 

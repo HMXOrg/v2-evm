@@ -38,7 +38,7 @@ contract CollateralReader {
     _collaterals = new Collateral[](_len);
     IYBToken _yb;
     for (uint256 i; i < _len; ) {
-      _yb = IYBToken(_configStorage.ybTokenOf(_collateralTokens[i]));
+      _yb = IYBToken(configStorage.ybTokenOf(_collateralTokens[i]));
       if (address(_yb) != address(0)) {
         _collaterals[i].token = _yb.asset();
         _collaterals[i].amount = _yb.previewRedeem(vaultStorage.traderBalances(_account, _collateralTokens[i]));

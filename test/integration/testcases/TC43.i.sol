@@ -547,12 +547,12 @@ contract TC43 is BaseIntTest_WithActions {
     {
       assertVaultTokenBalance(address(usdc), 0, "TC43: before deposit collateral");
     }
-    dai.mint(BOB, 0.1 * 1e18);
-    depositCollateral(BOB, 0, ERC20(address(dai)), 0.1 * 1e18);
+    usdt.mint(BOB, 0.1 * 1e6);
+    depositCollateral(BOB, 0, ERC20(address(usdt)), 0.1 * 1e6);
     wbtc.mint(BOB, 100 * 1e8);
     depositCollateral(BOB, 0, ERC20(address(wbtc)), 1 * 1e8);
     {
-      assertVaultTokenBalance(address(dai), 0.1 * 1e18, "TC43: after deposit collateral");
+      assertVaultTokenBalance(address(usdt), 0.1 * 1e6, "TC43: after deposit collateral");
       assertVaultTokenBalance(address(wbtc), 101 * 1e8, "TC43: after deposit collateral");
     }
 
@@ -600,12 +600,12 @@ contract TC43 is BaseIntTest_WithActions {
 
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 1);
 
-    // Initial collateral = 0.1 DAI
+    // Initial collateral = 0.1 USDT
     //                    = 1 WBTC (WBTC @ $19,998.3457779) = $19,998.3457779
-    // 1st trade's execution fee = 0.1 DAI - 0.1 = 0 DAI
+    // 1st trade's execution fee = 0.1 USDT - 0.1 = 0 USDT
     // 1st trade's trading fee = 19998.3457779 - 100 = 19898.3457779 => 19898.3457779/19,998.3457779 = 0.99499959 WBTC
 
-    assertEq(vaultStorage.traderBalances(BOB, address(dai)), 0 * 1e18);
+    assertEq(vaultStorage.traderBalances(BOB, address(usdt)), 0 * 1e6);
     assertEq(vaultStorage.traderBalances(BOB, address(wbtc)), 0.99499959 * 1e8);
   }
 
@@ -642,8 +642,8 @@ contract TC43 is BaseIntTest_WithActions {
     {
       assertVaultTokenBalance(address(usdc), 0, "TC43: before deposit collateral");
     }
-    dai.mint(BOB, 0.1 * 1e18);
-    depositCollateral(BOB, 0, ERC20(address(dai)), 0.1 * 1e18);
+    usdt.mint(BOB, 0.1 * 1e6);
+    depositCollateral(BOB, 0, ERC20(address(usdt)), 0.1 * 1e6);
     wbtc.mint(BOB, 1 * 1e8);
     depositCollateral(BOB, 0, ERC20(address(wbtc)), 1 * 1e8);
     // Long ETH
@@ -692,7 +692,7 @@ contract TC43 is BaseIntTest_WithActions {
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 0);
 
     // No execution fee should be collected
-    assertEq(vaultStorage.traderBalances(BOB, address(dai)), 0.1 * 1e18);
+    assertEq(vaultStorage.traderBalances(BOB, address(usdt)), 0.1 * 1e6);
     assertEq(vaultStorage.traderBalances(BOB, address(wbtc)), 1 * 1e8);
   }
 
@@ -728,8 +728,8 @@ contract TC43 is BaseIntTest_WithActions {
     {
       assertVaultTokenBalance(address(usdc), 0, "TC43: before deposit collateral");
     }
-    dai.mint(BOB, 1205 * 1e18);
-    depositCollateral(BOB, 0, ERC20(address(dai)), 1205 * 1e18);
+    usdt.mint(BOB, 1205 * 1e6);
+    depositCollateral(BOB, 0, ERC20(address(usdt)), 1205 * 1e6);
 
     // Long ETH
     vm.deal(BOB, 1 ether);
@@ -777,9 +777,9 @@ contract TC43 is BaseIntTest_WithActions {
     // Therefore, no position will be opened.
     assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 0);
 
-    // Initial collateral = 1205 DAI
-    // 1st trade's execution fee = 1205 - 0.1 = 1204.9 DAI
+    // Initial collateral = 1205 USDT
+    // 1st trade's execution fee = 1205 - 0.1 = 1204.9 USDT
     // execution fee is deducted even if the order failed
-    assertEq(vaultStorage.traderBalances(BOB, address(dai)), 1204.9 * 1e18);
+    assertEq(vaultStorage.traderBalances(BOB, address(usdt)), 1204.9 * 1e6);
   }
 }

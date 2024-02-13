@@ -16,6 +16,7 @@ import { ICrossMarginHandler02 } from "@hmx/handlers/interfaces/ICrossMarginHand
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
+import { IYBToken } from "@hmx/interfaces/blast/IYBToken.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -23,6 +24,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 /// @title CrossMarginHandler
 /// @notice This contract handles the deposit and withdrawal of collateral tokens for the Cross Margin Trading module.
+/// @dev CHAIN:BLAST
 contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginHandler02 {
   using SafeERC20Upgradeable for ERC20Upgradeable;
   using EnumerableSet for EnumerableSet.UintSet;
@@ -131,7 +133,11 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
 
   /// @notice Validate only accepted collateral tokens to be deposited or withdrawn
   modifier onlyAcceptedToken(address _token) {
-    ConfigStorage(CrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
+    ConfigStorage _configStorage = ConfigStorage(CrossMarginService(crossMarginService).configStorage());
+    // Skip accepted collateral check if ybTokenOf is not null
+    if (_configStorage.ybTokenOf(_token) == address(0)) {
+      _configStorage.validateAcceptedCollateral(_token);
+    }
     _;
   }
 
@@ -178,28 +184,43 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     if (_mainAccount != _msgSender()) revert ICrossMarginHandler02_Unauthorized();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+    ConfigStorage _configStorage = ConfigStorage(_crossMarginService.configStorage());
 
     if (_shouldWrap) {
+      // If _token is not weth then revert it
+      if (_token != _configStorage.weth()) revert ICrossMarginHandler02_NotWNativeToken();
       // Prevent mismatch msgValue and the input amount
-      if (msg.value != _amount) {
-        revert ICrossMarginHandler02_MismatchMsgValue();
-      }
+      if (msg.value != _amount) revert ICrossMarginHandler02_MismatchMsgValue();
 
-      // Wrap the native to wNative. The _token must be wNative.
+      // Wrap ETH to ybETH. The _token must be ybETH.
       // If not, it would revert transfer amount exceed on the next line.
-      // slither-disable-next-line arbitrary-send-eth
-      IWNative(_token).deposit{ value: _amount }();
-      // Transfer those wNative token from this contract to VaultStorage
+      // Need to override _token and _amount as it is adjusted
+      _token = _configStorage.ybTokenOf(_token);
+      _amount = IYBToken(_token).depositETH{ value: _amount }(address(this));
+      // Transfer ybETHs to VaultStorage
       ERC20Upgradeable(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
+    } else if (_configStorage.ybTokenOf(_token) != address(0)) {
+      // If ybTokenOf is not null, then wrap it to ybToken
+      // Transfer token from user
+      ERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(this), _amount);
+      address _yb = _configStorage.ybTokenOf(_token);
+      // Deposit and override _amount as it is adjusted
+      if (ERC20Upgradeable(_token).allowance(address(this), _yb) == 0)
+        ERC20Upgradeable(_token).safeApprove(_yb, type(uint256).max);
+      _amount = IYBToken(_yb).deposit(_amount, address(this));
+      // Transfer ybTokens to VaultStorage
+      ERC20Upgradeable(_yb).safeTransfer(_crossMarginService.vaultStorage(), _amount);
+      // Reassign _token to be ybToken after done
+      _token = _yb;
     } else {
       // Transfer depositing token from trader's wallet to VaultStorage
-      ERC20Upgradeable(_token).safeTransferFrom(_msgSender(), _crossMarginService.vaultStorage(), _amount);
+      ERC20Upgradeable(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
     }
 
     // Call service to deposit collateral
-    _crossMarginService.depositCollateral(_msgSender(), _subAccountId, _token, _amount);
+    _crossMarginService.depositCollateral(msg.sender, _subAccountId, _token, _amount);
 
-    emit LogDepositCollateral(_msgSender(), _subAccountId, _token, _amount);
+    emit LogDepositCollateral(msg.sender, _subAccountId, _token, _amount);
   }
 
   /**
@@ -303,12 +324,17 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     if (msg.sender != address(this)) revert ICrossMarginHandler02_Unauthorized();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
-    if (_order.shouldUnwrap && _order.token != ConfigStorage(_crossMarginService.configStorage()).weth())
-      revert ICrossMarginHandler02_NotWNativeToken();
+    ConfigStorage _configStorage = ConfigStorage(_crossMarginService.configStorage());
+    if (_order.shouldUnwrap && _order.token != _configStorage.weth()) revert ICrossMarginHandler02_NotWNativeToken();
 
     // Call service to withdraw collateral
     if (_order.shouldUnwrap) {
-      // Withdraw wNative straight to this contract first.
+      IYBToken _ybeth = IYBToken(_configStorage.ybTokenOf(_order.token));
+      // Reassign order.token to be ybETH
+      _order.token = _configStorage.ybTokenOf(_order.token);
+      // Reassign order.amount to be ybs units
+      _order.amount = _ybeth.previewWithdraw(_order.amount);
+      // Withdraw ybETH straight to this contract.
       _crossMarginService.withdrawCollateral(
         _order.account,
         _order.subAccountId,
@@ -316,7 +342,28 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
         _order.amount,
         address(this)
       );
-      _transferOutETH(_order.amount, _order.account);
+      // Then we redeem ETH. The receiving amount can be different from _order.amount.
+      // Due to we're returning ETH but at this point _order.amount is in ybETH.
+      _ybeth.redeemETH(_order.amount, _order.account, address(this));
+    } else if (_configStorage.ybTokenOf(_order.token) != address(0)) {
+      // If ybTokenOf(_order.token) is not null
+      // Then we will need to redeem ybTokens.
+      IYBToken _yb = IYBToken(_configStorage.ybTokenOf(_order.token));
+      // Reassign _order.token to be ybToken
+      address _originalToken = _order.token;
+      _order.token = _configStorage.ybTokenOf(_order.token);
+      // Ressign _order.amount to be ybs uints
+      _order.amount = _yb.previewWithdraw(_order.amount);
+      // Withdraw ybTokens straight to this contract.
+      _crossMarginService.withdrawCollateral(
+        _order.account,
+        _order.subAccountId,
+        _order.token,
+        _order.amount,
+        address(this)
+      );
+      // Then we redeem ybs.
+      IYBToken(_order.token).redeem(_order.amount, _order.account, address(this));
     } else {
       // Withdraw _token straight to the user
       _crossMarginService.withdrawCollateral(

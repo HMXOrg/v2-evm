@@ -32,12 +32,12 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   // add liquidity
   function testCorrectness_WhenHLPAddLiquidity() external {
-    dai.approve(address(liquidityService), type(uint256).max);
+    ybusdb.approve(address(liquidityService), type(uint256).max);
 
-    dai.mint(address(vaultStorage), 100 ether);
-    liquidityService.addLiquidity(ALICE, address(dai), 100 ether, 0);
+    dealyb(payable(address(ybusdb)), address(vaultStorage), 100 ether);
+    liquidityService.addLiquidity(ALICE, address(ybusdb), 100 ether, 0);
 
-    assertEq(dai.balanceOf(address(vaultStorage)), 100 ether, "VaultStorage should receive DAI from Handler.");
+    assertEq(ybusdb.balanceOf(address(vaultStorage)), 100 ether, "VaultStorage should receive ybUSDB from Handler.");
     assertEq(hlp.totalSupply(), 99.7 ether, "HLP Total Supply");
   }
 
@@ -52,14 +52,14 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     // disable liquidity config
     configStorage.setLiquidityEnabled(false);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
-    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+    liquidityService.addLiquidity(ALICE, address(ybeth), 10 ether, 0);
   }
 
   // remove liquidity when circuit break
   function testRevert_WhenCircuitBreak_HLPShouldNotRemoveLiquidity() external {
     configStorage.setLiquidityEnabled(false);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
-    liquidityService.removeLiquidity(ALICE, address(weth), 10 ether, 0);
+    liquidityService.removeLiquidity(ALICE, address(ybeth), 10 ether, 0);
   }
 
   // add liquidity on unlisted token
@@ -83,14 +83,14 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   // add liquidity with zero amount
   function testRevert_WhenHLPAddLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
-    liquidityService.addLiquidity(ALICE, address(weth), 0, 0);
+    liquidityService.addLiquidity(ALICE, address(ybeth), 0, 0);
   }
 
   // slippage check fail
   function testRevert_WhenHLPAddLiquidity_AndSlippageCheckFail() external {
-    weth.mint(address(vaultStorage), 10 ether);
+    dealyb(payable(address(ybeth)), address(vaultStorage), 10 ether);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_InsufficientLiquidityMint()"));
-    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, type(uint256).max);
+    liquidityService.addLiquidity(ALICE, address(ybeth), 10 ether, type(uint256).max);
   }
 
   // function testRevert_WhenHLPTransferToken_AfterAddLiquidity_InCoolDownPeriod()

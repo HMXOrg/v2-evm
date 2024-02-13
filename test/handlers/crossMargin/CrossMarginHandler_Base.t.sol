@@ -24,25 +24,30 @@ contract CrossMarginHandler_Base is BaseTest {
   uint24[] internal publishTimeDiffs;
 
   function setUp() public virtual {
-    tickPrices = new int24[](3);
+    tickPrices = new int24[](4);
     tickPrices[0] = 99039;
     tickPrices[1] = 73135;
     tickPrices[2] = 73135;
+    tickPrices[3] = 73135;
 
-    publishTimeDiffs = new uint24[](3);
+    publishTimeDiffs = new uint24[](4);
     publishTimeDiffs[0] = 0;
     publishTimeDiffs[1] = 0;
     publishTimeDiffs[2] = 0;
+    publishTimeDiffs[3] = 0;
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(ecoPyth));
     pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
     pythAdapter.setConfig(wethAssetId, wethAssetId, false);
     pythAdapter.setConfig(usdcAssetId, usdcAssetId, false);
+    pythAdapter.setConfig(ybethAssetId, ybethAssetId, false);
 
     ecoPyth.setUpdater(address(this), true);
 
     ecoPyth.insertAssetId(wbtcAssetId);
     ecoPyth.insertAssetId(wethAssetId);
+    ecoPyth.insertAssetId(usdcAssetId);
+    ecoPyth.insertAssetId(ybethAssetId);
 
     // have to updatePriceFeed first, before oracleMiddleware.setAssetPriceConfig sanity check price
     bytes32[] memory priceUpdateDatas = ecoPyth.buildPriceUpdateData(tickPrices);
@@ -52,6 +57,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60, address(pythAdapter));
     oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(usdcAssetId, 1e6, 60, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(ybethAssetId, 1e6, 60, address(pythAdapter));
 
     calculator = Deployer.deployCalculator(
       address(proxyAdmin),
@@ -84,8 +91,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     crossMarginHandler.setOrderExecutor(address(this), true);
 
-    // Set accepted token deposit/withdraw as WETH and USDC
-    IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
+    // Set accepted token deposit/withdraw as ybETH and USDC
+    IConfigStorage.CollateralTokenConfig memory _collateralConfigYbETH = IConfigStorage.CollateralTokenConfig({
       collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
@@ -97,7 +104,7 @@ contract CrossMarginHandler_Base is BaseTest {
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(wethAssetId, _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(ybethAssetId, _collateralConfigYbETH);
     configStorage.setCollateralTokenConfig(usdcAssetId, _collateralConfigUSDC);
 
     // Set market config

@@ -15,6 +15,8 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   bytes32 internal constant usdcAssetId = "USDCUSD";
   bytes32 internal constant usdtAssetId = "USDTUSD";
   bytes32 internal constant daiAssetId = "DAIUSD";
+  bytes32 internal constant ybethAssetId = "YBETHUSD";
+  bytes32 internal constant ybusdbAssetId = "YBUSDBUSD";
 
   // stock
   bytes32 internal constant appleAssetId = "AAPLUSD";

@@ -12,11 +12,11 @@ abstract contract BaseIntTest_SetCollateralTokens is BaseIntTest_SetOracle {
     // collateralFactorBPS = 80%
     _addCollateralConfig(sglpAssetId, 8000, true, address(0));
     // collateralFactorBPS = 80%
-    _addCollateralConfig(wethAssetId, 8000, true, address(0));
+    _addCollateralConfig(ybethAssetId, 8000, true, address(0));
     // collateralFactorBPS = 80%
     _addCollateralConfig(wbtcAssetId, 8000, true, address(0));
     // collateralFactorBPS = 100%
-    _addCollateralConfig(daiAssetId, 10000, true, address(0));
+    _addCollateralConfig(ybusdbAssetId, 10000, true, address(0));
     // collateralFactorBPS = 100%
     _addCollateralConfig(usdcAssetId, 10000, true, address(0));
     // collateralFactorBPS = 100%

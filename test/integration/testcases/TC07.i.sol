@@ -45,7 +45,7 @@ contract TC07 is BaseIntTest_WithActions {
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(weth)), 0, "ALICE's WETH Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 0, "ALICE's USDC Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0, "ALICE's WBTC Balance");
-      assertEq(weth.balanceOf(address(vaultStorage)), 0, "Vault's WETH Balance");
+      assertEq(ybeth.balanceOf(address(vaultStorage)), 0, "Vault's ybETH Balance");
       assertEq(usdc.balanceOf(address(vaultStorage)), 0, "Vault's USDC Balance");
       assertEq(wbtc.balanceOf(address(vaultStorage)), 10 * 1e8, "Vault's WBTC Balance");
       // Alice deposits 12,000(USD) of WETH
@@ -55,10 +55,10 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice deposits 1,000(USD) of WBTC
       depositCollateral(ALICE, SUB_ACCOUNT_ID, wbtc, 0.05 * 1e8);
       // After Alice deposited all collaterals, VaultStorage must contain tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(weth)), 8 * 1e18, "ALICE's WETH Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(ybeth)), 8 * 1e18, "ALICE's ybETH Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 9_000 * 1e6, "ALICE's USDC Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0.05 * 1e8, "ALICE's WBTC Balance");
-      assertEq(weth.balanceOf(address(vaultStorage)), 8 * 1e18, "Vault's WETH Balance");
+      assertEq(ybeth.balanceOf(address(vaultStorage)), 8 * 1e18, "Vault's ybETH Balance");
       assertEq(usdc.balanceOf(address(vaultStorage)), 9_000 * 1e6, "Vault's USDC Balance");
       assertEq(wbtc.balanceOf(address(vaultStorage)), (0.05 + 10) * 1e8, "Vault's WBTC Balance");
       // After Alice deposited all collaterals, Alice must have no token left
@@ -111,7 +111,8 @@ contract TC07 is BaseIntTest_WithActions {
       // _prices[1] = 1 * 1e8;
       // _prices[2] = 1 * 1e8;
       // _prices[3] = 20_000 * 1e8;
-      tickPrices[0] = 73463; // ETH tick price $1,550
+      tickPrices[0] = 73463; // ETH tick price to $1,550
+      tickPrices[7] = 73463; // Set ybETH tick price to $1,550
       tickPrices[2] = 0; // USDC tick price $1
       tickPrices[4] = 0; // DAI tick price $1
       tickPrices[1] = 99039; // WBTC tick price $20,000

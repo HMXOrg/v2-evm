@@ -29,6 +29,9 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { MockGmxRewardRouterV2 } from "@hmx-test/mocks/MockGmxRewardRouterV2.sol";
+import { MockErc20Rebasing } from "@hmx-test/mocks/MockErc20Rebasing.sol";
+import { MockYbETH } from "@hmx-test/mocks/MockYbETH.sol";
+import { MockYbUSDB } from "@hmx-test/mocks/MockYbUSDB.sol";
 
 // Interfaces
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
@@ -138,8 +141,11 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
   MockErc20 sglp; //decimals 18
+  MockYbETH ybeth; // decimals 18
+  MockYbUSDB ybusdb; // decimals 18
 
-  IWNative weth; //for native
+  MockErc20Rebasing weth; // for native
+  MockErc20Rebasing usdb; // for usdb rebasing
 
   /* PYTH */
   IEcoPyth internal pyth;
@@ -176,8 +182,10 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     proxyAdmin = new ProxyAdmin();
 
     // deploy MOCK weth
-    weth = IWNative(new MockWNative());
+    weth = new MockErc20Rebasing();
+    usdb = new MockErc20Rebasing();
     vm.label(address(weth), "WETH");
+    vm.label(address(usdb), "USDB");
 
     pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
@@ -205,6 +213,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
     sglp = new MockErc20("StakedGlp", "sGLP", 18);
+    ybeth = new MockYbETH(weth);
+    ybusdb = new MockYbUSDB(usdb);
 
     // labels
     vm.label(address(wbtc), "WBTC");

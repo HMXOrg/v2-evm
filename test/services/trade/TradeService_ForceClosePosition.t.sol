@@ -59,14 +59,14 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // mock HLP token for profitable trader
-    // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
+    // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 ybETH (price 1$)
     //                                                        - 10,000 WBTC (price 100$)
-    vaultStorage.addHLPLiquidity(address(weth), 1_000_000 ether);
+    vaultStorage.addHLPLiquidity(address(ybeth), 1_000_000 ether);
     vaultStorage.addHLPLiquidity(address(wbtc), 10_000 ether);
 
     // assume ALICE sub-account 0 has collateral
-    // weth - 100,000 ether
-    vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    // ybeth - 100,000 ether
+    vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(ybeth), 100_000 ether);
   }
 
   /**
@@ -109,7 +109,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
 
     // Start test
 
-    address _tpToken = address(weth); // take profit token
+    address _tpToken = address(ybeth); // take profit token
 
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -136,14 +136,14 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     //                                 = 0.9 * 500000 / (500000 - (+36315.789473684210526315789473298614))
     //                                 = 0.970488081725312145289443813847 USD
     // ALICE position has profit 90000 USD
-    // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // profit in WETH = 90000 / 0.9 = 100000 ether
+    // ALICE sub account 0 has ybETH as collateral = 100,000 ether
+    // profit in ybETH = 90000 / 0.9 = 100000 ether
     // settlement fee rate 0.5% note: from mock
     // settlement fee = 100000 * 0.5 / 100 = 500 ether
     // then ALICE sub account 0 collateral should be increased by 100000 - 500 = 99500 ether
     //                             = 100000 + 99500 = 199500 ether
-    // and HLP WETH liquidity should reduced by 100000 ether
-    //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 100000 = 900000 ether
+    // and HLP ybETH liquidity should reduced by 100000 ether
+    //     HLP ybETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 100000 = 900000 ether
     // finally fee should increased by 500 ether
     address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
@@ -214,7 +214,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
 
     // Start test
 
-    address _tpToken = address(weth); // take profit token
+    address _tpToken = address(ybeth); // take profit token
 
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -240,14 +240,14 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     //                                 = 1.09 * 500000 / (500000 + (+19047.619047619047619047619048436341))
     //                                 = 1.049999999999999999999999999999 USD
     // ALICE position has profit 90000 USD
-    // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // profit in WETH = 90000 / 1.09 = 82568.807339449541284403 ether
+    // ALICE sub account 0 has ybETH as collateral = 100,000 ether
+    // profit in ybETH = 90000 / 1.09 = 82568.807339449541284403 ether
     // settlement fee rate 0.5% note: from mock
     // settlement fee = 82568.807339449541284403 * 0.5 / 100 = 412.844036697247706422 ether
     // then ALICE sub account 0 collateral should be increased by 82568.807339449541284403 - 412.844036697247706422 = 82155.963302752293577981 ether
     //                             = 100000 + 82155.963302752293577981 = 182155.963302752293577981 ether
-    // and HLP WETH liquidity should reduced by 82568.807339449541284403 ether
-    //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 82568.807339449541284403 = 917431.192660550458715597 ether
+    // and HLP ybETH liquidity should reduced by 82568.807339449541284403 ether
+    //     HLP ybETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 82568.807339449541284403 = 917431.192660550458715597 ether
     // finally fee should increased by 412.844036697247706422 ether
     address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);

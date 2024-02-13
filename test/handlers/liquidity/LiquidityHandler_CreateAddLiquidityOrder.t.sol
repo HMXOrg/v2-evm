@@ -31,7 +31,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
   /**
    * REVERT
    */
-  function test_revert_notAcceptedToken() external {
+  function testRevert_WhenNotAcceptedToken() external {
     vm.deal(ALICE, 5 ether);
 
     vm.prank(ALICE);
@@ -40,7 +40,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(bad), 1 ether, 1 ether, 5 ether, false);
   }
 
-  function test_revert_InsufficientExecutionFee() external {
+  function testRevert_InsufficientExecutionFee() external {
     wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
     vm.prank(ALICE);
@@ -50,7 +50,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 3 ether, false);
   }
 
-  function test_revert_incorrectValueTransfer() external {
+  function testRevert_WhenIncorrectValueTransfer() external {
     wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
     vm.prank(ALICE);
@@ -59,7 +59,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createAddLiquidityOrder{ value: 3 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
   }
 
-  function test_revert_nativeIncorrectValueTransfer() external {
+  function testRevert_WhenMsgSenderIncorrect() external {
     wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
     vm.prank(ALICE);
@@ -68,7 +68,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createAddLiquidityOrder{ value: 3 ether }(address(weth), 1 ether, 1 ether, 5 ether, false);
   }
 
-  function test_revert_hlpCircuitBreaker() external {
+  function testRevert_WhenHlpCircuitBreaker() external {
     mockLiquidityService.setHlpEnabled(false);
 
     vm.deal(ALICE, 5 ether); //deal with out of gas
@@ -81,7 +81,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     vm.stopPrank();
   }
 
-  function test_revert_badAmount() external {
+  function testRevert_WhenBadAmount() external {
     vm.deal(ALICE, 5 ether); //deal with out of gas
     wbtc.mint(ALICE, 1 ether);
 
@@ -96,14 +96,14 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
    * CORRECTNESS
    */
 
-  function test_correctness_addLiquidityOrder() external {
+  function testCorrectness_WhenCreateAddLiquidityOrder() external {
     _createAddLiquidityOrder();
 
     assertEq(liquidityHandler.getLiquidityOrders().length, 1, "Order Amount After Executed Order");
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Executed Order");
   }
 
-  function test_correctness_addLiquidityOrder_multiple() external {
+  function testCorrectness_WhenCreateMultipleAddLiquidityOrder() external {
     _createAddLiquidityOrder();
     _createAddLiquidityOrder();
 

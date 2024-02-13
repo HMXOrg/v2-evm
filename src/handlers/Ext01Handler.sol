@@ -14,6 +14,7 @@ import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
+import { IYBToken } from "@hmx/interfaces/blast/IYBToken.sol";
 
 /// Services
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -345,8 +346,15 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
         _cancelOrder(_switchCollateralOrder.primaryAccount, _switchCollateralOrder.subAccountId, _order.orderIndex);
       } else if (_order.orderType == 2) {
-        TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));
-        _cancelOrder(_transferCollateralOrder.primaryAccount, _transferCollateralOrder.fromSubAccountId, _order.orderIndex);
+        TransferCollateralOrder memory _transferCollateralOrder = abi.decode(
+          _order.rawOrder,
+          (TransferCollateralOrder)
+        );
+        _cancelOrder(
+          _transferCollateralOrder.primaryAccount,
+          _transferCollateralOrder.fromSubAccountId,
+          _order.orderIndex
+        );
       }
     }
   }
@@ -497,6 +505,15 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   }
 
   function _executeTransferCollateralOrder(TransferCollateralOrder memory _order) internal {
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(crossMarginService.configStorage());
+    address _yb = _configStorage.ybTokenOf(_order.token);
+    if (_yb != address(0)) {
+      // Handle ybToken here.
+      _order.token = _yb;
+      _order.amount = IYBToken(_yb).previewWithdraw(_order.amount);
+    }
+
     // Call service to transfer collateral
     _order.crossMarginService.transferCollateral(
       ICrossMarginService.TransferCollateralParams(
@@ -527,17 +544,16 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
     address _owner;
     if (_order.orderType == 1) {
-      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));  
+      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
       _owner = _switchCollateralOrder.primaryAccount;
     } else if (_order.orderType == 2) {
-      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));  
+      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));
       _owner = _transferCollateralOrder.primaryAccount;
     }
 
     bool _isExecutor = orderExecutors[_msgSender()];
     // validate if msg.sender is not owned the order or not executor, then revert
     if (_msgSender() != _owner && !_isExecutor) revert IExt01Handler_NotOrderOwner();
-
 
     _removeOrder(subAccount, _orderIndex);
 
@@ -546,12 +562,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       _transferOutETH(_order.executionFee, _owner);
     }
 
-    emit LogCancelOrder(
-      payable(_owner),
-      _order.orderIndex,
-      _order.orderType,
-      _subAccountId
-    );
+    emit LogCancelOrder(payable(_owner), _order.orderIndex, _order.orderType, _subAccountId);
 
     delete genericOrders[subAccount][_orderIndex];
   }

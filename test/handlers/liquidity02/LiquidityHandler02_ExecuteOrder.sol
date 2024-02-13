@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-import { LiquidityHandler_Base02, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base02.t.sol";
+import { LiquidityHandler02_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler02_Base.t.sol";
 import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -51,7 +51,7 @@ struct PriceFeed {
   Price emaPrice;
 }
 
-contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
+contract LiquidityHandler02_ExecuteOrder is LiquidityHandler02_Base {
   bytes32[] internal priceUpdateData;
   bytes32[] internal publishTimeUpdateData;
 

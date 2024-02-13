@@ -20,7 +20,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
    * TEST CORRECTNESS
    */
 
-  function testCorrectness_crossMarginHandler_getWithdrawOrders() external {
+  function testCorrectness_CrossMarginHandler_GetWithdrawOrders() external {
     assertEq(crossMarginHandler.getWithdrawOrders().length, 0);
 
     // Open 5 orders
@@ -38,7 +38,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
     assertEq(crossMarginHandler.getWithdrawOrders().length, 7);
   }
 
-  function testCorrectness_crossMarginHandler_getActiveWithdrawOrders() external {
+  function testCorrectness_CrossMarginHandler_GetActiveWithdrawOrders() external {
     assertEq(crossMarginHandler.getActiveWithdrawOrders(10, 0).length, 0);
     // Open 5 orders
     simulateAliceCreateWithdrawOrder();
@@ -86,7 +86,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
     }
   }
 
-  function testCorrectness_crossMarginHandler_getExecutedWithdrawOrders() external {
+  function testCorrectness_CrossMarginHandler_GetExecutedWithdrawOrders() external {
     address _subAccount = getSubAccount(ALICE, 1);
 
     assertEq(crossMarginHandler.getExecutedWithdrawOrders(_subAccount, 10, 0).length, 0);
@@ -148,9 +148,9 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
     }
   }
 
-  function testCorrectness_crossMarginHandler_getWithdrawOrders_timestampCorrectness() external {
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), (1.5 ether));
+  function testCorrectness_CrossMarginHandler_GetWithdrawOrders_TimestampCorrectness() external {
+    dealyb(payable(address(ybeth)), ALICE, 10 ether);
+    simulateAliceDepositToken(address(ybeth), (1.5 ether));
 
     vm.warp(block.timestamp + 100);
 

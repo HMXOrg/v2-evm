@@ -16,6 +16,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   bytes32 constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
   bytes32 constant applePriceId = 0x0000000000000000000000000000000000000000000000000000000000000006;
   bytes32 constant jpyPriceid = 0x0000000000000000000000000000000000000000000000000000000000000007;
+  bytes32 constant ybethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000008;
+  bytes32 constant ybusdbPriceId = 0x0000000000000000000000000000000000000000000000000000000000000009;
 
   struct AssetPythPriceData {
     bytes32 assetId;
@@ -111,6 +113,28 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         tickPrice: 49138
       })
     );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({
+        assetId: ybethAssetId,
+        priceId: ybethPriceId,
+        price: 1500 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0,
+        tickPrice: 73135
+      })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({
+        assetId: ybusdbAssetId,
+        priceId: ybusdbPriceId,
+        price: 1 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0,
+        tickPrice: 0
+      })
+    );
 
     // Set MarketStatus
     uint8 _marketActiveStatus = uint8(2);
@@ -161,6 +185,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
     oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
     oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(ybethAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(ybusdbAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
 
     orderbookOracle.insertMarketIndex(wethMarketIndex);
   }

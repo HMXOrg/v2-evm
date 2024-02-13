@@ -4,13 +4,14 @@
 
 pragma solidity 0.8.18;
 
-// base
+// Base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
 
-// contracts
+// Contracts
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
@@ -19,16 +20,19 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { HLP } from "@hmx/contracts/HLP.sol";
 
-// interfaces
+// Interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IYBToken } from "@hmx/interfaces/blast/IYBToken.sol";
 import { ISurgeStaking } from "@hmx/staking/interfaces/ISurgeStaking.sol";
 
 /// @title LiquidityHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
+/// @dev CHAIN:BLAST
 contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILiquidityHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
+  using SafeTransferLib for address;
 
   /**
    * Events
@@ -127,8 +131,13 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    * Modifiers
    */
 
+  /// @notice Validate only accepted collateral tokens to be deposited or withdrawn
   modifier onlyAcceptedToken(address _token) {
-    ConfigStorage(LiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
+    ConfigStorage _configStorage = ConfigStorage(LiquidityService(liquidityService).configStorage());
+    // Skip accepted collateral check if ybTokenOf is not null
+    if (_configStorage.ybTokenOf(_token) == address(0)) {
+      _configStorage.validateAcceptedLiquidityToken(_token);
+    }
     _;
   }
 
@@ -188,18 +197,18 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     bool _shouldWrap,
     bool _isNotAutoStake
   ) internal returns (uint256 _orderId) {
-    // pre validate
+    // Pre-validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
+    ConfigStorage _configStorage = ConfigStorage(LiquidityService(liquidityService).configStorage());
     if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
-    if (_shouldWrap && _tokenIn != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
-      revert ILiquidityHandler_NotWNativeToken();
     if (_shouldWrap) {
+      if (_tokenIn != _configStorage.weth()) revert ILiquidityHandler_NotWNativeToken();
       if (msg.value != _amountIn + _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
     } else {
       if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
-    // convert native to WNative (including executionFee)
+    // Convert native to WNative (including executionFee)
     _transferInETH();
     _orderId = liquidityOrders.length;
     liquidityOrders.push(
@@ -341,16 +350,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         _executionFee = _order.executionFee;
 
         try this.executeLiquidity(_order) returns (uint256 actualOut) {
-          emit LogExecuteLiquidityOrder(
-            _order.account,
-            _order.orderId,
-            _order.token,
-            _order.amount,
-            _order.minOut,
-            _order.isAdd,
-            actualOut
-          );
-
           // update order status
           _order.status = LiquidityOrderStatus.SUCCESS;
           _order.actualAmountOut = actualOut;
@@ -390,14 +389,32 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
   /// @notice execute either addLiquidity or removeLiquidity
   /// @param _order LiquidityOrder struct representing the order to execute.
-  function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256 _amountOut) {
-    // if not in executing state, then revert
+  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amountOut) {
+    // If not in executing state, then revert
     if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(LiquidityService(liquidityService).configStorage());
+    address _vaultStorage = LiquidityService(liquidityService).vaultStorage();
 
     if (_order.isAdd) {
       bool isHlpStakingDeployed = address(hlpStaking) != address(0);
-      bool isNotAutoStake = isSurge[_order.account][_order.orderId]; // isSurge is repurposed to isNotAutoStake
-      IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
+      // isSurge is repurposed to isNotAutoStake
+      bool isNotAutoStake = isSurge[_order.account][_order.orderId];
+      if (_configStorage.ybTokenOf(_order.token) != address(0)) {
+        // Handle ybToken wrapping
+        IERC20Upgradeable _yb = IERC20Upgradeable(_configStorage.ybTokenOf(_order.token));
+        // Deposit and override _amount as it is adjusted
+        if (IERC20Upgradeable(_order.token).allowance(address(this), address(_yb)) == 0)
+          IERC20Upgradeable(_order.token).safeApprove(address(_yb), type(uint256).max);
+        _order.amount = IYBToken(address(_yb)).deposit(_order.amount, address(this));
+        // Transfer ybTokens to VaultStorage
+        IERC20Upgradeable(_yb).safeTransfer(_vaultStorage, _order.amount);
+        // Re-assign _order.token
+        _order.token = address(_yb);
+      } else {
+        // Transfer tokens to VaultStorage
+        IERC20Upgradeable(_order.token).safeTransfer(_vaultStorage, _order.amount);
+      }
       _amountOut = LiquidityService(liquidityService).addLiquidity(
         _order.account,
         _order.token,
@@ -410,8 +427,19 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         // Auto stake into HLPStaking
         ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
       }
-      return _amountOut;
     } else {
+      address _originalToken = _order.token;
+      bool _isYbNeeded = _configStorage.ybTokenOf(_order.token) != address(0);
+      if (_isYbNeeded) {
+        // If ybTokenOf(_order.token) is not null
+        // Then we will need to redeem ybTokens.
+        IYBToken _yb = IYBToken(_configStorage.ybTokenOf(_order.token));
+        // Reassign _order.token to be ybToken
+        _order.token = _configStorage.ybTokenOf(_order.token);
+        // Ressign _order.amount to be ybs uints
+        _order.amount = _yb.previewWithdraw(_order.amount);
+      }
+
       _amountOut = LiquidityService(liquidityService).removeLiquidity(
         _order.account,
         _order.token,
@@ -419,14 +447,26 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         _order.minOut
       );
 
+      if (_isYbNeeded) {
+        _amountOut = IYBToken(_order.token).redeem(_amountOut, address(this), address(this));
+      }
+
       if (_order.isNativeOut) {
         _transferOutETH(_amountOut, payable(_order.account));
       } else {
-        IERC20Upgradeable(_order.token).safeTransfer(_order.account, _amountOut);
+        IERC20Upgradeable(_originalToken).safeTransfer(_order.account, _amountOut);
       }
-
-      return _amountOut;
     }
+
+    emit LogExecuteLiquidityOrder(
+      _order.account,
+      _order.orderId,
+      _order.token,
+      _order.amount,
+      _order.minOut,
+      _order.isAdd,
+      _amountOut
+    );
   }
 
   /// @notice Cancels the specified add/remove liquidity order and refunds the execution fee.

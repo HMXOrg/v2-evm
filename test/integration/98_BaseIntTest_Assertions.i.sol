@@ -10,9 +10,9 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
-import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
+import { BaseIntTest_SetBlast } from "@hmx-test/integration/09_BaseIntTest_SetBlast.i.sol";
 
-contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
+contract BaseIntTest_Assertions is BaseIntTest_SetBlast, StdAssertions {
   uint256 constant MAX_DIFF = 0.002 ether; // 0.1 %
 
   // Token Balances

@@ -50,6 +50,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
   event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
   event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
+  event LogSetYbTokenOf(address token, address ybToken);
 
   /**
    * Constants
@@ -99,6 +100,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
   // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
   mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
+  // ybToken mapping
+  mapping(address token => address ybToken) public ybTokenOf;
 
   /**
    * Modifiers
@@ -647,6 +650,22 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
       emit LogMinProfitDuration(_marketIndexs[i], _minProfitDurations[i]);
 
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  /// @notice Set ybToken for a token
+  /// @param _tokens The token address to set ybToken
+  /// @param _ybTokens The ybToken address to set
+  function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external onlyOwner {
+    uint256 _len = _tokens.length;
+    if (_len != _ybTokens.length) revert IConfigStorage_BadArgs();
+
+    for (uint256 i = 0; i < _len; ) {
+      ybTokenOf[_tokens[i]] = _ybTokens[i];
+      emit LogSetYbTokenOf(_tokens[i], _ybTokens[i]);
       unchecked {
         ++i;
       }

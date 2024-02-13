@@ -8,6 +8,7 @@ interface ICrossMarginHandler {
    * Errors
    */
   error ICrossMarginHandler_InvalidAddress();
+  error ICrossMarginHandler_InvalidArraySize();
   error ICrossMarginHandler_MismatchMsgValue();
   error ICrossMarginHandler_InCorrectValueTransfer();
   error ICrossMarginHandler_NotWhitelisted();

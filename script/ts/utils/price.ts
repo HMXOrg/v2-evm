@@ -91,7 +91,7 @@ export async function getUpdatePriceData(
         .join("")
   );
   const ecoPythCalldataBuilder = EcoPythCalldataBuilder__factory.connect(
-    config.oracles.unsafeEcoPythCalldataBuilder3,
+    config.oracles.unsafeEcoPythCalldataBuilder3!,
     provider
   );
   const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData] = await ecoPythCalldataBuilder.build(buildData);

@@ -15,6 +15,12 @@ async function main(chainId: number) {
       adapter: config.oracles.pythAdapter,
     },
     {
+      assetId: ethers.utils.formatBytes32String("ybETH"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
       assetId: ethers.utils.formatBytes32String("BTC"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
@@ -22,6 +28,12 @@ async function main(chainId: number) {
     },
     {
       assetId: ethers.utils.formatBytes32String("USDC"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("ybUSDB"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,

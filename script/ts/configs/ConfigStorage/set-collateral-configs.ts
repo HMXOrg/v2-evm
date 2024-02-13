@@ -22,6 +22,22 @@ async function main(chainId: number) {
         settleStrategy: ethers.constants.AddressZero,
       },
     },
+    {
+      assetId: ethers.utils.formatBytes32String("ybETH"),
+      collateralConfig: {
+        collateralFactorBPS: 0.9 * BPS,
+        accepted: true,
+        settleStrategy: ethers.constants.AddressZero,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("ybUSDB"),
+      collateralConfig: {
+        collateralFactorBPS: 1 * BPS,
+        accepted: true,
+        settleStrategy: ethers.constants.AddressZero,
+      },
+    },
   ];
 
   console.log("[configs/ConfigStorage] Set Collateral Configs...");

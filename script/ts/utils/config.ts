@@ -6,8 +6,9 @@ import ArbitrumMainnetMarketConfig from "../../../configs/.arbitrum.one.market.j
 import ArbitrumGoerliMarketConfig from "../../../configs/.arbitrum.goerli.market.json";
 import BlastSepoliaMarketConfig from "../../../configs/.blast.sepolia.market.json";
 import BlastSepoliaConfig from "../../../configs/blast.sepolia.json";
+import { BaseConfig } from "../entities/configFile";
 
-export function loadConfig(chainId: number) {
+export function loadConfig(chainId: number): BaseConfig {
   if (chainId === 42161) {
     return ArbitrumMainnetConfig;
   }
@@ -33,7 +34,7 @@ export function loadMarketConfig(chainId: number) {
   throw new Error("not found market config");
 }
 
-export function getConfig() {
+export function getConfig(): BaseConfig {
   if (network.name === "matic") {
     return ArbitrumGoerliConfig;
   }

@@ -14,44 +14,22 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ybUSDB"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("ybUSDB"),
-        tokenAddress: config.tokens.ybusdb,
-        decimals: 18,
-        isStableCoin: true,
-      },
+      token: config.tokens.weth,
+      ybToken: config.tokens.ybeth!,
     },
-    {
-      assetId: ethers.utils.formatBytes32String("ybETH"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("ybETH"),
-        tokenAddress: config.tokens.ybeth,
-        decimals: 18,
-        isStableCoin: false,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("USDT"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("USDT"),
-        tokenAddress: config.tokens.usdt,
-        decimals: 6,
-        isStableCoin: true,
-      },
-    },
+    { token: config.tokens.usdb!, ybToken: config.tokens.ybusdb! },
   ];
 
-  console.log("[configs/ConfigStorage] Set Asset Configs...");
+  console.log("[configs/ConfigStorage] Set ybToken of...");
   await ownerWrapper.authExec(
     configStorage.address,
-    configStorage.interface.encodeFunctionData("setAssetConfigs", [
-      inputs.map((each) => each.assetId),
-      inputs.map((each) => each.config) as IConfigStorage.AssetConfigStruct[],
+    configStorage.interface.encodeFunctionData("setYbTokenOfMany", [
+      inputs.map((each) => each.token) as string[],
+      inputs.map((each) => each.ybToken) as string[],
     ])
   );
   console.log("[configs/ConfigStorage] Finished");
-  console.log("[configs/ConfigStorage] Set Asset Configs success!");
+  console.log("[configs/ConfigStorage] Set ybToken of success!");
 }
 
 const prog = new Command();

@@ -8,7 +8,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
-  const tokenAddress = config.tokens.usdt;
+  const tokenAddress = config.tokens.usdt!;
   const amountIn = ethers.utils.parseUnits("500", 6);
   const subAccountId = 0;
   const shouldWrap = false;
@@ -16,7 +16,7 @@ async function main(chainId: number) {
   console.log("[CrossMarginHandler] depositCollateral...");
   const handler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, signer);
   const token = ERC20__factory.connect(tokenAddress, signer);
-  await token.approve(handler.address, amountIn);
+  await (await token.approve(handler.address, amountIn)).wait();
   const tx = await handler.depositCollateral(subAccountId, tokenAddress, amountIn, shouldWrap);
   console.log(`[CrossMarginHandler] Tx: ${tx.hash}`);
   await tx.wait(1);

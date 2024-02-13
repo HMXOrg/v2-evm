@@ -1,4 +1,4 @@
-import { ethers, tenderly, upgrades, getChainId } from "hardhat";
+import { ethers, run, upgrades, getChainId } from "hardhat";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
@@ -21,9 +21,9 @@ async function main() {
   console.log(`[upgrade/LiquidityHandler] Upgraded!`);
 
   console.log(`[upgrade/LiquidityHandler] Verify contract on Tenderly`);
-  await tenderly.verify({
+  await run("verify:verify", {
     address: newImplementation.toString(),
-    name: "LiquidityHandler",
+    constructorArguments: [],
   });
 }
 

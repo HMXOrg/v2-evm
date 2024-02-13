@@ -350,7 +350,6 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
       // Then we will need to redeem ybTokens.
       IYBToken _yb = IYBToken(_configStorage.ybTokenOf(_order.token));
       // Reassign _order.token to be ybToken
-      address _originalToken = _order.token;
       _order.token = _configStorage.ybTokenOf(_order.token);
       // Ressign _order.amount to be ybs uints
       _order.amount = _yb.previewWithdraw(_order.amount);

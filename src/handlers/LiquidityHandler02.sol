@@ -392,7 +392,6 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
       }
     } else {
-      address _originalToken = _order.token;
       bool _isYbNeeded = _configStorage.ybTokenOf(_order.token) != address(0);
       if (_isYbNeeded) {
         // If ybTokenOf(_order.token) is not null
@@ -464,7 +463,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Skip cancelled order
     if (vars.order.amount > 0) {
-      try this.executeLiquidity(vars.order) returns (uint256 actualOut) {
+      try this.executeLiquidity(vars.order) {
         // update order status
         _handleOrderSuccess(vars.subAccount, _orderIndex);
       } catch Error(string memory errMsg) {

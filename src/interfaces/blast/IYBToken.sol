@@ -10,7 +10,7 @@ interface IYBToken {
 
   function redeem(uint256 _shares, address _receiver, address _owner) external returns (uint256);
 
-  function previewRedeem(uint256 _shares) external returns (uint256);
+  function previewRedeem(uint256 _shares) external view returns (uint256);
 
-  function previewWithdraw(uint256 _assets) external returns (uint256);
+  function previewWithdraw(uint256 _assets) external view returns (uint256);
 }

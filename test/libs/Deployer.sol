@@ -54,6 +54,7 @@ import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
 
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { ICalcPriceAdapter } from "@hmx/oracles/interfaces/ICalcPriceAdapter.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
@@ -809,6 +810,10 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IGasService(payable(_proxy));
+  }
+
+  function deployYbPriceAdapter(address _yb, bytes32 _baseAssetId) internal returns (ICalcPriceAdapter) {
+    return ICalcPriceAdapter(deployContractWithArguments("YbPriceAdapter", abi.encode(_yb, _baseAssetId)));
   }
 
   /**

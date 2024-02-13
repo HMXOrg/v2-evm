@@ -448,9 +448,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       );
       // Then we redeem ETH. The receiving amount can be different from _order.amount.
       // Due to we're returning ETH but at this point _order.amount is in ybETH.
-      uint256 _ethAmount = _ybeth.redeemETH(_order.amount, address(this), address(this));
-      // slither-disable-next-line arbitrary-send-eth
-      payable(_order.account).transfer(_ethAmount);
+      _ybeth.redeemETH(_order.amount, _order.account, address(this));
     } else if (_configStorage.ybTokenOf(_order.token) != address(0)) {
       // If ybTokenOf(_order.token) is not null
       // Then we will need to redeem ybTokens.
@@ -468,10 +466,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         _order.amount,
         address(this)
       );
-      // Then we redeem ybs.
-      uint256 _assets = IYBToken(_order.token).redeem(_order.amount, address(this), address(this));
-      // Transfer to user
-      ERC20Upgradeable(_originalToken).safeTransfer(_order.account, _assets);
+      // Then we redeem ybs to user
+      IYBToken(_order.token).redeem(_order.amount, _order.account, address(this));
     } else {
       // Withdraw _token straight to the user
       _order.crossMarginService.withdrawCollateral(

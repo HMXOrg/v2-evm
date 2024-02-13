@@ -19,6 +19,7 @@ on:
       - "perf/**"
       - "refactor/**"
       - "main"
+      - "main-blast"
 env:
   FOUNDRY_PROFILE: ci
 

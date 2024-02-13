@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "main-blast"
   pull_request:
     branches:
       - "release/**"

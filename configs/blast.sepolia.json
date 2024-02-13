@@ -41,8 +41,8 @@
       "wstEth": "",
       "hlp": "",
       "dix": "0x832a59773e7a0896cF348C5EA72670D7CD37572D",
-      "ybeth": "",
-      "ybusdb": ""
+      "ybeth": "0xA2Daf47841F7921e31A361E8eB1b593ee826977f",
+      "ybusdb": "0xd639863Ca964e6dd7d9799D7b2eE2462A76d932c"
     },
     "orderbook": "0x23628f0C68b3B77Ec2F5Cb3eeB480099c41c2cea"
   },
@@ -51,8 +51,8 @@
     "weth": "0x4200000000000000000000000000000000000023",
     "usdb": "0x4200000000000000000000000000000000000022",
     "usdt": "0xfAE1131D79E9B13CA11c3Fb3D7b588D8Fa44401c",
-    "ybeth": "0x1BE63A4D24a8AaffaB26745Bde8be0B6887241C8",
-    "ybusdb": "0xC039771b711362B9d1602eE2DEd7EEd183dF0B08",
+    "ybeth": "0x628eF5ADFf7da4980CeA33E05568d22772E87EB8",
+    "ybusdb": "0x073315910A2B432F2f9482bCEAFe34420718c7Cc",
     "traderLoyaltyCredit": ""
   },
   "vendors": {},

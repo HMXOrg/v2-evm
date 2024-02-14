@@ -160,6 +160,7 @@ export interface Readers {
   order: string;
   position: string;
   liquidation: string;
+  collateral?: string;
 }
 
 export interface Vendors {

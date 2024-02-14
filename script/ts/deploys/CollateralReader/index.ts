@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { CollateralReader__factory } from "../../../../typechain";
 
@@ -17,9 +17,9 @@ async function main() {
   config.reader.collateral = collateralReader.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: collateralReader.address,
-    name: "CollateralReader",
+    constructorArguments: [config.storages.vault, config.storages.config],
   });
 }
 

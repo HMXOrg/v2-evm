@@ -13,7 +13,8 @@
     "crossMargin": "0xd408a7CFA86e1fa233037970F6CDfCA7d753067e",
     "limitTrade": "0xF1b49fd29240a6f91988f18322e7851cB9a88BEe",
     "liquidity": "0xFc99D238c7A20895ba3756Ee04FD8BfD442c18fD",
-    "intent": "0xC4F51bc480154e5B270967C70B64b53d0C189079"
+    "intent": "0xC4F51bc480154e5B270967C70B64b53d0C189079",
+    "ext01": "0xe821824C8DE790283f86ac8bFddE759009485288"
   },
   "helpers": {
     "trade": "0xA227221350f1D0Ca119be424710aCD9df89151c3",
@@ -76,7 +77,8 @@
   "reader": {
     "order": "0x08a5f5D8696AAfa48192aaA86ec3C2e1952A48f0",
     "position": "0xd111F40B015A6B0cC7F376af20894656c33C0Cd7",
-    "liquidation": "0x0b3E70B2dAe86C7ceAE8Bb4a1F2388eb48887f3E"
+    "liquidation": "0x0b3E70B2dAe86C7ceAE8Bb4a1F2388eb48887f3E",
+    "collateral": "0x6874A355F5CB40e7cB696cAA8bb7bFDB6f508A0a"
   },
   "extension": {
     "switchCollateralRouter": "",

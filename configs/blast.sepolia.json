@@ -78,7 +78,7 @@
     "order": "0x08a5f5D8696AAfa48192aaA86ec3C2e1952A48f0",
     "position": "0xd111F40B015A6B0cC7F376af20894656c33C0Cd7",
     "liquidation": "0x0b3E70B2dAe86C7ceAE8Bb4a1F2388eb48887f3E",
-    "collateral": "0x6874A355F5CB40e7cB696cAA8bb7bFDB6f508A0a"
+    "collateral": "0x75e256cB82d656A86F3351EcB92C7F580D07D6C8"
   },
   "extension": {
     "switchCollateralRouter": "",

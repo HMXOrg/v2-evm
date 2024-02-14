@@ -2,6 +2,8 @@
 pragma solidity 0.8.18;
 
 interface IYBToken {
+  function asset() external view returns (address);
+
   function depositETH(address _receiver) external payable returns (uint256);
 
   function deposit(uint256 _assets, address _receiver) external returns (uint256);

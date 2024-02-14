@@ -11,12 +11,14 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IYBToken } from "@hmx/interfaces/blast/IYBToken.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract CollateralReader {
+contract CollateralReader is Ownable {
   using HMXLib for address;
 
   IVaultStorage public vaultStorage;
   IConfigStorage public configStorage;
+  mapping(address ybToken => bool isYb) isYbToken;
 
   constructor(IVaultStorage _vaultStorage, IConfigStorage _configStorage) {
     vaultStorage = _vaultStorage;
@@ -28,6 +30,13 @@ contract CollateralReader {
     uint256 amount;
   }
 
+  function setIsYbToken(address[] memory ybTokens, bool[] memory isYb) external onlyOwner {
+    uint256 length = ybTokens.length;
+    for (uint256 i = 0; i < length; i++) {
+      isYbToken[ybTokens[i]] = isYb[i];
+    }
+  }
+
   function getCollaterals(
     address _account,
     uint8 _subAccountId
@@ -36,12 +45,14 @@ contract CollateralReader {
     address[] memory _collateralTokens = configStorage.getCollateralTokens();
     uint256 _len = _collateralTokens.length;
     _collaterals = new Collateral[](_len);
-    IYBToken _yb;
+    address _baseTokenOfYb;
     for (uint256 i; i < _len; ) {
-      _yb = IYBToken(configStorage.ybTokenOf(_collateralTokens[i]));
-      if (address(_yb) != address(0)) {
-        _collaterals[i].token = _yb.asset();
-        _collaterals[i].amount = _yb.previewRedeem(vaultStorage.traderBalances(_account, _collateralTokens[i]));
+      _baseTokenOfYb = isYbToken[_collateralTokens[i]] ? IYBToken(_collateralTokens[i]).asset() : address(0);
+      if (address(_baseTokenOfYb) != address(0)) {
+        _collaterals[i].token = _baseTokenOfYb;
+        _collaterals[i].amount = IYBToken(_collateralTokens[i]).previewRedeem(
+          vaultStorage.traderBalances(_account, _collateralTokens[i])
+        );
       } else {
         _collaterals[i].token = _collateralTokens[i];
         _collaterals[i].amount = vaultStorage.traderBalances(_account, _collateralTokens[i]);

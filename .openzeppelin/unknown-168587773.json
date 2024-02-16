@@ -5915,7 +5915,7 @@
             "label": "withdrawOrders",
             "offset": 0,
             "slot": "156",
-            "type": "t_array(t_struct(WithdrawOrder)36790_storage)dyn_storage",
+            "type": "t_array(t_struct(WithdrawOrder)36826_storage)dyn_storage",
             "contract": "CrossMarginHandler",
             "src": "src/handlers/CrossMarginHandler.sol:100"
           },
@@ -5923,7 +5923,7 @@
             "label": "subAccountExecutedWithdrawOrders",
             "offset": 0,
             "slot": "157",
-            "type": "t_mapping(t_address,t_array(t_struct(WithdrawOrder)36790_storage)dyn_storage)",
+            "type": "t_mapping(t_address,t_array(t_struct(WithdrawOrder)36826_storage)dyn_storage)",
             "contract": "CrossMarginHandler",
             "src": "src/handlers/CrossMarginHandler.sol:101"
           },
@@ -5945,7 +5945,7 @@
             "label": "address payable",
             "numberOfBytes": "20"
           },
-          "t_array(t_struct(WithdrawOrder)36790_storage)dyn_storage": {
+          "t_array(t_struct(WithdrawOrder)36826_storage)dyn_storage": {
             "label": "struct ICrossMarginHandler.WithdrawOrder[]",
             "numberOfBytes": "32"
           },
@@ -5961,11 +5961,11 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(CrossMarginService)59354": {
+          "t_contract(CrossMarginService)59449": {
             "label": "contract CrossMarginService",
             "numberOfBytes": "20"
           },
-          "t_enum(WithdrawOrderStatus)36765": {
+          "t_enum(WithdrawOrderStatus)36801": {
             "label": "enum ICrossMarginHandler.WithdrawOrderStatus",
             "members": [
               "PENDING",
@@ -5974,7 +5974,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_address,t_array(t_struct(WithdrawOrder)36790_storage)dyn_storage)": {
+          "t_mapping(t_address,t_array(t_struct(WithdrawOrder)36826_storage)dyn_storage)": {
             "label": "mapping(address => struct ICrossMarginHandler.WithdrawOrder[])",
             "numberOfBytes": "32"
           },
@@ -5982,7 +5982,7 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_struct(WithdrawOrder)36790_storage": {
+          "t_struct(WithdrawOrder)36826_storage": {
             "label": "struct ICrossMarginHandler.WithdrawOrder",
             "members": [
               {
@@ -6029,7 +6029,7 @@
               },
               {
                 "label": "crossMarginService",
-                "type": "t_contract(CrossMarginService)59354",
+                "type": "t_contract(CrossMarginService)59449",
                 "offset": 0,
                 "slot": "5"
               },
@@ -6041,7 +6041,268 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(WithdrawOrderStatus)36765",
+                "type": "t_enum(WithdrawOrderStatus)36801",
+                "offset": 21,
+                "slot": "5"
+              },
+              {
+                "label": "shouldUnwrap",
+                "type": "t_bool",
+                "offset": 22,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint48": {
+            "label": "uint48",
+            "numberOfBytes": "6"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "4d5f8ccd50ba3e3983278a01a193daa5d7faf788ab9c563648287e24a8dd1c57": {
+      "address": "0xff9c10F2a207c6c60b1f57228bb366c05d11fC1C",
+      "txHash": "0xe20d7f60bfbc6008cb5d14406e68ec0ef2ea7fbf8ce65a6be4e012fc1c204010",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "crossMarginService",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:94"
+          },
+          {
+            "label": "pyth",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_address",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:95"
+          },
+          {
+            "label": "nextExecutionOrderIndex",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:96"
+          },
+          {
+            "label": "minExecutionOrderFee",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:97"
+          },
+          {
+            "label": "maxExecutionChuck",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint256",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:98"
+          },
+          {
+            "label": "withdrawOrders",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_array(t_struct(WithdrawOrder)36858_storage)dyn_storage",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:100"
+          },
+          {
+            "label": "subAccountExecutedWithdrawOrders",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_array(t_struct(WithdrawOrder)36858_storage)dyn_storage)",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:101"
+          },
+          {
+            "label": "orderExecutors",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "CrossMarginHandler",
+            "src": "src/handlers/CrossMarginHandler.sol:102"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(WithdrawOrder)36858_storage)dyn_storage": {
+            "label": "struct ICrossMarginHandler.WithdrawOrder[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrossMarginService)59481": {
+            "label": "contract CrossMarginService",
+            "numberOfBytes": "20"
+          },
+          "t_enum(WithdrawOrderStatus)36833": {
+            "label": "enum ICrossMarginHandler.WithdrawOrderStatus",
+            "members": [
+              "PENDING",
+              "SUCCESS",
+              "FAIL"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_struct(WithdrawOrder)36858_storage)dyn_storage)": {
+            "label": "mapping(address => struct ICrossMarginHandler.WithdrawOrder[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(WithdrawOrder)36858_storage": {
+            "label": "struct ICrossMarginHandler.WithdrawOrder",
+            "members": [
+              {
+                "label": "orderId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "executionFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "createdTimestamp",
+                "type": "t_uint48",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "executedTimestamp",
+                "type": "t_uint48",
+                "offset": 6,
+                "slot": "3"
+              },
+              {
+                "label": "account",
+                "type": "t_address_payable",
+                "offset": 12,
+                "slot": "3"
+              },
+              {
+                "label": "token",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "crossMarginService",
+                "type": "t_contract(CrossMarginService)59481",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "subAccountId",
+                "type": "t_uint8",
+                "offset": 20,
+                "slot": "5"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(WithdrawOrderStatus)36833",
                 "offset": 21,
                 "slot": "5"
               },

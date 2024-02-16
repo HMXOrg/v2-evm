@@ -24,6 +24,6 @@ contract Smoke_CollateralReader is Test {
     isYbs[0] = true;
     isYbs[1] = true;
     reader.setIsYbToken(ybTokens, isYbs);
-    reader.getCollaterals(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a, 0);
+    reader.getCollaterals(0x0895EA853b120BE33eD625F0D68587de772083FA, 0);
   }
 }

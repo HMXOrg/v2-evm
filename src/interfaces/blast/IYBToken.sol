@@ -15,4 +15,6 @@ interface IYBToken {
   function previewRedeem(uint256 _shares) external view returns (uint256);
 
   function previewWithdraw(uint256 _assets) external view returns (uint256);
+
+  function previewMint(uint256 _shares) external view returns (uint256 _assets);
 }

@@ -50,7 +50,7 @@ contract CollateralReader is Ownable {
       _baseTokenOfYb = isYbToken[_collateralTokens[i]] ? IYBToken(_collateralTokens[i]).asset() : address(0);
       if (address(_baseTokenOfYb) != address(0)) {
         _collaterals[i].token = _baseTokenOfYb;
-        _collaterals[i].amount = IYBToken(_collateralTokens[i]).previewRedeem(
+        _collaterals[i].amount = IYBToken(_collateralTokens[i]).previewMint(
           vaultStorage.traderBalances(_account, _collateralTokens[i])
         );
       } else {

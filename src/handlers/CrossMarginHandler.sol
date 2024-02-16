@@ -457,6 +457,14 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       _order.token = _configStorage.ybTokenOf(_order.token);
       // Ressign _order.amount to be ybs uints
       _order.amount = _yb.previewWithdraw(_order.amount);
+
+      // Prevent over-withdraw from precision loss
+      uint256 actualAmount = VaultStorage(CrossMarginService(crossMarginService).vaultStorage()).traderBalances(
+        HMXLib.getSubAccount(_order.account, _order.subAccountId),
+        _order.token
+      );
+      if (actualAmount < _order.amount) _order.amount = actualAmount;
+
       // Withdraw ybTokens straight to this contract.
       _order.crossMarginService.withdrawCollateral(
         _order.account,

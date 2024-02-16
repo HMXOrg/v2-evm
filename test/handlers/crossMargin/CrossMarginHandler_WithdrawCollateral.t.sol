@@ -105,6 +105,42 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(ALICE), 20 ether);
   }
 
+  function testCorrectness_Handler_WhenRebased_WhenOverWithdrawWETH() external {
+    vm.startPrank(BOB, BOB);
+    vm.deal(BOB, 20 ether);
+    vm.stopPrank();
+
+    address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
+
+    // Before start depositing, Alice must have 0 amount of ybETH token
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 0);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 0);
+    assertEq(ybeth.balanceOf(ALICE), 0 ether);
+
+    // Deposit 10 WETH, all should wrapped to 10 ybETH
+    {
+      weth.mint(ALICE, 10 ether);
+      simulateAliceDepositToken(address(weth), (10 ether));
+    }
+
+    // After deposited, Alice's sub account must have 10 ybETH as collateral token
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 10 ether);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 10 ether);
+    assertEq(ybeth.balanceOf(ALICE), 0 ether);
+
+    // WETH is rebased.
+    weth.setNextYield(10 ether);
+
+    // Alice try to withdraw 30 WETH, as now 1 ybETH = 2 WETH.
+    // The protocol should unwrap ybETH to 20 WETH and send it to Alice correctly.
+    simulateAliceWithdrawToken(address(weth), 30 ether, tickPrices, publishTimeDiffs, block.timestamp, false);
+
+    // After withdrawn, Alice must have 0 ybETH as collateral token and 20 WETH in her wallet.
+    assertEq(vaultStorage.traderBalances(subAccount, address(ybeth)), 0);
+    assertEq(ybeth.balanceOf(address(vaultStorage)), 0);
+    assertEq(weth.balanceOf(ALICE), 20 ether);
+  }
+
   function testCorrectness_Handler_WhenWithdrawNormalErc20() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 

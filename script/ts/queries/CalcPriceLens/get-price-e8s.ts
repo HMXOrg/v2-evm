@@ -10,7 +10,7 @@ async function main(chainId: number) {
 
   const calcPriceLEns = CalcPriceLens__factory.connect(config.oracles.calcPriceLens, provider);
   const price = await calcPriceLEns["getPrice(bytes32,uint256[])"](ethers.utils.formatBytes32String("ybETH"), [
-    ethers.utils.parseUnits("2500", 8),
+    "2809970000000000000000000000000000",
   ]);
   console.log("price", price.toString());
 }

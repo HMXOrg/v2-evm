@@ -759,6 +759,10 @@ library Deployer {
     return IERC20ApproveStrategy(payable(_proxy));
   }
 
+  function deployYbPriceAdapter(address _yb, bytes32 _baseAssetId) internal returns (ICalcPriceAdapter) {
+    return ICalcPriceAdapter(deployContractWithArguments("YbPriceAdapter", abi.encode(_yb, _baseAssetId)));
+  }
+
   function deployTradeOrderHelper(
     address _configStorage,
     address _perpStorage,
@@ -810,10 +814,6 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IGasService(payable(_proxy));
-  }
-
-  function deployYbPriceAdapter(address _yb, bytes32 _baseAssetId) internal returns (ICalcPriceAdapter) {
-    return ICalcPriceAdapter(deployContractWithArguments("YbPriceAdapter", abi.encode(_yb, _baseAssetId)));
   }
 
   /**

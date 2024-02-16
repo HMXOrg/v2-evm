@@ -55,6 +55,9 @@ interface IIntentHandler {
   event LogSetIntentExecutor(address executor, bool isAllow);
   event LogSetTradeOrderHelper(address oldTradeOrderHelper, address newTradeOrderHelper);
   event LogSetDelegate(address sender, address delegate);
+  event LogIntentReplay(bytes32 indexed key);
+  event LogBadSignature(bytes32 indexed key);
+  event LogCollectExecutionFeeFailed(bytes32 indexed key);
 
   enum Command {
     // +-----------------------+-----------+----------+-----------+---------------+

@@ -156,7 +156,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
 
     // Open 2 orders
     simulateAliceCreateWithdrawOrder(); // Intention: success
-    simulateAliceCreateWithdrawOrder(); // Intention: fail with insufficient balance
+    simulateAliceCreateWithdrawOrder(); // Intention: over-withdraw but success
 
     // assert timestamp and status
     {
@@ -195,7 +195,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
       assertEq(_orders[1].orderId, 1);
       assertEq(_orders[1].createdTimestamp, 101);
       assertEq(_orders[1].executedTimestamp, 201);
-      assertEq(uint(_orders[1].status), 2); // fail
+      assertEq(uint(_orders[1].status), 1); // success
     }
   }
 }

@@ -157,12 +157,18 @@ contract EcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
         priceE8s[_i] = priceE18 / 1e10;
       } else {
         // Make tick right away
-        priceE8s[_i] = uint256(int256(_data[_i].priceE8));
+        priceE8s[_i] = _priceE18TickPriceE8(PythLib.convertToUint(_data[_i].priceE8, -8, 18));
       }
 
       unchecked {
         ++_i;
       }
     }
+  }
+
+  function _priceE18TickPriceE8(uint256 priceE18) internal pure returns (uint256) {
+    int24 _tick = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(priceE18));
+    uint160 _sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
+    return (uint256(_sqrtPriceX96) * (uint256(_sqrtPriceX96)) * (1e8)) >> (96 * 2);
   }
 }

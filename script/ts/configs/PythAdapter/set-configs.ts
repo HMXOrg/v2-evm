@@ -7,8 +7,8 @@ import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("ybUSDB"),
-    pythPriceId: ethers.utils.formatBytes32String("ybUSDB"),
+    assetId: ethers.utils.formatBytes32String("STRK"),
+    pythPriceId: ethers.utils.formatBytes32String("STRK"),
     inverse: false,
   },
 ];

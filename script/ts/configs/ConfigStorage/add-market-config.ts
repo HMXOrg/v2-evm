@@ -31,40 +31,22 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("ETH"),
-      maxLongPositionSize: ethers.utils.parseUnits("5500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("5500000", 30),
-      increasePositionFeeRateBPS: 2, // 0.02%
-      decreasePositionFeeRateBPS: 2, // 0.02%
+      assetId: ethers.utils.formatBytes32String("STRK"),
+      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
+      increasePositionFeeRateBPS: 5, // 0.05%
+      decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 350000, // 3500%
+      maxProfitRateBPS: 400000, // 4000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("2000000000", 30), // 2000 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("BTC"),
-      maxLongPositionSize: ethers.utils.parseUnits("6000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("6000000", 30),
-      increasePositionFeeRateBPS: 2, // 0.02%
-      decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 350000, // 3500%
-      assetClass: assetClasses.crypto,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("3000000000", 30), // 3000 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
   ];
 

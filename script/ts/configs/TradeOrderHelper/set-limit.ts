@@ -56,6 +56,7 @@ async function main(chainId: number) {
     { marketIndex: 46, positionSizeLimit: 2000000, tradeSizeLimit: 2000000 },
     { marketIndex: 47, positionSizeLimit: 100000, tradeSizeLimit: 100000 },
     { marketIndex: 48, positionSizeLimit: 100000, tradeSizeLimit: 100000 },
+    { marketIndex: 49, positionSizeLimit: 2000000, tradeSizeLimit: 2000000 },
   ];
 
   const config = loadConfig(chainId);

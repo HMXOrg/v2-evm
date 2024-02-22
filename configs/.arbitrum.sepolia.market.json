@@ -441,6 +441,16 @@
       "assetSymbol": "Crypto.MANTA",
       "quotedAssetSymbol": "Crypto.MANTA",
       "sortIndex": 2004
+    },
+    {
+      "index": 49,
+      "name": "STRKUSD",
+      "assetId": "0x5354524b00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "strk-usd",
+      "assetSymbol": "Crypto.STRK",
+      "quotedAssetSymbol": "Crypto.STRK",
+      "sortIndex": 2004
     }
   ],
   "assets": {

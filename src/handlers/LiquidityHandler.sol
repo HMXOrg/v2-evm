@@ -101,7 +101,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
   ISurgeStaking public hlpStaking;
-  mapping(address user => mapping(uint256 orderId => bool isSurge)) isSurge; // isSurge is repurposed to isNotAutoStake to indicate if user want to auto-stake HLP or not
+  mapping(address user => mapping(uint256 orderId => bool isSurge)) isSurge;
+  mapping(address user => mapping(uint256 orderId => bool isNotAutoStake)) isNotAutoStake;
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
   /// @param _liquidityService Address of the LiquidityService contract.
@@ -168,7 +169,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
-    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, false);
+    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, false, false);
   }
 
   /// @notice Create a new AddLiquidity order and maybe participate in HLP Surge event
@@ -186,7 +187,20 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     bool _shouldWrap,
     bool _isNotAutoStake
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
-    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isNotAutoStake);
+    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isNotAutoStake, false);
+  }
+
+  function createAddLiquidityOrder(
+    address _tokenIn,
+    uint256 _amountIn,
+    uint256 _minOut,
+    uint256 _executionFee,
+    bool _shouldWrap,
+    bool _isNotAutoStake,
+    bool _isSurge
+  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
+    return
+      _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isNotAutoStake, _isSurge);
   }
 
   function _createAddLiquidityOrder(
@@ -195,7 +209,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap,
-    bool _isNotAutoStake
+    bool _isNotAutoStake,
+    bool _isSurge
   ) internal returns (uint256 _orderId) {
     // Pre-validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
@@ -398,8 +413,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     if (_order.isAdd) {
       bool isHlpStakingDeployed = address(hlpStaking) != address(0);
-      // isSurge is repurposed to isNotAutoStake
-      bool isNotAutoStake = isSurge[_order.account][_order.orderId];
+      bool _isNotAutoStake = isNotAutoStake[_order.account][_order.orderId];
       if (_configStorage.ybTokenOf(_order.token) != address(0)) {
         // Handle ybToken wrapping
         IERC20Upgradeable _yb = IERC20Upgradeable(_configStorage.ybTokenOf(_order.token));
@@ -420,12 +434,16 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         _order.token,
         _order.amount,
         _order.minOut,
-        (isNotAutoStake || !isHlpStakingDeployed) ? _order.account : address(this)
+        (_isNotAutoStake || !isHlpStakingDeployed) ? _order.account : address(this)
       );
-      if (isHlpStakingDeployed && !isNotAutoStake) {
+      if (isHlpStakingDeployed && !_isNotAutoStake) {
         // If HLPStaking is live and user want to auto-stake
         // Auto stake into HLPStaking
-        ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
+        if (isSurge[_order.account][_order.orderId]) {
+          ISurgeStaking(hlpStaking).depositSurge(_order.account, _amountOut);
+        } else {
+          ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
+        }
       }
     } else {
       address _originalToken = _order.token;

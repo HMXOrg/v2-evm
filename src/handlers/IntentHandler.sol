@@ -109,7 +109,13 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
           }
           continue;
         }
-        try gasService.collectExecutionFeeFromCollateral(_localVars.mainAccount, _localVars.subAccountId) {} catch {
+        try
+          gasService.collectExecutionFeeFromCollateral(
+            _localVars.mainAccount,
+            _localVars.subAccountId,
+            _vars.order.marketIndex
+          )
+        {} catch {
           emit LogCollectExecutionFeeFailed(_localVars.key);
           unchecked {
             ++_i;

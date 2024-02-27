@@ -242,7 +242,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         status: LiquidityOrderStatus.PENDING
       })
     );
-    isSurge[msg.sender][_orderId] = _isNotAutoStake;
+    isNotAutoStake[msg.sender][_orderId] = _isNotAutoStake;
+    isSurge[msg.sender][_orderId] = _isSurge;
     emit LogCreateAddLiquidityOrder(
       msg.sender,
       _orderId,

@@ -451,6 +451,16 @@
       "assetSymbol": "Crypto.STRK",
       "quotedAssetSymbol": "Crypto.STRK",
       "sortIndex": 2004
+    },
+    {
+      "index": 50,
+      "name": "PYTHUSD",
+      "assetId": "0x5059544800000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "pyth-usd",
+      "assetSymbol": "Crypto.PYTH",
+      "quotedAssetSymbol": "Crypto.PYTH",
+      "sortIndex": 2004
     }
   ],
   "assets": {

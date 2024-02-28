@@ -110,7 +110,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     }
 
     if (vars.executionFeeToBePaidInUsd > 0) {
-      revert GasService_NotEnoughCollateral();
+      vaultStorage.addTradingFeeDebt(vars.subAccount, vars.executionFeeToBePaidInUsd);
     }
   }
 

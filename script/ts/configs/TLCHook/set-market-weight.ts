@@ -18,36 +18,10 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   const weightConfigs: Array<WeightConfig> = [
-    { marketIndex: 0, weightBPS: 4 * BPS },
-    { marketIndex: 1, weightBPS: 4 * BPS },
-    { marketIndex: 4, weightBPS: 5 * BPS },
-    { marketIndex: 9, weightBPS: 5 * BPS },
-    { marketIndex: 12, weightBPS: 5 * BPS },
-    { marketIndex: 13, weightBPS: 5 * BPS },
-    { marketIndex: 14, weightBPS: 5 * BPS },
-    { marketIndex: 15, weightBPS: 5 * BPS },
-    { marketIndex: 16, weightBPS: 5 * BPS },
-    { marketIndex: 17, weightBPS: 5 * BPS },
-    { marketIndex: 20, weightBPS: 5 * BPS },
-    { marketIndex: 21, weightBPS: 5 * BPS },
-    { marketIndex: 23, weightBPS: 5 * BPS },
-    { marketIndex: 25, weightBPS: 5 * BPS },
-    { marketIndex: 27, weightBPS: 5 * BPS },
-    { marketIndex: 32, weightBPS: 5 * BPS },
-    { marketIndex: 33, weightBPS: 5 * BPS },
-    { marketIndex: 35, weightBPS: 5 * BPS },
-    { marketIndex: 36, weightBPS: 5 * BPS },
-    { marketIndex: 37, weightBPS: 5 * BPS },
-    { marketIndex: 38, weightBPS: 5 * BPS },
-    { marketIndex: 39, weightBPS: 5 * BPS },
-    { marketIndex: 40, weightBPS: 5 * BPS },
-    { marketIndex: 41, weightBPS: 5 * BPS },
-    { marketIndex: 42, weightBPS: 5 * BPS },
-    { marketIndex: 43, weightBPS: 5 * BPS },
-    { marketIndex: 44, weightBPS: 5 * BPS },
-    { marketIndex: 45, weightBPS: 5 * BPS },
-    { marketIndex: 47, weightBPS: 5 * BPS },
-    { marketIndex: 48, weightBPS: 5 * BPS },
+    {
+      marketIndex: 50, // PYTHUSD
+      weightBPS: 5 * BPS,
+    },
   ];
 
   const tlcHook = TLCHook__factory.connect(config.hooks.tlc, deployer);

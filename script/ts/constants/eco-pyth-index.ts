@@ -58,6 +58,7 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xf0d57deca57b3da2fe63a493f4c25925fdfd8edf834b20f93e1f84dbd1504d4a", // SHIBUSD
   "0xc9907d786c5821547777780a1e4f89484f3417cb14dd244f2b0a34ea7a554d67", // ICPUSD
   "0xc3883bcf1101c111e9fcfe2465703c47f2b638e21fef2cce0502e6c8f416e0e2", // MANTAUSD
+  "0x6a182399ff70ccf3e06024898942028204125a819e519a335ffa4579e66cd870", // STRKUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -116,6 +117,7 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("1000SHIB"),
   ethers.utils.formatBytes32String("ICP"),
   ethers.utils.formatBytes32String("MANTA"),
+  ethers.utils.formatBytes32String("STRK"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -174,6 +176,7 @@ export const ecoPythHoomanReadableByIndex = [
   "1000SHIB",
   "ICP",
   "MANTA",
+  "STRK",
 ];
 export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
   [ethers.utils.formatBytes32String("1000SHIB"), 1000],

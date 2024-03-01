@@ -42,6 +42,11 @@ const config: HardhatUserConfig = {
       chainId: 168587773,
       accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
+    blast: {
+      url: process.env.BLAST_MAINNET_RPC || "",
+      chainId: 81457,
+      accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
+    },
   },
   solidity: {
     version: "0.8.18",
@@ -73,6 +78,14 @@ const config: HardhatUserConfig = {
       blastSepolia: process.env.ETHERSCAN_API_KEY!,
     },
     customChains: [
+      {
+        network: "blast",
+        chainId: 81457,
+        urls: {
+          apiURL: "https://api.blastscan.io/api",
+          browserURL: "https://www.blastscan.io",
+        },
+      },
       {
         network: "blastSepolia",
         chainId: 168587773,

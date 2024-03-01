@@ -1,0 +1,90 @@
+{
+  "proxyAdmin": "",
+  "multicall": "",
+  "timelock": "",
+  "safe": "",
+  "storages": {
+    "config": "",
+    "perp": "",
+    "vault": ""
+  },
+  "handlers": {
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "intent": "",
+    "ext01": ""
+  },
+  "helpers": {
+    "trade": "",
+    "limitTrade": "",
+    "tradeOrder": "",
+    "intentBuilder": ""
+  },
+  "services": {
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": "",
+    "gas": ""
+  },
+  "oracles": {
+    "ecoPyth2": "",
+    "pythAdapter": "",
+    "sglpStakedAdapter": "",
+    "middleware": "",
+    "ecoPythCalldataBuilder3": "",
+    "unsafeEcoPythCalldataBuilder3": "",
+    "onChainPriceLens": "",
+    "calcPriceLens": "",
+    "priceAdapters": {
+      "wstEth": "",
+      "hlp": "",
+      "dix": "",
+      "ybeth": "",
+      "ybusdb": ""
+    },
+    "orderbook": ""
+  },
+  "tokens": {
+    "hlp": "",
+    "weth": "0x4300000000000000000000000000000000000004",
+    "usdb": "0x4300000000000000000000000000000000000003",
+    "ybeth": "",
+    "ybusdb": "",
+    "traderLoyaltyCredit": ""
+  },
+  "vendors": {},
+  "strategies": {},
+  "hooks": {
+    "tradingStaking": "",
+    "tlc": ""
+  },
+  "calculator": "",
+  "adaptiveFeeCalculator": "",
+  "accountAbstraction": {
+    "entryPoint": "",
+    "factory": ""
+  },
+  "staking": {
+    "trading": "",
+    "tlc": "",
+    "hlp": ""
+  },
+  "rewardDistributor": "",
+  "reader": {
+    "order": "",
+    "position": "",
+    "liquidation": "",
+    "collateral": ""
+  },
+  "extension": {
+    "switchCollateralRouter": "",
+    "dexter": {
+      "uniswapV3": "",
+      "curve": "",
+      "glp": ""
+    }
+  }
+}

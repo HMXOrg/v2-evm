@@ -1,10 +1,10 @@
 import { ethers, run } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-
-const config = getConfig();
+import { loadConfig, writeConfigFile } from "../../utils/config";
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const config = loadConfig(chainId);
   const ybToken = config.tokens.ybusdb!;
   const assetId = ethers.utils.formatBytes32String("DAI");
   const contract = await ethers.deployContract("YbPriceAdapter", [ybToken, assetId], deployer);

@@ -31,15 +31,6 @@ async function main(chainId: number) {
         isStableCoin: false,
       },
     },
-    {
-      assetId: ethers.utils.formatBytes32String("USDT"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("USDT"),
-        tokenAddress: config.tokens.usdt,
-        decimals: 6,
-        isStableCoin: true,
-      },
-    },
   ];
 
   console.log("[configs/ConfigStorage] Set Asset Configs...");
@@ -50,8 +41,6 @@ async function main(chainId: number) {
       inputs.map((each) => each.config) as IConfigStorage.AssetConfigStruct[],
     ])
   );
-  console.log("[configs/ConfigStorage] Finished");
-  console.log("[configs/ConfigStorage] Set Asset Configs success!");
 }
 
 const prog = new Command();

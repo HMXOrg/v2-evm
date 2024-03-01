@@ -4,9 +4,9 @@ import { Command } from "commander";
 import signers from "../../entities/signers";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
-const positionManagers = ["0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a", "0x0578C797798Ae89b688Cd5676348344d7d0EC35E"];
-
 async function main(chainId: number) {
+  const positionManagers = ["0x3231C08B500bb26e0654cb0338F135CeD44d6B84", "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E"];
+
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);

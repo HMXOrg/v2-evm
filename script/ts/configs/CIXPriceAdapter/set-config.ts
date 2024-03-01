@@ -29,7 +29,6 @@ async function main(chainId: number) {
     ethers.utils.parseUnits("0.040", 8),
     ethers.utils.parseUnits("0.040", 8),
   ];
-
   const usdQuoteds = [
     true, // EURUSD
     false, // USDJPY

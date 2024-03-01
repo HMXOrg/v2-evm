@@ -15,14 +15,6 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("USDT"),
-      collateralConfig: {
-        collateralFactorBPS: 1 * BPS,
-        accepted: true,
-        settleStrategy: ethers.constants.AddressZero,
-      },
-    },
-    {
       assetId: ethers.utils.formatBytes32String("ybETH"),
       collateralConfig: {
         collateralFactorBPS: 0.9 * BPS,

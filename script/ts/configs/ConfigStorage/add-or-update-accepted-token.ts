@@ -13,18 +13,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.usdt!,
-      config: {
-        targetWeight: ethers.utils.parseEther("0.25"), // 100%
-        bufferLiquidity: 0,
-        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
-        accepted: true,
-      },
-    },
-    {
       tokenAddress: config.tokens.ybeth!,
       config: {
-        targetWeight: ethers.utils.parseEther("0.5"), // 100%
+        targetWeight: ethers.utils.parseEther("0.5"), // 50%
         bufferLiquidity: 0,
         maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
         accepted: true,
@@ -33,7 +24,7 @@ async function main(chainId: number) {
     {
       tokenAddress: config.tokens.ybusdb!,
       config: {
-        targetWeight: ethers.utils.parseEther("0.25"), // 100%
+        targetWeight: ethers.utils.parseEther("0.5"), // 50%
         bufferLiquidity: 0,
         maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
         accepted: true,

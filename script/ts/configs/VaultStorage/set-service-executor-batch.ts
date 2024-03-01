@@ -27,10 +27,6 @@ async function main(chainId: number) {
       executorAddress: config.services.liquidation,
       isServiceExecutor: true,
     },
-    {
-      executorAddress: config.services.gas,
-      isServiceExecutor: true,
-    },
   ];
 
   const deployer = signers.deployer(chainId);

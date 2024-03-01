@@ -1,11 +1,10 @@
 import { ethers, run } from "hardhat";
-import { writeConfigFile } from "../../utils/config";
-import BlastSepoliaConfig from "../../../../configs/blast.sepolia.json";
-
-const config = BlastSepoliaConfig;
+import { loadConfig, writeConfigFile } from "../../utils/config";
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const config = loadConfig(chainId);
   const ybToken = config.tokens.ybeth!;
   const assetId = ethers.utils.formatBytes32String("ETH");
   const contract = await ethers.deployContract("YbPriceAdapter", [ybToken, assetId], deployer);

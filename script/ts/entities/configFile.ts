@@ -19,6 +19,7 @@ export interface BaseConfig {
   staking: Staking;
   rewardDistributor: string;
   reader: Readers;
+  extension: Extension;
 }
 
 export interface Storages {
@@ -266,4 +267,5 @@ export interface Dexter {
   uniswapV3: string;
   curve: string;
   glp: string;
+  erc4626: string;
 }

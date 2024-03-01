@@ -74,9 +74,9 @@
   },
   "rewardDistributor": "",
   "reader": {
-    "order": "",
-    "position": "",
-    "liquidation": "",
+    "order": "0x72AeE66BC101243dff0A492931EEbFCE6A4f6b9c",
+    "position": "0x0622DBf2ee42C531AF2AB8Fe4d802B4546D3119a",
+    "liquidation": "0x53eee7C2e543E29f558e866947278A6379D99B56",
     "collateral": "0xBF04652dF75d98Ff2e28186ee646A88367232dCE"
   },
   "extension": {

@@ -7,7 +7,7 @@ async function main() {
   const chainId = (await ethers.provider.getNetwork()).chainId;
   const config = loadConfig(chainId);
 
-  const minimumPositionSize = ethers.utils.parseUnits("10", 30); // 10 USD
+  const minimumPositionSize = ethers.utils.parseUnits("0.1", 30); // 0.1 USD
 
   const deployer = (await ethers.getSigners())[0];
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);

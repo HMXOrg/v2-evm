@@ -11,7 +11,7 @@ async function main(chainId: number) {
     {
       contractAddress: config.services.crossMargin,
       executorAddress: config.handlers.crossMargin,
-      isServiceExecutor: true,
+      isServiceExecutor: false,
     },
     {
       contractAddress: config.services.liquidity,
@@ -21,27 +21,27 @@ async function main(chainId: number) {
     {
       contractAddress: config.services.liquidation,
       executorAddress: config.handlers.bot,
-      isServiceExecutor: true,
+      isServiceExecutor: false,
     },
     {
       contractAddress: config.services.trade,
       executorAddress: config.handlers.limitTrade,
-      isServiceExecutor: true,
+      isServiceExecutor: false,
     },
     {
       contractAddress: config.services.trade,
       executorAddress: config.handlers.bot,
-      isServiceExecutor: true,
+      isServiceExecutor: false,
     },
     {
       contractAddress: config.helpers.trade,
       executorAddress: config.services.trade,
-      isServiceExecutor: true,
+      isServiceExecutor: false,
     },
     {
       contractAddress: config.helpers.trade,
       executorAddress: config.services.liquidation,
-      isServiceExecutor: true,
+      isServiceExecutor: false,
     },
   ];
 

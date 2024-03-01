@@ -80,6 +80,8 @@ export interface PriceAdapters {
   dix: string;
   ybeth?: string;
   ybusdb?: string;
+  ybeth2?: string;
+  ybusdb2?: string;
 }
 
 export interface Staking {
@@ -154,6 +156,8 @@ export interface Tokens {
   usdb?: string;
   ybeth?: string;
   ybusdb?: string;
+  ybeth2?: string;
+  ybusdb2?: string;
 }
 
 export interface Readers {

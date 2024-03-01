@@ -5,7 +5,7 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
   const chainId = (await ethers.provider.getNetwork()).chainId;
   const config = loadConfig(chainId);
-  const ybToken = config.tokens.ybeth!;
+  const ybToken = config.tokens.ybeth2!;
   const assetId = ethers.utils.formatBytes32String("ETH");
   const contract = await ethers.deployContract("YbPriceAdapter", [ybToken, assetId], deployer);
 
@@ -13,7 +13,7 @@ async function main() {
   console.log(`[deploys/YbPriceAdapter] Deploying YbPriceAdapter for ybETH Contract`);
   console.log(`[deploys/YbPriceAdapter] Deployed at: ${contract.address}`);
 
-  config.oracles.priceAdapters.ybeth = contract.address;
+  config.oracles.priceAdapters.ybeth2 = contract.address;
   writeConfigFile(config);
 
   await run("verify:verify", {

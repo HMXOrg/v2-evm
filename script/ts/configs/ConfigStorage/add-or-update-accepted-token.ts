@@ -3,36 +3,52 @@ import { ConfigStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   const inputs = [
     {
-      tokenAddress: config.tokens.sglp,
+      tokenAddress: config.tokens.usdt!,
       config: {
-        targetWeight: ethers.utils.parseEther("0"), // 0%
+        targetWeight: ethers.utils.parseEther("0.25"), // 100%
         bufferLiquidity: 0,
         maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
-        accepted: false,
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.ybeth!,
+      config: {
+        targetWeight: ethers.utils.parseEther("0.5"), // 100%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.ybusdb!,
+      config: {
+        targetWeight: ethers.utils.parseEther("0.25"), // 100%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
       },
     },
   ];
 
   console.log("[configs/ConfigStorage] AddOrUpdateAcceptedToken...");
-  const tx = await safeWrapper.proposeTransaction(
+  await ownerWrapper.authExec(
     configStorage.address,
-    0,
     configStorage.interface.encodeFunctionData("addOrUpdateAcceptedToken", [
       inputs.map((each) => each.tokenAddress),
       inputs.map((each) => each.config),
     ])
   );
-  console.log(`[configs/ConfigStorage] Proposed hash: ${tx}`);
 }
 
 const prog = new Command();

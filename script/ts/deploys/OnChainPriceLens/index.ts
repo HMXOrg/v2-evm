@@ -1,4 +1,4 @@
-import { ethers, tenderly, network } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 
 const config = getConfig();
@@ -14,9 +14,9 @@ async function main() {
   config.oracles.onChainPriceLens = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: contract.address,
-    name: "OnChainPriceLens",
+    constructorArguments: [],
   });
 }
 

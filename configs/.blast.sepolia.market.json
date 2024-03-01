@@ -1,0 +1,456 @@
+{
+  "markets": [
+    {
+      "index": 0,
+      "name": "ETHUSD",
+      "assetId": "0x4554480000000000000000000000000000000000000000000000000000000000",
+      "slug": "eth-usd",
+      "assetSymbol": "Crypto.ETH",
+      "sortIndex": 0
+    },
+    {
+      "index": 1,
+      "name": "BTCUSD",
+      "assetId": "0x4254430000000000000000000000000000000000000000000000000000000000",
+      "slug": "btc-usd",
+      "assetSymbol": "Crypto.BTC",
+      "sortIndex": 1
+    },
+    {
+      "index": 2,
+      "name": "USDJPY",
+      "assetId": "0x4a50590000000000000000000000000000000000000000000000000000000000",
+      "slug": "usd-jpy",
+      "assetSymbol": "FX.JPY",
+      "sortIndex": 2000
+    },
+    {
+      "index": 3,
+      "name": "XAUUSD",
+      "assetId": "0x5841550000000000000000000000000000000000000000000000000000000000",
+      "slug": "xau-usd",
+      "assetSymbol": "Metal.XAU",
+      "sortIndex": 3001
+    },
+    {
+      "index": 4,
+      "name": "EURUSD",
+      "assetId": "0x4555520000000000000000000000000000000000000000000000000000000000",
+      "slug": "eur-usd",
+      "assetSymbol": "FX.EUR",
+      "sortIndex": 2001
+    },
+    {
+      "index": 5,
+      "name": "XAGUSD",
+      "assetId": "0x5841470000000000000000000000000000000000000000000000000000000000",
+      "slug": "xag-usd",
+      "assetSymbol": "Metal.XAG",
+      "sortIndex": 3001
+    },
+    {
+      "index": 6,
+      "name": "AUDUSD",
+      "assetId": "0x4155440000000000000000000000000000000000000000000000000000000000",
+      "slug": "aud-usd",
+      "assetSymbol": "FX.AUD",
+      "sortIndex": 2002
+    },
+    {
+      "index": 7,
+      "name": "GBPUSD",
+      "assetId": "0x4742500000000000000000000000000000000000000000000000000000000000",
+      "slug": "gbp-usd",
+      "assetSymbol": "FX.GBP",
+      "sortIndex": 2003
+    },
+    {
+      "index": 8,
+      "name": "ADAUSD",
+      "assetId": "0x4144410000000000000000000000000000000000000000000000000000000000",
+      "slug": "ada-usd",
+      "assetSymbol": "Crypto.ADA",
+      "sortIndex": 2
+    },
+    {
+      "index": 9,
+      "name": "MATICUSD",
+      "assetId": "0x4d41544943000000000000000000000000000000000000000000000000000000",
+      "slug": "matic-usd",
+      "assetSymbol": "Crypto.MATIC",
+      "sortIndex": 3
+    },
+    {
+      "index": 10,
+      "name": "SUIUSD",
+      "assetId": "0x5355490000000000000000000000000000000000000000000000000000000000",
+      "slug": "sui-usd",
+      "assetSymbol": "Crypto.SUI",
+      "sortIndex": 4
+    },
+    {
+      "index": 11,
+      "name": "ARBUSD",
+      "assetId": "0x4152420000000000000000000000000000000000000000000000000000000000",
+      "slug": "arb-usd",
+      "assetSymbol": "Crypto.ARB",
+      "sortIndex": 5
+    },
+    {
+      "index": 12,
+      "name": "OPUSD",
+      "assetId": "0x4f50000000000000000000000000000000000000000000000000000000000000",
+      "slug": "op-usd",
+      "assetSymbol": "Crypto.OP",
+      "sortIndex": 6
+    },
+    {
+      "index": 13,
+      "name": "LTCUSD",
+      "assetId": "0x4c54430000000000000000000000000000000000000000000000000000000000",
+      "slug": "ltc-usd",
+      "assetSymbol": "Crypto.LTC",
+      "sortIndex": 7
+    },
+    {
+      "index": 14,
+      "name": "BNBUSD",
+      "assetId": "0x424e420000000000000000000000000000000000000000000000000000000000",
+      "slug": "bnb-usd",
+      "assetSymbol": "Crypto.BNB",
+      "sortIndex": 8
+    },
+    {
+      "index": 15,
+      "name": "SOLUSD",
+      "assetId": "0x534f4c0000000000000000000000000000000000000000000000000000000000",
+      "slug": "sol-usd",
+      "assetSymbol": "Crypto.SOL",
+      "sortIndex": 9
+    },
+    {
+      "index": 16,
+      "name": "XRPUSD",
+      "assetId": "0x5852500000000000000000000000000000000000000000000000000000000000",
+      "slug": "xrp-usd",
+      "assetSymbol": "Crypto.XRP",
+      "sortIndex": 10
+    },
+    {
+      "index": 17,
+      "name": "LINKUSD",
+      "assetId": "0x4c494e4b00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "link-usd",
+      "assetSymbol": "Crypto.LINK",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 11
+    },
+    {
+      "index": 18,
+      "name": "USDCHF",
+      "assetId": "0x4348460000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-chf",
+      "assetSymbol": "FX.CHF",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 2004
+    },
+    {
+      "index": 19,
+      "name": "DOGEUSD",
+      "assetId": "0x444f474500000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "doge-usd",
+      "assetSymbol": "Crypto.DOGE",
+      "quotedAssetSymbol": "Crypto.DOGE",
+      "sortIndex": 2004
+    },
+    {
+      "index": 20,
+      "name": "USDCAD",
+      "assetId": "0x4341440000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-cad",
+      "assetSymbol": "FX.CAD",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 2004
+    },
+    {
+      "index": 21,
+      "name": "USDSGD",
+      "assetId": "0x5347440000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-sgd",
+      "assetSymbol": "FX.SGD",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 2004
+    },
+    {
+      "index": 22,
+      "name": "USDCNH",
+      "assetId": "0x434e480000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-cnh",
+      "assetSymbol": "FX.CNH",
+      "quotedAssetSymbol": "FX.CNH",
+      "sortIndex": 2004
+    },
+    {
+      "index": 23,
+      "name": "USDHKD",
+      "assetId": "0x484b440000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-hkd",
+      "assetSymbol": "FX.HKD",
+      "quotedAssetSymbol": "FX.HKD",
+      "sortIndex": 2004
+    },
+    {
+      "index": 24,
+      "name": "BCHUSD",
+      "assetId": "0x4243480000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "bch-usd",
+      "assetSymbol": "Crypto.BCH",
+      "quotedAssetSymbol": "Crypto.BCH",
+      "sortIndex": 2004
+    },
+    {
+      "index": 25,
+      "name": "MEMEUSD",
+      "assetId": "0x4d454d4500000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "meme-usd",
+      "assetSymbol": "Crypto.MEME",
+      "quotedAssetSymbol": "Crypto.MEME",
+      "sortIndex": 2004
+    },
+    {
+      "index": 26,
+      "name": "DIX",
+      "assetId": "0x4449580000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "dix",
+      "assetSymbol": "FX.DIX",
+      "quotedAssetSymbol": "FX.DIX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 27,
+      "name": "JTOUSD",
+      "assetId": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "jto-usd",
+      "assetSymbol": "Crypto.JTO",
+      "quotedAssetSymbol": "Crypto.JTO",
+      "sortIndex": 2004
+    },
+    {
+      "index": 28,
+      "name": "STXUSD",
+      "assetId": "0x5354580000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "stx-usd",
+      "assetSymbol": "Crypto.STX",
+      "quotedAssetSymbol": "Crypto.STX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 29,
+      "name": "ORDIUSD",
+      "assetId": "0x4f52444900000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "ordi-usd",
+      "assetSymbol": "Crypto.ORDI",
+      "quotedAssetSymbol": "Crypto.ORDI",
+      "sortIndex": 2004
+    },
+    {
+      "index": 30,
+      "name": "TIAUSD",
+      "assetId": "0x5449410000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "tia-usd",
+      "assetSymbol": "Crypto.TIA",
+      "quotedAssetSymbol": "Crypto.TIA",
+      "sortIndex": 2004
+    },
+    {
+      "index": 31,
+      "name": "AVAXUSD",
+      "assetId": "0x4156415800000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "avax-usd",
+      "assetSymbol": "Crypto.AVAX",
+      "quotedAssetSymbol": "Crypto.AVAX",
+      "sortIndex": 2004
+    },
+    {
+      "index": 32,
+      "name": "INJUSD",
+      "assetId": "0x494e4a0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "inj-usd",
+      "assetSymbol": "Crypto.INJ",
+      "quotedAssetSymbol": "Crypto.INJ",
+      "sortIndex": 2004
+    },
+    {
+      "index": 33,
+      "name": "DOTUSD",
+      "assetId": "0x444f540000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "dot-usd",
+      "assetSymbol": "Crypto.DOT",
+      "quotedAssetSymbol": "Crypto.DOT",
+      "sortIndex": 2004
+    },
+    {
+      "index": 34,
+      "name": "SEIUSD",
+      "assetId": "0x5345490000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "sei-usd",
+      "assetSymbol": "Crypto.SEI",
+      "quotedAssetSymbol": "Crypto.SEI",
+      "sortIndex": 2004
+    },
+    {
+      "index": 35,
+      "name": "ATOMUSD",
+      "assetId": "0x41544f4d00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "atom-usd",
+      "assetSymbol": "Crypto.ATOM",
+      "quotedAssetSymbol": "Crypto.ATOM",
+      "sortIndex": 2004
+    },
+    {
+      "index": 36,
+      "name": "1000PEPEUSD",
+      "assetId": "0x3130303050455045000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "1000pepe-usd",
+      "assetSymbol": "Crypto.1000PEPE",
+      "quotedAssetSymbol": "Crypto.1000PEPE",
+      "sortIndex": 2004
+    },
+    {
+      "index": 37,
+      "name": "1000SHIBUSD",
+      "assetId": "0x3130303053484942000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "1000shib-usd",
+      "assetSymbol": "Crypto.1000SHIB",
+      "quotedAssetSymbol": "Crypto.1000SHIB",
+      "sortIndex": 2004
+    },
+    {
+      "index": 38,
+      "name": "USDSEK",
+      "assetId": "0x53454b0000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-sek",
+      "assetSymbol": "FX.SEK",
+      "quotedAssetSymbol": "FX.SEK",
+      "sortIndex": 2004
+    },
+    {
+      "index": 39,
+      "name": "ICPUSD",
+      "assetId": "0x4943500000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "icp-usd",
+      "assetSymbol": "Crypto.ICP",
+      "quotedAssetSymbol": "Crypto.ICP",
+      "sortIndex": 2004
+    },
+    {
+      "index": 40,
+      "name": "MANTAUSD",
+      "assetId": "0x4d414e5441000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "manta-usd",
+      "assetSymbol": "Crypto.MANTA",
+      "quotedAssetSymbol": "Crypto.MANTA",
+      "sortIndex": 2004
+    },
+    {
+      "index": 41,
+      "name": "STRKUSD",
+      "assetId": "0x5354524b00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "strk-usd",
+      "assetSymbol": "Crypto.STRK",
+      "quotedAssetSymbol": "Crypto.STRK",
+      "sortIndex": 2004
+    },
+    {
+      "index": 42,
+      "name": "PYTHUSD",
+      "assetId": "0x5059544800000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "pyth-usd",
+      "assetSymbol": "Crypto.PYTH",
+      "quotedAssetSymbol": "Crypto.PYTH",
+      "sortIndex": 2004
+    }
+  ],
+  "assets": {
+    "ETH": "0x4554480000000000000000000000000000000000000000000000000000000000",
+    "BTC": "0x4254430000000000000000000000000000000000000000000000000000000000",
+    "USDC": "0x5553444300000000000000000000000000000000000000000000000000000000",
+    "USDT": "0x5553445400000000000000000000000000000000000000000000000000000000",
+    "DAI": "0x4441490000000000000000000000000000000000000000000000000000000000",
+    "AAPL": "0x4141504c00000000000000000000000000000000000000000000000000000000",
+    "JPY": "0x4a50590000000000000000000000000000000000000000000000000000000000",
+    "XAU": "0x5841550000000000000000000000000000000000000000000000000000000000",
+    "GLP": "0x474c500000000000000000000000000000000000000000000000000000000000",
+    "HLP": "HLP",
+    "AMZN": "0x414d5a4e00000000000000000000000000000000000000000000000000000000",
+    "MSFT": "0x4d53465400000000000000000000000000000000000000000000000000000000",
+    "TSLA": "0x54534c4100000000000000000000000000000000000000000000000000000000",
+    "EUR": "0x4555520000000000000000000000000000000000000000000000000000000000",
+    "XAG": "0x5841470000000000000000000000000000000000000000000000000000000000",
+    "ADA": "0x4144410000000000000000000000000000000000000000000000000000000000",
+    "AUD": "0x4155440000000000000000000000000000000000000000000000000000000000",
+    "GBP": "0x4742500000000000000000000000000000000000000000000000000000000000",
+    "MATIC": "0x4d41544943000000000000000000000000000000000000000000000000000000",
+    "SUI": "0x5355490000000000000000000000000000000000000000000000000000000000",
+    "HMX": "HMX",
+    "LHMX": "LHMX",
+    "ARB": "0x4152420000000000000000000000000000000000000000000000000000000000",
+    "OP": "0x4f50000000000000000000000000000000000000000000000000000000000000",
+    "LTC": "0x4c54430000000000000000000000000000000000000000000000000000000000",
+    "COIN": "0x434f494e00000000000000000000000000000000000000000000000000000000",
+    "GOOG": "0x474f4f4700000000000000000000000000000000000000000000000000000000",
+    "BNB": "0x424e420000000000000000000000000000000000000000000000000000000000",
+    "SOL": "0x534f4c0000000000000000000000000000000000000000000000000000000000",
+    "QQQ": "0x5151510000000000000000000000000000000000000000000000000000000000",
+    "XRP": "0x5852500000000000000000000000000000000000000000000000000000000000",
+    "esHMX": "esHMX",
+    "DragonPoint": "DragonPoint",
+    "DIX": "0x4449580000000000000000000000000000000000000000000000000000000000",
+    "MEME": "0x4d454d4500000000000000000000000000000000000000000000000000000000",
+    "JTO": "0x4a544f0000000000000000000000000000000000000000000000000000000000",
+    "STX": "0x5354580000000000000000000000000000000000000000000000000000000000",
+    "ORDI": "0x4f52444900000000000000000000000000000000000000000000000000000000",
+    "TIA": "0x5449410000000000000000000000000000000000000000000000000000000000",
+    "AVAX": "0x4156415800000000000000000000000000000000000000000000000000000000",
+    "INJ": "0x494e4a0000000000000000000000000000000000000000000000000000000000",
+    "DOT": "0x444f540000000000000000000000000000000000000000000000000000000000",
+    "SEI": "0x5345490000000000000000000000000000000000000000000000000000000000",
+    "ATOM": "0x41544f4d00000000000000000000000000000000000000000000000000000000",
+    "1000PEPE": "0x3130303050455045000000000000000000000000000000000000000000000000",
+    "1000SHIB": "0x3130303053484942000000000000000000000000000000000000000000000000",
+    "SEK": "0x53454b0000000000000000000000000000000000000000000000000000000000",
+    "ICP": "0x4943500000000000000000000000000000000000000000000000000000000000",
+    "MANTA": "0x4d414e5441000000000000000000000000000000000000000000000000000000",
+    "ybETH": "0x7962455448000000000000000000000000000000000000000000000000000000",
+    "ybUSDB": "0x7962555344420000000000000000000000000000000000000000000000000000",
+    "USDB": "0x5553444200000000000000000000000000000000000000000000000000000000",
+    "STRK": "0x5354524b00000000000000000000000000000000000000000000000000000000",
+    "PYTH": "0x5059544800000000000000000000000000000000000000000000000000000000"
+  }
+}

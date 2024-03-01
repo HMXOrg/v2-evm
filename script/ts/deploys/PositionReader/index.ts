@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 
 const BigNumber = ethers.BigNumber;
@@ -21,9 +21,9 @@ async function main() {
   config.reader.position = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: contract.address,
-    name: "PositionReader",
+    constructorArguments: [config.storages.config, config.storages.perp, config.oracles.middleware, config.calculator],
   });
 }
 

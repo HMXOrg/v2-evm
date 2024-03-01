@@ -1,8 +1,7 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
+import { ethers, run, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
-const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
@@ -14,7 +13,7 @@ async function main() {
   const Contract = await ethers.getContractFactory("LimitTradeHandler", deployer);
   const contract = await upgrades.deployProxy(
     Contract,
-    [config.tokens.weth, config.services.trade, config.oracles.ecoPyth, minExecutionFee, minExecutionTimestamp],
+    [config.tokens.weth, config.services.trade, config.oracles.ecoPyth2, minExecutionFee, minExecutionTimestamp],
     {
       unsafeAllow: ["delegatecall"],
     }
@@ -26,9 +25,9 @@ async function main() {
   config.handlers.limitTrade = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "LimitTradeHandler",
+    constructorArguments: [],
   });
 }
 

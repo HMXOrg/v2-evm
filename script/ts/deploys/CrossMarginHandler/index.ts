@@ -1,11 +1,10 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
+import { ethers, run, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
-const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
+const minExecutionFee = ethers.utils.parseEther("0.0001");
 const maxExecutionChunk = 100;
 
 async function main() {
@@ -14,7 +13,7 @@ async function main() {
   const Contract = await ethers.getContractFactory("CrossMarginHandler", deployer);
   const contract = await upgrades.deployProxy(Contract, [
     config.services.crossMargin,
-    config.oracles.ecoPyth,
+    config.oracles.ecoPyth2,
     minExecutionFee,
     maxExecutionChunk,
   ]);
@@ -25,9 +24,9 @@ async function main() {
   config.handlers.crossMargin = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "CrossMarginHandler",
+    constructorArguments: [],
   });
 }
 

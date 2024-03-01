@@ -1,14 +1,14 @@
 import { Command } from "commander";
 import { loadConfig, loadMarketConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 import { LimitTradeHelper__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 48,
+      marketIndex: 42,
       tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
       positionSizeLimit: ethers.utils.parseUnits("100000", 30),
     },
@@ -17,8 +17,8 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
-  const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
+  const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade!, deployer);
 
   console.log(`[configs/LimitTradeHelper] Set Limit By Market Index...`);
   console.table(
@@ -31,16 +31,14 @@ async function main(chainId: number) {
       };
     })
   );
-  const tx = await safeWrapper.proposeTransaction(
+  await ownerWrapper.authExec(
     limitTradeHelper.address,
-    0,
     limitTradeHelper.interface.encodeFunctionData("setLimit", [
       inputs.map((input) => input.marketIndex),
       inputs.map((input) => input.positionSizeLimit),
       inputs.map((input) => input.tradeSizeLimit),
     ])
   );
-  console.log(`[configs/LimitTradeHelper] Proposed tx to set limit by market index: ${tx}`);
 }
 
 const program = new Command();

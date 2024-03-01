@@ -3,45 +3,53 @@ import { ConfigStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
+import { IConfigStorage } from "../../../../typechain/src/storages/ConfigStorage";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+      assetId: ethers.utils.formatBytes32String("ybUSDB"),
       config: {
-        assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
-        tokenAddress: config.tokens.gmBTCUSD,
+        assetId: ethers.utils.formatBytes32String("ybUSDB"),
+        tokenAddress: config.tokens.ybusdb,
+        decimals: 18,
+        isStableCoin: true,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("ybETH"),
+      config: {
+        assetId: ethers.utils.formatBytes32String("ybETH"),
+        tokenAddress: config.tokens.ybeth,
         decimals: 18,
         isStableCoin: false,
       },
     },
     {
-      assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
+      assetId: ethers.utils.formatBytes32String("USDT"),
       config: {
-        assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
-        tokenAddress: config.tokens.gmETHUSD,
-        decimals: 18,
-        isStableCoin: false,
+        assetId: ethers.utils.formatBytes32String("USDT"),
+        tokenAddress: config.tokens.usdt,
+        decimals: 6,
+        isStableCoin: true,
       },
     },
   ];
 
   console.log("[configs/ConfigStorage] Set Asset Configs...");
-  const tx = await safeWrapper.proposeTransaction(
+  await ownerWrapper.authExec(
     configStorage.address,
-    0,
     configStorage.interface.encodeFunctionData("setAssetConfigs", [
       inputs.map((each) => each.assetId),
-      inputs.map((each) => each.config),
+      inputs.map((each) => each.config) as IConfigStorage.AssetConfigStruct[],
     ])
   );
-  console.log(`[configs/ConfigStorage] Tx: ${tx}`);
   console.log("[configs/ConfigStorage] Finished");
   console.log("[configs/ConfigStorage] Set Asset Configs success!");
 }

@@ -18,7 +18,6 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
-import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
@@ -59,13 +58,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 amount
   );
   event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
-  event LogConvertSGlpCollateral(
-    address primaryAccount,
-    uint256 subAccountId,
-    address tokenOut,
-    uint256 amountIn,
-    uint256 amountOut
-  );
   event LogSetTradeHelper(address indexed oldTradeHelper, address newTradeHelper);
 
   /**
@@ -90,8 +82,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public vaultStorage;
   address public calculator;
   address public perpStorage;
-  /// @notice DEPRECATED.
-  address public convertedSglpStrategy;
   address public tradeHelper;
 
   /// @dev Initializes the CrossMarginService contract.
@@ -99,37 +89,28 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _vaultStorage The address of the VaultStorage contract.
   /// @param _perpStorage The address of the PerpStorage contract.
   /// @param _calculator The address of the Calculator contract.
-  /// @param _convertedSglpStrategy The address of the ConvertedGlpStrategy contract for converting GLP collateral to other tokens.
   function initialize(
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
-    address _calculator,
-    address _convertedSglpStrategy
+    address _calculator
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    if (
-      _configStorage == address(0) ||
-      _vaultStorage == address(0) ||
-      _calculator == address(0) ||
-      _convertedSglpStrategy == address(0)
-    ) revert ICrossMarginService_InvalidAddress();
+    if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
+      revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     calculator = _calculator;
 
-    convertedSglpStrategy = _convertedSglpStrategy;
-
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
     PerpStorage(_perpStorage).getGlobalState();
     Calculator(_calculator).oracle();
-    ConvertedGlpStrategy(convertedSglpStrategy).sglp();
   }
 
   /**

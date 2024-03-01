@@ -72,7 +72,7 @@
     "arbitrum:goerli:config:set-hlp": "dotenv -- bash -c 'forge script ./script/config/07_SetHLP.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:config:set-eco-pyth-updater": "dotenv -- bash -c 'forge script ./script/config/08_SetEcoPythUpdater.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:config:reload-config": "dotenv -- bash -c 'forge script ./script/config/ReloadConfig.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
-    "arbitrum:goerli:execute:get-equity": "dotenv -- bash -c 'forge script ./script/execute/GetEquity.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'"
+    "arbitrum:goerli:execute:get-equity": "dotenv -- bash -c 'forge script script/foundry/execute/GetEquity.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'"
   },
   "devDependencies": {
     "@indexed-finance/multicall": "^2.0.0",

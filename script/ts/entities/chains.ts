@@ -29,4 +29,18 @@ export default {
     safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
     statSubgraphUrl: "",
   },
+  168587773: {
+    name: "blast_sepolia",
+    rpc: process.env.BLAST_SEPOLIA_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.BLAST_SEPOLIA_RPC),
+    safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
+    statSubgraphUrl: "",
+  },
+  81457: {
+    name: "blast",
+    rpc: process.env.BLAST_MAINNET_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.BLAST_MAINNET_RPC),
+    safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
+    statSubgraphUrl: "",
+  },
 } as { [chainId: number]: ChainEntity };

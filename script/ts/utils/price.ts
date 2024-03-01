@@ -20,7 +20,7 @@ function _priceToPriceE8(price: string, expo: number, multiplicationFactor: numb
   return priceBN.div(Math.pow(10, priceDecimals.sub(targetBN).toNumber()));
 }
 
-const assetIdWithPriceAdapters = ["GLP", "wstETH", "GM-BTCUSD", "GM-ETHUSD", "DIX"];
+const assetIdWithPriceAdapters = ["GLP", "wstETH", "GM-BTCUSD", "GM-ETHUSD", "DIX", "ybETH", "ybUSDB"];
 
 export async function getUpdatePriceData(
   priceIds: string[],
@@ -91,7 +91,7 @@ export async function getUpdatePriceData(
         .join("")
   );
   const ecoPythCalldataBuilder = EcoPythCalldataBuilder__factory.connect(
-    config.oracles.unsafeEcoPythCalldataBuilder3,
+    config.oracles.unsafeEcoPythCalldataBuilder3!,
     provider
   );
   const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData] = await ecoPythCalldataBuilder.build(buildData);

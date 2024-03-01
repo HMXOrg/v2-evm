@@ -5,14 +5,14 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("MANTA")];
+const ASSET_IDS = [ethers.utils.formatBytes32String("PYTH")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const config = loadConfig(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
+  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2!, deployer);
   console.log("[configs/EcoPyth] Inserting asset IDs...");
   await ownerWrapper.authExec(ecoPyth.address, ecoPyth.interface.encodeFunctionData("insertAssetIds", [ASSET_IDS]));
 }

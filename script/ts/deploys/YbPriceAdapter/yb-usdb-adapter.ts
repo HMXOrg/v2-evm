@@ -9,11 +9,11 @@ async function main() {
   const assetId = ethers.utils.formatBytes32String("DAI");
   const contract = await ethers.deployContract("YbPriceAdapter", [ybToken, assetId], deployer);
 
-  await contract.deployed();
   console.log(`[deploys/YbPriceAdapter] Deploying YbPriceAdapter for ybUSDB Contract`);
+  await contract.deployed();
   console.log(`[deploys/YbPriceAdapter] Deployed at: ${contract.address}`);
 
-  config.oracles.priceAdapters.ybeth2 = contract.address;
+  config.oracles.priceAdapters.ybusdb2 = contract.address;
   writeConfigFile(config);
 
   await run("verify:verify", {

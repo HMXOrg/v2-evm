@@ -13,7 +13,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.ybeth!,
+      tokenAddress: config.tokens.ybeth2!,
       config: {
         targetWeight: ethers.utils.parseEther("0.5"), // 50%
         bufferLiquidity: 0,
@@ -22,9 +22,27 @@ async function main(chainId: number) {
       },
     },
     {
-      tokenAddress: config.tokens.ybusdb!,
+      tokenAddress: config.tokens.ybusdb2!,
       config: {
         targetWeight: ethers.utils.parseEther("0.5"), // 50%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.ybeth!,
+      config: {
+        targetWeight: ethers.utils.parseEther("0"), // 0%
+        bufferLiquidity: 0,
+        maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
+        accepted: true,
+      },
+    },
+    {
+      tokenAddress: config.tokens.ybusdb!,
+      config: {
+        targetWeight: ethers.utils.parseEther("0"), // 0%
         bufferLiquidity: 0,
         maxWeightDiff: ethers.utils.parseEther("1000"), // 100000 % (Don't check max weight diff at launch)
         accepted: true,

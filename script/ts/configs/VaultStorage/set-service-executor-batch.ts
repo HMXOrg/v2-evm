@@ -6,6 +6,7 @@ import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
+
   const inputs = [
     {
       executorAddress: config.services.liquidity,

@@ -13,9 +13,9 @@ async function main(chainId: number) {
   const inputs = [
     {
       token: config.tokens.weth,
-      ybToken: config.tokens.ybeth!,
+      ybToken: config.tokens.ybeth2!,
     },
-    { token: config.tokens.usdb!, ybToken: config.tokens.ybusdb! },
+    { token: config.tokens.usdb!, ybToken: config.tokens.ybusdb2! },
   ];
 
   console.log("[configs/ConfigStorage] Set ybToken of...");

@@ -24,7 +24,6 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   IRebalanceHLPService public service;
   IVaultStorage public vaultStorage;
   IEcoPyth public pyth;
-  IERC20Upgradeable public sglp;
 
   uint16 public minHLPValueLossBPS;
 
@@ -46,38 +45,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     IRebalanceHLPService _service = IRebalanceHLPService(_rebalanceHLPService);
     service = _service;
     vaultStorage = _service.vaultStorage();
-    sglp = _service.sglp();
     pyth = IEcoPyth(_pyth);
-  }
-
-  function addGlp(
-    IRebalanceHLPService.AddGlpParams[] calldata _params,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external onlyWhitelisted returns (uint256 receivedGlp) {
-    if (_params.length == 0) revert RebalanceHLPHandler_ParamsIsEmpty();
-    // Update the price and publish time data using the Pyth oracle
-    // slither-disable-next-line arbitrary-send-eth
-    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
-    // Execute logic at Service
-    receivedGlp = service.addGlp(_params);
-  }
-
-  function withdrawGlp(
-    IRebalanceHLPService.WithdrawGlpParams[] calldata _params,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external nonReentrant onlyWhitelisted returns (IRebalanceHLPService.WithdrawGlpResult[] memory result) {
-    if (_params.length == 0) revert RebalanceHLPHandler_ParamsIsEmpty();
-    // Update the price and publish time data using the Pyth oracle
-    // slither-disable-next-line arbitrary-send-eth
-    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
-    // Execute logic at Service
-    result = service.withdrawGlp(_params);
   }
 
   function swap(

@@ -14,21 +14,21 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ybUSDB"),
+      assetId: ethers.utils.formatBytes32String("ybETH2"),
       config: {
-        assetId: ethers.utils.formatBytes32String("ybUSDB"),
-        tokenAddress: config.tokens.ybusdb,
+        assetId: ethers.utils.formatBytes32String("ybETH2"),
+        tokenAddress: config.tokens.ybeth2,
         decimals: 18,
-        isStableCoin: true,
+        isStableCoin: false,
       },
     },
     {
-      assetId: ethers.utils.formatBytes32String("ybETH"),
+      assetId: ethers.utils.formatBytes32String("ybUSDB2"),
       config: {
-        assetId: ethers.utils.formatBytes32String("ybETH"),
-        tokenAddress: config.tokens.ybeth,
+        assetId: ethers.utils.formatBytes32String("ybUSDB2"),
+        tokenAddress: config.tokens.ybusdb2,
         decimals: 18,
-        isStableCoin: false,
+        isStableCoin: true,
       },
     },
   ];

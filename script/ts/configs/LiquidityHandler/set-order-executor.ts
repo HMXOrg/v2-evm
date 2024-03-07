@@ -1,18 +1,22 @@
 import { ethers } from "hardhat";
 import { LiquidityHandler__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
-
-const config = getConfig();
-
-const orderExecutor = "0x0578C797798Ae89b688Cd5676348344d7d0EC35E";
+import { loadConfig } from "../../utils/config";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const orderExecutor = "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E";
 
-  console.log("> LiquidityHandler: Set Order Executor...");
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const config = loadConfig(chainId);
+  const deployer = (await ethers.getSigners())[0];
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
+
+  console.log("[configs/LiquidityHandler] Set Order Executor...");
   const handler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
-  await (await handler.setOrderExecutor(orderExecutor, true)).wait();
-  console.log("> LiquidityHandler: Set Order Executor success!");
+  await ownerWrapper.authExec(
+    handler.address,
+    handler.interface.encodeFunctionData("setOrderExecutor", [orderExecutor, true])
+  );
 }
 main().catch((error) => {
   console.error(error);

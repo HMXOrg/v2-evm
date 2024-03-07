@@ -1,23 +1,26 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
+import { ConfigStorage__factory } from "../../../../typechain";
 import { getConfig } from "../../utils/config";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 const config = getConfig();
 
 const assetClassName = "COMMODITY";
 const assetConfig = {
-  baseBorrowingRate: ethers.utils.parseEther("0.00000222"), // 0.008% per hour
+  baseBorrowingRate: 27777777777, // 0.01% per hour
 };
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
+  const chainId = (await ethers.provider.getNetwork()).chainId;
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  console.log(`> ConfigStorage: Add ${assetClassName} Asset Class Config...`);
-  await (await configStorage.addAssetClassConfig(assetConfig)).wait();
-  console.log(`> ConfigStorage: Add ${assetClassName} Asset Class Config success!`);
+  console.log(`[configs/ConfigStorage] Add ${assetClassName} to asset class config...`);
+  await ownerWrapper.authExec(
+    configStorage.address,
+    configStorage.interface.encodeFunctionData("addAssetClassConfig", [assetConfig])
+  );
 }
 main().catch((error) => {
   console.error(error);

@@ -16,16 +16,27 @@ async function main(chainId: number) {
     config.extension.switchCollateralRouter,
     deployer
   );
+
   const params: Array<SetDexter> = [
     {
-      tokenIn: config.tokens.sglp,
-      tokenOut: config.tokens.usdcNative,
-      dexter: config.extension.dexter.glp,
+      tokenIn: config.tokens.ybeth!,
+      tokenOut: config.tokens.weth,
+      dexter: config.extension.dexter.erc4626,
     },
     {
-      tokenIn: config.tokens.usdcNative,
-      tokenOut: config.tokens.sglp,
-      dexter: config.extension.dexter.glp,
+      tokenIn: config.tokens.ybusdb!,
+      tokenOut: config.tokens.usdb!,
+      dexter: config.extension.dexter.erc4626,
+    },
+    {
+      tokenIn: config.tokens.weth!,
+      tokenOut: config.tokens.ybeth2!,
+      dexter: config.extension.dexter.erc4626,
+    },
+    {
+      tokenIn: config.tokens.usdb!,
+      tokenOut: config.tokens.ybusdb2!,
+      dexter: config.extension.dexter.erc4626,
     },
   ];
 

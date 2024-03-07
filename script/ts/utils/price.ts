@@ -20,7 +20,17 @@ function _priceToPriceE8(price: string, expo: number, multiplicationFactor: numb
   return priceBN.div(Math.pow(10, priceDecimals.sub(targetBN).toNumber()));
 }
 
-const assetIdWithPriceAdapters = ["GLP", "wstETH", "GM-BTCUSD", "GM-ETHUSD", "DIX", "ybETH", "ybUSDB"];
+const assetIdWithPriceAdapters = [
+  "GLP",
+  "wstETH",
+  "GM-BTCUSD",
+  "GM-ETHUSD",
+  "DIX",
+  "ybETH",
+  "ybUSDB",
+  "ybETH2",
+  "ybUSDB2",
+];
 
 export async function getUpdatePriceData(
   priceIds: string[],
@@ -46,10 +56,10 @@ export async function getUpdatePriceData(
   const buildData = [];
   for (let i = 0; i < priceIds.length; i++) {
     if (assetIdWithPriceAdapters.includes(priceIds[i])) {
-      // If the asset is GLP, use the GLP price from the contract
+      // If the asset is on-chain, just pass price zero
       buildData.push({
         assetId: ecoPythAssetIdByIndex[i],
-        priceE8: ethers.BigNumber.from(0), // EcoPythCallDataBuilder will use the GLP price from the contract
+        priceE8: ethers.BigNumber.from(0),
         publishTime: ethers.BigNumber.from(Math.floor(Date.now() / 1000)),
         maxDiffBps: MAX_PRICE_DIFF,
       });

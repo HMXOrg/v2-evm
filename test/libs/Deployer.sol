@@ -700,6 +700,10 @@ library Deployer {
     return IDexter(deployContractWithArguments("CurveDexter", abi.encode(_weth)));
   }
 
+  function deployErc4626Dexter() internal returns (IDexter) {
+    return IDexter(deployContract("Erc4626Dexter"));
+  }
+
   function deployGlpDexter(
     address _weth,
     address _sGlp,

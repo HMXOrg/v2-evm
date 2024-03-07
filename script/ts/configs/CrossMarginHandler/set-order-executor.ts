@@ -1,18 +1,22 @@
 import { ethers } from "hardhat";
 import { CrossMarginHandler__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
-
-const config = getConfig();
-
-const orderExecutor = "0x0578C797798Ae89b688Cd5676348344d7d0EC35E";
+import { loadConfig } from "../../utils/config";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const orderExecutor = "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E";
 
-  console.log("> CrossMarginHandler: Set Order Executor...");
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const config = loadConfig(chainId);
+  const deployer = (await ethers.getSigners())[0];
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
+
+  console.log("[configs/CrossMarginHandler] Set Order Executor...");
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
-  await (await crossMarginHandler.setOrderExecutor(orderExecutor, true)).wait();
-  console.log("> CrossMarginHandler: Set Order Executor success!");
+  await ownerWrapper.authExec(
+    crossMarginHandler.address,
+    crossMarginHandler.interface.encodeFunctionData("setOrderExecutor", [orderExecutor, true])
+  );
 }
 main().catch((error) => {
   console.error(error);

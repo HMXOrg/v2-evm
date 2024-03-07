@@ -145,7 +145,8 @@
     "dexter": {
       "uniswapV3": "0xF91078e3D4612bd1185Dc9feEA08Ddb6Ad9EF0Ab",
       "curve": "0xd84914c167863B6BA64A0E8abf6a51d9f25662df",
-      "glp": "0x42870d0079cD7acB71b3fe96EA4d77FBd1ccC820"
+      "glp": "0x42870d0079cD7acB71b3fe96EA4d77FBd1ccC820",
+      "erc4626": ""
     }
   }
 }

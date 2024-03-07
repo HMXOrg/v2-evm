@@ -10,12 +10,12 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const priceAdapters = [
     {
-      priceId: ethers.utils.formatBytes32String("ybETH"),
-      adapter: config.oracles.priceAdapters.ybeth!,
+      priceId: ethers.utils.formatBytes32String("ybETH2"),
+      adapter: config.oracles.priceAdapters.ybeth2!,
     },
     {
-      priceId: ethers.utils.formatBytes32String("ybUSDB"),
-      adapter: config.oracles.priceAdapters.ybusdb!,
+      priceId: ethers.utils.formatBytes32String("ybUSDB2"),
+      adapter: config.oracles.priceAdapters.ybusdb2!,
     },
   ];
 

@@ -17,26 +17,6 @@ interface IRebalanceHLPService {
   error RebalanceHLPService_InvalidPath();
   error RebalanceHLPService_OneInchSwapFailed();
 
-  /// @param token: the address of ERC20 token that will be converted into GLP.
-  /// @param tokenMedium: Medium token for swapping, in case of swap before rebalance.
-  ///                  Set address(0) if swap is no need.
-  /// @param amount: the amount of token to convert to GLP.
-  /// @param minAmountOutUSD: the minimum acceptable USD value of the GLP purchased
-  /// @param minAmountOutGlp: the minimum acceptable GLP amount
-  struct AddGlpParams {
-    address token;
-    address tokenMedium;
-    uint256 amount;
-    uint256 minAmountOutUSD;
-    uint256 minAmountOutGlp;
-  }
-
-  struct WithdrawGlpParams {
-    address token;
-    uint256 glpAmount;
-    uint256 minOut;
-  }
-
   struct SwapParams {
     uint256 amountIn;
     uint256 minAmountOut;
@@ -48,11 +28,6 @@ interface IRebalanceHLPService {
     uint256 amount;
   }
 
-  // execute reinvesting
-  function addGlp(AddGlpParams[] calldata params) external returns (uint256 receivedGlp);
-
-  function withdrawGlp(WithdrawGlpParams[] calldata params) external returns (WithdrawGlpResult[] memory result);
-
   function swap(SwapParams calldata params) external returns (uint256 amountOut);
 
   function oneInchSwap(SwapParams calldata params, bytes calldata oneInchData) external returns (uint256 amountOut);
@@ -61,13 +36,7 @@ interface IRebalanceHLPService {
   function setMinHLPValueLossBPS(uint16 minTvlBPS) external;
 
   // Getters
-  function sglp() external view returns (IERC20Upgradeable);
-
   function vaultStorage() external view returns (IVaultStorage);
-
-  function rewardRouter() external view returns (IGmxRewardRouterV2);
-
-  function glpManager() external view returns (IGmxGlpManager);
 
   function calculator() external view returns (ICalculator);
 

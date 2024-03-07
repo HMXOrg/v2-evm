@@ -11,21 +11,16 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const PARAMS = [
-    // {
-    //   amountIn: "1281586.724641214767559313",
-    //   minAmountOut: "1354900",
-    //   path: [config.tokens.sglp, config.tokens.usdc],
-    // },
     {
-      amountIn: "1281586.724641214767559313",
-      minAmountOut: "718",
-      path: [config.tokens.sglp, config.tokens.weth],
+      amountIn: "2316.332067366771798254",
+      minAmountOut: "0",
+      path: [config.tokens.ybusdb!, config.tokens.usdb!, config.tokens.ybusdb2!],
     },
   ];
 
   const chainInfo = chains[chainId];
   const deployer = signers.deployer(chainId);
-  const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
+  const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP!, deployer);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, chainInfo.jsonRpcProvider);

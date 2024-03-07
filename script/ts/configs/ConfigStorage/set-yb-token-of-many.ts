@@ -1,10 +1,8 @@
-import { ethers } from "ethers";
 import { ConfigStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
-import { IConfigStorage } from "../../../../typechain/src/storages/ConfigStorage";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -15,9 +13,9 @@ async function main(chainId: number) {
   const inputs = [
     {
       token: config.tokens.weth,
-      ybToken: config.tokens.ybeth!,
+      ybToken: config.tokens.ybeth2!,
     },
-    { token: config.tokens.usdb!, ybToken: config.tokens.ybusdb! },
+    { token: config.tokens.usdb!, ybToken: config.tokens.ybusdb2! },
   ];
 
   console.log("[configs/ConfigStorage] Set ybToken of...");
@@ -28,8 +26,6 @@ async function main(chainId: number) {
       inputs.map((each) => each.ybToken) as string[],
     ])
   );
-  console.log("[configs/ConfigStorage] Finished");
-  console.log("[configs/ConfigStorage] Set ybToken of success!");
 }
 
 const prog = new Command();

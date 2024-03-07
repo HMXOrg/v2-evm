@@ -5,7 +5,7 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
+const minExecutionFee = ethers.utils.parseEther("0.0003");
 const maxExecutionChunk = 100;
 
 async function main() {

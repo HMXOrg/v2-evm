@@ -118,7 +118,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
 
   function execute(
     IIntentHandler.ExecuteTradeOrderVars memory vars
-  ) external returns (uint256 _oraclePrice, uint256 _executedPrice, bool _isFullClose) {
+  ) external onlyWhitelistedCaller returns (uint256 _oraclePrice, uint256 _executedPrice, bool _isFullClose) {
     // Retrieve existing position
     vars.positionId = HMXLib.getPositionId(
       HMXLib.getSubAccount(vars.order.account, vars.order.subAccountId),

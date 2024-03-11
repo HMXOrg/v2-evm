@@ -11,7 +11,7 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
-  const signer = signers.deployer(chainId);
+  const signer = signers.liquidityExecutor(chainId);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
@@ -31,7 +31,7 @@ async function main(chainId: number) {
   console.log("[LiquidityHandler] executeOrder...");
   const handler = LiquidityHandler__factory.connect(config.handlers.liquidity, signer);
   const tx = await handler.executeOrder(
-    ethers.constants.MaxUint256,
+    145,
     await signer.getAddress(),
     priceUpdateData,
     publishTimeDiffUpdateData,

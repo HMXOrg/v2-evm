@@ -450,13 +450,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       address _originalToken = _order.token;
       bool _isYbNeeded = _configStorage.ybTokenOf(_order.token) != address(0);
       if (_isYbNeeded) {
-        // If ybTokenOf(_order.token) is not null
-        // Then we will need to redeem ybTokens.
-        IYBToken _yb = IYBToken(_configStorage.ybTokenOf(_order.token));
         // Reassign _order.token to be ybToken
         _order.token = _configStorage.ybTokenOf(_order.token);
-        // Ressign _order.amount to be ybs uints
-        _order.amount = _yb.previewWithdraw(_order.amount);
       }
 
       _amountOut = LiquidityService(liquidityService).removeLiquidity(

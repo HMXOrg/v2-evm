@@ -147,7 +147,8 @@
     "dexter": {
       "uniswapV3": "0x773a4deFa1a6ad36b8E1D70e5a408A7D0902a2f9",
       "curve": "",
-      "glp": ""
+      "glp": "",
+      "erc4626": ""
     }
   }
 }

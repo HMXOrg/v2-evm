@@ -25,6 +25,11 @@ async function main(chainId: number) {
     },
     {
       contractAddress: config.services.trade,
+      executorAddress: config.handlers.limitTrade,
+      isServiceExecutor: true,
+    },
+    {
+      contractAddress: config.services.trade,
       executorAddress: config.handlers.bot,
       isServiceExecutor: true,
     },
@@ -36,21 +41,6 @@ async function main(chainId: number) {
     {
       contractAddress: config.helpers.trade,
       executorAddress: config.services.liquidation,
-      isServiceExecutor: true,
-    },
-    {
-      contractAddress: config.services.gas,
-      executorAddress: config.handlers.intent,
-      isServiceExecutor: true,
-    },
-    {
-      contractAddress: config.services.trade,
-      executorAddress: config.helpers.tradeOrder,
-      isServiceExecutor: true,
-    },
-    {
-      contractAddress: config.services.trade,
-      executorAddress: config.handlers.limitTrade,
       isServiceExecutor: true,
     },
   ];

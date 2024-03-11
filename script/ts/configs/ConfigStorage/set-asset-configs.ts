@@ -14,29 +14,20 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("ybUSDB"),
+      assetId: ethers.utils.formatBytes32String("ybETH2"),
       config: {
-        assetId: ethers.utils.formatBytes32String("ybUSDB"),
-        tokenAddress: config.tokens.ybusdb,
-        decimals: 18,
-        isStableCoin: true,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("ybETH"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("ybETH"),
-        tokenAddress: config.tokens.ybeth,
+        assetId: ethers.utils.formatBytes32String("ybETH2"),
+        tokenAddress: config.tokens.ybeth2,
         decimals: 18,
         isStableCoin: false,
       },
     },
     {
-      assetId: ethers.utils.formatBytes32String("USDT"),
+      assetId: ethers.utils.formatBytes32String("ybUSDB2"),
       config: {
-        assetId: ethers.utils.formatBytes32String("USDT"),
-        tokenAddress: config.tokens.usdt,
-        decimals: 6,
+        assetId: ethers.utils.formatBytes32String("ybUSDB2"),
+        tokenAddress: config.tokens.ybusdb2,
+        decimals: 18,
         isStableCoin: true,
       },
     },
@@ -50,8 +41,6 @@ async function main(chainId: number) {
       inputs.map((each) => each.config) as IConfigStorage.AssetConfigStruct[],
     ])
   );
-  console.log("[configs/ConfigStorage] Finished");
-  console.log("[configs/ConfigStorage] Set Asset Configs success!");
 }
 
 const prog = new Command();

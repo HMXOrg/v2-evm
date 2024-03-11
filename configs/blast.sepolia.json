@@ -85,7 +85,8 @@
     "dexter": {
       "uniswapV3": "",
       "curve": "",
-      "glp": ""
+      "glp": "",
+      "erc4626": ""
     }
   }
 }

@@ -76,6 +76,7 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ETHERSCAN_API_KEY!,
       arbitrumGoerli: process.env.ETHERSCAN_API_KEY!,
       blastSepolia: process.env.ETHERSCAN_API_KEY!,
+      blast: process.env.BLASTSCAN_API_KEY!,
     },
     customChains: [
       {

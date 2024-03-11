@@ -4,8 +4,6 @@ import { ethers } from "ethers";
 export const ecoPythPriceFeedIdsByIndex = [
   "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", // ETHUSD
   "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43", // BTCUSD
-  "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a", // USDCUSD
-  "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b", // USDTUSD
   "0xb0948a5e5313200c632b51bb5ca32f6de0d36e9950a942d19751e833f70dabfd", // DAIUSD
   "0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52", // USDJPY
   "0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2", // XAUUSD
@@ -46,16 +44,16 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xf0d57deca57b3da2fe63a493f4c25925fdfd8edf834b20f93e1f84dbd1504d4a", // SHIBUSD
   "0xc9907d786c5821547777780a1e4f89484f3417cb14dd244f2b0a34ea7a554d67", // ICPUSD
   "0xc3883bcf1101c111e9fcfe2465703c47f2b638e21fef2cce0502e6c8f416e0e2", // MANTAUSD
-  "ybETH",
-  "ybUSDB",
   "0x6a182399ff70ccf3e06024898942028204125a819e519a335ffa4579e66cd870", // STRKUSD
   "0x0bbf28e9a841a1cc788f6a361b17ca072d0ea3098a1e5df1c3922d06719579ff", // PYTHUSD
+  "ybETH",
+  "ybUSDB",
+  "ybETH2",
+  "ybUSDB2",
 ];
 export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("ETH"),
   ethers.utils.formatBytes32String("BTC"),
-  ethers.utils.formatBytes32String("USDC"),
-  ethers.utils.formatBytes32String("USDT"),
   ethers.utils.formatBytes32String("DAI"),
   ethers.utils.formatBytes32String("JPY"),
   ethers.utils.formatBytes32String("XAU"),
@@ -96,16 +94,16 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("1000SHIB"),
   ethers.utils.formatBytes32String("ICP"),
   ethers.utils.formatBytes32String("MANTA"),
-  ethers.utils.formatBytes32String("ybETH"),
-  ethers.utils.formatBytes32String("ybUSDB"),
   ethers.utils.formatBytes32String("STRK"),
   ethers.utils.formatBytes32String("PYTH"),
+  ethers.utils.formatBytes32String("ybETH"),
+  ethers.utils.formatBytes32String("ybUSDB"),
+  ethers.utils.formatBytes32String("ybETH2"),
+  ethers.utils.formatBytes32String("ybUSDB2"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
   "BTC",
-  "USDC",
-  "USDT",
   "DAI",
   "JPY",
   "XAU",
@@ -146,10 +144,12 @@ export const ecoPythHoomanReadableByIndex = [
   "1000SHIB",
   "ICP",
   "MANTA",
-  "ybETH",
-  "ybUSDB",
   "STRK",
   "PYTH",
+  "ybETH",
+  "ybUSDB",
+  "ybETH2",
+  "ybUSDB2",
 ];
 export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
   [ethers.utils.formatBytes32String("1000SHIB"), 1000],

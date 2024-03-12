@@ -87,6 +87,17 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     marketWeights[_marketIndex] = _weight;
   }
 
+  function setMarketWeights(uint256[] memory _marketIndexes, uint256[] memory _weights) external onlyOwner {
+    if (_marketIndexes.length != _weights.length) revert TLCHook_BadArgs();
+    for (uint256 i = 0; i < _marketIndexes.length; ) {
+      emit LogSetMarketWeight(_marketIndexes[i], marketWeights[_marketIndexes[i]], _weights[i]);
+      marketWeights[_marketIndexes[i]] = _weights[i];
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   function setWhitelistedCallers(address[] calldata _callers, bool[] calldata _isWhitelisteds) external onlyOwner {
     if (_callers.length != _isWhitelisteds.length) revert TLCHook_BadArgs();
     for (uint256 i = 0; i < _callers.length; ) {

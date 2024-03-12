@@ -54,13 +54,13 @@
     "usdt": "0xfAE1131D79E9B13CA11c3Fb3D7b588D8Fa44401c",
     "ybeth": "0x628eF5ADFf7da4980CeA33E05568d22772E87EB8",
     "ybusdb": "0x073315910A2B432F2f9482bCEAFe34420718c7Cc",
-    "traderLoyaltyCredit": ""
+    "traderLoyaltyCredit": "0xCC7254Cb26DE7E6C61e399E3fBF80404c037b8C6"
   },
   "vendors": {},
   "strategies": {},
   "hooks": {
-    "tradingStaking": "",
-    "tlc": ""
+    "tradingStaking": "0x7a85b2030cFbC3B6766efD8238Bf2E0066419051",
+    "tlc": "0x4353676051098d1a7893879Eb2Dae1955066aFc9"
   },
   "calculator": "0xf944690f3B7436161BA27B47799Bd06EA4154C0e",
   "adaptiveFeeCalculator": "0x5337672c258E5D7AFabe3104EA330C4CB2c6e44f",

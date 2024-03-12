@@ -2,13 +2,13 @@ import { TradingStakingHook__factory } from "../../../../typechain";
 import { loadConfig, loadMarketConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 import { compareAddress } from "../../utils/address";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const whitelistedCallers = [
     {
@@ -22,26 +22,14 @@ async function main(chainId: number) {
   ];
 
   const tradingStakingHook = TradingStakingHook__factory.connect(config.hooks.tradingStaking, deployer);
-  const owner = await tradingStakingHook.owner();
   console.log(`[configs/TradingStakingHook] Set Whitelisted Callers`);
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      tradingStakingHook.address,
-      0,
-      tradingStakingHook.interface.encodeFunctionData("setWhitelistedCallers", [
-        whitelistedCallers.map((each) => each.caller),
-        whitelistedCallers.map((each) => each.isWhitelisted),
-      ])
-    );
-    console.log(`[configs/TradingStakingHook] Proposed tx: ${tx}`);
-  } else {
-    const tx = await tradingStakingHook.setWhitelistedCallers(
+  await ownerWrapper.authExec(
+    tradingStakingHook.address,
+    tradingStakingHook.interface.encodeFunctionData("setWhitelistedCallers", [
       whitelistedCallers.map((each) => each.caller),
-      whitelistedCallers.map((each) => each.isWhitelisted)
-    );
-    console.log(`[configs/TradingStakingHook] Tx: ${tx}`);
-    await tx.wait();
-  }
+      whitelistedCallers.map((each) => each.isWhitelisted),
+    ])
+  );
   console.log("[configs/TradingStakingHook] Finished");
 }
 

@@ -2,13 +2,13 @@ import { TLCHook__factory } from "../../../../typechain";
 import { loadConfig, loadMarketConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 import { compareAddress } from "../../utils/address";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const whitelistedCallers = [
     {
@@ -22,26 +22,14 @@ async function main(chainId: number) {
   ];
 
   const tlcHook = TLCHook__factory.connect(config.hooks.tlc, deployer);
-  const owner = await tlcHook.owner();
   console.log(`[configs/TLCHook] Set Whitelisted Callers`);
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      tlcHook.address,
-      0,
-      tlcHook.interface.encodeFunctionData("setWhitelistedCallers", [
-        whitelistedCallers.map((each) => each.caller),
-        whitelistedCallers.map((each) => each.isWhitelisted),
-      ])
-    );
-    console.log(`[configs/TLCHook] Proposed tx: ${tx}`);
-  } else {
-    const tx = await tlcHook.setWhitelistedCallers(
+  await ownerWrapper.authExec(
+    tlcHook.address,
+    tlcHook.interface.encodeFunctionData("setWhitelistedCallers", [
       whitelistedCallers.map((each) => each.caller),
-      whitelistedCallers.map((each) => each.isWhitelisted)
-    );
-    console.log(`[configs/TLCHook] Tx: ${tx}`);
-    await tx.wait();
-  }
+      whitelistedCallers.map((each) => each.isWhitelisted),
+    ])
+  );
   console.log("[configs/TLCHook] Finished");
 }
 

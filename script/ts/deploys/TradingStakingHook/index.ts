@@ -12,10 +12,10 @@ async function main() {
 
   const Contract = await ethers.getContractFactory("TradingStakingHook", deployer);
 
+  console.log(`[deploys/TradingStakingHook] Deploying TradingStakingHook Contract`);
   const contract = await upgrades.deployProxy(Contract, [tradingStaking, config.services.trade]);
   await contract.deployed();
-  console.log(`Deploying TradingStakingHook Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/TradingStakingHook] Deployed at: ${contract.address}`);
 
   config.hooks.tradingStaking = contract.address;
   writeConfigFile(config);

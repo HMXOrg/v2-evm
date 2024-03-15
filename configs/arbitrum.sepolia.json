@@ -136,7 +136,7 @@
     "tlc": "0xBe0DEA090588d45EA0615aa5238ED50fA0e65a95",
     "hlp": "0x880676cfcB5895a1B3fA65AD6E5cfc335316901c"
   },
-  "rewardDistributor": "",
+  "rewardDistributor": "0x9fa1eaF7539F8bAfFfE1ec7Bedd9d0F8269aD330",
   "reader": {
     "order": "0xE3fe34110CE6924cca655EB7C273e3EA79cAE31b",
     "position": "0xF4D79112A02A72f71a7Fba3F791b4B42Dd81f395",

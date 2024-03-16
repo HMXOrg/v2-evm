@@ -34,8 +34,8 @@ async function main(chainId: number) {
     {
       marketIndex: 0,
       assetId: ethers.utils.formatBytes32String("ETH"),
-      maxLongPositionSize: ethers.utils.parseUnits("100000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("100000", 30),
+      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
       increasePositionFeeRateBPS: 2, // 0.02%
       decreasePositionFeeRateBPS: 2, // 0.02%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
@@ -53,8 +53,8 @@ async function main(chainId: number) {
     {
       marketIndex: 1,
       assetId: ethers.utils.formatBytes32String("BTC"),
-      maxLongPositionSize: ethers.utils.parseUnits("100000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("100000", 30),
+      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
       increasePositionFeeRateBPS: 2, // 0.02%
       decreasePositionFeeRateBPS: 2, // 0.02%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100

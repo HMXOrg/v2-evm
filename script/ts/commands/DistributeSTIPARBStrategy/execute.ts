@@ -10,8 +10,8 @@ async function main(chainId: number) {
   const signer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, signer);
 
-  const amount = "6496648404417764547031";
-  const expiredAt = 1710410400; // Thu Mar 14 2024 10:00:00 GMT+0000
+  const amount = "6749291313999252088281";
+  const expiredAt = 1711015200; // Thu Mar 21 2024 10:00:00 GMT+0000
 
   console.log(`[cmds/DistributeSTIPARBStrategy] Feeding ${ethers.utils.formatEther(amount)} ARB...`);
   const strat = DistributeSTIPARBStrategy__factory.connect(config.strategies.distributeSTIPARB, signer);

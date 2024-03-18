@@ -59,13 +59,13 @@
     "ybusdb": "0x620aa22aA45F59Af91CaFBAd0ab58181FcDBfB08",
     "ybeth2": "0xb9d94A3490bA2482E2D4F21F0E76b92E5661Ded8",
     "ybusdb2": "0xCD732d21c1B23A3f84Bb386E9759b5b6A1BcBe39",
-    "traderLoyaltyCredit": ""
+    "traderLoyaltyCredit": "0x5e81729765a54565a8e95f2d361F39605C2D279d"
   },
   "vendors": {},
   "strategies": {},
   "hooks": {
-    "tradingStaking": "",
-    "tlc": ""
+    "tradingStaking": "0x59109bC04C1DE0AB4a5eFA59F31B8C8800182BA4",
+    "tlc": "0x9302624e5A7079b892296d39e6e969790CDeE19b"
   },
   "calculator": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
   "adaptiveFeeCalculator": "",
@@ -74,8 +74,8 @@
     "factory": ""
   },
   "staking": {
-    "trading": "",
-    "tlc": "",
+    "trading": "0x0D2900Fc41388271C5D4DdD0fa148973d9E83878",
+    "tlc": "0xaECF694920EF9471BF40b9FE6d7d272637F31674",
     "hlp": "0x6D59A9acC2e0fa6CA568b24C07B3D6A39d408C18"
   },
   "rewardDistributor": "",

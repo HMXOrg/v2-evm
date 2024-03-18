@@ -14,10 +14,10 @@ async function main() {
 
   const Contract = await ethers.getContractFactory("TLCHook", deployer);
 
+  console.log(`[delpoys/TLCHook] Deploying TLCHook Contract`);
   const contract = await upgrades.deployProxy(Contract, [tradeService, tlc, tlcStaking]);
   await contract.deployed();
-  console.log(`Deploying TLCHook Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/TLCHook] Deployed at: ${contract.address}`);
 
   config.hooks.tlc = contract.address;
   writeConfigFile(config);

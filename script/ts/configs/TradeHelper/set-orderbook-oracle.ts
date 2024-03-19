@@ -13,7 +13,7 @@ async function main(chainId: number) {
   console.log(`[configs/TradeHelper] setOrderbookOracle`);
   await ownerWrapper.authExec(
     tradeHelper.address,
-    tradeHelper.interface.encodeFunctionData("setOrderbookOracle", [config.oracles.orderbook])
+    tradeHelper.interface.encodeFunctionData("setOrderbookOracle", [config.oracles.orderbook!])
   );
   console.log("[configs/TradeHelper] Finished");
 }

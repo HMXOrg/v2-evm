@@ -175,6 +175,7 @@ export interface Vendors {
   curve?: CurveVendor;
   chainlink?: ChainlinkVendor;
   oneInch?: OneInchVendor;
+  thruster?: UniswapVendor;
 }
 
 export interface GmxVendor {
@@ -264,8 +265,9 @@ export interface Extension {
 }
 
 export interface Dexter {
-  uniswapV3: string;
-  curve: string;
-  glp: string;
-  erc4626: string;
+  uniswapV3?: string;
+  curve?: string;
+  glp?: string;
+  erc4626?: string;
+  thruster?: string;
 }

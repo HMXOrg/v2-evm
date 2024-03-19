@@ -13,19 +13,22 @@ type SetPathConfig = {
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const dexter = UniswapDexter__factory.connect(config.extension.dexter.uniswapV3, deployer);
 
+  const dexterAddress = config.extension.dexter.thruster!;
   const params: Array<SetPathConfig> = [
     {
-      tokenIn: config.tokens.usdc,
-      tokenOut: config.tokens.wstEth,
-      path: ethers.utils.solidityPack(
-        ["address", "uint24", "address", "uint24", "address"],
-        [config.tokens.usdc, 500, config.tokens.weth, 100, config.tokens.wstEth]
-      ),
+      tokenIn: config.tokens.usdb!,
+      tokenOut: config.tokens.weth,
+      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.usdb, 500, config.tokens.weth]),
+    },
+    {
+      tokenIn: config.tokens.weth,
+      tokenOut: config.tokens.usdb!,
+      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.weth, 500, config.tokens.usdb]),
     },
   ];
 
+  const dexter = UniswapDexter__factory.connect(dexterAddress, deployer);
   console.log("[cmds/UniswapDexter] Setting path config...");
   for (let i = 0; i < params.length; i++) {
     console.log(params[i].path);

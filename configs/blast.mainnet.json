@@ -61,7 +61,12 @@
     "ybusdb2": "0xCD732d21c1B23A3f84Bb386E9759b5b6A1BcBe39",
     "traderLoyaltyCredit": "0x5e81729765a54565a8e95f2d361F39605C2D279d"
   },
-  "vendors": {},
+  "vendors": {
+    "thruster": {
+      "permit2": "0x414991b742FbCBE3EF00d94Ff9f9A63729091711",
+      "universalRouter": "0xC4af384fA1ff36a49C55549811E1B2dc1F72Ba44"
+    }
+  },
   "strategies": {},
   "hooks": {
     "tradingStaking": "0x59109bC04C1DE0AB4a5eFA59F31B8C8800182BA4",

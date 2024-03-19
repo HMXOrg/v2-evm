@@ -9,7 +9,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, signers.deployer(chainId));
 
-  const inputs = [{ updater: config.handlers.ext01, isUpdater: true }];
+  const inputs = [{ updater: "0x60F80329d206A432D8aE3E4b34F505920cb17CdE", isUpdater: true }];
 
   const deployer = signers.deployer(chainId);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);

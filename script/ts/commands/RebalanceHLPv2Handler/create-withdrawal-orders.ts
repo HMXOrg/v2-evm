@@ -1,17 +1,18 @@
 import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import { CrossMarginHandler__factory, ERC20__factory, RebalanceHLPv2Service__factory } from "../../../../typechain";
+import { RebalanceHLPv2Handler__factory, RebalanceHLPv2Service__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
+  const executionFee = ethers.utils.parseEther("0.002");
   const withdrawalParams = [
     {
-      market: config.tokens.gmBTCUSD,
-      amount: ethers.utils.parseUnits("0.01", 18),
+      market: config.tokens.gmETHUSD,
+      amount: ethers.utils.parseUnits("37878.7879", 18),
       minLongTokenAmount: 0,
       minShortTokenAmount: 0,
       gasLimit: 1000000,
@@ -19,11 +20,9 @@ async function main(chainId: number) {
   ];
 
   console.log("[cmds/RebalanceHLPv2Service] createWithdrawalOrders...");
-  const service = RebalanceHLPv2Service__factory.connect(config.services.rebalanceHLPv2, signer);
-  const tx = await service.createWithdrawalOrders(
-    withdrawalParams,
-    ethers.utils.parseEther("0.001").mul(withdrawalParams.length)
-  );
+  const handler = RebalanceHLPv2Handler__factory.connect(config.handlers.rebalanceHLPv2, signer);
+  const value = executionFee.mul(withdrawalParams.length);
+  const tx = await handler.createWithdrawalOrders(withdrawalParams, executionFee, { value });
   console.log(`[cmds/RebalanceHLPv2Service] Tx: ${tx.hash}`);
   await tx.wait(1);
   console.log("[cmds/RebalanceHLPv2Service] Finished");

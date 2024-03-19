@@ -15,6 +15,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { IYBToken } from "@hmx/interfaces/blast/IYBToken.sol";
+import { IBlastPoints } from "@hmx/interfaces/blast/IBlastPoints.sol";
 
 /// Services
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -730,6 +731,13 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
     // Sanity check
     tradeService.vaultStorage();
+  }
+
+  /// @notice Set Blast Pts Operator
+  /// @param _blastPoints Blast Points contract address
+  /// @param _operator Operator address
+  function setBlastPtsOperator(IBlastPoints _blastPoints, address _operator) external onlyOwner {
+    _blastPoints.configurePointsOperator(_operator);
   }
 
   function setDelegate(address _delegate) external {

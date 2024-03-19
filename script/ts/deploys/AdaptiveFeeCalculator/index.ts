@@ -19,7 +19,7 @@ async function main() {
 
   await run("verify:verify", {
     address: adaptiveFeeCalculator.address,
-    constructorArguments: [],
+    constructorArguments: [k1, k2],
   });
 }
 

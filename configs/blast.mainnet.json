@@ -49,7 +49,7 @@
       "ybeth2": "0x1e0591d87ADDF06A9673e7d6bA6f95371EB8b44e",
       "ybusdb2": "0x2D86b7109eB4DA63ba6b819dB7f8adCd732bc037"
     },
-    "orderbook": ""
+    "orderbook": "0xe0afa4161415ea6C316A279D69024F99DD7C17Db"
   },
   "tokens": {
     "hlp": "0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0",
@@ -68,7 +68,7 @@
     "tlc": "0x9302624e5A7079b892296d39e6e969790CDeE19b"
   },
   "calculator": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
-  "adaptiveFeeCalculator": "",
+  "adaptiveFeeCalculator": "0x2728D7AC20E8b89187bFCB23bE066822A47b318c",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""

@@ -17,6 +17,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { IBlastPoints } from "@hmx/interfaces/blast/IBlastPoints.sol";
 
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
@@ -884,7 +885,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _len = _orderIndices.length;
-    for (uint256 _i; _i < _len;) {
+    for (uint256 _i; _i < _len; ) {
       uint256 _orderIndex = _orderIndices[_i];
       LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
       // Check if this order still exists
@@ -1177,12 +1178,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     limitTradeHelper = LimitTradeHelper(_limitTradeHelper);
   }
 
-  function multicall(bytes[] calldata data) external returns (bytes[] memory results) {
-    results = new bytes[](data.length);
-    for (uint256 i = 0; i < data.length; i++) {
-      results[i] = _functionDelegateCall(address(this), data[i]);
-    }
-    return results;
+  /// @notice Set Blast Pts Operator
+  /// @param _blastPoints Blast Points contract address
+  /// @param _operator Operator address
+  function setBlastPtsOperator(IBlastPoints _blastPoints, address _operator) external onlyOwner {
+    _blastPoints.configurePointsOperator(_operator);
   }
 
   /**

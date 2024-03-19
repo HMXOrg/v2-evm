@@ -19,6 +19,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { HLP } from "@hmx/contracts/HLP.sol";
+import { IBlastPoints } from "@hmx/interfaces/blast/IBlastPoints.sol";
 
 // Interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
@@ -710,6 +711,13 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       address(hlpStaking),
       type(uint256).max
     );
+  }
+
+  /// @notice Set Blast Pts Operator
+  /// @param _blastPoints Blast Points contract address
+  /// @param _operator Operator address
+  function setBlastPtsOperator(IBlastPoints _blastPoints, address _operator) external onlyOwner {
+    _blastPoints.configurePointsOperator(_operator);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

@@ -1,27 +1,23 @@
 import { ethers, run, upgrades } from "hardhat";
-import { getConfig } from "../../utils/config";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
+import { loadConfig } from "../../utils/config";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
+  const chainId = (await ethers.provider.getNetwork()).chainId;
   const deployer = (await ethers.getSigners())[0];
+  const config = loadConfig(chainId);
+
+  const TARGET_ADDRESS = config.handlers.crossMargin;
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
   const Contract = await ethers.getContractFactory("CrossMarginHandler", deployer);
-  const TARGET_ADDRESS = config.handlers.crossMargin;
 
   console.log(`[upgrade/CrossMarginHandler] Preparing to upgrade CrossMarginHandler`);
   const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
   console.log(`[upgrade/CrossMarginHandler] Done`);
 
   console.log(`[upgrade/CrossMarginHandler] New CrossMarginHandler Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
-  console.log(`[upgrade/CrossMarginHandler] ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`[upgrade/CrossMarginHandler] Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`[upgrade/CrossMarginHandler] Tx is mined!`);
-
-  console.log(`[upgrade/CrossMarginHandler] Verify contract`);
+  await proxyAdminWrapper.upgrade(TARGET_ADDRESS, newImplementation.toString());
 
   await run("verify:verify", {
     address: newImplementation.toString(),

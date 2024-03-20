@@ -14,7 +14,7 @@
     "limitTrade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
     "liquidity": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "intent": "",
-    "ext01": "",
+    "ext01": "0x7d975c289598E13dc95E48D04042F106e8d6d06a",
     "rebalanceHLP": "0xc2c45a6d0FD1A74888aAE64a45144165fB90e109"
   },
   "helpers": {
@@ -96,7 +96,8 @@
       "uniswapV3": "",
       "curve": "",
       "glp": "",
-      "erc4626": "0x7d8914432Fa40B4f645b3F91c6893E6Ecdf3BC43"
+      "erc4626": "0x7d8914432Fa40B4f645b3F91c6893E6Ecdf3BC43",
+      "thruster": "0xA10b6F0ee63B66Ca49df2D1594387063be6ac81E"
     }
   }
 }

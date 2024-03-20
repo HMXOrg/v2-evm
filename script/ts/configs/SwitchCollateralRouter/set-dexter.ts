@@ -19,24 +19,14 @@ async function main(chainId: number) {
 
   const params: Array<SetDexter> = [
     {
-      tokenIn: config.tokens.ybeth!,
-      tokenOut: config.tokens.weth,
-      dexter: config.extension.dexter.erc4626,
-    },
-    {
-      tokenIn: config.tokens.ybusdb!,
-      tokenOut: config.tokens.usdb!,
-      dexter: config.extension.dexter.erc4626,
-    },
-    {
-      tokenIn: config.tokens.weth!,
-      tokenOut: config.tokens.ybeth2!,
-      dexter: config.extension.dexter.erc4626,
-    },
-    {
       tokenIn: config.tokens.usdb!,
-      tokenOut: config.tokens.ybusdb2!,
-      dexter: config.extension.dexter.erc4626,
+      tokenOut: config.tokens.weth,
+      dexter: config.extension.dexter.thruster!,
+    },
+    {
+      tokenIn: config.tokens.weth,
+      tokenOut: config.tokens.usdb!,
+      dexter: config.extension.dexter.thruster!,
     },
   ];
 

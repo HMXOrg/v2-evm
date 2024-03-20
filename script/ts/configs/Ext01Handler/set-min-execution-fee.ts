@@ -5,34 +5,40 @@ import { Command } from "commander";
 import signers from "../../entities/signers";
 import { compareAddress } from "../../utils/address";
 import { ethers } from "ethers";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
-// OrderType 1 = Create switch collateral order
-const SWITCH_COLLATERAL_ORDER_TYPE = 1;
-// OrderType 2 = Create transfer collateral order
-const TRANSFER_COLLATERAL_ORDER_TYPE = 2;
+enum OrderType {
+  SwithCollateral = 1,
+  TransferCollateral = 2,
+}
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01, deployer);
 
-  const orderType = TRANSFER_COLLATERAL_ORDER_TYPE;
-  const minExecutionFee = ethers.utils.parseEther("0.0003");
+  const PARAMS = [
+    {
+      orderType: OrderType.TransferCollateral,
+      minExecutionFee: ethers.utils.parseEther("0.000008"),
+    },
+    {
+      orderType: OrderType.SwithCollateral,
+      minExecutionFee: ethers.utils.parseEther("0.00002"),
+    },
+  ];
 
-  console.log("[config/Ext01Handler] Ext01Handler setMinExecutionFee...");
-  const owner = await ext01Handler.owner();
-  if (compareAddress(owner, config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      ext01Handler.address,
-      0,
-      ext01Handler.interface.encodeFunctionData("setMinExecutionFee", [orderType, minExecutionFee])
+  for (const p of PARAMS) {
+    console.log(
+      `[config/Ext01Handler] Set min execution fee for ${p.orderType} to ${ethers.utils.formatEther(
+        p.minExecutionFee
+      )} ETH`
     );
-    console.log(`[config/Ext01Handler] Proposed ${tx} to setMinExecutionFee`);
-  } else {
-    const tx = await ext01Handler.setMinExecutionFee(orderType, minExecutionFee);
-    console.log(`[config/Ext01Handler] setMinExecutionFee Done at ${tx.hash}`);
-    await tx.wait();
+    await ownerWrapper.authExec(
+      ext01Handler.address,
+      ext01Handler.interface.encodeFunctionData("setMinExecutionFee", [p.orderType, p.minExecutionFee])
+    );
   }
 }
 

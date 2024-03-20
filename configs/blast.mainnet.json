@@ -83,7 +83,7 @@
     "tlc": "0xaECF694920EF9471BF40b9FE6d7d272637F31674",
     "hlp": "0x6D59A9acC2e0fa6CA568b24C07B3D6A39d408C18"
   },
-  "rewardDistributor": "",
+  "rewardDistributor": "0x03B2ba832695BF225AD2375C18439677BA8454D9",
   "reader": {
     "order": "0x72AeE66BC101243dff0A492931EEbFCE6A4f6b9c",
     "position": "0x0622DBf2ee42C531AF2AB8Fe4d802B4546D3119a",

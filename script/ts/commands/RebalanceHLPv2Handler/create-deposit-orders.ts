@@ -12,14 +12,14 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
-  const executionFee = ethers.utils.parseEther("0.001");
+  const executionFee = ethers.utils.parseEther("0.002");
   const depositParams = [
     {
       market: config.tokens.gmETHUSD,
       longToken: config.tokens.weth,
-      longTokenAmount: ethers.utils.parseUnits("718.558387427580082534", 18),
+      longTokenAmount: ethers.utils.parseUnits("194.63", 18),
       shortToken: config.tokens.usdcNative,
-      shortTokenAmount: ethers.utils.parseUnits("1354682.718869", 6),
+      shortTokenAmount: ethers.utils.parseUnits("0", 6),
       minMarketTokens: 0,
       gasLimit: 1000000,
     },

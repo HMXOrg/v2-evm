@@ -50,6 +50,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
   event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
   event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
+  event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
 
   /**
    * Constants
@@ -99,6 +100,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
   // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
   mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
+  // Min profit duration in steps based on trade size
+  StepMinProfitDuration[] public stepMinProfitDurations;
 
   /**
    * Modifiers
@@ -651,6 +654,39 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
         ++i;
       }
     }
+  }
+
+  function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
+    uint256 length = _stepMinProfitDurations.length;
+    for (uint256 i = 0; i < length; ) {
+      stepMinProfitDurations.push(_stepMinProfitDurations[i]);
+      emit LogSetStepMinProfitDuration(stepMinProfitDurations.length - 1, _stepMinProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setStepMinProfitDuration(
+    uint256 index,
+    StepMinProfitDuration memory _stepMinProfitDuration
+  ) external onlyOwner {
+    stepMinProfitDurations[index] = _stepMinProfitDuration;
+    emit LogSetStepMinProfitDuration(index, _stepMinProfitDuration);
+  }
+
+  function getStepMinProfitDuration(uint256 sizeDelta) external returns (uint256) {
+    uint256 length = stepMinProfitDurations.length;
+    for (uint256 i = 0; i < length; ) {
+      if (sizeDelta >= stepMinProfitDurations[i].fromSize && sizeDelta < stepMinProfitDurations[i].toSize) {
+        // In-range
+        return stepMinProfitDurations[i].minProfitDuration;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    return 0;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

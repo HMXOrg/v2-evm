@@ -675,8 +675,11 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetStepMinProfitDuration(index, _stepMinProfitDuration);
   }
 
-  function getStepMinProfitDuration(uint256 sizeDelta) external returns (uint256) {
+  function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256) {
     uint256 length = stepMinProfitDurations.length;
+    if (length == 0) {
+      return minProfitDurations[marketIndex];
+    }
     for (uint256 i = 0; i < length; ) {
       if (sizeDelta >= stepMinProfitDurations[i].fromSize && sizeDelta < stepMinProfitDurations[i].toSize) {
         // In-range

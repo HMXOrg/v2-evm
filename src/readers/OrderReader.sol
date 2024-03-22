@@ -12,6 +12,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 // libs
 import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract OrderReader {
   IConfigStorage immutable configStorage;
@@ -107,7 +108,10 @@ contract OrderReader {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
-          _minProfitDuration = configStorage.minProfitDurations(_order.marketIndex);
+          _minProfitDuration = configStorage.getStepMinProfitDuration(
+            _order.marketIndex,
+            HMXLib.abs(_position.positionSizeE30)
+          );
           // check position
           if (_isPositionClose(_position)) {
             continue;

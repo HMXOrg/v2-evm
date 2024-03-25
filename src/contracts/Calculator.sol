@@ -1195,6 +1195,26 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   }
 
   function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
+  ) external view returns (bool, uint256) {
+    GetDeltaVars2 memory vars;
+    vars.size = _size;
+    vars.isLong = _isLong;
+    vars.markPrice = _markPrice;
+    vars.averagePrice = _averagePrice;
+    vars.lastIncreaseTimestamp = _lastIncreaseTimestamp;
+    vars.marketIndex = _marketIndex;
+    vars.useMinProfitDuration = false;
+
+    return _getDelta(vars);
+  }
+
+  function getDelta(
     address _subAccount,
     uint256 _size,
     bool _isLong,

@@ -655,16 +655,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
       {
         // Calculate pnl
-        (_var.isProfit, _var.delta) = _getDelta(
-          HMXLib.getSubAccount(_var.position.primaryAccount, _var.position.subAccountId),
-          _var.absSize,
-          _var.isLong,
-          _var.priceE30,
-          _var.position.avgEntryPriceE30,
-          _var.position.lastIncreaseTimestamp,
-          _var.position.marketIndex,
-          false
-        );
+        GetDeltaVars2 memory gdVars;
+        gdVars.subAccount = HMXLib.getSubAccount(_var.position.primaryAccount, _var.position.subAccountId);
+        gdVars.size = _var.absSize;
+        gdVars.isLong = _var.isLong;
+        gdVars.markPrice = _var.priceE30;
+        gdVars.averagePrice = _var.position.avgEntryPriceE30;
+        gdVars.lastIncreaseTimestamp = _var.position.lastIncreaseTimestamp;
+        gdVars.marketIndex = _var.position.marketIndex;
+        gdVars.useMinProfitDuration = false;
+        (_var.isProfit, _var.delta) = _getDelta(gdVars);
 
         if (_var.isProfit) {
           if (_var.delta >= _var.position.reserveValueE30) {
@@ -1203,21 +1203,17 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _lastIncreaseTimestamp,
     uint256 _marketIndex
   ) external view returns (bool, uint256) {
-    GetlDeltaVars2 {
-    address subAccount;
-    uint256 size;
-    bool isLong;
-    uint256 markPrice;
-    uint256 averagePrice;
-    uint256 lastIncreaseTimestamp;
-    uint256 marketIndex;
-    bool useMinProfitDuration;
-    uint256 priceDelta;
-    uint256 delta;
-    bool isProfit;
-  }
-    return
-      _getDelta(_subAccount, _size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex, true);
+    GetDeltaVars2 memory vars;
+    vars.subAccount = _subAccount;
+    vars.size = _size;
+    vars.isLong = _isLong;
+    vars.markPrice = _markPrice;
+    vars.averagePrice = _averagePrice;
+    vars.lastIncreaseTimestamp = _lastIncreaseTimestamp;
+    vars.marketIndex = _marketIndex;
+    vars.useMinProfitDuration = true;
+
+    return _getDelta(vars);
   }
 
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
@@ -1227,7 +1223,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @param _averagePrice The average price of the position.
   /// @return isProfit A boolean value indicating whether the position is profitable or not.
   /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
-  struct GetlDeltaVars2 {
+  struct GetDeltaVars2 {
     address subAccount;
     uint256 size;
     bool isLong;
@@ -1241,7 +1237,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bool isProfit;
   }
 
-  function _getDelta(GetlDeltaVars2 memory vars) internal view returns (bool, uint256) {
+  function _getDelta(GetDeltaVars2 memory vars) internal view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (vars.averagePrice == 0) return (false, 0);
 

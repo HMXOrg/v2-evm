@@ -139,6 +139,7 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
   }
 
   function getDelta(
+    address _subAccount,
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
@@ -147,9 +148,10 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     uint256 _marketIndex
   ) public view override returns (bool, uint256) {
     if (actualFunction[keccak256("getDelta")]) {
-      return c.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
+      return c.getDelta(_subAccount, _size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
     } else {
-      return super.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
+      return
+        super.getDelta(_subAccount, _size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
     }
   }
 

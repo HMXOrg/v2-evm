@@ -114,6 +114,7 @@ interface ICalculator {
   function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) external view returns (bool, uint256);
 
   function getDelta(
+    address _subAccount,
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,

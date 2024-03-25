@@ -50,6 +50,8 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
   uint256 public movingWindowLength;
   uint256 public movingWindowInterval;
 
+  mapping(bytes32 positionId => uint256 lastIncreaseSize) public lastIncreaseSizeByPositionId;
+
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -326,6 +328,10 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
 
   function _getCurrentEpochVolumeTimestamp() internal view returns (uint256 epochTimestamp) {
     return movingWindowInterval > 0 ? (block.timestamp / movingWindowInterval) * movingWindowInterval : block.timestamp;
+  }
+
+  function setLastIncreaseSize(bytes32 positionId, uint256 tradeSize) external onlyWhitelistedExecutor {
+    lastIncreaseSizeByPositionId[positionId] = tradeSize;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

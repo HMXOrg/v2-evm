@@ -362,6 +362,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // if adjust position, calculate the new average price
     if (!_vars.isNewPosition) {
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
+        _vars.subAccount,
         HMXLib.abs(_vars.position.positionSizeE30),
         _vars.isLong,
         _vars.closePriceE30,
@@ -835,6 +836,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
      */
     {
       (isProfit, delta) = calculator.getDelta(
+        _vars.accountInfo.subAccount,
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.closePrice,

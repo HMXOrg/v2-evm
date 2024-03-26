@@ -16,7 +16,7 @@ async function main(chainId: number) {
       assetId: ethers.utils.formatBytes32String("PYTH"),
       config: {
         assetId: ethers.utils.formatBytes32String("PYTH"),
-        tokenAddress: config.tokens.pyth!,
+        tokenAddress: config.tokens.pyth,
         decimals: 6,
         isStableCoin: false,
       },

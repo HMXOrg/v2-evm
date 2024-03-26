@@ -13,20 +13,11 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
+      assetId: ethers.utils.formatBytes32String("PYTH"),
       config: {
-        assetId: ethers.utils.formatBytes32String("GM-BTCUSD"),
-        tokenAddress: config.tokens.gmBTCUSD,
-        decimals: 18,
-        isStableCoin: false,
-      },
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
-      config: {
-        assetId: ethers.utils.formatBytes32String("GM-ETHUSD"),
-        tokenAddress: config.tokens.gmETHUSD,
-        decimals: 18,
+        assetId: ethers.utils.formatBytes32String("PYTH"),
+        tokenAddress: config.tokens.pyth!,
+        decimals: 6,
         isStableCoin: false,
       },
     },

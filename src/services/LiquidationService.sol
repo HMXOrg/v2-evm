@@ -380,7 +380,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
         // remove the position's value in storage
         _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);
-        _vars.perpStorage.setLastIncreaseSize(_vars.positionId, 0);
 
         emit LogLiquidationPosition(
           _vars.positionId,

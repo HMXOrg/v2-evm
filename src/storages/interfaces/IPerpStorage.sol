@@ -53,6 +53,7 @@ interface IPerpStorage {
     int256 realizedPnl;
     int256 lastFundingAccrued;
     uint8 subAccountId;
+    uint256 lastIncreaseSize;
   }
 
   /**
@@ -111,8 +112,4 @@ interface IPerpStorage {
   function increaseEpochVolume(bool isBuy, uint256 marketIndex, uint256 absSizeDelta) external;
 
   function getEpochVolume(bool isBuy, uint256 marketIndex) external view returns (uint256 epochVolume);
-
-  function setLastIncreaseSize(bytes32 positionId, uint256 tradeSize) external;
-
-  function lastIncreaseSizeByPositionId(bytes32 positionId) external view returns (uint256 tradeSize);
 }

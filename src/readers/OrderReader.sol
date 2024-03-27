@@ -108,10 +108,7 @@ contract OrderReader {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
-          _minProfitDuration = configStorage.getStepMinProfitDuration(
-            _order.marketIndex,
-            perpStorage.lastIncreaseSizeByPositionId(HMXLib.getPositionId(_subAccount, _order.marketIndex))
-          );
+          _minProfitDuration = configStorage.getStepMinProfitDuration(_order.marketIndex, _position.lastIncreaseSize);
           // check position
           if (_isPositionClose(_position)) {
             continue;

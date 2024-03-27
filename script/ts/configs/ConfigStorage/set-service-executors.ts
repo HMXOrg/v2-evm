@@ -9,8 +9,8 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      contractAddress: config.helpers.trade,
-      executorAddress: config.safe,
+      contractAddress: config.services.gas,
+      executorAddress: config.handlers.intent,
       isServiceExecutor: true,
     },
   ];

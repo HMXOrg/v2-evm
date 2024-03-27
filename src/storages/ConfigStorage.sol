@@ -668,12 +668,16 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     }
   }
 
-  function setStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
+  function setStepMinProfitDuration(
+    uint256[] memory indexes,
+    StepMinProfitDuration[] memory _stepMinProfitDurations
+  ) external onlyOwner {
+    if (indexes.length != _stepMinProfitDurations.length) revert IConfigStorage_BadLen();
     uint256 length = _stepMinProfitDurations.length;
     for (uint256 i = 0; i < length; ) {
       if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
-      stepMinProfitDurations[i] = _stepMinProfitDurations[i];
-      emit LogSetStepMinProfitDuration(i, _stepMinProfitDurations[i]);
+      stepMinProfitDurations[indexes[i]] = _stepMinProfitDurations[i];
+      emit LogSetStepMinProfitDuration(indexes[i], _stepMinProfitDurations[i]);
       unchecked {
         ++i;
       }

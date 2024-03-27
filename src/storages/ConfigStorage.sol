@@ -659,6 +659,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
     uint256 length = _stepMinProfitDurations.length;
     for (uint256 i = 0; i < length; ) {
+      if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
       stepMinProfitDurations.push(_stepMinProfitDurations[i]);
       emit LogSetStepMinProfitDuration(stepMinProfitDurations.length - 1, _stepMinProfitDurations[i]);
       unchecked {
@@ -667,12 +668,24 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     }
   }
 
-  function setStepMinProfitDuration(
-    uint256 index,
-    StepMinProfitDuration memory _stepMinProfitDuration
-  ) external onlyOwner {
-    stepMinProfitDurations[index] = _stepMinProfitDuration;
-    emit LogSetStepMinProfitDuration(index, _stepMinProfitDuration);
+  function setStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
+    uint256 length = _stepMinProfitDurations.length;
+    for (uint256 i = 0; i < length; ) {
+      if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
+      stepMinProfitDurations[i] = _stepMinProfitDurations[i];
+      emit LogSetStepMinProfitDuration(i, _stepMinProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function removeLastStepMinProfitDuration() external onlyOwner {
+    emit LogSetStepMinProfitDuration(
+      stepMinProfitDurations.length - 1,
+      IConfigStorage.StepMinProfitDuration({ fromSize: 0, toSize: 0, minProfitDuration: 0 })
+    );
+    stepMinProfitDurations.pop();
   }
 
   function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256) {

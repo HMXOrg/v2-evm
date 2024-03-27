@@ -252,7 +252,9 @@ interface IConfigStorage {
 
   function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external;
 
-  function setStepMinProfitDuration(uint256 index, StepMinProfitDuration memory _stepMinProfitDuration) external;
+  function setStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external;
+
+  function removeLastStepMinProfitDuration() external;
 
   function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256);
 }

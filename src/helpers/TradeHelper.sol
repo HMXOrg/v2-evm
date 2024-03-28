@@ -684,7 +684,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     _vars.marketIndex = _marketIndex;
 
     bytes32[] memory _hlpAssetIds = _vars.configStorage.getHlpAssetIds();
-    uint256 _len = _hlpAssetIds.length;
+    address[] memory _traderTokens = _vars.vaultStorage.getTraderTokens(_subAccount);
+    uint256 _len = _traderTokens.length;
 
     // check loss
     if (_unrealizedPnl < 0) {
@@ -717,7 +718,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // loop for settle
     for (uint256 i = 0; i < _len; ) {
-      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_hlpAssetIds[i]);
+      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_traderTokens[i]);
       _vars.tokenDecimal = _assetConfig.decimals;
       _vars.token = _assetConfig.tokenAddress;
       (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);

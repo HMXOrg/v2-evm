@@ -29,6 +29,9 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     uint256 _executionFeeInUsd,
     address _executionFeeTreasury
   ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     vaultStorage = VaultStorage(_vaultStorage);
     configStorage = ConfigStorage(_configStorage);
     executionFeeInUsd = _executionFeeInUsd;

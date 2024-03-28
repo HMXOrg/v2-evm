@@ -20,6 +20,7 @@ import { String } from "@hmx-test/libs/String.sol";
 import { MockArbSys } from "@hmx-test/mocks/MockArbSys.sol";
 import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
 import { MockGmxV2Oracle } from "@hmx-test/mocks/MockGmxV2Oracle.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Cheats {
   bytes32 internal constant GM_WBTCUSDC_ASSET_ID = "GM(WBTC-USDC)";
@@ -80,6 +81,9 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     Deployer.upgrade("Calculator", address(proxyAdmin), address(calculator));
     Deployer.upgrade("RebalanceHLPHandler", address(proxyAdmin), address(rebalanceHLPHandler));
     Deployer.upgrade("RebalanceHLPService", address(proxyAdmin), address(rebalanceHLPService));
+    Deployer.upgrade("PerpStorage", address(proxyAdmin), address(perpStorage));
+    Deployer.upgrade("TradeService", address(proxyAdmin), address(tradeService));
+    Deployer.upgrade("TradeHelper", address(proxyAdmin), address(tradeHelper));
     vm.stopPrank();
 
     // Setup
@@ -218,6 +222,20 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_ETHUSDC_ASSET_ID, 0.98014296 * 1e8);
     MockEcoPyth(address(ecoPyth2)).overridePrice(USDC_NATIVE_ASSET_ID, 1 * 1e8);
+
+    uint256[] memory _marketIndexes = new uint256[](1);
+    _marketIndexes[0] = 0;
+    uint256[] memory _positionSizeLimits = new uint256[](1);
+    _positionSizeLimits[0] = 2_000_000 * 1e30;
+    uint256[] memory _tradeSizeLimits = new uint256[](1);
+    _tradeSizeLimits[0] = 2_000_000 * 1e30;
+
+    vm.prank(0x6409ba830719cd0fE27ccB3051DF1b399C90df4a);
+    LimitTradeHelper(0x0E7C0d58f2e4a6b28597D51a34C4b7acDA1Ee719).setLimit(
+      _marketIndexes,
+      _positionSizeLimits,
+      _tradeSizeLimits
+    );
   }
 
   function rebalanceHLPv2_createDepositOrder(

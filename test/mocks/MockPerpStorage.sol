@@ -99,4 +99,6 @@ contract MockPerpStorage {
     markets[_marketIndex].shortAccumSE = shortAccumSE;
     markets[_marketIndex].shortAccumS2E = shortAccumS2E;
   }
+
+  function lastIncreaseSizeByPositionId(bytes32 positionId) external view returns (uint256 tradeSize) {}
 }

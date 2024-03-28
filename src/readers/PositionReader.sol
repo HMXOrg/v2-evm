@@ -79,6 +79,7 @@ contract PositionReader {
 
       // Calculate the delta
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
+        HMXLib.getSubAccount(position.primaryAccount, position.subAccountId),
         HMXLib.abs(position.positionSizeE30),
         position.positionSizeE30 > 0,
         _adaptivePriceE30,

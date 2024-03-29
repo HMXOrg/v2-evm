@@ -13,7 +13,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.sglp,
+      tokenAddress: config.tokens.pyth,
       config: {
         targetWeight: ethers.utils.parseEther("0"), // 0%
         bufferLiquidity: 0,

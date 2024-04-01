@@ -50,6 +50,7 @@ export const ecoPythPriceFeedIdsByIndex = [
   "ybUSDB",
   "ybETH2",
   "ybUSDB2",
+  "0x9a4df90b25497f66b1afb012467e316e801ca3d839456db028892fe8c70c8016", // PENDLEUSD
 ];
 export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("ETH"),
@@ -100,6 +101,7 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("ybUSDB"),
   ethers.utils.formatBytes32String("ybETH2"),
   ethers.utils.formatBytes32String("ybUSDB2"),
+  ethers.utils.formatBytes32String("PENDLE"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -150,6 +152,7 @@ export const ecoPythHoomanReadableByIndex = [
   "ybUSDB",
   "ybETH2",
   "ybUSDB2",
+  "PENDLE",
 ];
 export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
   [ethers.utils.formatBytes32String("1000SHIB"), 1000],

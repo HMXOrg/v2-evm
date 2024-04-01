@@ -10,6 +10,8 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const hmxApi = new HmxApiWrapper(chainId);
   console.log("[cmds/OrderbookOracle] Feed Orderbook Oracle Data...");
+  await hmxApi.refreshMarketIds();
+  await hmxApi.syncAdaptiveFeeDatabase();
   await hmxApi.feedOrderbookOracle();
   console.log("[cmds/OrderbookOracle] Success!");
 }

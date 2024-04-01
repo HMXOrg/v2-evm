@@ -8,7 +8,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const inputs = [
     {
-      executorAddress: config.rewardDistributor,
+      executorAddress: config.services.gas,
       isServiceExecutor: true,
     },
   ];

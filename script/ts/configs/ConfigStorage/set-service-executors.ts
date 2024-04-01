@@ -13,6 +13,11 @@ async function main(chainId: number) {
       executorAddress: config.handlers.intent,
       isServiceExecutor: true,
     },
+    {
+      contractAddress: config.services.trade,
+      executorAddress: config.helpers.tradeOrder,
+      isServiceExecutor: true,
+    },
   ];
 
   const deployer = signers.deployer(chainId);

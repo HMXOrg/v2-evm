@@ -13,7 +13,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
-  const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01, deployer);
+  const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01!, deployer);
 
   const orderExecutor = "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E";
   const isAllow = true;

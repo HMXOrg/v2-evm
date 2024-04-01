@@ -14,7 +14,7 @@
     "limitTrade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
     "liquidity": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "intent": "",
-    "ext01": "",
+    "ext01": "0x7d975c289598E13dc95E48D04042F106e8d6d06a",
     "rebalanceHLP": "0xc2c45a6d0FD1A74888aAE64a45144165fB90e109"
   },
   "helpers": {
@@ -49,7 +49,7 @@
       "ybeth2": "0x1e0591d87ADDF06A9673e7d6bA6f95371EB8b44e",
       "ybusdb2": "0x2D86b7109eB4DA63ba6b819dB7f8adCd732bc037"
     },
-    "orderbook": ""
+    "orderbook": "0xe0afa4161415ea6C316A279D69024F99DD7C17Db"
   },
   "tokens": {
     "hlp": "0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0",
@@ -59,26 +59,31 @@
     "ybusdb": "0x620aa22aA45F59Af91CaFBAd0ab58181FcDBfB08",
     "ybeth2": "0xb9d94A3490bA2482E2D4F21F0E76b92E5661Ded8",
     "ybusdb2": "0xCD732d21c1B23A3f84Bb386E9759b5b6A1BcBe39",
-    "traderLoyaltyCredit": ""
+    "traderLoyaltyCredit": "0x5e81729765a54565a8e95f2d361F39605C2D279d"
   },
-  "vendors": {},
+  "vendors": {
+    "thruster": {
+      "permit2": "0x414991b742FbCBE3EF00d94Ff9f9A63729091711",
+      "universalRouter": "0xC4af384fA1ff36a49C55549811E1B2dc1F72Ba44"
+    }
+  },
   "strategies": {},
   "hooks": {
-    "tradingStaking": "",
-    "tlc": ""
+    "tradingStaking": "0x59109bC04C1DE0AB4a5eFA59F31B8C8800182BA4",
+    "tlc": "0x9302624e5A7079b892296d39e6e969790CDeE19b"
   },
   "calculator": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
-  "adaptiveFeeCalculator": "",
+  "adaptiveFeeCalculator": "0x2728D7AC20E8b89187bFCB23bE066822A47b318c",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""
   },
   "staking": {
-    "trading": "",
-    "tlc": "",
+    "trading": "0x0D2900Fc41388271C5D4DdD0fa148973d9E83878",
+    "tlc": "0xaECF694920EF9471BF40b9FE6d7d272637F31674",
     "hlp": "0x6D59A9acC2e0fa6CA568b24C07B3D6A39d408C18"
   },
-  "rewardDistributor": "",
+  "rewardDistributor": "0x03B2ba832695BF225AD2375C18439677BA8454D9",
   "reader": {
     "order": "0x72AeE66BC101243dff0A492931EEbFCE6A4f6b9c",
     "position": "0x0622DBf2ee42C531AF2AB8Fe4d802B4546D3119a",
@@ -91,7 +96,8 @@
       "uniswapV3": "",
       "curve": "",
       "glp": "",
-      "erc4626": "0x7d8914432Fa40B4f645b3F91c6893E6Ecdf3BC43"
+      "erc4626": "0x7d8914432Fa40B4f645b3F91c6893E6Ecdf3BC43",
+      "thruster": "0xA10b6F0ee63B66Ca49df2D1594387063be6ac81E"
     }
   }
 }

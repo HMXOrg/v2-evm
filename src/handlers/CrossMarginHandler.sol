@@ -16,6 +16,7 @@ import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 import { IYBToken } from "@hmx/interfaces/blast/IYBToken.sol";
+import { IBlastPoints } from "@hmx/interfaces/blast/IBlastPoints.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -589,6 +590,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function setOrderExecutor(address _executor, bool _isAllow) external nonReentrant onlyOwner {
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
+  /// @notice Set Blast Pts Operator
+  /// @param _blastPoints Blast Points contract address
+  /// @param _operator Operator address
+  function setBlastPtsOperator(IBlastPoints _blastPoints, address _operator) external onlyOwner {
+    _blastPoints.configurePointsOperator(_operator);
   }
 
   /**

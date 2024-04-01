@@ -15,7 +15,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
-  const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01, deployer);
+  const ext01Handler = Ext01Handler__factory.connect(config.handlers.ext01!, deployer);
 
   const orderType = TRANSFER_COLLATERAL_ORDER_TYPE;
   const minExecutionFee = ethers.utils.parseEther("0.0003");

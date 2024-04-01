@@ -461,6 +461,16 @@
       "assetSymbol": "Crypto.PYTH",
       "quotedAssetSymbol": "Crypto.PYTH",
       "sortIndex": 2004
+    },
+    {
+      "index": 51,
+      "name": "PENDLEUSD",
+      "assetId": "0x50454e444c450000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "pendle-usd",
+      "assetSymbol": "Crypto.PENDLE",
+      "quotedAssetSymbol": "Crypto.PENDLE",
+      "sortIndex": 2004
     }
   ],
   "assets": {

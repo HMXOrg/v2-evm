@@ -6,7 +6,7 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
+import HmxApiWrapper from "../../wrappers/HMXAPIWrapper";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
@@ -16,6 +16,8 @@ async function main(chainId: number) {
   const hmxApi = new HmxApiWrapper(chainId);
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
+  console.log(ethers.utils.formatBytes32String("PENDLE"));
+  return;
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);

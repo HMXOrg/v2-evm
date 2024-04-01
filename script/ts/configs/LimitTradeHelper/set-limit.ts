@@ -7,49 +7,11 @@ import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const inputs = [
-    { marketIndex: 0, tradeSizeLimit: 200000, positionSizeLimit: 200000 },
-    { marketIndex: 1, tradeSizeLimit: 200000, positionSizeLimit: 200000 },
-    { marketIndex: 2, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 3, tradeSizeLimit: 100000, positionSizeLimit: 100000 },
-    { marketIndex: 4, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 5, tradeSizeLimit: 100000, positionSizeLimit: 100000 },
-    { marketIndex: 6, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 7, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 8, tradeSizeLimit: 60000, positionSizeLimit: 60000 },
-    { marketIndex: 9, tradeSizeLimit: 60000, positionSizeLimit: 60000 },
-    { marketIndex: 10, tradeSizeLimit: 60000, positionSizeLimit: 60000 },
-    { marketIndex: 11, tradeSizeLimit: 80000, positionSizeLimit: 80000 },
-    { marketIndex: 12, tradeSizeLimit: 80000, positionSizeLimit: 80000 },
-    { marketIndex: 13, tradeSizeLimit: 80000, positionSizeLimit: 80000 },
-    { marketIndex: 14, tradeSizeLimit: 100000, positionSizeLimit: 100000 },
-    { marketIndex: 15, tradeSizeLimit: 200000, positionSizeLimit: 200000 },
-    { marketIndex: 16, tradeSizeLimit: 150000, positionSizeLimit: 150000 },
-    { marketIndex: 17, tradeSizeLimit: 80000, positionSizeLimit: 80000 },
-    { marketIndex: 18, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 19, tradeSizeLimit: 100000, positionSizeLimit: 100000 },
-    { marketIndex: 20, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 21, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 22, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 23, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 24, tradeSizeLimit: 50000, positionSizeLimit: 50000 },
-    { marketIndex: 25, tradeSizeLimit: 20000, positionSizeLimit: 20000 },
-    { marketIndex: 26, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 27, tradeSizeLimit: 10000, positionSizeLimit: 10000 },
-    { marketIndex: 28, tradeSizeLimit: 15000, positionSizeLimit: 15000 },
-    { marketIndex: 29, tradeSizeLimit: 50000, positionSizeLimit: 50000 },
-    { marketIndex: 30, tradeSizeLimit: 20000, positionSizeLimit: 20000 },
-    { marketIndex: 31, tradeSizeLimit: 70000, positionSizeLimit: 70000 },
-    { marketIndex: 32, tradeSizeLimit: 60000, positionSizeLimit: 60000 },
-    { marketIndex: 33, tradeSizeLimit: 50000, positionSizeLimit: 50000 },
-    { marketIndex: 34, tradeSizeLimit: 10000, positionSizeLimit: 10000 },
-    { marketIndex: 35, tradeSizeLimit: 20000, positionSizeLimit: 20000 },
-    { marketIndex: 36, tradeSizeLimit: 10000, positionSizeLimit: 10000 },
-    { marketIndex: 37, tradeSizeLimit: 40000, positionSizeLimit: 40000 },
-    { marketIndex: 38, tradeSizeLimit: 400000, positionSizeLimit: 400000 },
-    { marketIndex: 39, tradeSizeLimit: 20000, positionSizeLimit: 20000 },
-    { marketIndex: 40, tradeSizeLimit: 20000, positionSizeLimit: 20000 },
-    { marketIndex: 41, tradeSizeLimit: 40000, positionSizeLimit: 40000 },
-    { marketIndex: 42, tradeSizeLimit: 20000, positionSizeLimit: 20000 },
+    {
+      marketIndex: 43,
+      tradeSizeLimit: 15000,
+      positionSizeLimit: 15000,
+    },
   ];
 
   const config = loadConfig(chainId);
@@ -64,8 +26,8 @@ async function main(chainId: number) {
       return {
         marketIndex: i.marketIndex,
         market: marketConfig.markets[i.marketIndex].name,
-        positionSizeLimit: ethers.utils.formatUnits(i.positionSizeLimit, 30),
-        tradeSizeLimit: ethers.utils.formatUnits(i.tradeSizeLimit, 30),
+        positionSizeLimit: i.positionSizeLimit,
+        tradeSizeLimit: i.tradeSizeLimit,
       };
     })
   );

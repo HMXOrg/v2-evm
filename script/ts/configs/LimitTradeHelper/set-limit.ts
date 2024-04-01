@@ -9,8 +9,8 @@ async function main(chainId: number) {
   const inputs = [
     {
       marketIndex: 43,
-      tradeSizeLimit: ethers.utils.parseUnits("75000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("75000", 30),
+      tradeSizeLimit: 15000,
+      positionSizeLimit: 15000,
     },
   ];
 
@@ -26,8 +26,8 @@ async function main(chainId: number) {
       return {
         marketIndex: i.marketIndex,
         market: marketConfig.markets[i.marketIndex].name,
-        positionSizeLimit: ethers.utils.formatUnits(i.positionSizeLimit, 30),
-        tradeSizeLimit: ethers.utils.formatUnits(i.tradeSizeLimit, 30),
+        positionSizeLimit: i.positionSizeLimit,
+        tradeSizeLimit: i.tradeSizeLimit,
       };
     })
   );

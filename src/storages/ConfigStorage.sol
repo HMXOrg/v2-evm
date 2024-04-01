@@ -643,7 +643,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     uint256 MAX_DURATION = 30 minutes;
 
-    for (uint256 i = 0; i < _marketIndexs.length; ) {
+    for (uint256 i; i < _marketIndexs.length; ) {
       if (_minProfitDurations[i] > MAX_DURATION) revert IConfigStorage_MaxDurationForMinProfit();
 
       minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
@@ -658,7 +658,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
     uint256 length = _stepMinProfitDurations.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
       stepMinProfitDurations.push(_stepMinProfitDurations[i]);
       emit LogSetStepMinProfitDuration(stepMinProfitDurations.length - 1, _stepMinProfitDurations[i]);
@@ -674,7 +674,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   ) external onlyOwner {
     if (indexes.length != _stepMinProfitDurations.length) revert IConfigStorage_BadLen();
     uint256 length = _stepMinProfitDurations.length;
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
       stepMinProfitDurations[indexes[i]] = _stepMinProfitDurations[i];
       emit LogSetStepMinProfitDuration(indexes[i], _stepMinProfitDurations[i]);
@@ -697,7 +697,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     if (length == 0) {
       return minProfitDurations[marketIndex];
     }
-    for (uint256 i = 0; i < length; ) {
+    for (uint256 i; i < length; ) {
       if (sizeDelta >= stepMinProfitDurations[i].fromSize && sizeDelta < stepMinProfitDurations[i].toSize) {
         // In-range
         return stepMinProfitDurations[i].minProfitDuration;
@@ -706,7 +706,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
         ++i;
       }
     }
-    return 0;
+    return minProfitDurations[marketIndex];
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

@@ -50,8 +50,6 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
   uint256 public movingWindowLength;
   uint256 public movingWindowInterval;
 
-  mapping(bytes32 positionId => uint256 lastIncreaseSize) public lastIncreaseSizeByPositionId;
-
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();

@@ -1168,12 +1168,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     if (vars.isProfit) {
       vars.minProfitDuration = ConfigStorage(configStorage).getStepMinProfitDuration(
         position.marketIndex,
-        PerpStorage(perpStorage).lastIncreaseSizeByPositionId(
-          HMXLib.getPositionId(
-            HMXLib.getSubAccount(position.primaryAccount, position.subAccountId),
-            position.marketIndex
-          )
-        )
+        position.lastIncreaseSize
       );
       if (block.timestamp < position.lastIncreaseTimestamp + vars.minProfitDuration) {
         vars.market = PerpStorage(perpStorage).getMarketByIndex(position.marketIndex);
@@ -1284,9 +1279,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
     if (vars.isProfit && vars.useMinProfitDuration) {
+      bytes32 positionId = HMXLib.getPositionId(vars.subAccount, vars.marketIndex);
+      IPerpStorage.Position memory position = PerpStorage(perpStorage).getPositionById(positionId);
       uint256 minProfitDuration = ConfigStorage(configStorage).getStepMinProfitDuration(
         vars.marketIndex,
-        PerpStorage(perpStorage).lastIncreaseSizeByPositionId(HMXLib.getPositionId(vars.subAccount, vars.marketIndex))
+        position.lastIncreaseSize
       );
       if (block.timestamp < vars.lastIncreaseTimestamp + minProfitDuration) {
         return (vars.isProfit, 0);

@@ -95,6 +95,12 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
+  struct StepMinProfitDuration {
+    uint256 fromSize;
+    uint256 toSize;
+    uint256 minProfitDuration;
+  }
+
   /**
    * States
    */
@@ -243,4 +249,15 @@ interface IConfigStorage {
   function getAssetClassConfigsLength() external view returns (uint256);
 
   function isAdaptiveFeeEnabledByMarketIndex(uint256 marketIndex) external view returns (bool);
+
+  function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external;
+
+  function setStepMinProfitDuration(
+    uint256[] memory indexes,
+    StepMinProfitDuration[] memory _stepMinProfitDurations
+  ) external;
+
+  function removeLastStepMinProfitDuration() external;
+
+  function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256);
 }

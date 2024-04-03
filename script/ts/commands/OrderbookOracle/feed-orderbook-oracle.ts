@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
+import HmxApiWrapper from "../../wrappers/HMXAPIWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -10,6 +10,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const hmxApi = new HmxApiWrapper(chainId);
   console.log("[cmds/OrderbookOracle] Feed Orderbook Oracle Data...");
+  await hmxApi.refreshMarketIds();
   await hmxApi.feedOrderbookOracle();
   console.log("[cmds/OrderbookOracle] Success!");
 }

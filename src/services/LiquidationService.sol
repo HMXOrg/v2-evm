@@ -79,26 +79,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     ConfigStorage configStorage;
   }
 
-  struct LiquidatePositionVars {
-    bytes32 positionId;
-    uint256 absPositionSizeE30;
-    uint256 oldSumSe;
-    uint256 oldSumS2e;
-    uint256 tradingFee;
-    uint256 borrowingFee;
-    int256 fundingFee;
-    bool isLong;
-    IPerpStorage.Position position;
-    PerpStorage.Market globalMarket;
-    ConfigStorage.MarketConfig marketConfig;
-    VaultStorage vaultStorage;
-    TradeHelper tradeHelper;
-    PerpStorage perpStorage;
-    OracleMiddleware oracle;
-    Calculator calculator;
-    ConfigStorage configStorage;
-  }
-
   /**
    * States
    */
@@ -274,6 +254,27 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Private Functions
    */
+  struct LiquidatePositionVars {
+    bytes32 positionId;
+    uint256 absPositionSizeE30;
+    uint256 oldSumSe;
+    uint256 oldSumS2e;
+    uint256 tradingFee;
+    uint256 borrowingFee;
+    int256 fundingFee;
+    bool isLong;
+    IPerpStorage.Position position;
+    PerpStorage.Market globalMarket;
+    ConfigStorage.MarketConfig marketConfig;
+    VaultStorage vaultStorage;
+    TradeHelper tradeHelper;
+    PerpStorage perpStorage;
+    OracleMiddleware oracle;
+    Calculator calculator;
+    ConfigStorage configStorage;
+    uint256 len;
+    bytes32[] positionIds;
+  }
 
   /// @dev Liquidates positions associated with a given sub-account.
   /// It iterates over the list of position IDs and updates borrowing rate,
@@ -297,12 +298,12 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     // Get the list of position ids associated with the sub-account
-    bytes32[] memory positionIds = _vars.perpStorage.getPositionIds(_subAccount);
+    _vars.positionIds = _vars.perpStorage.getPositionIds(_subAccount);
 
-    uint256 _len = positionIds.length;
-    for (uint256 i; i < _len; ) {
+    _vars.len = _vars.positionIds.length;
+    for (uint256 i; i < _vars.len; ) {
       // Get the current position id from the list
-      _vars.positionId = positionIds[i];
+      _vars.positionId = _vars.positionIds[i];
       _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
       _vars.absPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
 
@@ -351,6 +352,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
         uint256 absPositionSize = HMXLib.abs(_vars.position.positionSizeE30);
 
         (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
+          _subAccount,
           absPositionSize,
           _vars.position.positionSizeE30 > 0,
           _adaptivePrice,

@@ -23,7 +23,7 @@ import { TradeService } from "@hmx/services/TradeService.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
 
 // Storage
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";

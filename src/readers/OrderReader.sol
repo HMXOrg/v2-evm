@@ -123,7 +123,7 @@ contract OrderReader {
             _position,
             _market,
             vars.marketConfigs[_order.marketIndex],
-            _order.sizeDelta,
+            !isTpSlOrder ? _order.sizeDelta : -_position.positionSizeE30,
             vars.prices[_order.marketIndex]
           )
         ) {

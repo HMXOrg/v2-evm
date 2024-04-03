@@ -728,6 +728,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return minProfitDurations[marketIndex];
   }
 
+  function getStepMinProfitDurations() external view returns (StepMinProfitDuration[] memory) {
+    return stepMinProfitDurations;
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();

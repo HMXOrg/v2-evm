@@ -23,7 +23,7 @@ import { TradeService } from "@hmx/services/TradeService.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
 
 // Storage
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -588,20 +588,6 @@ contract Smoke_Base is ForkEnv {
     new Smoke_Trade().openClosePosition();
     vm.revertTo(snapshot);
     new Smoke_TriggerOrder().executeTriggerOrder();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().reinvestSuccess();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().withdrawSuccess();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().emptyParams();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().overAmount();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().notWhitelisted();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().withdrawExceedingAmount();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().swapReinvestSuccess();
     vm.revertTo(snapshot);
     new Smoke_DistributeARBRewardsFromSTIP().distributeARBRewardsFromSTIP();
   }

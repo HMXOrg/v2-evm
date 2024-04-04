@@ -176,6 +176,7 @@ contract TC38 is BaseIntTest_WithActions {
         0
       );
       (bool bobIsProfit, uint256 bobProfit) = calculator.getDelta(
+        getSubAccount(BOB, 0),
         uint256(bobPosition.positionSizeE30),
         true,
         bobClosePrice,
@@ -193,6 +194,7 @@ contract TC38 is BaseIntTest_WithActions {
         0
       );
       (bool carolIsProfit, uint256 carolProfit) = calculator.getDelta(
+        getSubAccount(CAROL, 0),
         uint256(carolPosition.positionSizeE30),
         true,
         carolClosePrice,

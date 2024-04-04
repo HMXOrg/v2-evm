@@ -265,4 +265,6 @@ interface IConfigStorage {
   function ybTokenOf(address _token) external view returns (address);
 
   function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external;
+
+  function setIsStepMinProfitEnabledByMarketIndex(uint256[] memory marketIndexes, bool[] memory isEnableds) external;
 }

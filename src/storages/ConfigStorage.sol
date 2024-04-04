@@ -105,6 +105,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(address token => address ybToken) public ybTokenOf;
   // Min profit duration in steps based on trade size
   StepMinProfitDuration[] public stepMinProfitDurations;
+  mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
 
   /**
    * Modifiers
@@ -713,7 +714,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256) {
     uint256 length = stepMinProfitDurations.length;
-    if (length == 0) {
+    if (length == 0 || !isStepMinProfitEnabledByMarketIndex[marketIndex]) {
       return minProfitDurations[marketIndex];
     }
     for (uint256 i; i < length; ) {
@@ -730,6 +731,21 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function getStepMinProfitDurations() external view returns (StepMinProfitDuration[] memory) {
     return stepMinProfitDurations;
+  }
+
+  function setIsStepMinProfitEnabledByMarketIndex(
+    uint256[] memory marketIndexes,
+    bool[] memory isEnableds
+  ) external onlyOwner {
+    if (marketIndexes.length != isEnableds.length) revert IConfigStorage_BadLen();
+    uint256 length = marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      isStepMinProfitEnabledByMarketIndex[marketIndexes[i]] = isEnableds[i];
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

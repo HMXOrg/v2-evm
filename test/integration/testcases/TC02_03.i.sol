@@ -27,6 +27,10 @@ contract TC02_03 is BaseIntTest_WithActions {
     minProfitDurations[0] = 300;
     configStorage.setMinProfitDurations(marketIndexes, minProfitDurations);
 
+    bool[] memory isEnabledStepMinProfit = new bool[](1);
+    isEnabledStepMinProfit[0] = true;
+    configStorage.setIsStepMinProfitEnabledByMarketIndex(marketIndexes, isEnabledStepMinProfit);
+
     IConfigStorage.StepMinProfitDuration[] memory steps = new IConfigStorage.StepMinProfitDuration[](3);
 
     // Step Min Profit Duration
@@ -201,6 +205,10 @@ contract TC02_03 is BaseIntTest_WithActions {
     uint256[] memory minProfitDurations = new uint256[](1);
     minProfitDurations[0] = 300;
     configStorage.setMinProfitDurations(marketIndexes, minProfitDurations);
+
+    bool[] memory isEnabledStepMinProfit = new bool[](1);
+    isEnabledStepMinProfit[0] = true;
+    configStorage.setIsStepMinProfitEnabledByMarketIndex(marketIndexes, isEnabledStepMinProfit);
 
     IConfigStorage.StepMinProfitDuration[] memory steps = new IConfigStorage.StepMinProfitDuration[](3);
 

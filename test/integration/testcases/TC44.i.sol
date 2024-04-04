@@ -21,6 +21,7 @@ contract TC44 is BaseIntTest_WithActions {
   IOrderReader internal orderReader;
 
   function testCorrectness_TC44_tradeWithMinProfitDuration() external {
+    limitTradeHandler.setGuaranteeLimitPrice(false);
     orderReader = Deployer.deployOrderReader(
       address(configStorage),
       address(perpStorage),
@@ -35,6 +36,10 @@ contract TC44 is BaseIntTest_WithActions {
     uint256[] memory minProfitDurations = new uint256[](1);
     minProfitDurations[0] = 300;
     configStorage.setMinProfitDurations(marketIndexes, minProfitDurations);
+
+    bool[] memory isEnabledStepMinProfit = new bool[](1);
+    isEnabledStepMinProfit[0] = true;
+    configStorage.setIsStepMinProfitEnabledByMarketIndex(marketIndexes, isEnabledStepMinProfit);
 
     IConfigStorage.StepMinProfitDuration[] memory steps = new IConfigStorage.StepMinProfitDuration[](3);
 
@@ -149,88 +154,70 @@ contract TC44 is BaseIntTest_WithActions {
     _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 400 * 1e30);
 
-    // skip(2 minutes);
+    skip(2 minutes);
 
-    // // T6: Time has passed for 2 minutes. Min Profit Duration of 1 minute has already expired.
-    // // ALICE market buy weth with 10,000 USD at price 1622.83582907 USD
-    // // This would pass as the min profit duration has already expired.
-    // // But ALICE position will be under min profit duration again for 3 minutes.
-    // tickPrices[0] = 73923; // ETHUSD = 1622.83582907
-    // marketBuy(ALICE, 0, wethMarketIndex, 10_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, 10_400 * 1e30);
+    // T6: Time has passed for 2 minutes. Min Profit Duration of 1 minute has already expired.
+    // ALICE market buy weth with 10,000 USD at price 1622.83582907 USD
+    // This would pass as the min profit duration has already expired.
+    // But ALICE position will be under min profit duration again for 3 minutes.
+    tickPrices[0] = 73923; // ETHUSD = 1622.83582907
+    marketBuy(ALICE, 0, wethMarketIndex, 10_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 10_400 * 1e30);
 
-    // skip(2 minutes);
+    skip(2 minutes);
 
-    // // T7: Time has passed for 2 minutes. The position is profitable.
-    // // ALICE will not be able to interact with the position due to min profit duration of 3 minutes.
-    // marketBuy(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, 10_400 * 1e30);
+    // T7: Time has passed for 2 minutes. The position is profitable.
+    // ALICE will not be able to interact with the position due to min profit duration of 3 minutes.
+    createLimitTradeOrder(
+      ALICE,
+      0,
+      wethMarketIndex,
+      type(int256).min,
+      1900 * 1e30,
+      0,
+      false,
+      executionOrderFee,
+      true,
+      address(usdc)
+    );
+    executableOrders = orderReader.getExecutableOrders(800, 0, orderReaderPrices, shouldInverts);
+    assertEq(executableOrders[0].account, address(0));
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 10_400 * 1e30);
 
-    // // T8: Time has not passed.
-    // // ALICE market sell ETH to decrease position for 100 USD at price 1622.83582907 USD under Min Profit Duration.
-    // // This would fail because min profit duration is still active and the position is profitable.
-    // // Decrease is also not allowed during Min Profit Duration.
-    // tickPrices[0] = 73923; // ETHUSD = 1622.83582907
-    // marketSell(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, 10_400 * 1e30);
+    // T8: Time has not passed.
+    // ALICE market sell ETH to decrease position for 100 USD at price 1622.83582907 USD under Min Profit Duration.
+    // This would fail because min profit duration is still active and the position is profitable.
+    // Decrease is also not allowed during Min Profit Duration.
+    tickPrices[0] = 73923; // ETHUSD = 1622.83582907
+    executableOrders = orderReader.getExecutableOrders(800, 0, orderReaderPrices, shouldInverts);
+    assertEq(executableOrders[0].account, address(0));
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 10_400 * 1e30);
 
-    // // T9: Time has not passed. But ETH price drop to 1528.33381234 USD. The position is not profitable.
-    // // ALICE market sell ETH to decrease position for 100 USD at price 1528.33381234 USD under Min Profit Duration.
-    // // This should be possible because the position is not profitable. Hence, the Min Profit Duration is not active.
-    // tickPrices[0] = 73323; // ETHUSD = 1528.33381234
-    // marketSell(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, 10_300 * 1e30);
-
-    // skip(1 minutes);
-
-    // // T10: Time has passed for 2 minutes. ETH price increase to 1622.83582907 USD. Alice position is profitable.
-    // // Alice increase position by 89,699 USD to make the current Long ETH = 99,999 USD in size.
-    // // If the position is profitable, this position will be under the Min Profit Duration of 3 minutes.
-    // tickPrices[0] = 73923; // ETHUSD = 1622.83582907
-    // marketBuy(ALICE, 0, wethMarketIndex, 89699 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, 99_999 * 1e30);
-
-    // skip(1 minutes);
-
-    // // T11: Time has passed for 2 minutes. ETH price drop to 1528.33381234 USD. Alice position is NOT profitable.
-    // // Alice can interact with their position because Min Profit Duration is not active.
-    // // Alice market sell ETH for 100,010 USD to flip the position in to Short ETH 11 USD in size.
-    // // This trade should put this position for under 1 minutes of Min Profit Duration from the 11 increase size to 11 USD Short.
-    // tickPrices[0] = 73323; // ETHUSD = 1528.33381234
-    // marketSell(ALICE, 0, wethMarketIndex, 100_010 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, -11 * 1e30);
-
-    // skip(30 seconds);
-
-    // // T12: Time has passed for 30 seconds. ETH price drop to 1513.12739333 USD. Alice position is profitable. (The position is short now.)
-    // // Alice cannot interact with their position because Min Profit Duration is active.
-    // tickPrices[0] = 73223; // ETHUSD = 1513.12739333
-    // marketBuy(ALICE, 0, wethMarketIndex, 11 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, -11 * 1e30);
-
-    // skip(30 seconds);
-
-    // // T12: Time has passed for 1 minute. Alice position is profitable.
-    // // Alice can interact with their position because Min Profit Duration of 1 minute has expired.
-    // // Alice fully close the position.
-    // tickPrices[0] = 73223; // ETHUSD = 1513.12739333
-    // marketBuy(ALICE, 0, wethMarketIndex, 11 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    // _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
-    // _position = perpStorage.getPositionById(_positionId);
-    // assertEq(_position.positionSizeE30, 0 * 1e30);
+    // T9: Time has not passed. But ETH price drop to 1528.33381234 USD. The position is not profitable.
+    // ALICE market sell ETH to decrease position for 100 USD at price 1528.33381234 USD under Min Profit Duration.
+    // This should be possible because the position is not profitable. Hence, the Min Profit Duration is not active.
+    tickPrices[0] = 73323; // ETHUSD = 1528.33381234
+    orderReaderPrices = new uint64[](1);
+    orderReaderPrices[0] = 1528.33381234 * 1e8;
+    executableOrders = orderReader.getExecutableOrders(800, 0, orderReaderPrices, shouldInverts);
+    assertEq(executableOrders[0].account, ALICE);
+    executeLimitTradeOrder(
+      executableOrders[0].account,
+      executableOrders[0].subAccountId,
+      executableOrders[0].orderIndex,
+      payable(FEEVER),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp
+    );
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 0);
   }
 }

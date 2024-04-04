@@ -102,7 +102,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
   // Min profit duration in steps based on trade size
   StepMinProfitDuration[] public stepMinProfitDurations;
-  mapping(uint256 marketIndex => bool isStepMinProfitEnabled) isStepMinProfitEnabledByMarketIndex;
+  mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
 
   /**
    * Modifiers

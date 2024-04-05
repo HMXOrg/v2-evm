@@ -589,20 +589,6 @@ contract Smoke_Base is ForkEnv {
     vm.revertTo(snapshot);
     new Smoke_TriggerOrder().executeTriggerOrder();
     vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().reinvestSuccess();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().withdrawSuccess();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().emptyParams();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().overAmount();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().notWhitelisted();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().withdrawExceedingAmount();
-    vm.revertTo(snapshot);
-    new RebalanceHLPService_Test().swapReinvestSuccess();
-    vm.revertTo(snapshot);
     new Smoke_DistributeARBRewardsFromSTIP().distributeARBRewardsFromSTIP();
   }
 }

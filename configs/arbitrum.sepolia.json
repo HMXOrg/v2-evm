@@ -138,8 +138,8 @@
   },
   "rewardDistributor": "0x9fa1eaF7539F8bAfFfE1ec7Bedd9d0F8269aD330",
   "reader": {
-    "order": "0x8226e02638C4f0BD81ad1Ed91fe687B377825592",
-    "position": "0x7C8A104BDDB428EaC9e49DD649597730d451b55A",
+    "order": "0xa9301FcA0652cEc32Ae7e3563b4023431931ec67",
+    "position": "0xe05Ce9A99181C785b50bCBfB8FD644D7Ce234AEC",
     "liquidation": "0xEc55B65C20421500D80B190e263356aCFE91f63c"
   },
   "extension": {

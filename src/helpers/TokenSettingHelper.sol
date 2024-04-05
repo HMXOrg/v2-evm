@@ -57,8 +57,28 @@ contract TokenSettingHelper is ITokenSettingHelper, ReentrancyGuardUpgradeable, 
     return isCollateralToken;
   }
 
-  function getTokenSettingsBySubAccount(address _subAccount) external view returns (address[] memory) {
-    return tokenSettingsBySubAccount[_subAccount];
+  function getTokenSettingsBySubAccount(
+    address _subAccount
+  ) external view returns (address[] memory tokenSettingsWithTraderTokens) {
+    address[] memory tokenSettings = tokenSettingsBySubAccount[_subAccount];
+    address[] memory traderTokens = vaultStorage.getTraderTokens(_subAccount);
+    tokenSettingsWithTraderTokens = new address[](tokenSettings.length + traderTokens.length);
+
+    uint256 tokenSettingsLength = tokenSettings.length;
+    for (uint256 i; i < tokenSettingsLength; ) {
+      tokenSettingsWithTraderTokens[i] = tokenSettings[i];
+      unchecked {
+        ++i;
+      }
+    }
+    uint256 traderTokensLength = traderTokens.length;
+    for (uint256 i; i < traderTokensLength; ) {
+      tokenSettingsWithTraderTokens[tokenSettingsLength + i] = traderTokens[i];
+      unchecked {
+        ++i;
+      }
+    }
+    return tokenSettingsWithTraderTokens;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

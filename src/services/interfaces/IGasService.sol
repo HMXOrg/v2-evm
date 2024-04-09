@@ -27,4 +27,10 @@ interface IGasService {
     bool _isExecutionFeeSubsidization,
     uint256 _waivedExecutionFeeTradeSize
   ) external;
+
+  function adjustSubsidizedExecutionFeeValue(int256 deltaValueE30) external;
+
+  function subsidizedExecutionFeeValue() external view returns (uint256);
+
+  function waivedExecutionFeeTradeSize() external view returns (uint256);
 }

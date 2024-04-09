@@ -22,6 +22,9 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   ConfigStorage public configStorage;
   uint256 public executionFeeInUsd;
   address public executionFeeTreasury;
+  bool public isExecutionFeeSubsidization;
+  uint256 public subsidizedExecutionFeeValue; // The total value of gas fee that is subsidized by the platform in E30
+  uint256 public waivedExecutionFeeTradeSize; // The minimum trade size (E30) that we will waive exeuction fee
 
   function initialize(
     address _vaultStorage,
@@ -68,7 +71,8 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   function collectExecutionFeeFromCollateral(
     address _primaryAccount,
     uint8 _subAccountId,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    uint256 _absSizeDelta
   ) external onlyWhitelistedExecutor {
     VarsCollectExecutionFeeFromCollateral memory vars;
 
@@ -78,43 +82,58 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     vars.oracle = OracleMiddleware(configStorage.oracle());
 
     emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, executionFeeInUsd);
-    vars.executionFeeToBePaidInUsd = executionFeeInUsd;
-    for (uint256 _i; _i < vars.len; ) {
-      vars.assetId = configStorage.tokenAssetIds(vars.traderTokens[_i]);
-      vars.assetConfig = configStorage.getAssetConfig(vars.assetId);
-      vars.token = vars.assetConfig.tokenAddress;
-      vars.userBalance = vaultStorage.traderBalances(vars.subAccount, vars.token);
+    if (isExecutionFeeSubsidization && _absSizeDelta >= waivedExecutionFeeTradeSize) {
+      emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, executionFeeInUsd);
+      subsidizedExecutionFeeValue += executionFeeInUsd;
+    } else {
+      vars.executionFeeToBePaidInUsd = executionFeeInUsd;
+      for (uint256 _i; _i < vars.len; ) {
+        vars.assetId = configStorage.tokenAssetIds(vars.traderTokens[_i]);
+        vars.assetConfig = configStorage.getAssetConfig(vars.assetId);
+        vars.token = vars.assetConfig.tokenAddress;
+        vars.userBalance = vaultStorage.traderBalances(vars.subAccount, vars.token);
 
-      if (vars.userBalance > 0) {
-        (vars.tokenPrice, ) = vars.oracle.getLatestPrice(vars.assetConfig.assetId, false);
-        vars.tokenDecimal = vars.assetConfig.decimals;
+        if (vars.userBalance > 0) {
+          (vars.tokenPrice, ) = vars.oracle.getLatestPrice(vars.assetConfig.assetId, false);
+          vars.tokenDecimal = vars.assetConfig.decimals;
 
-        (vars.payAmount, vars.payValue) = _getPayAmount(
-          vars.userBalance,
-          vars.executionFeeToBePaidInUsd,
-          vars.tokenPrice,
-          vars.tokenDecimal
-        );
-        emit LogCollectExecutionFeeAmount(vars.subAccount, _marketIndex, vars.token, vars.payAmount);
+          (vars.payAmount, vars.payValue) = _getPayAmount(
+            vars.userBalance,
+            vars.executionFeeToBePaidInUsd,
+            vars.tokenPrice,
+            vars.tokenDecimal
+          );
+          emit LogCollectExecutionFeeAmount(vars.subAccount, _marketIndex, vars.token, vars.payAmount);
 
-        vaultStorage.decreaseTraderBalance(vars.subAccount, vars.token, vars.payAmount);
-        vaultStorage.increaseTraderBalance(executionFeeTreasury, vars.token, vars.payAmount);
+          vaultStorage.decreaseTraderBalance(vars.subAccount, vars.token, vars.payAmount);
+          vaultStorage.increaseTraderBalance(executionFeeTreasury, vars.token, vars.payAmount);
 
-        vars.executionFeeToBePaidInUsd -= vars.payValue;
+          vars.executionFeeToBePaidInUsd -= vars.payValue;
 
-        if (vars.executionFeeToBePaidInUsd == 0) {
-          break;
+          if (vars.executionFeeToBePaidInUsd == 0) {
+            break;
+          }
+        }
+
+        unchecked {
+          ++_i;
         }
       }
 
-      unchecked {
-        ++_i;
+      if (vars.executionFeeToBePaidInUsd > 0) {
+        vaultStorage.addTradingFeeDebt(vars.subAccount, vars.executionFeeToBePaidInUsd);
       }
     }
+  }
 
-    if (vars.executionFeeToBePaidInUsd > 0) {
-      vaultStorage.addTradingFeeDebt(vars.subAccount, vars.executionFeeToBePaidInUsd);
+  function adjustSubsidizedExecutionFeeValue(int256 deltaValueE30) external onlyWhitelistedExecutor {
+    uint256 previousValue = subsidizedExecutionFeeValue;
+    if (deltaValueE30 >= 0) {
+      subsidizedExecutionFeeValue += uint256(deltaValueE30);
+    } else {
+      subsidizedExecutionFeeValue -= uint256(-deltaValueE30);
     }
+    emit LogAdjustSubsidizedExecutionFeeValue(previousValue, subsidizedExecutionFeeValue, deltaValueE30);
   }
 
   function _getPayAmount(
@@ -140,5 +159,15 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     executionFeeTreasury = _executionFeeTreasury;
 
     emit LogSetParams(_executionFeeInUsd, _executionFeeTreasury);
+  }
+
+  function setExecutionFeeSubsidizationConfig(
+    bool _isExecutionFeeSubsidization,
+    uint256 _waivedExecutionFeeTradeSize
+  ) external onlyOwner {
+    isExecutionFeeSubsidization = _isExecutionFeeSubsidization;
+    waivedExecutionFeeTradeSize = _waivedExecutionFeeTradeSize;
+
+    emit LogSetExecutionFeeSubsidizationConfig(isExecutionFeeSubsidization, waivedExecutionFeeTradeSize);
   }
 }

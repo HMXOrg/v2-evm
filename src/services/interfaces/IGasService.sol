@@ -16,6 +16,11 @@ interface IGasService {
   function collectExecutionFeeFromCollateral(
     address _primaryAccount,
     uint8 _subAccountId,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    uint256 _absSizeDelta
   ) external;
+
+  event LogSetExecutionFeeSubsidizationConfig(bool isGasSubsidization, uint256 waivedExecutionFeeTradeSize);
+  event LogSubsidizeExecutionFee(address subAccount, uint256 marketIndex, uint256 executionFeeUsd);
+  event LogAdjustSubsidizedExecutionFeeValue(uint256 previousValue, uint256 newValue, int256 delta);
 }

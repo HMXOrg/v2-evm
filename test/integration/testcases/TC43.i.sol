@@ -798,4 +798,91 @@ contract TC43 is BaseIntTest_WithActions {
     // execution fee is deducted even if the order failed
     assertEq(vaultStorage.traderBalances(BOB, address(dai)), 1204.9 * 1e18);
   }
+
+  function testCorrectness_TC43_intentHandler_subsidizeExecutionFee() external {
+    gasService.setExecutionFeeSubsidizationConfig(true, 0);
+    uint256 privateKey = uint256(keccak256(bytes("1")));
+    BOB = vm.addr(privateKey);
+
+    // T0: Initialized state
+    // ALICE as liquidity provider
+    // BOB as trader
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+
+    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
+    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
+    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+
+    // T1: Add liquidity in pool USDC 100_000 , WBTC 100
+    vm.deal(ALICE, executionOrderFee);
+    wbtc.mint(ALICE, 100 * 1e8);
+
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      100 * 1e8,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
+
+    // T2: Create market order
+    {
+      assertVaultTokenBalance(address(usdc), 0, "TC43: before deposit collateral");
+    }
+    dai.mint(BOB, 1205 * 1e18);
+    depositCollateral(BOB, 0, ERC20(address(dai)), 1205 * 1e18);
+
+    // Long ETH
+    vm.deal(BOB, 1 ether);
+
+    {
+      // before create order, must be empty
+      assertEq(limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)), 0);
+      assertEq(BOB.balance, 1 ether);
+    }
+
+    // Bob will open two positions on ETH and BTC markets
+    IIntentHandler.ExecuteIntentInputs memory executeIntentInputs;
+    executeIntentInputs.accountAndSubAccountIds = new bytes32[](1);
+    executeIntentInputs.cmds = new bytes32[](1);
+
+    IIntentHandler.TradeOrder memory tradeOrder1 = IIntentHandler.TradeOrder({
+      marketIndex: wethMarketIndex, // marketIndex
+      sizeDelta: 100_000 * 1e30, // sizeDelta
+      triggerPrice: 0, // triggerPrice
+      acceptablePrice: 4000 * 1e30, // acceptablePrice
+      triggerAboveThreshold: true, // triggerAboveThreshold
+      reduceOnly: false, // reduceOnly
+      tpToken: address(usdc), // tpToken
+      createdTimestamp: block.timestamp, // createdTimestamp
+      expiryTimestamp: block.timestamp + 5 minutes, // expiryTimestamp
+      account: BOB,
+      subAccountId: 0
+    });
+    (bytes32 accountAndSubAccountId, bytes32 cmd) = intentBuilder.buildTradeOrder(tradeOrder1);
+    executeIntentInputs.accountAndSubAccountIds[0] = accountAndSubAccountId;
+    executeIntentInputs.cmds[0] = cmd;
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, intentHandler.getDigest(tradeOrder1));
+    executeIntentInputs.signatures = new bytes[](1);
+    executeIntentInputs.signatures[0] = abi.encodePacked(r, s, v);
+
+    executeIntentInputs.priceData = pyth.buildPriceUpdateData(tickPrices);
+    executeIntentInputs.publishTimeData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    executeIntentInputs.minPublishTime = block.timestamp;
+    executeIntentInputs.encodedVaas = keccak256("someEncodedVaas");
+
+    intentHandler.execute(executeIntentInputs);
+
+    // The order will execute successfully.
+    assertEq(perpStorage.getNumberOfSubAccountPosition(BOB), 1);
+
+    // Initial collateral = 1205 DAI
+    // 1st trade's execution fee = 1205 - 0.1 = 1204.9 DAI
+    // execution fee is deducted even if the order failed
+    assertEq(vaultStorage.traderBalances(BOB, address(dai)), 1204.9 * 1e18);
+  }
 }

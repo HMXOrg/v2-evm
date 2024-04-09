@@ -12,6 +12,9 @@ interface IGasService {
     address token,
     uint256 executionFeeAmount
   );
+  event LogSetExecutionFeeSubsidizationConfig(bool isGasSubsidization, uint256 waivedExecutionFeeTradeSize);
+  event LogSubsidizeExecutionFee(address subAccount, uint256 marketIndex, uint256 executionFeeUsd);
+  event LogAdjustSubsidizedExecutionFeeValue(uint256 previousValue, uint256 newValue, int256 delta);
 
   function collectExecutionFeeFromCollateral(
     address _primaryAccount,
@@ -20,7 +23,8 @@ interface IGasService {
     uint256 _absSizeDelta
   ) external;
 
-  event LogSetExecutionFeeSubsidizationConfig(bool isGasSubsidization, uint256 waivedExecutionFeeTradeSize);
-  event LogSubsidizeExecutionFee(address subAccount, uint256 marketIndex, uint256 executionFeeUsd);
-  event LogAdjustSubsidizedExecutionFeeValue(uint256 previousValue, uint256 newValue, int256 delta);
+  function setExecutionFeeSubsidizationConfig(
+    bool _isExecutionFeeSubsidization,
+    uint256 _waivedExecutionFeeTradeSize
+  ) external;
 }

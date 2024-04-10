@@ -12,9 +12,9 @@ async function main(chainId: number) {
   const marketConfig = loadMarketConfig(chainId);
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
-  const tradeOrderHelper = TradeOrderHelper__factory.connect(config.helpers.tradeOrder, deployer);
+  const limitTradeHelper = TradeOrderHelper__factory.connect(config.helpers.tradeOrder!, deployer);
 
-  console.log(`[configs/LimitTradeHelper] Set Limit By Market Index...`);
+  console.log(`[configs/TradeOrderHelper] Set Limit By Market Index...`);
   console.table(
     inputs.map((i) => {
       return {
@@ -26,8 +26,8 @@ async function main(chainId: number) {
     })
   );
   await ownerWrapper.authExec(
-    tradeOrderHelper.address,
-    tradeOrderHelper.interface.encodeFunctionData("setLimit", [
+    limitTradeHelper.address,
+    limitTradeHelper.interface.encodeFunctionData("setLimit", [
       inputs.map((input) => input.marketIndex),
       inputs.map((input) => ethers.utils.parseUnits(input.positionSizeLimit.toString(), 30)),
       inputs.map((input) => ethers.utils.parseUnits(input.tradeSizeLimit.toString(), 30)),

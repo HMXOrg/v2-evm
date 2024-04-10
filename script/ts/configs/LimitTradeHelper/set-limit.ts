@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { loadConfig, loadMarketConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 import { LimitTradeHelper__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 
@@ -9,16 +9,16 @@ async function main(chainId: number) {
   const inputs = [
     {
       marketIndex: 51,
-      tradeSizeLimit: ethers.utils.parseUnits("75000", 30),
-      positionSizeLimit: ethers.utils.parseUnits("75000", 30),
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
     },
   ];
 
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
-  const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
+  const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade!, deployer);
 
   console.log(`[configs/LimitTradeHelper] Set Limit By Market Index...`);
   console.table(
@@ -26,19 +26,19 @@ async function main(chainId: number) {
       return {
         marketIndex: i.marketIndex,
         market: marketConfig.markets[i.marketIndex].name,
-        positionSizeLimit: ethers.utils.formatUnits(i.positionSizeLimit, 30),
-        tradeSizeLimit: ethers.utils.formatUnits(i.tradeSizeLimit, 30),
+        positionSizeLimit: i.positionSizeLimit,
+        tradeSizeLimit: i.tradeSizeLimit,
       };
     })
   );
-
-  await (
-    await limitTradeHelper.setLimit(
+  await ownerWrapper.authExec(
+    limitTradeHelper.address,
+    limitTradeHelper.interface.encodeFunctionData("setLimit", [
       inputs.map((input) => input.marketIndex),
-      inputs.map((input) => input.positionSizeLimit),
-      inputs.map((input) => input.tradeSizeLimit)
-    )
-  ).wait();
+      inputs.map((input) => ethers.utils.parseUnits(input.positionSizeLimit.toString(), 30)),
+      inputs.map((input) => ethers.utils.parseUnits(input.tradeSizeLimit.toString(), 30)),
+    ])
+  );
 }
 
 const program = new Command();

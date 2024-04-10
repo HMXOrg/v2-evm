@@ -2,25 +2,19 @@ import { Command } from "commander";
 import { loadConfig, loadMarketConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
-import { LimitTradeHelper__factory } from "../../../../typechain";
+import { TradeOrderHelper__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
-  const inputs = [
-    {
-      marketIndex: 51,
-      tradeSizeLimit: 75000,
-      positionSizeLimit: 75000,
-    },
-  ];
+  const inputs = [{ marketIndex: 51, positionSizeLimit: 75000, tradeSizeLimit: 75000 }];
 
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
-  const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade!, deployer);
+  const limitTradeHelper = TradeOrderHelper__factory.connect(config.helpers.tradeOrder!, deployer);
 
-  console.log(`[configs/LimitTradeHelper] Set Limit By Market Index...`);
+  console.log(`[configs/TradeOrderHelper] Set Limit By Market Index...`);
   console.table(
     inputs.map((i) => {
       return {

@@ -14,7 +14,7 @@ interface DataRow {
   amount: string;
 }
 
-async function main(chainId: number, inputPath: string, nonce: number) {
+async function main(chainId: number, inputPath: string) {
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, TREASURY_ADDRESS, deployer);
   const bulkSendErc20 = BulkSendErc20__factory.connect("0x80825A51AFa8bFafe6B0640f605C169c5f58d670", deployer);
@@ -46,8 +46,7 @@ async function main(chainId: number, inputPath: string, nonce: number) {
   const tx = await safeWrapper.proposeTransaction(
     bulkSendErc20.address,
     0,
-    bulkSendErc20.interface.encodeFunctionData("leggo", [tokenAddresses, recepients, tokenAmounts]),
-    { nonce: nonce++ }
+    bulkSendErc20.interface.encodeFunctionData("leggo", [tokenAddresses, recepients, tokenAmounts])
   );
   console.log(`[cmds/BulkSendErc20] Proposed tx: ${tx}`);
 }
@@ -56,11 +55,10 @@ const program = new Command();
 
 program.requiredOption("--chain-id <number>", "chain id", parseInt);
 program.requiredOption("--input-path <string>", "input path");
-program.requiredOption("--nonce <number>", "nonce", parseInt);
 
 const opts = program.parse(process.argv).opts();
 
-main(opts.chainId, opts.inputPath, opts.nonce)
+main(opts.chainId, opts.inputPath)
   .then(() => {
     process.exit(0);
   })

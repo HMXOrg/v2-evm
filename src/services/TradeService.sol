@@ -362,6 +362,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // if adjust position, calculate the new average price
     if (!_vars.isNewPosition) {
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
+        _vars.subAccount,
         HMXLib.abs(_vars.position.positionSizeE30),
         _vars.isLong,
         _vars.closePriceE30,
@@ -374,7 +375,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       // in order to avoid bypassing the maximum profit cap.
       // Additionally, if the minimum profit duration is active, increasing the position is not allowed.
       // This is checked by comparing _delta to 0, as it is virtually impossible for _delta to be 0 if the position is active without a minimum profit duration.
-      uint256 minProfitDuration = _vars.configStorage.minProfitDurations(_marketIndex);
+      uint256 minProfitDuration = _vars.configStorage.getStepMinProfitDuration(
+        _marketIndex,
+        _vars.position.lastIncreaseSize
+      );
       if (
         _isProfit &&
         (_delta >= _vars.position.reserveValueE30 ||
@@ -401,6 +405,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
     _vars.position.lastIncreaseTimestamp = block.timestamp;
+    _vars.position.lastIncreaseSize = _vars.absSizeDelta;
 
     // if the position size is zero after the update, revert the transaction with an error
     if (_vars.position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
@@ -835,6 +840,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
      */
     {
       (isProfit, delta) = calculator.getDelta(
+        _vars.accountInfo.subAccount,
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.closePrice,
@@ -849,7 +855,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _isMaxProfit = true;
       }
 
-      uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(_marketIndex);
+      uint256 minProfitDuration = ConfigStorage(configStorage).getStepMinProfitDuration(
+        _marketIndex,
+        _vars.position.lastIncreaseSize
+      );
       if (isProfit && block.timestamp < (_vars.position.lastIncreaseTimestamp + minProfitDuration)) {
         revert ITradeService_NotAllowDecrease();
       }
@@ -904,6 +913,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.perpStorage.savePosition(_vars.accountInfo.subAccount, _vars.positionId, _vars.position);
       } else {
         _vars.position.realizedPnl += _vars.realizedPnl;
+        _vars.position.lastIncreaseSize = 0;
         _vars.perpStorage.removePositionFromSubAccount(_vars.accountInfo.subAccount, _vars.positionId);
       }
 

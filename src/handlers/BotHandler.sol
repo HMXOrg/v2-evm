@@ -171,6 +171,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     );
 
     (bool _isProfit, uint256 _delta) = _calculator.getDelta(
+      HMXLib.getSubAccount(_position.primaryAccount, _position.subAccountId),
       HMXLib.abs(_position.positionSizeE30),
       _position.positionSizeE30 > 0,
       _adaptivePriceE30,

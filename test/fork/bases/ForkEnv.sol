@@ -87,7 +87,7 @@ import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { UncheckedEcoPythCalldataBuilder } from "@hmx/oracles/UncheckedEcoPythCalldataBuilder.sol";
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
 import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 abstract contract ForkEnv is Test {

@@ -51,6 +51,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
   event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
   event LogSetYbTokenOf(address token, address ybToken);
+  event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
 
   /**
    * Constants
@@ -102,6 +103,9 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
   // ybToken mapping
   mapping(address token => address ybToken) public ybTokenOf;
+  // Min profit duration in steps based on trade size
+  StepMinProfitDuration[] public stepMinProfitDurations;
+  mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
 
   /**
    * Modifiers
@@ -643,7 +647,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     uint256 MAX_DURATION = 30 minutes;
 
-    for (uint256 i = 0; i < _marketIndexs.length; ) {
+    for (uint256 i; i < _marketIndexs.length; ) {
       if (_minProfitDurations[i] > MAX_DURATION) revert IConfigStorage_MaxDurationForMinProfit();
 
       minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
@@ -666,6 +670,78 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     for (uint256 i = 0; i < _len; ) {
       ybTokenOf[_tokens[i]] = _ybTokens[i];
       emit LogSetYbTokenOf(_tokens[i], _ybTokens[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
+    uint256 length = _stepMinProfitDurations.length;
+    for (uint256 i; i < length; ) {
+      if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
+      stepMinProfitDurations.push(_stepMinProfitDurations[i]);
+      emit LogSetStepMinProfitDuration(stepMinProfitDurations.length - 1, _stepMinProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setStepMinProfitDuration(
+    uint256[] memory indexes,
+    StepMinProfitDuration[] memory _stepMinProfitDurations
+  ) external onlyOwner {
+    if (indexes.length != _stepMinProfitDurations.length) revert IConfigStorage_BadLen();
+    uint256 length = _stepMinProfitDurations.length;
+    for (uint256 i; i < length; ) {
+      if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
+      stepMinProfitDurations[indexes[i]] = _stepMinProfitDurations[i];
+      emit LogSetStepMinProfitDuration(indexes[i], _stepMinProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function removeLastStepMinProfitDuration() external onlyOwner {
+    emit LogSetStepMinProfitDuration(
+      stepMinProfitDurations.length - 1,
+      IConfigStorage.StepMinProfitDuration({ fromSize: 0, toSize: 0, minProfitDuration: 0 })
+    );
+    stepMinProfitDurations.pop();
+  }
+
+  function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256) {
+    uint256 length = stepMinProfitDurations.length;
+    if (length == 0 || !isStepMinProfitEnabledByMarketIndex[marketIndex]) {
+      return minProfitDurations[marketIndex];
+    }
+    for (uint256 i; i < length; ) {
+      if (sizeDelta >= stepMinProfitDurations[i].fromSize && sizeDelta < stepMinProfitDurations[i].toSize) {
+        // In-range
+        return stepMinProfitDurations[i].minProfitDuration;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    return minProfitDurations[marketIndex];
+  }
+
+  function getStepMinProfitDurations() external view returns (StepMinProfitDuration[] memory) {
+    return stepMinProfitDurations;
+  }
+
+  function setIsStepMinProfitEnabledByMarketIndex(
+    uint256[] memory marketIndexes,
+    bool[] memory isEnableds
+  ) external onlyOwner {
+    if (marketIndexes.length != isEnableds.length) revert IConfigStorage_BadLen();
+    uint256 length = marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      isStepMinProfitEnabledByMarketIndex[marketIndexes[i]] = isEnableds[i];
+
       unchecked {
         ++i;
       }

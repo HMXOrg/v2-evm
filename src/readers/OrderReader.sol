@@ -12,6 +12,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 // libs
 import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract OrderReader {
   IConfigStorage immutable configStorage;
@@ -86,11 +87,14 @@ contract OrderReader {
     ILimitTradeHandler.LimitOrder memory _order;
     address _subAccount;
     bytes32 _positionId;
-    uint256 _minProfitDuration;
     IPerpStorage.Position memory _position;
+    IPerpStorage.Market memory _market;
     len = vars.orders.length;
     for (uint256 i; i < len; i++) {
       _order = vars.orders[i];
+      _subAccount = _getSubAccount(_order.account, _order.subAccountId);
+      _positionId = _getPositionId(_subAccount, _order.marketIndex);
+      _position = perpStorage.getPositionById(_positionId);
       {
         if (vars.isInValidMarket[_order.marketIndex]) {
           continue;
@@ -104,17 +108,25 @@ contract OrderReader {
         // check Tp/Sl order
         bool isTpSlOrder = _isTpSlOrder(_order);
         if (isTpSlOrder) {
-          _subAccount = _getSubAccount(_order.account, _order.subAccountId);
-          _positionId = _getPositionId(_subAccount, _order.marketIndex);
-          _position = perpStorage.getPositionById(_positionId);
-          _minProfitDuration = configStorage.minProfitDurations(_order.marketIndex);
           // check position
           if (_isPositionClose(_position)) {
             continue;
           }
         }
+        _market = perpStorage.getMarketByIndex(_order.marketIndex);
+        if (!isTpSlOrder && !_isUnderMaxOI(_market, vars.marketConfigs[_order.marketIndex], _position, _order)) {
+          continue;
+        }
 
-        if (!isTpSlOrder && !_isUnderMaxOI(vars.marketConfigs[_order.marketIndex], _position, _order)) {
+        if (
+          _isUnderMinProfitDuration(
+            _position,
+            _market,
+            vars.marketConfigs[_order.marketIndex],
+            !isTpSlOrder ? _order.sizeDelta : -_position.positionSizeE30,
+            vars.prices[_order.marketIndex]
+          )
+        ) {
           continue;
         }
       }
@@ -142,19 +154,44 @@ contract OrderReader {
 
   function _isUnderMinProfitDuration(
     IPerpStorage.Position memory _position,
-    uint256 _minProfitDuration,
-    uint256 _timestamp
-  ) internal pure returns (bool) {
-    return _timestamp < _position.lastIncreaseTimestamp + _minProfitDuration;
+    IPerpStorage.Market memory _market,
+    IConfigStorage.MarketConfig memory _marketConfig,
+    int256 _sizeDelta,
+    uint256 _oraclePrice
+  ) internal view returns (bool) {
+    uint256 _minProfitDuration = configStorage.getStepMinProfitDuration(
+      _position.marketIndex,
+      _position.lastIncreaseSize
+    );
+    uint256 _markPrice = _calculateAdaptivePrice(
+      _market,
+      _marketConfig.fundingRate.maxSkewScaleUSD,
+      _oraclePrice,
+      _position.positionSizeE30,
+      _sizeDelta
+    );
+
+    (bool _isProfit, ) = _getDelta(
+      HMXLib.abs(_position.positionSizeE30),
+      _position.positionSizeE30 > 0,
+      _markPrice,
+      _position.avgEntryPriceE30
+    );
+
+    if (!_isProfit) {
+      return false;
+    } else {
+      return block.timestamp < _position.lastIncreaseTimestamp + _minProfitDuration;
+    }
   }
 
   function _isUnderMaxOI(
+    IPerpStorage.Market memory _market,
     IConfigStorage.MarketConfig memory _marketConfig,
     IPerpStorage.Position memory _position,
     ILimitTradeHandler.LimitOrder memory _order
-  ) internal view returns (bool) {
+  ) internal pure returns (bool) {
     bool _isLong = _position.positionSizeE30 > 0;
-    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_order.marketIndex);
     if (_isLong) {
       return int256(_marketConfig.maxLongPositionSize) > int256(_market.longPositionSize) + _order.sizeDelta;
     } else {
@@ -181,5 +218,87 @@ contract OrderReader {
 
     if (_priceE30 == 0) return 0;
     return 10 ** 60 / _priceE30;
+  }
+
+  function _calculateAdaptivePrice(
+    IPerpStorage.Market memory _market,
+    uint256 _maxSkewScale,
+    uint256 _oraclePrice,
+    int256 _positionSize,
+    int256 _sizeDelta
+  ) private pure returns (uint256 _nextClosePrice) {
+    if (_maxSkewScale == 0) return _oraclePrice;
+
+    // new position size    = position size + size delta
+    // new market skew      = long position size - short position size + size delta
+    // premium before       = new market skew / max scale skew
+    // premium after        = (new market skew - new position size) / max scale skew
+    // premium              = (premium after + premium after) / 2
+    // next close price     = oracle price * (1 + premium)
+
+    // Example:
+    // Given
+    //    - max scale       = 1000000 USD
+    //    - market skew     = 2000 USD
+    //    - price           = 100 USD
+    //    - position size   = 1000 USD
+    //    - decrease size   = 300 USD
+    //    - remaining size  = 500 USD
+    //    - entry price     = 100.05 USD
+    //    - close price     = 100.15 USD
+    //    - pnl             = 1000 * (100.15 - 100.05) / 100.05 = 0.999500249875062468765617191404 USD
+    //    - realized pnl    = 300 * (100.15 - 100.05) / 100.05 = 0.299850074962518740629685157421 USD
+    //    - unrealized pnl  = 0.999500249875062468765617191404 - 0.299850074962518740629685157421
+    //                      = 0.699650174912543728135932033983
+    // Then
+    //    - premium before      = 2000 - 300 = 1700 / 1000000 = 0.0017
+    //    - premium after       = 2000 - 1000 = 1000 / 1000000 = 0.001
+    //    - new premium         = 0.0017 + 0.001 = 0.0027 / 2 = 0.00135
+    //    - next close price    = 100 * (1 + 0.00135) = 100.135 USD
+
+    int256 _newPositionSize = _positionSize + _sizeDelta;
+
+    int256 _newMarketSkew = int256(_market.longPositionSize) - int256(_market.shortPositionSize) + _sizeDelta;
+
+    int256 _premiumBefore = (_newMarketSkew * 1e30) / int256(_maxSkewScale);
+    int256 _premiumAfter = ((_newMarketSkew - _newPositionSize) * 1e30) / int256(_maxSkewScale);
+
+    int256 _premium = (_premiumBefore + _premiumAfter) / 2;
+
+    if (_premium > 0) {
+      return (_oraclePrice * (1e30 + uint256(_premium))) / 1e30;
+    } else {
+      return (_oraclePrice * (1e30 - uint256(-_premium))) / 1e30;
+    }
+  }
+
+  function _getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) internal pure returns (bool, uint256) {
+    // Check for invalid input: averagePrice cannot be zero.
+    if (_averagePrice == 0) return (false, 0);
+
+    // Calculate the difference between the average price and the fixed price.
+    uint256 _priceDelta;
+    unchecked {
+      _priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
+    }
+
+    // Calculate the delta, adjusted for the size of the order.
+    uint256 _delta = (_size * _priceDelta) / _averagePrice;
+
+    // Determine if the position is profitable or not based on the averagePrice and the mark price.
+    bool _isProfit;
+    if (_isLong) {
+      _isProfit = _markPrice > _averagePrice;
+    } else {
+      _isProfit = _markPrice < _averagePrice;
+    }
+
+    // Return the values of isProfit and delta.
+    return (_isProfit, _delta);
   }
 }

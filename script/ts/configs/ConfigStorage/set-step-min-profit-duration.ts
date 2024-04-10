@@ -12,26 +12,20 @@ async function main(chainId: number) {
     {
       index: 0,
       fromSize: 0,
-      toSize: ethers.utils.parseUnits("10000", 30),
-      minProfitDuration: 60,
+      toSize: ethers.utils.parseUnits("100", 30),
+      minProfitDuration: 120,
     },
     {
       index: 1,
-      fromSize: ethers.utils.parseUnits("10000", 30),
-      toSize: ethers.utils.parseUnits("100000", 30),
-      minProfitDuration: 180,
-    },
-    {
-      index: 2,
-      fromSize: ethers.utils.parseUnits("100000", 30),
-      toSize: ethers.utils.parseUnits("200000", 30),
+      fromSize: ethers.utils.parseUnits("100", 30),
+      toSize: ethers.utils.parseUnits("200", 30),
       minProfitDuration: 300,
     },
     {
-      index: 3,
-      fromSize: ethers.utils.parseUnits("200000", 30),
+      index: 2,
+      fromSize: ethers.utils.parseUnits("200", 30),
       toSize: ethers.constants.MaxUint256,
-      minProfitDuration: 600,
+      minProfitDuration: 420,
     },
   ];
 

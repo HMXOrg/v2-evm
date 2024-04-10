@@ -75,8 +75,8 @@
   },
   "rewardDistributor": "0xc7dF21Ce6822bE05B689756BdccEda40014f1C6C",
   "reader": {
-    "order": "0x08a5f5D8696AAfa48192aaA86ec3C2e1952A48f0",
-    "position": "0xd111F40B015A6B0cC7F376af20894656c33C0Cd7",
+    "order": "0xf64DCCfedB413014B2B53b5330DEd402c3CB32A2",
+    "position": "0x7c5A4cD834bdB06a979F4A207cE0C83f77dF27e9",
     "liquidation": "0x0b3E70B2dAe86C7ceAE8Bb4a1F2388eb48887f3E",
     "collateral": "0x2590edA8E9E6c17217BD9059De659Ec00Dd1394b"
   },

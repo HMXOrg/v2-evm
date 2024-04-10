@@ -22,9 +22,8 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   ConfigStorage public configStorage;
   uint256 public executionFeeInUsd;
   address public executionFeeTreasury;
-  bool public isExecutionFeeSubsidization;
   uint256 public subsidizedExecutionFeeValue; // The total value of gas fee that is subsidized by the platform in E30
-  uint256 public waivedExecutionFeeTradeSize; // The minimum trade size (E30) that we will waive exeuction fee
+  uint256 public waviedExecutionFeeMinTradeSize; // The minimum trade size (E30) that we will waive exeuction fee
 
   function initialize(
     address _vaultStorage,
@@ -82,7 +81,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     vars.oracle = OracleMiddleware(configStorage.oracle());
 
     emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, executionFeeInUsd);
-    if (isExecutionFeeSubsidization && _absSizeDelta >= waivedExecutionFeeTradeSize) {
+    if (_absSizeDelta >= waviedExecutionFeeMinTradeSize) {
       emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, executionFeeInUsd);
       subsidizedExecutionFeeValue += executionFeeInUsd;
     } else {
@@ -161,13 +160,9 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     emit LogSetParams(_executionFeeInUsd, _executionFeeTreasury);
   }
 
-  function setExecutionFeeSubsidizationConfig(
-    bool _isExecutionFeeSubsidization,
-    uint256 _waivedExecutionFeeTradeSize
-  ) external onlyOwner {
-    isExecutionFeeSubsidization = _isExecutionFeeSubsidization;
-    waivedExecutionFeeTradeSize = _waivedExecutionFeeTradeSize;
+  function setWaviedExecutionFeeMinTradeSize(uint256 _waviedExecutionFeeMinTradeSize) external onlyOwner {
+    waviedExecutionFeeMinTradeSize = _waviedExecutionFeeMinTradeSize;
 
-    emit LogSetExecutionFeeSubsidizationConfig(isExecutionFeeSubsidization, waivedExecutionFeeTradeSize);
+    emit LogSetWaviedExecutionFeeMinTradeSize(waviedExecutionFeeMinTradeSize);
   }
 }

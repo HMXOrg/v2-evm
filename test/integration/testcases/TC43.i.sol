@@ -800,7 +800,7 @@ contract TC43 is BaseIntTest_WithActions {
   }
 
   function testCorrectness_TC43_intentHandler_subsidizeExecutionFee() external {
-    gasService.setExecutionFeeSubsidizationConfig(true, 0);
+    gasService.setWaviedExecutionFeeMinTradeSize(0);
     uint256 privateKey = uint256(keccak256(bytes("1")));
     BOB = vm.addr(privateKey);
 
@@ -892,7 +892,7 @@ contract TC43 is BaseIntTest_WithActions {
   }
 
   function testCorrectness_TC43_intentHandler_subsidizeExecutionFee_belowWaiveSize() external {
-    gasService.setExecutionFeeSubsidizationConfig(true, 200_000 * 1e30);
+    gasService.setWaviedExecutionFeeMinTradeSize(200_000 * 1e30);
     uint256 privateKey = uint256(keccak256(bytes("1")));
     BOB = vm.addr(privateKey);
 

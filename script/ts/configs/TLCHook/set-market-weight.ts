@@ -19,7 +19,11 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 43, // PENDLEUSD
+      marketIndex: 44, // WUSD
+      weightBPS: 5 * BPS,
+    },
+    {
+      marketIndex: 45, // ENAUSD
       weightBPS: 5 * BPS,
     },
   ];

@@ -405,6 +405,26 @@
       "assetSymbol": "Crypto.PENDLE",
       "quotedAssetSymbol": "Crypto.PENDLE",
       "sortIndex": 2004
+    },
+    {
+      "index": 44,
+      "name": "WUSD",
+      "assetId": "0x5700000000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "w-usd",
+      "assetSymbol": "Crypto.W",
+      "quotedAssetSymbol": "Crypto.W",
+      "sortIndex": 2004
+    },
+    {
+      "index": 45,
+      "name": "ENAUSD",
+      "assetId": "0x454e410000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "ena-usd",
+      "assetSymbol": "Crypto.ENA",
+      "quotedAssetSymbol": "Crypto.ENA",
+      "sortIndex": 2004
     }
   ],
   "assets": {

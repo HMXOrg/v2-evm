@@ -50,7 +50,8 @@ contract Calculator_FundingRate is Calculator_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreaseSize: 0
       })
     );
 
@@ -67,7 +68,8 @@ contract Calculator_FundingRate is Calculator_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreaseSize: 0
       })
     );
   }

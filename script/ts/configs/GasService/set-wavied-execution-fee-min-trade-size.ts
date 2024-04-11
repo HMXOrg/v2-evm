@@ -9,17 +9,13 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const isExecutionFeeSubsidization = true;
-  const waivedExecutionFeeTradeSize = 0;
+  const waviedExecutionFeeMinTradeSize = 0;
 
   const gasService = GasService__factory.connect(config.services.gas, deployer);
   console.log(`[configs/GasService] Set Intent Executor`);
   await ownerWrapper.authExec(
     gasService.address,
-    gasService.interface.encodeFunctionData("setExecutionFeeSubsidizationConfig", [
-      isExecutionFeeSubsidization,
-      waivedExecutionFeeTradeSize,
-    ])
+    gasService.interface.encodeFunctionData("setWaviedExecutionFeeMinTradeSize", [waviedExecutionFeeMinTradeSize])
   );
   console.log("[configs/GasService] Finished");
 }

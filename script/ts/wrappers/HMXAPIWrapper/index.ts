@@ -1,17 +1,28 @@
 import axios from "axios";
+import { Agent } from "node:https";
 
 export default class {
   chainId: number;
   baseUrl: string;
+  chainName: string;
 
   constructor(chainId: number) {
     this.chainId = chainId;
-    this.baseUrl =
-      this.chainId === 42161 ? `${process.env.HMX_API_PROD_ENDPOINT}` : `${process.env.HMX_API_DEV_ENDPOINT}`;
+    if (this.chainId === 42161 || this.chainId === 81457) {
+      this.baseUrl = `${process.env.HMX_API_PROD_ENDPOINT}`;
+    } else {
+      this.baseUrl = `${process.env.HMX_API_DEV_ENDPOINT}`;
+    }
+
+    if (this.chainId === 42161 || this.chainId === 421614) {
+      this.chainName = "arbitrum";
+    } else {
+      this.chainName = "blast";
+    }
   }
 
   async refreshAssetIds() {
-    const endpoint = `${this.baseUrl}/blast/v1/internal/pyth/asset-ids.reload`;
+    const endpoint = `${this.baseUrl}/${this.chainName}/v1/internal/pyth/asset-ids.reload`;
     try {
       await axios.post(endpoint);
     } catch (e: any) {
@@ -23,14 +34,14 @@ export default class {
   }
 
   async feedOrderbookOracle() {
-    const endpoint = `${this.baseUrl}/blast/v1/internal/adaptive-fee.update`;
+    const endpoint = `${this.baseUrl}/${this.chainName}/v1/internal/adaptive-fee.updateContract`;
     await axios.post(endpoint, {
       force: true,
     });
   }
 
   async refreshMarketIds() {
-    const endpoint = `${this.baseUrl}/blast/v1/internal/market-ids.reload`;
+    const endpoint = `${this.baseUrl}/${this.chainName}/v1/internal/market-ids.reload`;
     try {
       await axios.post(endpoint);
     } catch (e: any) {
@@ -39,5 +50,12 @@ export default class {
         console.log("lastest market id cache is equal to the contract");
       }
     }
+  }
+
+  async syncAdaptiveFeeDatabase() {
+    const endpoint = `${this.baseUrl}/${this.chainName}/v1/internal/adaptive-fee.updateDB`;
+    await axios.post(endpoint, {
+      force: true,
+    });
   }
 }

@@ -395,6 +395,36 @@
       "assetSymbol": "Crypto.PYTH",
       "quotedAssetSymbol": "Crypto.PYTH",
       "sortIndex": 2004
+    },
+    {
+      "index": 43,
+      "name": "PENDLEUSD",
+      "assetId": "0x50454e444c450000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "pendle-usd",
+      "assetSymbol": "Crypto.PENDLE",
+      "quotedAssetSymbol": "Crypto.PENDLE",
+      "sortIndex": 2004
+    },
+    {
+      "index": 44,
+      "name": "WUSD",
+      "assetId": "0x5700000000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "w-usd",
+      "assetSymbol": "Crypto.W",
+      "quotedAssetSymbol": "Crypto.W",
+      "sortIndex": 2004
+    },
+    {
+      "index": 45,
+      "name": "ENAUSD",
+      "assetId": "0x454e410000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "ena-usd",
+      "assetSymbol": "Crypto.ENA",
+      "quotedAssetSymbol": "Crypto.ENA",
+      "sortIndex": 2004
     }
   ],
   "assets": {
@@ -451,6 +481,7 @@
     "ybUSDB": "0x7962555344420000000000000000000000000000000000000000000000000000",
     "USDB": "0x5553444200000000000000000000000000000000000000000000000000000000",
     "STRK": "0x5354524b00000000000000000000000000000000000000000000000000000000",
-    "PYTH": "0x5059544800000000000000000000000000000000000000000000000000000000"
+    "PYTH": "0x5059544800000000000000000000000000000000000000000000000000000000",
+    "PENDLE": "0x50454e444c450000000000000000000000000000000000000000000000000000"
   }
 }

@@ -7,13 +7,13 @@ import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("ybETH2"),
-    pythPriceId: ethers.utils.formatBytes32String("ybETH2"),
+    assetId: ethers.utils.formatBytes32String("W"),
+    pythPriceId: ethers.utils.formatBytes32String("W"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("ybUSDB2"),
-    pythPriceId: ethers.utils.formatBytes32String("ybUSDB2"),
+    assetId: ethers.utils.formatBytes32String("ENA"),
+    pythPriceId: ethers.utils.formatBytes32String("ENA"),
     inverse: false,
   },
 ];

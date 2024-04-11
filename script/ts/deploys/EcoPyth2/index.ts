@@ -17,7 +17,7 @@ async function main() {
   writeConfigFile(config);
 
   await run("verify:verify", {
-    address: ecoPyth2.address,
+    address: config.oracles.ecoPyth2,
     constructorArguments: [],
   });
 }

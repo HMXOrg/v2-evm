@@ -9,10 +9,39 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
 
   const inputs = [
-    {
-      marketIndex: 0,
-      isEnabled: true,
-    },
+    { marketIndex: 0, isEnabled: true },
+    { marketIndex: 1, isEnabled: true },
+    { marketIndex: 12, isEnabled: true },
+    { marketIndex: 13, isEnabled: true },
+    { marketIndex: 14, isEnabled: true },
+    { marketIndex: 15, isEnabled: true },
+    { marketIndex: 16, isEnabled: true },
+    { marketIndex: 17, isEnabled: true },
+    { marketIndex: 20, isEnabled: true },
+    { marketIndex: 21, isEnabled: true },
+    { marketIndex: 23, isEnabled: true },
+    { marketIndex: 25, isEnabled: true },
+    { marketIndex: 27, isEnabled: true },
+    { marketIndex: 32, isEnabled: true },
+    { marketIndex: 33, isEnabled: true },
+    { marketIndex: 35, isEnabled: true },
+    { marketIndex: 36, isEnabled: true },
+    { marketIndex: 37, isEnabled: true },
+    { marketIndex: 38, isEnabled: true },
+    { marketIndex: 39, isEnabled: true },
+    { marketIndex: 40, isEnabled: true },
+    { marketIndex: 41, isEnabled: true },
+    { marketIndex: 42, isEnabled: true },
+    { marketIndex: 43, isEnabled: true },
+    { marketIndex: 44, isEnabled: true },
+    { marketIndex: 45, isEnabled: true },
+    { marketIndex: 47, isEnabled: true },
+    { marketIndex: 48, isEnabled: true },
+    { marketIndex: 49, isEnabled: true },
+    { marketIndex: 50, isEnabled: true },
+    { marketIndex: 51, isEnabled: true },
+    { marketIndex: 52, isEnabled: true },
+    { marketIndex: 53, isEnabled: true },
   ];
 
   const deployer = signers.deployer(chainId);

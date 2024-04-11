@@ -1,4 +1,4 @@
-import { ethers, tenderly, upgrades } from "hardhat";
+import { ethers, run, tenderly, upgrades } from "hardhat";
 import { getConfig } from "../../utils/config";
 import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
@@ -25,6 +25,12 @@ async function main() {
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "PerpStorage",
+  });
+
+  console.log(`[upgrade/PerpStorage] Verify contract`);
+  await run("verify:verify", {
+    address: newImplementation.toString(),
+    constructorArguments: [],
   });
 }
 

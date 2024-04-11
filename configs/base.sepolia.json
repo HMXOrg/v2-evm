@@ -33,7 +33,7 @@
     "gas": ""
   },
   "oracles": {
-    "ecoPyth2": "",
+    "ecoPyth2": "0xEB27B05178515c7E6E51dEE159c8487A011ac030",
     "pythAdapter": "",
     "middleware": "",
     "ecoPythCalldataBuilder3": "",

@@ -10,7 +10,10 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
 
-  const inputs = [{ marketIndex: 43, minProfitDuration: 60 }];
+  const inputs = [
+    { marketIndex: 44, minProfitDuration: 60 },
+    { marketIndex: 45, minProfitDuration: 60 },
+  ];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);

@@ -19,6 +19,10 @@ contract TC43 is BaseIntTest_WithActions {
   event LogBadSignature(bytes32 indexed key);
   event LogIntentReplay(bytes32 indexed key);
 
+  function setUp() public {
+    gasService.setWaviedExecutionFeeMinTradeSize(type(uint256).max);
+  }
+
   function testCorrectness_TC43_intentHandler_executeMarketOrderSuccess() external {
     uint256 privateKey = uint256(keccak256(bytes("1")));
     BOB = vm.addr(privateKey);

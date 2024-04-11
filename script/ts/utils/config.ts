@@ -4,6 +4,8 @@ import ArbitrumGoerliConfig from "../../../configs/arbitrum.goerli.json";
 import ArbitrumMainnetConfig from "../../../configs/arbitrum.mainnet.json";
 import ArbitrumMainnetMarketConfig from "../../../configs/.arbitrum.one.market.json";
 import ArbitrumGoerliMarketConfig from "../../../configs/.arbitrum.goerli.market.json";
+import BaseMainnetConfig from "../../../configs/base.mainnet.json";
+import BaseSepoliaConfig from "../../../configs/base.sepolia.json";
 
 export function loadConfig(chainId: number) {
   if (chainId === 42161) {
@@ -11,6 +13,12 @@ export function loadConfig(chainId: number) {
   }
   if (chainId === 421613) {
     return ArbitrumGoerliConfig;
+  }
+  if (chainId === 8453) {
+    return BaseMainnetConfig;
+  }
+  if (chainId === 84532) {
+    return BaseSepoliaConfig;
   }
   throw new Error("not found config");
 }

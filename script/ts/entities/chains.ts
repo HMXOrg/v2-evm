@@ -15,17 +15,17 @@ if (!process.env.ARBITRUM_MAINNET_RPC) throw new Error("Missing ARBITRUM_MAINNET
 if (!process.env.ARBI_STAT_SUBGRAPH_URL) throw new Error("Missing ARBI_STAT_SUBGRAPH_URL env var");
 
 export default {
-  42161: {
-    name: "arbitrum",
-    rpc: process.env.ARBITRUM_MAINNET_RPC,
-    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_MAINNET_RPC),
+  8453: {
+    name: "base",
+    rpc: process.env.BASE_MAINNET_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.BASE_MAINNET_RPC),
     safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
     statSubgraphUrl: process.env.ARBI_STAT_SUBGRAPH_URL,
   },
-  421613: {
-    name: "arbitrum_goerli",
-    rpc: process.env.ARBITRUM_GOERLI_RPC,
-    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_GOERLI_RPC),
+  84532: {
+    name: "base_sepolia",
+    rpc: process.env.BASE_SEPOLIA_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.BASE_SEPOLIA_RPC),
     safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
     statSubgraphUrl: "",
   },

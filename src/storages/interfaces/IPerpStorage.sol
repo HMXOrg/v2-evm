@@ -53,6 +53,7 @@ interface IPerpStorage {
     int256 realizedPnl;
     int256 lastFundingAccrued;
     uint8 subAccountId;
+    uint256 lastIncreaseSize;
   }
 
   /**

@@ -1,28 +1,29 @@
-import { ethers, tenderly, upgrades } from "hardhat";
-import { getConfig } from "../../utils/config";
+import { ethers, run, upgrades, getChainId } from "hardhat";
+import { loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
 import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
-  const config = getConfig();
-  const chainId = (await ethers.provider.getNetwork()).chainId;
-  const deployer = (await ethers.getSigners())[0];
+  const chainId = Number(await getChainId());
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
   const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
   const IntentHandler = await ethers.getContractFactory("IntentHandler", deployer);
-  const intentHandlerAddress = config.handlers.intent;
+  const intentHandler = config.handlers.intent;
 
   console.log(`[upgrade/IntentHandler] Preparing to upgrade IntentHandler`);
-  const newImplementation = await upgrades.prepareUpgrade(intentHandlerAddress, IntentHandler);
+  const newImplementation = await upgrades.prepareUpgrade(intentHandler, IntentHandler);
   console.log(`[upgrade/IntentHandler] Done`);
 
   console.log(`[upgrade/IntentHandler] New IntentHandler Implementation address: ${newImplementation}`);
-  await proxyAdminWrapper.upgrade(intentHandlerAddress, newImplementation.toString());
-  console.log(`[upgrade/IntentHandler] Done`);
+  await proxyAdminWrapper.upgrade(intentHandler, newImplementation.toString());
+  console.log(`[upgrade/IntentHandler] Upgraded!`);
 
-  console.log(`[upgrade/IntentHandler] Verify contract on Tenderly`);
-  await tenderly.verify({
+  console.log(`[upgrade/IntentHandler] Verify contract`);
+  await run("verify:verify", {
     address: newImplementation.toString(),
-    name: "IntentHandler",
+    constructorArguments: [],
   });
 }
 

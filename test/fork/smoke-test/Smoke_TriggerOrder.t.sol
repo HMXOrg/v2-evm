@@ -13,7 +13,8 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract Smoke_TriggerOrder is ForkEnv {
   error Smoke_TriggerOrder_NoOrder();
@@ -25,10 +26,10 @@ contract Smoke_TriggerOrder is ForkEnv {
   address[] internal executeAccounts;
   uint8[] internal executeSubAccountIds;
   uint256[] internal executeOrderIndexes;
-  OrderReader newOrderReader;
+  IOrderReader newOrderReader;
 
   constructor() {
-    newOrderReader = new OrderReader(
+    newOrderReader = Deployer.deployOrderReader(
       address(ForkEnv.configStorage),
       address(ForkEnv.perpStorage),
       address(ForkEnv.oracleMiddleware),

@@ -67,7 +67,7 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
 
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
 import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
 import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
@@ -719,8 +719,14 @@ library Deployer {
     address _perpStorage,
     address _oracleMiddleware,
     address _limitTradeHandler
-  ) internal returns (OrderReader) {
-    return new OrderReader(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler);
+  ) internal returns (IOrderReader) {
+    return
+      IOrderReader(
+        deployContractWithArguments(
+          "OrderReader",
+          abi.encode(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler)
+        )
+      );
   }
 
   function deployDistributeSTIPARBStrategy(

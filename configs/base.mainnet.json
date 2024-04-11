@@ -1,0 +1,91 @@
+{
+  "proxyAdmin": "",
+  "multicall": "",
+  "timelock": "",
+  "safe": "",
+  "storages": {
+    "config": "",
+    "perp": "",
+    "vault": ""
+  },
+  "handlers": {
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "rebalanceHLP": "",
+    "ext01": "",
+    "rebalanceHLPv2": "",
+    "intent": ""
+  },
+  "helpers": {
+    "trade": "",
+    "limitTrade": "",
+    "tradeOrder": ""
+  },
+  "services": {
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": "",
+    "rebalanceHLP": "",
+    "rebalanceHLPv2": "",
+    "gas": ""
+  },
+  "oracles": {
+    "ecoPyth": "",
+    "ecoPyth2": "",
+    "pythAdapter": "",
+    "middleware": "",
+    "ecoPythCalldataBuilder3": "",
+    "unsafeEcoPythCalldataBuilder3": "",
+    "onChainPriceLens": "",
+    "calcPriceLens": "",
+    "priceAdapters": {
+      "wstEth": "",
+      "hlp": "",
+      "dix": ""
+    },
+    "orderbook": ""
+  },
+  "tokens": {
+    "hlp": "",
+    "weth": "0x4200000000000000000000000000000000000006",
+    "usdc": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "dai": "0x50c5725949a6f0c72e6c4a641f24049a917db0cb",
+    "traderLoyaltyCredit": "",
+    "wstEth": "0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452"
+  },
+  "vendors": {},
+  "strategies": {
+    "erc20Approve": ""
+  },
+  "hooks": {
+    "tradingStaking": "",
+    "tlc": ""
+  },
+  "calculator": "",
+  "adaptiveFeeCalculator": "",
+  "accountAbstraction": {
+    "entryPoint": "",
+    "factory": ""
+  },
+  "staking": {
+    "trading": "",
+    "tlc": "",
+    "hlp": ""
+  },
+  "rewardDistributor": "",
+  "reader": {
+    "order": "",
+    "position": "",
+    "liquidation": "",
+    "collateral": ""
+  },
+  "extension": {
+    "switchCollateralRouter": "",
+    "dexter": {
+      "curve": ""
+    }
+  }
+}

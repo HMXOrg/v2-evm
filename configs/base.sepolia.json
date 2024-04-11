@@ -1,0 +1,91 @@
+{
+  "proxyAdmin": "",
+  "multicall": "",
+  "timelock": "",
+  "safe": "",
+  "storages": {
+    "config": "",
+    "perp": "",
+    "vault": ""
+  },
+  "handlers": {
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "rebalanceHLP": "",
+    "ext01": "",
+    "rebalanceHLPv2": "",
+    "intent": ""
+  },
+  "helpers": {
+    "trade": "",
+    "limitTrade": "",
+    "tradeOrder": ""
+  },
+  "services": {
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": "",
+    "rebalanceHLP": "",
+    "rebalanceHLPv2": "",
+    "gas": ""
+  },
+  "oracles": {
+    "ecoPyth": "",
+    "ecoPyth2": "",
+    "pythAdapter": "",
+    "middleware": "",
+    "ecoPythCalldataBuilder3": "",
+    "unsafeEcoPythCalldataBuilder3": "",
+    "onChainPriceLens": "",
+    "calcPriceLens": "",
+    "priceAdapters": {
+      "wstEth": "",
+      "hlp": "",
+      "dix": ""
+    },
+    "orderbook": ""
+  },
+  "tokens": {
+    "hlp": "",
+    "weth": "",
+    "usdc": "",
+    "dai": "",
+    "traderLoyaltyCredit": "",
+    "wstEth": ""
+  },
+  "vendors": {},
+  "strategies": {
+    "erc20Approve": ""
+  },
+  "hooks": {
+    "tradingStaking": "",
+    "tlc": ""
+  },
+  "calculator": "",
+  "adaptiveFeeCalculator": "",
+  "accountAbstraction": {
+    "entryPoint": "",
+    "factory": ""
+  },
+  "staking": {
+    "trading": "",
+    "tlc": "",
+    "hlp": ""
+  },
+  "rewardDistributor": "",
+  "reader": {
+    "order": "",
+    "position": "",
+    "liquidation": "",
+    "collateral": ""
+  },
+  "extension": {
+    "switchCollateralRouter": "",
+    "dexter": {
+      "curve": ""
+    }
+  }
+}

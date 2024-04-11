@@ -28,13 +28,14 @@ const config: HardhatUserConfig = {
       url: process.env.TENDERLY_RPC || "",
       accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
-    arbitrum: {
-      url: process.env.ARBITRUM_MAINNET_RPC || "",
-      accounts: [process.env.MAINNET_PRIVATE_KEY || ""],
+    base: {
+      url: process.env.BASE_RPC || "",
+      chainId: 8453,
+      accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
-    arb_goerli: {
-      url: process.env.ARBITRUM_GOERLI_RPC || "",
-      chainId: 421613,
+    base_sepolia: {
+      url: process.env.BASE_SEPOLIA_RPC || "",
+      chainId: 84532,
       accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
   },

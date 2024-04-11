@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
     base: {
-      url: process.env.BASE_RPC || "",
+      url: process.env.BASE_MAINNET_RPC || "",
       chainId: 8453,
       accounts: process.env.MAINNET_PRIVATE_KEY !== undefined ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },

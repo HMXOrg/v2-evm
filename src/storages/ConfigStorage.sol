@@ -51,6 +51,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
   event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
   event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
+  event LogSetMakerTakerFee(uint256 marketIndex, uint256 makerFee, uint256 takerFee);
 
   /**
    * Constants
@@ -726,6 +727,26 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     uint256 length = marketIndexes.length;
     for (uint256 i; i < length; ) {
       isStepMinProfitEnabledByMarketIndex[marketIndexes[i]] = isEnableds[i];
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setMakerTakerFeeByMarketIndexes(
+    uint256[] memory marketIndexes,
+    uint256[] memory makerFees,
+    uint256[] memory takerFees
+  ) external onlyOwner {
+    if (marketIndexes.length != makerFees.length || makerFees.length != takerFees.length)
+      revert IConfigStorage_BadLen();
+    uint256 length = marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      makerFeeBpsByMarketIndex[marketIndexes[i]] = makerFees[i];
+      takerFeeBpsByMarketIndex[marketIndexes[i]] = takerFees[i];
+
+      emit LogSetMakerTakerFee(marketIndexes[i], makerFees[i], takerFees[i]);
 
       unchecked {
         ++i;

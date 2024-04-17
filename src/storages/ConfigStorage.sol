@@ -104,6 +104,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   StepMinProfitDuration[] public stepMinProfitDurations;
   mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
 
+  // Cannot put these two inside MarketConfig due to backward incompatibility
+  mapping(uint256 marketIndex => uint256 takerFeeBps) public takerFeeBpsByMarketIndex;
+  mapping(uint256 marketIndex => uint256 makerFeeBps) public makerFeeBpsByMarketIndex;
+
   /**
    * Modifiers
    */

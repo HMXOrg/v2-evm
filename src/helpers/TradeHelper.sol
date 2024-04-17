@@ -421,30 +421,70 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   /**
    * Private Functions
    */
+  struct UpdateFeeStateLocalVars {
+    Calculator calculator;
+    IPerpStorage.Market market;
+    uint256 absSizeDelta;
+    int256 skew;
+    uint32 takerFee;
+    uint32 makerFee;
+  }
 
   function _updateFeeStates(
     bytes32 /*_positionId*/,
     address /*_subAccount*/,
     PerpStorage.Position memory _position,
     int256 _sizeDelta,
-    uint32 _positionFeeBPS,
+    uint32 /*_positionFeeBPS*/,
     uint8 _assetClassIndex,
     uint256 _marketIndex,
     bool _isAdaptiveFee
   ) internal returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
+    UpdateFeeStateLocalVars memory vars;
     // SLOAD
-    Calculator _calculator = calculator;
-    uint256 _absSizeDelta = HMXLib.abs(_sizeDelta);
+    vars.calculator = calculator;
+    vars.market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
+    vars.absSizeDelta = HMXLib.abs(_sizeDelta);
 
-    // Calculate the trading fee
-    if (_isAdaptiveFee) {
-      _positionFeeBPS = getAdaptiveFeeBps(_sizeDelta, _position.marketIndex, _positionFeeBPS);
+    vars.skew = int256(vars.market.longPositionSize) - int256(vars.market.shortPositionSize);
+    vars.takerFee = uint32(ConfigStorage(configStorage).takerFeeBpsByMarketIndex(_marketIndex));
+    vars.makerFee = uint32(ConfigStorage(configStorage).makerFeeBpsByMarketIndex(_marketIndex));
+    // If _sizeDelta and _skew are in the same direction
+    // (multiply them together; if they have the same sign, the result will be positive.)
+    if (_sizeDelta * vars.skew > 0) {
+      // _skew will be larger, we will charge takerFee only
+      // Calculate the trading fee
+
+      if (_isAdaptiveFee) {
+        vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
+      }
+      _tradingFee = (vars.absSizeDelta * vars.takerFee) / BPS;
+    } else {
+      // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
+      if (vars.absSizeDelta > HMXLib.abs(vars.skew)) {
+        // Collect makerFee first on the part equal to current market skew
+        if (_isAdaptiveFee) {
+          vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+        }
+        _tradingFee = (HMXLib.abs(vars.skew) * vars.makerFee) / BPS;
+
+        // Then collect takerFee from the part that make marketSkew worse
+        if (_isAdaptiveFee) {
+          vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
+        }
+        _tradingFee += (HMXLib.abs(_sizeDelta + vars.skew) * vars.takerFee) / BPS;
+      } else {
+        // if _sizeDelta does not flip _skew, it makes _skew better
+        // we collect makerFee only
+        if (_isAdaptiveFee) {
+          vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+        }
+        _tradingFee = (vars.absSizeDelta * vars.makerFee) / BPS;
+      }
     }
 
-    _tradingFee = (_absSizeDelta * _positionFeeBPS) / BPS;
-
     // Calculate the borrowing fee
-    _borrowingFee = _calculator.getBorrowingFee(
+    _borrowingFee = vars.calculator.getBorrowingFee(
       _assetClassIndex,
       _position.reserveValueE30,
       _position.entryBorrowingRate
@@ -455,9 +495,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     // Calculate the funding fee
     // We are assuming that the market state has been updated with the latest funding rate
     bool _isLong = _position.positionSizeE30 > 0;
-    _fundingFee = _calculator.getFundingFee(
+    _fundingFee = vars.calculator.getFundingFee(
       _position.positionSizeE30,
-      PerpStorage(perpStorage).getMarketByIndex(_marketIndex).fundingAccrued,
+      vars.market.fundingAccrued,
       _position.lastFundingAccrued
     );
 

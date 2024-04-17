@@ -450,7 +450,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     vars.skew = int256(vars.market.longPositionSize) - int256(vars.market.shortPositionSize);
     vars.takerFeeBps = uint32(ConfigStorage(configStorage).takerFeeBpsByMarketIndex(_marketIndex));
     vars.makerFeeBps = uint32(ConfigStorage(configStorage).makerFeeBpsByMarketIndex(_marketIndex));
-    if (vars.takerFeeBps > 0 && vars.makerFeeBps > 0) {
+    if (vars.takerFeeBps > 0 || vars.makerFeeBps > 0) {
       // If _sizeDelta and _skew are in the same direction
       // (multiply them together; if they have the same sign, the result will be positive.)
       if (_sizeDelta * vars.skew > 0) {

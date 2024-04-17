@@ -435,7 +435,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     address /*_subAccount*/,
     PerpStorage.Position memory _position,
     int256 _sizeDelta,
-    uint32 /*_positionFeeBPS*/,
+    uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
     uint256 _marketIndex,
     bool _isAdaptiveFee
@@ -449,38 +449,47 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     vars.skew = int256(vars.market.longPositionSize) - int256(vars.market.shortPositionSize);
     vars.takerFee = uint32(ConfigStorage(configStorage).takerFeeBpsByMarketIndex(_marketIndex));
     vars.makerFee = uint32(ConfigStorage(configStorage).makerFeeBpsByMarketIndex(_marketIndex));
-    // If _sizeDelta and _skew are in the same direction
-    // (multiply them together; if they have the same sign, the result will be positive.)
-    if (_sizeDelta * vars.skew > 0) {
-      // _skew will be larger, we will charge takerFee only
-      // Calculate the trading fee
+    if (vars.takerFee > 0 && vars.makerFee > 0) {
+      // If _sizeDelta and _skew are in the same direction
+      // (multiply them together; if they have the same sign, the result will be positive.)
+      if (_sizeDelta * vars.skew > 0) {
+        // _skew will be larger, we will charge takerFee only
+        // Calculate the trading fee
 
-      if (_isAdaptiveFee) {
-        vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
-      }
-      _tradingFee = (vars.absSizeDelta * vars.takerFee) / BPS;
-    } else {
-      // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
-      if (vars.absSizeDelta > HMXLib.abs(vars.skew)) {
-        // Collect makerFee first on the part equal to current market skew
-        if (_isAdaptiveFee) {
-          vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
-        }
-        _tradingFee = (HMXLib.abs(vars.skew) * vars.makerFee) / BPS;
-
-        // Then collect takerFee from the part that make marketSkew worse
         if (_isAdaptiveFee) {
           vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
         }
-        _tradingFee += (HMXLib.abs(_sizeDelta + vars.skew) * vars.takerFee) / BPS;
+        _tradingFee = (vars.absSizeDelta * vars.takerFee) / BPS;
       } else {
-        // if _sizeDelta does not flip _skew, it makes _skew better
-        // we collect makerFee only
-        if (_isAdaptiveFee) {
-          vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+        // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
+        if (vars.absSizeDelta > HMXLib.abs(vars.skew)) {
+          // Collect makerFee first on the part equal to current market skew
+          if (_isAdaptiveFee) {
+            vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+          }
+          _tradingFee = (HMXLib.abs(vars.skew) * vars.makerFee) / BPS;
+
+          // Then collect takerFee from the part that make marketSkew worse
+          if (_isAdaptiveFee) {
+            vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
+          }
+          _tradingFee += (HMXLib.abs(_sizeDelta + vars.skew) * vars.takerFee) / BPS;
+        } else {
+          // if _sizeDelta does not flip _skew, it makes _skew better
+          // we collect makerFee only
+          if (_isAdaptiveFee) {
+            vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+          }
+          _tradingFee = (vars.absSizeDelta * vars.makerFee) / BPS;
         }
-        _tradingFee = (vars.absSizeDelta * vars.makerFee) / BPS;
       }
+    } else {
+      // If taker and maker fee is not set, use legacy trading fee
+      if (_isAdaptiveFee) {
+        _positionFeeBPS = getAdaptiveFeeBps(_sizeDelta, _position.marketIndex, _positionFeeBPS);
+      }
+
+      _tradingFee = (vars.absSizeDelta * _positionFeeBPS) / BPS;
     }
 
     // Calculate the borrowing fee

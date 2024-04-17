@@ -106,8 +106,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
 
   // Cannot put these inside MarketConfig due to backward incompatibility
-  mapping(uint256 marketIndex => uint256 takerFeeBps) public takerFeeBpsByMarketIndex;
-  mapping(uint256 marketIndex => uint256 makerFeeBps) public makerFeeBpsByMarketIndex;
+  mapping(uint256 marketIndex => uint256 takerFeeE8) public takerFeeE8ByMarketIndex;
+  mapping(uint256 marketIndex => uint256 makerFeeE8) public makerFeeE8ByMarketIndex;
 
   /**
    * Modifiers
@@ -743,8 +743,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
       revert IConfigStorage_BadLen();
     uint256 length = marketIndexes.length;
     for (uint256 i; i < length; ) {
-      makerFeeBpsByMarketIndex[marketIndexes[i]] = makerFees[i];
-      takerFeeBpsByMarketIndex[marketIndexes[i]] = takerFees[i];
+      makerFeeE8ByMarketIndex[marketIndexes[i]] = makerFees[i];
+      takerFeeE8ByMarketIndex[marketIndexes[i]] = takerFees[i];
 
       emit LogSetMakerTakerFee(marketIndexes[i], makerFees[i], takerFees[i]);
 

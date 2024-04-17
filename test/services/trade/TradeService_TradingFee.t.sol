@@ -199,9 +199,9 @@ contract TradeService_TradingFee is TradeService_Base {
     uint256[] memory marketIndexes = new uint256[](1);
     marketIndexes[0] = ethMarketIndex;
     uint256[] memory makerFees = new uint256[](1);
-    makerFees[0] = 5; // Maker Fee Rate = 0.05%
+    makerFees[0] = 0.0005 * 1e8; // Maker Fee Rate = 0.05%
     uint256[] memory takerFees = new uint256[](1);
-    takerFees[0] = 10; // Taker Fee Rate = 0.1%
+    takerFees[0] = 0.001 * 1e8; // Taker Fee Rate = 0.1%
     configStorage.setMakerTakerFeeByMarketIndexes(marketIndexes, makerFees, takerFees);
 
     // TVL
@@ -271,9 +271,9 @@ contract TradeService_TradingFee is TradeService_Base {
     uint256[] memory marketIndexes = new uint256[](1);
     marketIndexes[0] = ethMarketIndex;
     uint256[] memory makerFees = new uint256[](1);
-    makerFees[0] = 5; // Maker Fee Rate = 0.05%
+    makerFees[0] = 0.0005 * 1e8; // Maker Fee Rate = 0.05%
     uint256[] memory takerFees = new uint256[](1);
-    takerFees[0] = 10; // Taker Fee Rate = 0.1%
+    takerFees[0] = 0.001 * 1e8; // Taker Fee Rate = 0.1%
     configStorage.setMakerTakerFeeByMarketIndexes(marketIndexes, makerFees, takerFees);
 
     // TVL
@@ -343,9 +343,9 @@ contract TradeService_TradingFee is TradeService_Base {
     uint256[] memory marketIndexes = new uint256[](1);
     marketIndexes[0] = ethMarketIndex;
     uint256[] memory makerFees = new uint256[](1);
-    makerFees[0] = 5; // Maker Fee Rate = 0.05%
+    makerFees[0] = 0.0005 * 1e8; // Maker Fee Rate = 0.05%
     uint256[] memory takerFees = new uint256[](1);
-    takerFees[0] = 10; // Taker Fee Rate = 0.1%
+    takerFees[0] = 0.001 * 1e8; // Taker Fee Rate = 0.1%
     configStorage.setMakerTakerFeeByMarketIndexes(marketIndexes, makerFees, takerFees);
 
     // TVL

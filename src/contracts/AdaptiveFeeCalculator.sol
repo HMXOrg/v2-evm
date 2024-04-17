@@ -52,6 +52,31 @@ contract AdaptiveFeeCalculator is Ownable {
     return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), maxFeeBps));
   }
 
+  function getAdaptiveFeeE8(
+    uint256 sizeDelta,
+    uint256 epochVolume,
+    uint256 orderbookDepth,
+    uint256 coeffVariant,
+    uint256 baseFeeE8,
+    uint256 maxFeeE8
+  ) external view returns (uint32 feeBps) {
+    // Normalize the formula for easier coding
+    // y = min(baseFeeBps + (((sizeDelta + (epochVolume * k1))/liquidityDepth)^g * k2), maxFeeBps)
+    // y = min(baseFeeBps + ((A^g) * k2), maxFeeBps)
+    // y = min(baseFeeBps + B * k2), maxFeeBps)
+    // Sell = bid
+    // Buy = ask
+
+    int128 x = _convertE8To64x64(sizeDelta + ((epochVolume * k1) / BPS));
+    int128 d = _convertE8To64x64(orderbookDepth);
+    int128 A = x.div(d);
+
+    int128 g = findG(_convertE8To64x64(coeffVariant));
+    int128 B = pow(A, g);
+    int128 y = _convertE8To64x64(baseFeeE8).add(B.mul(_convertBPSTo64x64(k2)));
+    return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), maxFeeE8));
+  }
+
   function findG(int128 c) public pure returns (int128 g) {
     // g = 2^(2 - min(1, c))
     int128 min = HMXLib.minInt128(ABDKMath64x64.fromUInt(1), c);

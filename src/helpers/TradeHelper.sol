@@ -113,6 +113,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetAdaptiveFeeCalculator(address indexed oldAdaptiveFeeCalculator, address indexed adaptiveFeeCalculator);
   event LogSetOrderbookOracle(address indexed oldOrderbookOracle, address indexed orderbookOracle);
   event LogSetMaxAdaptiveFeeBps(uint32 indexed oldMaxAdaptiveFeeBps, uint32 indexed maxAdaptiveFeeBps);
+  event LogMakerTakerFee(uint256 makerFeeBps, uint256 makerSizeDelta, uint256 takerFeeBps, uint256 takerSizeDelta);
 
   /**
    * Structs
@@ -426,8 +427,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     IPerpStorage.Market market;
     uint256 absSizeDelta;
     int256 skew;
-    uint32 takerFee;
-    uint32 makerFee;
+    uint32 takerFeeBps;
+    uint32 makerFeeBps;
   }
 
   function _updateFeeStates(
@@ -447,9 +448,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     vars.absSizeDelta = HMXLib.abs(_sizeDelta);
 
     vars.skew = int256(vars.market.longPositionSize) - int256(vars.market.shortPositionSize);
-    vars.takerFee = uint32(ConfigStorage(configStorage).takerFeeBpsByMarketIndex(_marketIndex));
-    vars.makerFee = uint32(ConfigStorage(configStorage).makerFeeBpsByMarketIndex(_marketIndex));
-    if (vars.takerFee > 0 && vars.makerFee > 0) {
+    vars.takerFeeBps = uint32(ConfigStorage(configStorage).takerFeeBpsByMarketIndex(_marketIndex));
+    vars.makerFeeBps = uint32(ConfigStorage(configStorage).makerFeeBpsByMarketIndex(_marketIndex));
+    if (vars.takerFeeBps > 0 && vars.makerFeeBps > 0) {
       // If _sizeDelta and _skew are in the same direction
       // (multiply them together; if they have the same sign, the result will be positive.)
       if (_sizeDelta * vars.skew > 0) {
@@ -457,30 +458,39 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         // Calculate the trading fee
 
         if (_isAdaptiveFee) {
-          vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
+          vars.takerFeeBps = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFeeBps);
         }
-        _tradingFee = (vars.absSizeDelta * vars.takerFee) / BPS;
+        _tradingFee = (vars.absSizeDelta * vars.takerFeeBps) / BPS;
+        emit LogMakerTakerFee(0, 0, vars.takerFeeBps, vars.absSizeDelta);
       } else {
         // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
         if (vars.absSizeDelta > HMXLib.abs(vars.skew)) {
           // Collect makerFee first on the part equal to current market skew
           if (_isAdaptiveFee) {
-            vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+            vars.makerFeeBps = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFeeBps);
           }
-          _tradingFee = (HMXLib.abs(vars.skew) * vars.makerFee) / BPS;
+          _tradingFee = (HMXLib.abs(vars.skew) * vars.makerFeeBps) / BPS;
 
           // Then collect takerFee from the part that make marketSkew worse
           if (_isAdaptiveFee) {
-            vars.takerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFee);
+            vars.takerFeeBps = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.takerFeeBps);
           }
-          _tradingFee += (HMXLib.abs(_sizeDelta + vars.skew) * vars.takerFee) / BPS;
+          _tradingFee += (HMXLib.abs(_sizeDelta + vars.skew) * vars.takerFeeBps) / BPS;
+
+          emit LogMakerTakerFee(
+            vars.makerFeeBps,
+            HMXLib.abs(vars.skew),
+            vars.takerFeeBps,
+            HMXLib.abs(_sizeDelta + vars.skew)
+          );
         } else {
           // if _sizeDelta does not flip _skew, it makes _skew better
           // we collect makerFee only
           if (_isAdaptiveFee) {
-            vars.makerFee = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFee);
+            vars.makerFeeBps = getAdaptiveFeeBps(_sizeDelta, _marketIndex, vars.makerFeeBps);
           }
-          _tradingFee = (vars.absSizeDelta * vars.makerFee) / BPS;
+          _tradingFee = (vars.absSizeDelta * vars.makerFeeBps) / BPS;
+          emit LogMakerTakerFee(vars.makerFeeBps, vars.absSizeDelta, 0, 0);
         }
       }
     } else {

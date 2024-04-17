@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 
 async function main() {
@@ -10,8 +10,7 @@ async function main() {
   const unsafeEcoPythCalldataBuilder3 = await UnsafeEcoPythCalldataBuilder3.deploy(
     config.oracles.ecoPyth2,
     config.oracles.onChainPriceLens,
-    config.oracles.calcPriceLens,
-    true
+    config.oracles.calcPriceLens
   );
   await unsafeEcoPythCalldataBuilder3.deployed();
   console.log(`[deploys/EcoPythCalldataBuilder] Deployed at: ${unsafeEcoPythCalldataBuilder3.address}`);
@@ -19,9 +18,9 @@ async function main() {
   config.oracles.unsafeEcoPythCalldataBuilder3 = unsafeEcoPythCalldataBuilder3.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: unsafeEcoPythCalldataBuilder3.address,
-    name: "UnsafeEcoPythCalldataBuilder3",
+    constructorArguments: [config.oracles.ecoPyth2, config.oracles.onChainPriceLens, config.oracles.calcPriceLens],
   });
 }
 

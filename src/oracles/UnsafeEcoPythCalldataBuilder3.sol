@@ -21,22 +21,18 @@ import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { CalcPriceLens } from "@hmx/oracles/CalcPriceLens.sol";
 import { IPriceAdapter } from "@hmx/oracles/interfaces/IPriceAdapter.sol";
 import { ICalcPriceAdapter } from "@hmx/oracles/interfaces/ICalcPriceAdapter.sol";
-import { ArbSys } from "@hmx/interfaces/arbitrum/ArbSys.sol";
 
 contract UnsafeEcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
-  address constant ARBSYS_ADDR = address(0x0000000000000000000000000000000000000064);
   IEcoPyth public ecoPyth;
   OnChainPriceLens public ocLens;
   CalcPriceLens public cLens;
-  bool private l2BlockNumber;
 
   error BadOrder(uint256 index, bytes32 assetId);
 
-  constructor(IEcoPyth ecoPyth_, OnChainPriceLens ocLens_, CalcPriceLens cLens_, bool l2BlockNumber_) {
+  constructor(IEcoPyth ecoPyth_, OnChainPriceLens ocLens_, CalcPriceLens cLens_) {
     ecoPyth = ecoPyth_;
     ocLens = ocLens_;
     cLens = cLens_;
-    l2BlockNumber = l2BlockNumber_;
   }
 
   function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
@@ -147,10 +143,6 @@ contract UnsafeEcoPythCalldataBuilder3 is IEcoPythCalldataBuilder3 {
 
     // 4. Build the publishTimeUpdateCalldata
     _publishTimeUpdateCalldata = ecoPyth.buildPublishTimeUpdateData(_publishTimeDiffs);
-    if (l2BlockNumber) {
-      blockNumber = ArbSys(ARBSYS_ADDR).arbBlockNumber();
-    } else {
-      blockNumber = block.number;
-    }
+    blockNumber = block.number;
   }
 }

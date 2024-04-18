@@ -1076,11 +1076,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     int256 _sizeDelta,
     uint256 _marketIndex,
     uint256 _baseFeeE8
-  ) public view returns (uint32 feeBps) {
+  ) public view returns (uint256 feeBps) {
     (uint256 askDepth, uint256 bidDepth, uint256 coeffVariants) = orderbookOracle.getData(_marketIndex);
     bool isBuy = _sizeDelta > 0;
     uint256 epochOI = PerpStorage(perpStorage).getEpochVolume(isBuy, _marketIndex);
-    feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
+    feeBps = adaptiveFeeCalculator.getAdaptiveFeeE8(
       HMXLib.abs(_sizeDelta) / 1e22,
       epochOI / 1e22,
       isBuy ? askDepth : bidDepth,

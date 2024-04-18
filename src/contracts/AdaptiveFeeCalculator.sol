@@ -59,7 +59,7 @@ contract AdaptiveFeeCalculator is Ownable {
     uint256 coeffVariant,
     uint256 baseFeeE8,
     uint256 maxFeeE8
-  ) external view returns (uint32 feeBps) {
+  ) external view returns (uint256 feeBps) {
     // Normalize the formula for easier coding
     // y = min(baseFeeBps + (((sizeDelta + (epochVolume * k1))/liquidityDepth)^g * k2), maxFeeBps)
     // y = min(baseFeeBps + ((A^g) * k2), maxFeeBps)
@@ -74,7 +74,7 @@ contract AdaptiveFeeCalculator is Ownable {
     int128 g = findG(_convertE8To64x64(coeffVariant));
     int128 B = pow(A, g);
     int128 y = _convertE8To64x64(baseFeeE8).add(B.mul(_convertBPSTo64x64(k2)));
-    return uint32(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, BPS_PRECISION_64x64)), maxFeeE8));
+    return uint256(HMXLib.min(ABDKMath64x64.toUInt(ABDKMath64x64.mul(y, RATE_PRECISION_64x64)), maxFeeE8));
   }
 
   function findG(int128 c) public pure returns (int128 g) {

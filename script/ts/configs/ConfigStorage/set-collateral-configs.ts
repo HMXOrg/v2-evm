@@ -3,21 +3,45 @@ import { ConfigStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 const BPS = 10000;
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("PYTH"),
+      assetId: ethers.utils.formatBytes32String("USDC"),
       collateralConfig: {
-        collateralFactorBPS: 0.7 * BPS,
+        collateralFactorBPS: 1 * BPS,
+        accepted: true,
+        settleStrategy: ethers.constants.AddressZero,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("DAI"),
+      collateralConfig: {
+        collateralFactorBPS: 1 * BPS,
+        accepted: true,
+        settleStrategy: ethers.constants.AddressZero,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("ETH"),
+      collateralConfig: {
+        collateralFactorBPS: 0.9 * BPS,
+        accepted: true,
+        settleStrategy: ethers.constants.AddressZero,
+      },
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("BTC"),
+      collateralConfig: {
+        collateralFactorBPS: 0.9 * BPS,
         accepted: true,
         settleStrategy: ethers.constants.AddressZero,
       },
@@ -25,15 +49,13 @@ async function main(chainId: number) {
   ];
 
   console.log("[configs/ConfigStorage] Set Collateral Configs...");
-  const tx = await safeWrapper.proposeTransaction(
+  await ownerWrapper.authExec(
     configStorage.address,
-    0,
     configStorage.interface.encodeFunctionData("setCollateralTokenConfigs", [
       inputs.map((each) => each.assetId),
       inputs.map((each) => each.collateralConfig),
     ])
   );
-  console.log(`[configs/ConfigStorage] Tx: ${tx}`);
   console.log("[configs/ConfigStorage] Set Collateral Configs success!");
 }
 

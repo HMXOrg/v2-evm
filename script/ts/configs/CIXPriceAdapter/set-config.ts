@@ -1,15 +1,15 @@
 import { Command } from "commander";
-import { loadConfig, loadMarketConfig } from "../../utils/config";
+import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import SafeWrapper from "../../wrappers/SafeWrapper";
 import { CIXPriceAdapter__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 import { compareAddress } from "../../utils/address";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const cixPriceAdapter = CIXPriceAdapter__factory.connect(config.oracles.priceAdapters.dix, deployer);
 
   const cE8 = ethers.utils.parseUnits("47.46426", 8);
@@ -40,18 +40,10 @@ async function main(chainId: number) {
   ];
 
   console.log(`[configs/CIXPriceAdapter] Set Config...`);
-  if (compareAddress(await cixPriceAdapter.owner(), config.safe)) {
-    const tx = await safeWrapper.proposeTransaction(
-      cixPriceAdapter.address,
-      0,
-      cixPriceAdapter.interface.encodeFunctionData("setConfig", [cE8, assetIds, weightsE8, usdQuoteds])
-    );
-    console.log(`[configs/CIXPriceAdapter] Proposed tx to set limit by market index: ${tx}`);
-  } else {
-    const tx = await cixPriceAdapter.setConfig(cE8, assetIds, weightsE8, usdQuoteds);
-    console.log(`[configs/CIXPriceAdapter] Send tx to set config: ${tx.hash}`);
-    await tx.wait();
-  }
+  await ownerWrapper.authExec(
+    cixPriceAdapter.address,
+    cixPriceAdapter.interface.encodeFunctionData("setConfig", [cE8, assetIds, weightsE8, usdQuoteds])
+  );
 }
 
 const program = new Command();

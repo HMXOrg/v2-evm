@@ -262,4 +262,10 @@ interface IConfigStorage {
   function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256);
 
   function setIsStepMinProfitEnabledByMarketIndex(uint256[] memory marketIndexes, bool[] memory isEnableds) external;
+
+  function setMakerTakerFeeByMarketIndexes(
+    uint256[] memory marketIndexes,
+    uint256[] memory makerFees,
+    uint256[] memory takerFees
+  ) external;
 }

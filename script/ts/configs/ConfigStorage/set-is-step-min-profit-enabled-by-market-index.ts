@@ -40,6 +40,8 @@ async function main(chainId: number) {
     { marketIndex: 49, isEnabled: true },
     { marketIndex: 50, isEnabled: true },
     { marketIndex: 51, isEnabled: true },
+    { marketIndex: 52, isEnabled: true },
+    { marketIndex: 53, isEnabled: true },
   ];
 
   const deployer = signers.deployer(chainId);

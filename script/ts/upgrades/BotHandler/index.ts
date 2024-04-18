@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network, getChainId } from "hardhat";
+import { ethers, tenderly, upgrades, network, getChainId, run } from "hardhat";
 import { getConfig, loadConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import signers from "../../entities/signers";
@@ -30,6 +30,12 @@ async function main() {
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "BotHandler",
+  });
+
+  console.log(`[upgrades/BotHandler] Verify contract on Etherscan`);
+  await run("verify:verify", {
+    address: newImplementation.toString(),
+    constructorArguments: [],
   });
 }
 

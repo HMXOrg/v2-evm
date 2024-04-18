@@ -80,11 +80,11 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     vars.len = vars.traderTokens.length;
     vars.oracle = OracleMiddleware(configStorage.oracle());
 
-    emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, executionFeeInUsd);
     if (_absSizeDelta >= waviedExecutionFeeMinTradeSize) {
       emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, executionFeeInUsd);
       subsidizedExecutionFeeValue += executionFeeInUsd;
     } else {
+      emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, executionFeeInUsd);
       vars.executionFeeToBePaidInUsd = executionFeeInUsd;
       for (uint256 _i; _i < vars.len; ) {
         vars.assetId = configStorage.tokenAssetIds(vars.traderTokens[_i]);

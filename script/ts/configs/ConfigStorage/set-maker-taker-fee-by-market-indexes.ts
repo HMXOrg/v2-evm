@@ -10,19 +10,14 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      fromSize: 0,
-      toSize: ethers.utils.parseUnits("100000", 30),
-      minProfitDuration: 60,
+      marketIndex: 0,
+      makerFee: (0.02 / 100) * 1e8,
+      takerFee: (0.04 / 100) * 1e8,
     },
     {
-      fromSize: ethers.utils.parseUnits("100000", 30),
-      toSize: ethers.utils.parseUnits("200000", 30),
-      minProfitDuration: 300,
-    },
-    {
-      fromSize: ethers.utils.parseUnits("200000", 30),
-      toSize: ethers.constants.MaxUint256,
-      minProfitDuration: 600,
+      marketIndex: 1,
+      makerFee: (0.01 / 100) * 1e8,
+      takerFee: (0.04 / 100) * 1e8,
     },
   ];
 
@@ -30,7 +25,7 @@ async function main(chainId: number) {
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("[config/ConfigStorage] Add Step Min Profit Duration...");
+  console.log("[config/ConfigStorage] Set Step Min Profit Duration...");
   console.table(
     inputs.map((each) => {
       return {
@@ -42,7 +37,7 @@ async function main(chainId: number) {
   );
   await ownerWrapper.authExec(
     configStorage.address,
-    configStorage.interface.encodeFunctionData("addStepMinProfitDuration", [inputs])
+    configStorage.interface.encodeFunctionData("setStepMinProfitDuration", [inputs.map((e) => e.index), inputs])
   );
   console.log("[config/ConfigStorage] Done");
 }

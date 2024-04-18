@@ -261,10 +261,16 @@ interface IConfigStorage {
 
   function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256);
 
+  function setIsStepMinProfitEnabledByMarketIndex(uint256[] memory marketIndexes, bool[] memory isEnableds) external;
+
+  function setMakerTakerFeeByMarketIndexes(
+    uint256[] memory marketIndexes,
+    uint256[] memory makerFees,
+    uint256[] memory takerFees
+  ) external;
+
   /// CHAIN:BLAST
   function ybTokenOf(address _token) external view returns (address);
 
   function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external;
-
-  function setIsStepMinProfitEnabledByMarketIndex(uint256[] memory marketIndexes, bool[] memory isEnableds) external;
 }

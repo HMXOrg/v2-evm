@@ -70,7 +70,36 @@ const config: HardhatUserConfig = {
     apiKey: {
       arbitrumOne: process.env.ETHERSCAN_API_KEY!,
       arbitrumGoerli: process.env.ETHERSCAN_API_KEY!,
+      arbitrumSepolia: process.env.ETHERSCAN_API_KEY!,
+      blastSepolia: process.env.ETHERSCAN_API_KEY!,
+      blast: process.env.BLASTSCAN_API_KEY!,
     },
+    customChains: [
+      {
+        network: "blast",
+        chainId: 81457,
+        urls: {
+          apiURL: "https://api.blastscan.io/api",
+          browserURL: "https://www.blastscan.io",
+        },
+      },
+      {
+        network: "blastSepolia",
+        chainId: 168587773,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan",
+          browserURL: "https://testnet.blastscan.io",
+        },
+      },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+    ],
   },
   // This fully resolves paths for imports in the ./lib directory for Hardhat
   preprocess: {

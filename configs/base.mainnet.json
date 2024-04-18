@@ -21,7 +21,8 @@
   "helpers": {
     "trade": "",
     "limitTrade": "",
-    "tradeOrder": ""
+    "tradeOrder": "",
+    "intentBuilder": ""
   },
   "services": {
     "crossMargin": "",

@@ -25,19 +25,14 @@ async function main(chainId: number) {
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("[config/ConfigStorage] Set Step Min Profit Duration...");
-  console.table(
-    inputs.map((each) => {
-      return {
-        ...each,
-        fromSize: ethers.utils.formatUnits(each.fromSize, 30),
-        toSize: ethers.utils.formatUnits(each.toSize, 30),
-      };
-    })
-  );
+  console.log("[config/ConfigStorage] Set Maker/Taker Fee...");
   await ownerWrapper.authExec(
     configStorage.address,
-    configStorage.interface.encodeFunctionData("setStepMinProfitDuration", [inputs.map((e) => e.index), inputs])
+    configStorage.interface.encodeFunctionData("setMakerTakerFeeByMarketIndexes", [
+      inputs.map((e) => e.marketIndex),
+      inputs.map((e) => e.makerFee),
+      inputs.map((e) => e.takerFee),
+    ])
   );
   console.log("[config/ConfigStorage] Done");
 }

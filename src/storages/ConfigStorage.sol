@@ -52,6 +52,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
   event LogSetYbTokenOf(address token, address ybToken);
   event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
+  event LogSetMakerTakerFee(uint256 marketIndex, uint256 makerFee, uint256 takerFee);
 
   /**
    * Constants
@@ -106,6 +107,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   // Min profit duration in steps based on trade size
   StepMinProfitDuration[] public stepMinProfitDurations;
   mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
+
+  // Cannot put these inside MarketConfig due to backward incompatibility
+  mapping(uint256 marketIndex => uint256 takerFeeE8) public takerFeeE8ByMarketIndex;
+  mapping(uint256 marketIndex => uint256 makerFeeE8) public makerFeeE8ByMarketIndex;
 
   /**
    * Modifiers
@@ -741,6 +746,26 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     uint256 length = marketIndexes.length;
     for (uint256 i; i < length; ) {
       isStepMinProfitEnabledByMarketIndex[marketIndexes[i]] = isEnableds[i];
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setMakerTakerFeeByMarketIndexes(
+    uint256[] memory marketIndexes,
+    uint256[] memory makerFees,
+    uint256[] memory takerFees
+  ) external onlyOwner {
+    if (marketIndexes.length != makerFees.length || makerFees.length != takerFees.length)
+      revert IConfigStorage_BadLen();
+    uint256 length = marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      makerFeeE8ByMarketIndex[marketIndexes[i]] = makerFees[i];
+      takerFeeE8ByMarketIndex[marketIndexes[i]] = takerFees[i];
+
+      emit LogSetMakerTakerFee(marketIndexes[i], makerFees[i], takerFees[i]);
 
       unchecked {
         ++i;

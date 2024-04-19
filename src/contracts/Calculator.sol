@@ -1118,12 +1118,54 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _baseFeeRateBPS,
     uint256 _marketIndex
   ) internal view returns (uint256 tradingFee) {
-    bool isAdaptiveFeeEnabled = ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_marketIndex);
-    if (isAdaptiveFeeEnabled) {
-      uint32 feeBPS = TradeHelper(tradeHelper).getAdaptiveFeeBps(_size, _marketIndex, uint32(_baseFeeRateBPS));
-      return (HMXLib.abs(_size) * feeBPS) / BPS;
+    TradeHelper th = TradeHelper(tradeHelper);
+    bool _isAdaptiveFee = ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_marketIndex);
+    IPerpStorage.Market memory market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
+    int256 skew = int256(market.longPositionSize) - int256(market.shortPositionSize);
+    uint256 takerFeeE8 = ConfigStorage(configStorage).takerFeeE8ByMarketIndex(_marketIndex);
+    uint256 makerFeeE8 = ConfigStorage(configStorage).makerFeeE8ByMarketIndex(_marketIndex);
+    uint256 absSizeDelta = HMXLib.abs(_size);
+    if (takerFeeE8 > 0 || makerFeeE8 > 0) {
+      // If _sizeDelta and _skew are in the same direction
+      // (multiply them together; if they have the same sign, the result will be positive.)
+      if (_size * skew > 0) {
+        // _skew will be larger, we will charge takerFee only
+        // Calculate the trading fee
+
+        if (_isAdaptiveFee) {
+          takerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, takerFeeE8);
+        }
+        tradingFee = (absSizeDelta * takerFeeE8) / 1e8;
+      } else {
+        // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
+        if (absSizeDelta > HMXLib.abs(skew)) {
+          // Collect makerFee first on the part equal to current market skew
+          if (_isAdaptiveFee) {
+            makerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, makerFeeE8);
+          }
+          tradingFee = (HMXLib.abs(skew) * makerFeeE8) / 1e8;
+
+          // Then collect takerFee from the part that make marketSkew worse
+          if (_isAdaptiveFee) {
+            takerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, takerFeeE8);
+          }
+          tradingFee += (HMXLib.abs(_size + skew) * takerFeeE8) / 1e8;
+        } else {
+          // if _size does not flip _skew, it makes _skew better
+          // we collect makerFee only
+          if (_isAdaptiveFee) {
+            makerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, makerFeeE8);
+          }
+          tradingFee = (absSizeDelta * makerFeeE8) / 1e8;
+        }
+      }
     } else {
-      return (HMXLib.abs(_size) * _baseFeeRateBPS) / BPS;
+      // If taker and maker fee is not set, use legacy trading fee
+      if (_isAdaptiveFee) {
+        _baseFeeRateBPS = th.getAdaptiveFeeBps(_size, _marketIndex, uint32(_baseFeeRateBPS));
+      }
+
+      tradingFee = (absSizeDelta * _baseFeeRateBPS) / BPS;
     }
   }
 

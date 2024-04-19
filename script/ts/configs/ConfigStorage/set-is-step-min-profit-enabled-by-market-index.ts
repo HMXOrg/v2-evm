@@ -3,7 +3,6 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
-import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);

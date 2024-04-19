@@ -113,7 +113,15 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetAdaptiveFeeCalculator(address indexed oldAdaptiveFeeCalculator, address indexed adaptiveFeeCalculator);
   event LogSetOrderbookOracle(address indexed oldOrderbookOracle, address indexed orderbookOracle);
   event LogSetMaxAdaptiveFeeBps(uint32 indexed oldMaxAdaptiveFeeBps, uint32 indexed maxAdaptiveFeeBps);
-  event LogMakerTakerFee(uint256 makerFeeE8, uint256 makerSizeDelta, uint256 takerFeeE8, uint256 takerSizeDelta);
+  event LogSettleMakerTakerFee(
+    bytes32 positionId,
+    uint256 marketIndex,
+    address subAccount,
+    uint256 makerFeeE8,
+    uint256 makerSizeDelta,
+    uint256 takerFeeE8,
+    uint256 takerSizeDelta
+  );
 
   /**
    * Structs
@@ -429,11 +437,14 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     int256 skew;
     uint256 takerFeeE8;
     uint256 makerFeeE8;
+    uint256 takerFeeSizeDelta;
+    uint256 makerFeeSizeDelta;
+    bool isLong;
   }
 
   function _updateFeeStates(
-    bytes32 /*_positionId*/,
-    address /*_subAccount*/,
+    bytes32 _positionId,
+    address _subAccount,
     PerpStorage.Position memory _position,
     int256 _sizeDelta,
     uint32 _positionFeeBPS,
@@ -460,8 +471,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         if (_isAdaptiveFee) {
           vars.takerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.takerFeeE8);
         }
-        _tradingFee = (vars.absSizeDelta * vars.takerFeeE8) / 1e8;
-        emit LogMakerTakerFee(0, 0, vars.takerFeeE8, vars.absSizeDelta);
+        vars.takerFeeSizeDelta = vars.absSizeDelta;
+        _tradingFee = (vars.takerFeeSizeDelta * vars.takerFeeE8) / 1e8;
       } else {
         // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
         if (vars.absSizeDelta > HMXLib.abs(vars.skew)) {
@@ -469,30 +480,34 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
           if (_isAdaptiveFee) {
             vars.makerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.makerFeeE8);
           }
-          _tradingFee = (HMXLib.abs(vars.skew) * vars.makerFeeE8) / 1e8;
+          vars.makerFeeSizeDelta = HMXLib.abs(vars.skew);
+          _tradingFee = (vars.makerFeeSizeDelta * vars.makerFeeE8) / 1e8;
 
           // Then collect takerFee from the part that make marketSkew worse
           if (_isAdaptiveFee) {
             vars.takerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.takerFeeE8);
           }
-          _tradingFee += (HMXLib.abs(_sizeDelta + vars.skew) * vars.takerFeeE8) / 1e8;
-
-          emit LogMakerTakerFee(
-            vars.makerFeeE8,
-            HMXLib.abs(vars.skew),
-            vars.takerFeeE8,
-            HMXLib.abs(_sizeDelta + vars.skew)
-          );
+          vars.takerFeeSizeDelta = HMXLib.abs(_sizeDelta + vars.skew);
+          _tradingFee += (vars.takerFeeSizeDelta * vars.takerFeeE8) / 1e8;
         } else {
           // if _sizeDelta does not flip _skew, it makes _skew better
           // we collect makerFee only
           if (_isAdaptiveFee) {
             vars.makerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.makerFeeE8);
           }
-          _tradingFee = (vars.absSizeDelta * vars.makerFeeE8) / 1e8;
-          emit LogMakerTakerFee(vars.makerFeeE8, vars.absSizeDelta, 0, 0);
+          vars.makerFeeSizeDelta = vars.absSizeDelta;
+          _tradingFee = (vars.makerFeeSizeDelta * vars.makerFeeE8) / 1e8;
         }
       }
+      emit LogSettleMakerTakerFee(
+        _positionId,
+        _marketIndex,
+        _subAccount,
+        vars.makerFeeE8,
+        vars.makerFeeSizeDelta,
+        vars.takerFeeE8,
+        vars.takerFeeSizeDelta
+      );
     } else {
       // If taker and maker fee is not set, use legacy trading fee
       if (_isAdaptiveFee) {
@@ -513,7 +528,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Calculate the funding fee
     // We are assuming that the market state has been updated with the latest funding rate
-    bool _isLong = _position.positionSizeE30 > 0;
+    vars.isLong = _position.positionSizeE30 > 0;
     _fundingFee = vars.calculator.getFundingFee(
       _position.positionSizeE30,
       vars.market.fundingAccrued,
@@ -521,7 +536,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     );
 
     // Update global state
-    _isLong
+    vars.isLong
       ? _updateAccumFundingLong(_marketIndex, -_fundingFee)
       : _updateAccumFundingShort(_marketIndex, -_fundingFee);
 

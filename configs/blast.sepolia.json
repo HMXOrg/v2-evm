@@ -63,7 +63,7 @@
     "tlc": "0x4353676051098d1a7893879Eb2Dae1955066aFc9"
   },
   "calculator": "0xf944690f3B7436161BA27B47799Bd06EA4154C0e",
-  "adaptiveFeeCalculator": "0x5337672c258E5D7AFabe3104EA330C4CB2c6e44f",
+  "adaptiveFeeCalculator": "0x5B0f422C7d55dC02aaC81324cb4d8b79fe99D3CD",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""

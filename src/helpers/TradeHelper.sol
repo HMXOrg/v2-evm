@@ -113,7 +113,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetAdaptiveFeeCalculator(address indexed oldAdaptiveFeeCalculator, address indexed adaptiveFeeCalculator);
   event LogSetOrderbookOracle(address indexed oldOrderbookOracle, address indexed orderbookOracle);
   event LogSetMaxAdaptiveFeeBps(uint32 indexed oldMaxAdaptiveFeeBps, uint32 indexed maxAdaptiveFeeBps);
-  event LogMakerTakerFee(
+  event LogSettleMakerTakerFee(
     bytes32 positionId,
     uint256 marketIndex,
     address subAccount,
@@ -499,7 +499,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
           _tradingFee = (vars.makerFeeSizeDelta * vars.makerFeeE8) / 1e8;
         }
       }
-      emit LogMakerTakerFee(
+      emit LogSettleMakerTakerFee(
         _positionId,
         _marketIndex,
         _subAccount,

@@ -7,7 +7,7 @@ pragma solidity 0.8.18;
 import { Test } from "forge-std/Test.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import { Deployer, IEcoPythCalldataBuilder3, ILiquidityHandler, IIntentHandler, IGasService, ICrossMarginHandler, IBotHandler, ITradeOrderHelper, ITradeService, ILiquidityService, ILiquidationService, ICrossMarginService, ITradeHelper, ICalculator, IVaultStorage, IPerpStorage, IConfigStorage, IOracleMiddleware, IPythAdapter, IEcoPythCalldataBuilder, IEcoPyth, IIntentHandler, IIntentHandler } from "@hmx-test/libs/Deployer.sol";
+import { Deployer, IEcoPythCalldataBuilder3, ILimitTradeHandler, ILiquidityHandler, IIntentHandler, IGasService, ICrossMarginHandler, IBotHandler, ITradeOrderHelper, ITradeService, ILiquidityService, ILiquidationService, ICrossMarginService, ITradeHelper, ICalculator, IVaultStorage, IPerpStorage, IConfigStorage, IOracleMiddleware, IPythAdapter, IEcoPythCalldataBuilder, IEcoPyth, IIntentHandler, IIntentHandler } from "@hmx-test/libs/Deployer.sol";
 import { OnChainPriceLens } from "@hmx/oracles/OnChainPriceLens.sol";
 import { CalcPriceLens } from "@hmx/oracles/CalcPriceLens.sol";
 import { UnsafeEcoPythCalldataBuilder3 } from "@hmx/oracles/UnsafeEcoPythCalldataBuilder3.sol";
@@ -16,7 +16,6 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 import { IntentBuilder } from "@hmx-test/libs/IntentBuilder.sol";
 import { console } from "forge-std/console.sol";
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
 contract Smoke_Debug is ForkEnv {
   int64[] priceE8s;
@@ -31,58 +30,47 @@ contract Smoke_Debug is ForkEnv {
   }
 
   function test() external {
-    vm.createSelectFork(vm.envString("BLAST_SEPOLIA_RPC"));
+    vm.createSelectFork(vm.envString("BLAST_SEPOLIA_RPC"), 4534854);
 
-    OrderReader orderReader = OrderReader(0xf64DCCfedB413014B2B53b5330DEd402c3CB32A2);
-    uint64[] memory _prices = new uint64[](46);
-    _prices[0] = 352071104199;
-    _prices[1] = 6898488146585;
-    _prices[2] = 15186400000;
-    _prices[3] = 234715000000;
-    _prices[4] = 108614000;
-    _prices[5] = 2807937000;
-    _prices[6] = 66237000;
-    _prices[7] = 126966000;
-    _prices[8] = 57799999;
-    _prices[9] = 88217694;
-    _prices[10] = 153964014;
-    _prices[11] = 146651637;
-    _prices[12] = 300549999;
-    _prices[13] = 9607290667;
-    _prices[14] = 58865005000;
-    _prices[15] = 17044353500;
-    _prices[16] = 61030789;
-    _prices[17] = 1737850000;
-    _prices[18] = 90364000;
-    _prices[19] = 18787450;
-    _prices[20] = 135650000;
-    _prices[21] = 134450000;
-    _prices[22] = 724158000;
-    _prices[23] = 783250000;
-    _prices[24] = 61287484642;
-    _prices[25] = 3714654;
-    _prices[26] = 10037716236;
-    _prices[27] = 375347977;
-    _prices[28] = 312280827;
-    _prices[29] = 6974642597;
-    _prices[30] = 1128617923;
-    _prices[31] = 4702349999;
-    _prices[32] = 3265216855;
-    _prices[33] = 842450000;
-    _prices[34] = 66875005;
-    _prices[35] = 1073050040;
-    _prices[36] = 693490;
-    _prices[37] = 2747660;
-    _prices[38] = 1054464000;
-    _prices[39] = 1572693123;
-    _prices[40] = 271067636;
-    _prices[41] = 183777669;
-    _prices[42] = 75131630;
-    _prices[43] = 623162149;
-    _prices[44] = 83587927;
-    _prices[45] = 139548830;
+    vm.startPrank(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a);
 
-    bool[] memory _shouldInverts = new bool[](46);
-    orderReader.getExecutableOrders(900, 0, _prices, _shouldInverts);
+    bytes32[] memory priceData = new bytes32[](6);
+    priceData[0] = 0x013ad701b102ffffff000001fffffe00c4f0012f76000281008200ffeece0000;
+    priceData[1] = 0x000858ffe54dfff369000cfd0007680023a900ad8500f99000c382ffe7860000;
+    priceData[2] = 0x006bb5fffc64ffb852000c5f000c0b004d6500506800f349ff75fe005d580000;
+    priceData[3] = 0x00b4c70034990028c6009867005f6d008db30082e0004d41ffeda200553e0000;
+    priceData[4] = 0xff38c2ff72a5006a04001a22013adb00001a000b1ffff0a3004517ffedbb0000;
+    priceData[5] = 0x00024b0000000000000000000000000000000000000000000000000000000000;
+
+    bytes32[] memory publishTimeData = new bytes32[](6);
+    publishTimeData[0] = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    publishTimeData[1] = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    publishTimeData[2] = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    publishTimeData[3] = 0x0000030000000000000000000000000000000000000000000000000000000000;
+    publishTimeData[4] = 0x0000000000000000000000000000030000030000000000000000000000000000;
+    publishTimeData[5] = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
+    address[] memory _accounts = new address[](1);
+    _accounts[0] = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a;
+
+    uint8[] memory _subAccountIds = new uint8[](1);
+    _subAccountIds[0] = 1;
+
+    uint256[] memory _orderIndexes = new uint256[](1);
+    _orderIndexes[0] = 50;
+
+    ILimitTradeHandler(payable(0xF1b49fd29240a6f91988f18322e7851cB9a88BEe)).executeOrders(
+      _accounts,
+      _subAccountIds,
+      _orderIndexes,
+      payable(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a),
+      priceData,
+      publishTimeData,
+      1713756389,
+      0xe14423cae1bfe5774ec5916d5a3777f22da1659180f0af60fd9ab7e05bbd1916,
+      true
+    );
+
+    vm.stopPrank();
   }
 }

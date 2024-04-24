@@ -40,7 +40,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 4, // 0.04%
       initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 350000, // 3500%
+      maxProfitRateBPS: 200000, // 2000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -59,7 +59,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 4, // 0.04%
       initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 350000, // 3500%
+      maxProfitRateBPS: 200000, // 2000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -78,7 +78,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -97,7 +97,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -116,7 +116,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -135,7 +135,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -154,7 +154,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -173,7 +173,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -192,7 +192,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -211,7 +211,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -230,7 +230,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -249,7 +249,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -268,7 +268,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -287,7 +287,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -306,7 +306,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -325,7 +325,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -344,7 +344,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -363,7 +363,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -382,7 +382,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -401,7 +401,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -420,7 +420,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -439,7 +439,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -458,7 +458,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -477,7 +477,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -496,7 +496,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -515,7 +515,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -534,7 +534,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -553,7 +553,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -572,7 +572,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -591,7 +591,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -610,7 +610,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -629,7 +629,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -648,7 +648,7 @@ async function main(chainId: number) {
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,

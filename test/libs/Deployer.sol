@@ -73,6 +73,7 @@ import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveS
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
+import { ICalcPriceAdapter } from "@hmx/oracles/interfaces/ICalcPriceAdapter.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -817,6 +818,21 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IGasService(payable(_proxy));
+  }
+
+  function deployPendlePTAdapter(
+    uint256 assetPriceAssetId_,
+    address marketAddress_,
+    address pendlePtLpOracle_,
+    uint32 twapDuration_
+  ) internal returns (ICalcPriceAdapter) {
+    return
+      ICalcPriceAdapter(
+        deployContractWithArguments(
+          "PendlePTAdapter",
+          abi.encode(assetPriceAssetId_, marketAddress_, pendlePtLpOracle_, twapDuration_)
+        )
+      );
   }
 
   /**

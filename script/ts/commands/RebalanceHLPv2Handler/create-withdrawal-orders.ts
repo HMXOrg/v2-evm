@@ -11,8 +11,8 @@ async function main(chainId: number) {
   const executionFee = ethers.utils.parseEther("0.002");
   const withdrawalParams = [
     {
-      market: config.tokens.gmETHUSD,
-      amount: ethers.utils.parseUnits("37878.7879", 18),
+      market: config.tokens.gmBTCUSD,
+      amount: ethers.utils.parseUnits("320000", 18),
       minLongTokenAmount: 0,
       minShortTokenAmount: 0,
       gasLimit: 1000000,

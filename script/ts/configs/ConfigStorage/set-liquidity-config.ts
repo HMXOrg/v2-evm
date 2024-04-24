@@ -1,10 +1,8 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
-
-const config = getConfig();
+import { ConfigStorage__factory } from "../../../../typechain";
+import { loadConfig } from "../../utils/config";
+import { Command } from "commander";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
+import signers from "../../entities/signers";
 
 const liquidityConfig = {
   depositFeeRateBPS: 0, // 0%
@@ -18,16 +16,26 @@ const liquidityConfig = {
   enabled: true,
 };
 
-async function main() {
-  const deployer = (await ethers.getSigners())[0];
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("> ConfigStorage: Set Liquidity Config...");
-  await (await configStorage.setLiquidityConfig(liquidityConfig)).wait();
-  console.log("> ConfigStorage: Set Liquidity Config success!");
+  console.log("[configs/ConfigStorage] Set Liquidity Config...");
+  await ownerWrapper.authExec(
+    configStorage.address,
+    configStorage.interface.encodeFunctionData("setLiquidityConfig", [liquidityConfig])
+  );
 }
 
-main().catch((error) => {
+const program = new Command();
+
+program.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+
+const opts = program.parse(process.argv).opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

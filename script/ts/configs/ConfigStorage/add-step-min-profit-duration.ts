@@ -10,21 +10,6 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      fromSize: 0,
-      toSize: ethers.utils.parseUnits("10000", 30),
-      minProfitDuration: 60,
-    },
-    {
-      fromSize: ethers.utils.parseUnits("10000", 30),
-      toSize: ethers.utils.parseUnits("100000", 30),
-      minProfitDuration: 180,
-    },
-    {
-      fromSize: ethers.utils.parseUnits("100000", 30),
-      toSize: ethers.utils.parseUnits("200000", 30),
-      minProfitDuration: 300,
-    },
-    {
       fromSize: ethers.utils.parseUnits("200000", 30),
       toSize: ethers.constants.MaxUint256,
       minProfitDuration: 600,

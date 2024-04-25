@@ -48,6 +48,7 @@ import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
@@ -72,6 +73,13 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
+
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
+import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
+import { IntentBuilder } from "@hmx-test/libs/IntentBuilder.sol";
+import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
@@ -93,6 +101,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   address internal FEEVER;
   address internal ORDER_EXECUTOR;
   address internal BOT;
+
+  address internal constant EXT01_EXECUTOR = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -151,6 +161,15 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   TradeTester tradeTester;
 
   ProxyAdmin proxyAdmin;
+
+  AdaptiveFeeCalculator adaptiveFeeCalculator;
+  OrderbookOracle orderbookOracle;
+  IExt01Handler ext01Handler;
+
+  ITradeOrderHelper tradeOrderHelper;
+  IIntentHandler intentHandler;
+  IntentBuilder intentBuilder;
+  IGasService gasService;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -292,6 +311,54 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       maxExecutionChuck
     );
 
+    // deploy executor
+    ext01Handler = Deployer.deployExt01Handler(
+      address(proxyAdmin),
+      address(crossMarginService),
+      address(liquidationService),
+      address(liquidityService),
+      address(tradeService),
+      address(pyth)
+    );
+
+    tradeOrderHelper = Deployer.deployTradeOrderHelper(
+      address(configStorage),
+      address(perpStorage),
+      address(oracleMiddleWare),
+      address(tradeService)
+    );
+
+    gasService = Deployer.deployGasService(
+      address(proxyAdmin),
+      address(vaultStorage),
+      address(configStorage),
+      0.1 * 1e30,
+      FEEVER
+    );
+
+    intentHandler = Deployer.deployIntentHandler(
+      address(proxyAdmin),
+      address(pyth),
+      address(configStorage),
+      address(tradeOrderHelper),
+      address(gasService)
+    );
+
+    intentBuilder = new IntentBuilder(address(configStorage));
+
+    ext01Handler.setOrderExecutor(EXT01_EXECUTOR, true);
+    ext01Handler.setMinExecutionFee(2, 0.1 * 1e9);
+    pyth.setUpdater(address(ext01Handler), true);
+    address[] memory _handlers = new address[](1);
+    _handlers[0] = address(ext01Handler);
+    address[] memory _services = new address[](1);
+    _services[0] = address(crossMarginService);
+    bool[] memory _isAllows = new bool[](1);
+    _isAllows[0] = true;
+    configStorage.setServiceExecutors(_services, _handlers, _isAllows);
+
+    vm.label(address(ext01Handler), "ext01Handler");
+
     // testers
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
     globalMarketTester = new MarketTester(perpStorage);
@@ -336,6 +403,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(liquidationService), true);
       vaultStorage.setServiceExecutors(address(botHandler), true);
+      vaultStorage.setServiceExecutors(address(gasService), true);
     }
 
     // Setup PerpStorage
@@ -366,5 +434,20 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       crossMarginHandler.setOrderExecutor(address(this), true);
     }
+
+    // Setup Intent Handler
+    {
+      tradeOrderHelper.setWhitelistedCaller(address(intentHandler));
+      intentHandler.setIntentExecutor(address(this), true);
+      configStorage.setServiceExecutor(address(gasService), address(intentHandler), true);
+    }
+    adaptiveFeeCalculator = new AdaptiveFeeCalculator(15000, 500);
+    orderbookOracle = new OrderbookOracle();
+
+    tradeHelper.setAdaptiveFeeCalculator(address(adaptiveFeeCalculator));
+    tradeHelper.setOrderbookOracle(address(orderbookOracle));
+    tradeHelper.setMaxAdaptiveFeeBps(500);
+
+    calculator.setTradeHelper(address(tradeHelper));
   }
 }

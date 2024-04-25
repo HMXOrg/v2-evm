@@ -40,6 +40,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address token,
     uint256 amount
   );
+  event LogTransferCollateralSubAccount(
+    address indexed primaryAccount,
+    uint256 indexed subAccountFrom,
+    uint256 indexed subAccountTo,
+    address token,
+    uint256 amount
+  );
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
@@ -91,6 +98,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   WithdrawOrder[] public withdrawOrders; // all withdrawOrders
   mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
   mapping(address => bool) public orderExecutors; // address -> flag to execute
+  mapping(address user => bool isBanned) banlist;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _crossMarginService Address of the CrossMarginService contract.
@@ -257,6 +265,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
     if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
       revert ICrossMarginHandler_NotWNativeToken();
+    if (banlist[msg.sender]) revert ICrossMarginHandler_Unauthorized();
 
     // convert native to WNative (including executionFee)
     _transferInETH();
@@ -504,6 +513,12 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Sanity check
     IEcoPyth(_pyth).getAssetIds();
+  }
+
+  function setBanlist(address[] memory users, bool[] memory isBanned) external onlyOwner {
+    for (uint256 i = 0; i < users.length; i++) {
+      banlist[users[i]] = isBanned[i];
+    }
   }
 
   /// @notice setMinExecutionFee

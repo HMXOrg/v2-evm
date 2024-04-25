@@ -7,6 +7,7 @@ pragma solidity 0.8.18;
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 contract MockCalculator is ICalculator {
@@ -190,7 +191,7 @@ contract MockCalculator is ICalculator {
     return nextBorrowingRate;
   }
 
-  function getTradingFee(uint256 /*_size*/, uint256 /*_baseFeeRateBPS*/) public view virtual returns (uint256) {
+  function getTradingFee(int256 /*_size*/, uint256 /*_baseFeeRateBPS*/, uint256) public view virtual returns (uint256) {
     return 0;
   }
 
@@ -238,6 +239,8 @@ contract MockCalculator is ICalculator {
 
   function setPerpStorage(address /*_address*/) external {}
 
+  function setTradeHelper(address /*_address*/) external {}
+
   function calculateMarketAveragePrice(
     int256 /* _marketPositionSize */,
     uint256 /* _marketAveragePrice */,
@@ -248,11 +251,27 @@ contract MockCalculator is ICalculator {
   ) public view virtual returns (uint256 _newAvaragePrice) {}
 
   function getDelta(
+    IPerpStorage.Position memory position,
+    uint256 _markPrice
+  ) public view virtual returns (bool, uint256) {}
+
+  function getDelta(
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice,
-    uint256 _lastIncreaseTimestamp
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
+  ) public view virtual returns (bool, uint256) {}
+
+  function getDelta(
+    address _subAccount,
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
   ) public view virtual returns (bool, uint256) {}
 
   function getPositionNextAveragePrice(

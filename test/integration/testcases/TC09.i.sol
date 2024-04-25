@@ -12,10 +12,13 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 
+import "forge-std/console.sol";
+
 contract TC09 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   function testCorrectness_TC09() external {
+    vm.warp(1698207980);
     // T0: Initialized state
     {
       //deal with out of gas
@@ -56,6 +59,9 @@ contract TC09 is BaseIntTest_WithActions {
       // buy
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
       marketBuy(ALICE, 1, wbtcMarketIndex, 10_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+
+      assertEq(perpStorage.getEpochVolume(true, jpyMarketIndex), 100_000 * 1e30);
+      assertEq(perpStorage.getEpochVolume(true, wbtcMarketIndex), 10_000 * 1e30);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
@@ -88,17 +94,17 @@ contract TC09 is BaseIntTest_WithActions {
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |  Total |                           0.03377036 |      0.0015 |           0.00007311 |        0.00079999 |     0.00025 |  0.03639346 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
-       * |    Dev |                                      |    0.000225 |           0.00001096 |                   |             |  0.00023596 |  BTC |
+       * |    Dev |                                      |     0.00015 |           0.00000731 |                   |             |  0.00015731 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |    HLP |                           0.03377036 |             |           0.00006215 |                   |             |  0.03383251 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
-       * |  P-fee |                                      |    0.001275 |                      |                   |             |    0.001275 |  BTC |
+       * |  P-fee |                                      |     0.00135 |                      |                   |             |    0.00135 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |    liq |                                      |             |                      |                   |     0.00025 |     0.00025 |  BTC |
        */
       address aliceSubAccount1 = getSubAccount(ALICE, 0);
       assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1213266);
-      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.001275 * 1e8), 63471, 0);
+      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00135 * 1e8), 300000 + 15001 + 5000 + 15001 + 7313, 0); // calculate 2 times for tradingFee
       assertHLPLiquidity(address(wbtc), hlpLiquidityBefore + 0.03383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(aliceSubAccount1, 0);

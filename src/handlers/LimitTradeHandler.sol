@@ -571,7 +571,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bytes32 _encodedVaas,
     bool _isRevert
   ) internal {
-    if (_accounts.length != _subAccountIds.length && _accounts.length != _orderIndexes.length)
+    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
       revert ILimitTradeHandler_InvalidArraySize();
 
     // Update price to Pyth
@@ -695,11 +695,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         vars.order.sizeDelta,
         true
       );
+
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
     // Validate if the current price is valid for the execution of this order
-
     // Handle the sizeDelta in case it is sent with max int 256
     vars.sizeDelta = vars.order.sizeDelta;
     if (vars.order.sizeDelta == type(int256).max || vars.order.sizeDelta == type(int256).min) {
@@ -710,7 +710,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       }
     }
     if (vars.sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
-
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
       vars.order.triggerAboveThreshold,
       vars.order.triggerPrice,
@@ -722,9 +721,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Execute the order
     if (vars.order.reduceOnly) {
-      bool isCloseLong = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
-      bool isCloseShort = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
-      bool isClosePosition = !vars.isNewPosition && (isCloseLong || isCloseShort);
+      bool isDecreaseShort = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
+      bool isDecreaseLong = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
+      bool isClosePosition = !vars.isNewPosition && (isDecreaseShort || isDecreaseLong);
       if (isClosePosition) {
         _tradeService.decreasePosition({
           _account: vars.order.account,
@@ -753,8 +752,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _sizeDelta: vars.sizeDelta,
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
-        } else if (!vars.positionIsLong) {
-          bool _flipSide = !vars.order.reduceOnly && vars.sizeDelta > (-_existingPosition.positionSizeE30);
+        } else {
+          bool _flipSide = vars.sizeDelta > (-_existingPosition.positionSizeE30);
           if (_flipSide) {
             // Flip the position
             // Fully close Short position
@@ -780,10 +779,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               _account: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _positionSizeE30ToDecrease: HMXLib.min(
-                uint256(vars.sizeDelta),
-                uint256(-_existingPosition.positionSizeE30)
-              ),
+              _positionSizeE30ToDecrease: uint256(vars.sizeDelta),
               _tpToken: vars.order.tpToken,
               _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
             });
@@ -802,7 +798,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else if (vars.positionIsLong) {
-          bool _flipSide = !vars.order.reduceOnly && (-vars.sizeDelta) > _existingPosition.positionSizeE30;
+          bool _flipSide = (-vars.sizeDelta) > _existingPosition.positionSizeE30;
           if (_flipSide) {
             // Flip the position
             // Fully close Long position
@@ -828,10 +824,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               _account: vars.order.account,
               _subAccountId: vars.order.subAccountId,
               _marketIndex: vars.order.marketIndex,
-              _positionSizeE30ToDecrease: HMXLib.min(
-                uint256(-vars.sizeDelta),
-                uint256(_existingPosition.positionSizeE30)
-              ),
+              _positionSizeE30ToDecrease: uint256(-vars.sizeDelta),
               _tpToken: vars.order.tpToken,
               _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
             });
@@ -877,6 +870,31 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     _cancelOrder(_order, _subAccount, _orderIndex);
+  }
+
+  function batchCancelOrders(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256[] calldata _orderIndices
+  ) external nonReentrant delegate(_mainAccount) {
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
+    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
+    uint256 _len = _orderIndices.length;
+    for (uint256 _i; _i < _len;) {
+      uint256 _orderIndex = _orderIndices[_i];
+      LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+      // Check if this order still exists
+      if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+
+      _cancelOrder(_order, _subAccount, _orderIndex);
+      unchecked {
+        ++_i;
+      }
+    }
   }
 
   function _cancelOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {

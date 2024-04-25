@@ -1,33 +1,34 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
+import { ethers, run, tenderly, upgrades } from "hardhat";
+import { getConfig } from "../../utils/config";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
+  const config = getConfig();
+  const chainId = (await ethers.provider.getNetwork()).chainId;
   const deployer = (await ethers.getSigners())[0];
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const Contract = await ethers.getContractFactory("ConfigStorage", deployer);
-  const TARGET_ADDRESS = config.storages.config;
+  const ConfigStorage = await ethers.getContractFactory("ConfigStorage", deployer);
+  const configStorageAddress = config.storages.config;
 
-  console.log(`> Preparing to upgrade ConfigStorage`);
-  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
-  console.log(`> Done`);
+  console.log(`[upgrade/ConfigStorage] Preparing to upgrade ConfigStorage`);
+  const newImplementation = await upgrades.prepareUpgrade(configStorageAddress, ConfigStorage);
+  console.log(`[upgrade/ConfigStorage] Done`);
 
-  console.log(`> New ConfigStorage Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
-  console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`> Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`> Tx is mined!`);
+  console.log(`[upgrade/ConfigStorage] New ConfigStorage Implementation address: ${newImplementation}`);
+  await proxyAdminWrapper.upgrade(configStorageAddress, newImplementation.toString());
+  console.log(`[upgrade/ConfigStorage] Done`);
 
-  console.log(`> Verify contract on Tenderly`);
+  console.log(`[upgrade/ConfigStorage] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "ConfigStorage",
+  });
+
+  console.log(`[upgrade/ConfigStorage] Verify contract on Etherscan`);
+  await run("verify:verify", {
+    address: newImplementation.toString(),
+    constructorArguments: [],
   });
 }
 

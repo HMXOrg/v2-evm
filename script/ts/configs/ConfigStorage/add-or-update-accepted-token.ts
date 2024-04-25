@@ -3,15 +3,17 @@ import { ConfigStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   const inputs = [
     {
-      tokenAddress: config.tokens.arb,
+      tokenAddress: config.tokens.pyth,
       config: {
         targetWeight: ethers.utils.parseEther("0"), // 0%
         bufferLiquidity: 0,
@@ -21,14 +23,16 @@ async function main(chainId: number) {
     },
   ];
 
-  console.log("> ConfigStorage: AddOrUpdateAcceptedToken...");
-  const tx = await configStorage.addOrUpdateAcceptedToken(
-    inputs.map((each) => each.tokenAddress),
-    inputs.map((each) => each.config)
+  console.log("[configs/ConfigStorage] AddOrUpdateAcceptedToken...");
+  const tx = await safeWrapper.proposeTransaction(
+    configStorage.address,
+    0,
+    configStorage.interface.encodeFunctionData("addOrUpdateAcceptedToken", [
+      inputs.map((each) => each.tokenAddress),
+      inputs.map((each) => each.config),
+    ])
   );
-  console.log(`Tx hash: ${tx.hash}`);
-  await tx.wait();
-  console.log("> ConfigStorage: AddOrUpdateAcceptedToken success!");
+  console.log(`[configs/ConfigStorage] Proposed hash: ${tx}`);
 }
 
 const prog = new Command();

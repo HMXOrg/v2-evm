@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-// lib
+// libs
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -33,11 +33,15 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
 
   uint16 public minHLPValueLossBPS;
 
+  // 2023-11-08: Add 1inch router to support 1inch swap
+  address public oneInchRouter;
+
   modifier onlyWhitelisted() {
     configStorage.validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
+  event LogSetOneInchRouter(address oldValue, address newValue);
   event LogSetMinHLPValueLossBPS(uint16 oldValue, uint16 newValue);
 
   function initialize(
@@ -68,7 +72,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     IVaultStorage _vaultStorage = vaultStorage;
     IERC20Upgradeable _sglp = sglp;
 
-    // validate input
+    // Validate input
     uint256 totalGlpAccum = 0;
     for (uint256 i = 0; i < _params.length; ) {
       if (_params[i].token == address(0)) {
@@ -89,11 +93,11 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       // Set default for return data
       returnData[i].token = _params[i].token;
       returnData[i].amount = 0;
-      // get token from vault, remove HLP liq.
+      // Get token from vault, remove HLP liq.
       _vaultStorage.pushToken(address(_sglp), address(this), _params[i].glpAmount);
       _vaultStorage.removeHLPLiquidity(address(_sglp), _params[i].glpAmount);
 
-      // unstake n redeem GLP
+      // Unstake n redeem GLP
       _sglp.safeIncreaseAllowance(address(glpManager), _params[i].glpAmount);
       returnData[i].amount += rewardRouter.unstakeAndRedeemGlp(
         _params[i].token,
@@ -102,7 +106,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
         address(_vaultStorage)
       );
 
-      // update accounting
+      // Update accounting
       _vaultStorage.pullToken(_params[i].token);
       _vaultStorage.addHLPLiquidity(_params[i].token, returnData[i].amount);
       unchecked {
@@ -118,7 +122,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     IVaultStorage _vaultStorage = vaultStorage;
     ISwitchCollateralRouter _switchRouter = switchRouter;
 
-    // validate input
+    // Validate input
     for (uint256 i = 0; i < _params.length; ) {
       if (_params[i].token == address(0)) {
         revert RebalanceHLPService_InvalidTokenAddress();
@@ -141,21 +145,21 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
         path[0] = _params[i].token;
         path[1] = _params[i].tokenMedium;
 
-        // get first Token from vault, remove HLP liq.
+        // Get first Token from vault, remove HLP liq.
         _vaultStorage.pushToken(_params[i].token, address(_switchRouter), _params[i].amount);
         _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
 
         rebalanceToken = IERC20Upgradeable(_params[i].tokenMedium);
         realizedAmountToAdd = _switchRouter.execute(_params[i].amount, path);
       } else {
-        // get Token from vault, remove HLP liq.
+        // Get Token from vault, remove HLP liq.
         _vaultStorage.pushToken(_params[i].token, address(this), _params[i].amount);
         _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
 
         rebalanceToken = IERC20Upgradeable(_params[i].token);
         realizedAmountToAdd = _params[i].amount;
       }
-      // mint n stake, sanity check
+      // Mint n stake, sanity check
       rebalanceToken.safeIncreaseAllowance(address(glpManager), realizedAmountToAdd);
       receivedGlp += rewardRouter.mintAndStakeGlp(
         address(rebalanceToken),
@@ -168,14 +172,99 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       }
     }
 
-    // send accum GLP back to vault
+    // Send accum GLP back to vault
     _sglp.safeTransfer(address(vaultStorage), receivedGlp);
 
-    // send token back to vault, add HLP liq.
+    // Send token back to vault, add HLP liq.
     _vaultStorage.pullToken(address(_sglp));
     _vaultStorage.addHLPLiquidity(address(_sglp), receivedGlp);
 
     _validateHLPValue(totalHlpValueBefore);
+  }
+
+  function swap(SwapParams calldata _params) external onlyWhitelisted returns (uint256 _amountOut) {
+    // Checks
+    // Check if path is valid
+    if (_params.path.length < 2) revert RebalanceHLPService_InvalidPath();
+    // Cast dependencies to local variables to save on SLOADs.
+    IVaultStorage _vaultStorage = vaultStorage;
+    IConfigStorage _configStorage = configStorage;
+    // Check if swap HLP liquidity from one to another is valid
+    _configStorage.validateAcceptedCollateral(_params.path[0]);
+    _configStorage.validateAcceptedCollateral(_params.path[_params.path.length - 1]);
+    // Check if amountIn is valid.
+    if (_params.amountIn == 0) revert RebalanceHLPService_AmountIsZero();
+    // Cache TVL here to check if HLP value drop too much after swap
+    uint256 tvlBefore = calculator.getHLPValueE30(true);
+
+    // Preps
+    (address _tokenIn, address _tokenOut) = (_params.path[0], _params.path[_params.path.length - 1]);
+
+    // Remove HLP liquidity from tokenIn and push to switchRouter.
+    _vaultStorage.removeHLPLiquidity(_tokenIn, _params.amountIn);
+    _vaultStorage.pushToken(_tokenIn, address(switchRouter), _params.amountIn);
+
+    // Run switchRouter, it will send back _tokenOut to this contract
+    _amountOut = switchRouter.execute(uint256(_params.amountIn), _params.path);
+    // Check slippage
+    if (_amountOut < _params.minAmountOut) revert RebalanceHLPService_Slippage();
+
+    // Send last token to VaultStorage and pull
+    IERC20Upgradeable(_tokenOut).safeTransfer(address(_vaultStorage), _amountOut);
+    uint256 _deltaBalance = _vaultStorage.pullToken(_tokenOut);
+    if (_deltaBalance < _amountOut) revert RebalanceHLPService_InvalidTokenAmount();
+    // Increase HLP's liquidity
+    _vaultStorage.addHLPLiquidity(_tokenOut, _amountOut);
+
+    // Check if HLP value drop too much after swap before return
+    _validateHLPValue(tvlBefore);
+  }
+
+  function oneInchSwap(
+    SwapParams calldata _params,
+    bytes calldata _oneInchCalldata
+  ) external onlyWhitelisted returns (uint256 _amountOut) {
+    // Checks
+    // Check if path is valid
+    if (_params.path.length < 2) revert RebalanceHLPService_InvalidPath();
+    // Cast dependencies to local variables to save on SLOADs.
+    IVaultStorage _vaultStorage = vaultStorage;
+    IConfigStorage _configStorage = configStorage;
+    // Check if swap HLP liquidity from one to another is valid
+    _configStorage.validateAcceptedCollateral(_params.path[0]);
+    _configStorage.validateAcceptedCollateral(_params.path[_params.path.length - 1]);
+    // Check if amountIn is valid.
+    if (_params.amountIn == 0) revert RebalanceHLPService_AmountIsZero();
+    // Cache TVL here to check if HLP value drop too much after swap
+    uint256 tvlBefore = calculator.getHLPValueE30(true);
+
+    // Preps
+    (address _tokenIn, address _tokenOut) = (_params.path[0], _params.path[_params.path.length - 1]);
+
+    // Remove HLP liquidity from tokenIn and push to address(this).
+    _vaultStorage.removeHLPLiquidity(_tokenIn, _params.amountIn);
+    _vaultStorage.pushToken(_tokenIn, address(this), _params.amountIn);
+
+    // Approve 1inch router to spend tokenIn
+    IERC20Upgradeable(_tokenIn).safeIncreaseAllowance(oneInchRouter, _params.amountIn);
+
+    // Call 1inch swap.
+    (bool _success, ) = oneInchRouter.call(_oneInchCalldata);
+    if (!_success) revert RebalanceHLPService_OneInchSwapFailed();
+
+    // Check slippage
+    _amountOut = IERC20Upgradeable(_tokenOut).balanceOf(address(this));
+    if (_amountOut < _params.minAmountOut) revert RebalanceHLPService_Slippage();
+
+    // Send _tokenOut to VaultStorage and pull
+    IERC20Upgradeable(_tokenOut).safeTransfer(address(_vaultStorage), _amountOut);
+    uint256 _deltaBalance = _vaultStorage.pullToken(_tokenOut);
+    if (_deltaBalance < _amountOut) revert RebalanceHLPService_InvalidTokenAmount();
+    // Increase HLP's liquidity
+    _vaultStorage.addHLPLiquidity(_tokenOut, _amountOut);
+
+    // Check if HLP value drop too much after swap before return
+    _validateHLPValue(tvlBefore);
   }
 
   function _validateHLPValue(uint256 _valueBefore) internal view {
@@ -201,6 +290,11 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     }
     emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _HLPValueLossBPS);
     minHLPValueLossBPS = _HLPValueLossBPS;
+  }
+
+  function setOneInchRouter(address _oneInchRouter) external onlyOwner {
+    emit LogSetOneInchRouter(oneInchRouter, _oneInchRouter);
+    oneInchRouter = _oneInchRouter;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

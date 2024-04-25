@@ -22,7 +22,7 @@ contract TC38 is BaseIntTest_WithActions {
 
     _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
     _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig);
+    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -139,7 +139,8 @@ contract TC38 is BaseIntTest_WithActions {
       (int256 _BobUnrealizedPnlE30, ) = calculator.getUnrealizedPnlAndFee(getSubAccount(BOB, 0), 0, 0);
       (int256 _CarolUnrealizedPnlE30, ) = calculator.getUnrealizedPnlAndFee(getSubAccount(CAROL, 0), 0, 0);
 
-      assertEq(_BobUnrealizedPnlE30, 0, "T3: Bob unrealized Pnl");
+      // Bob unrealized PnL is not negated with min profit duration
+      assertEq(_BobUnrealizedPnlE30, 5366745427251721878598193819658182, "T3: Bob unrealized Pnl");
       assertEq(_CarolUnrealizedPnlE30, 0, "T3: CAROL unrealized Pnl");
     }
 
@@ -175,10 +176,12 @@ contract TC38 is BaseIntTest_WithActions {
         0
       );
       (bool bobIsProfit, uint256 bobProfit) = calculator.getDelta(
+        getSubAccount(BOB, 0),
         uint256(bobPosition.positionSizeE30),
         true,
         bobClosePrice,
         bobPosition.avgEntryPriceE30,
+        0,
         0
       );
 
@@ -191,10 +194,12 @@ contract TC38 is BaseIntTest_WithActions {
         0
       );
       (bool carolIsProfit, uint256 carolProfit) = calculator.getDelta(
+        getSubAccount(CAROL, 0),
         uint256(carolPosition.positionSizeE30),
         true,
         carolClosePrice,
         carolPosition.avgEntryPriceE30,
+        0,
         0
       );
 

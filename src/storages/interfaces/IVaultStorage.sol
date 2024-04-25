@@ -14,11 +14,35 @@ interface IVaultStorage {
   error IVaultStorage_TargetNotContract();
   error IVaultStorage_BadLen();
   error IVaultStorage_InvalidAddress();
+  error IVaultStorage_InvalidAccounting();
 
   /**
    * Functions
    */
   function totalAmount(address _token) external returns (uint256);
+
+  function lossDebt(address) external view returns (uint256);
+
+  function tradingFeeDebt(address) external view returns (uint256);
+
+  function borrowingFeeDebt(address) external view returns (uint256);
+
+  function fundingFeeDebt(address) external view returns (uint256);
+
+  function subTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external;
+
+  function subBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external;
+
+  function subFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external;
+
+  function subLossDebt(address _trader, uint256 _lossDebt) external;
+
+  function convertFundingFeeReserveWithHLP(
+    address _convertToken,
+    address _targetToken,
+    uint256 _convertAmount,
+    uint256 _targetAmount
+  ) external;
 
   function hlpLiquidityDebtUSDE30() external view returns (uint256);
 
@@ -36,13 +60,19 @@ interface IVaultStorage {
 
   function pullToken(address _token) external returns (uint256);
 
+  function clearOnHold(address _token, uint256 _amount) external;
+
   function addFee(address _token, uint256 _amount) external;
 
   function addHLPLiquidity(address _token, uint256 _amount) external;
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external;
 
+  function withdrawSurplusFromFundingFeeReserveToHLP(address _token, uint256 _fundingFeeAmount) external;
+
   function removeHLPLiquidity(address _token, uint256 _amount) external;
+
+  function removeHLPLiquidityOnHold(address _token, uint256 _amount) external;
 
   function pushToken(address _token, address _to, uint256 _amount) external;
 
@@ -82,7 +112,7 @@ interface IVaultStorage {
 
   function setStrategyFunctionSigAllowance(address _token, address _strategy, bytes4 _target) external;
 
-  function globalBorrowingFeeDebt() external returns (uint256);
+  function globalBorrowingFeeDebt() external view returns (uint256);
 
-  function globalLossDebt() external returns (uint256);
+  function globalLossDebt() external view returns (uint256);
 }

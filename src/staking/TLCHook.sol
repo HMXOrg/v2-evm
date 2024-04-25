@@ -16,6 +16,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   using FullMath for uint256;
 
   error TLCHook_Forbidden();
+  error TLCHook_BadArgs();
 
   uint32 internal constant BPS = 100_00;
 
@@ -25,13 +26,15 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
 
   // mapping weight with the marketIndex
   mapping(uint256 marketIndex => uint256 weight) public marketWeights;
+  mapping(address whitelisted => bool isWhitelisted) public whitelistedCallers;
 
-  modifier onlyTradeService() {
-    if (msg.sender != tradeService) revert TLCHook_Forbidden();
+  modifier onlyWhitelistedCaller() {
+    if (!whitelistedCallers[msg.sender]) revert TLCHook_Forbidden();
     _;
   }
 
   event LogSetMarketWeight(uint256 marketIndex, uint256 oldWeight, uint256 newWeight);
+  event LogSetWhitelistedCaller(address indexed caller, bool isWhitelisted);
 
   function initialize(address _tradeService, address _tlc, address _tlcStaking) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -51,7 +54,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     uint256 _marketIndex,
     uint256 _sizeDelta,
     bytes32
-  ) external onlyTradeService {
+  ) external onlyWhitelistedCaller {
     _mintTLC(_primaryAccount, _sizeDelta, _marketIndex);
   }
 
@@ -61,7 +64,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     uint256,
     uint256 _sizeDelta,
     bytes32
-  ) external onlyTradeService {
+  ) external onlyWhitelistedCaller {
     // Do nothing
   }
 
@@ -82,6 +85,19 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   function setMarketWeight(uint256 _marketIndex, uint256 _weight) external onlyOwner {
     emit LogSetMarketWeight(_marketIndex, marketWeights[_marketIndex], _weight);
     marketWeights[_marketIndex] = _weight;
+  }
+
+  function setWhitelistedCallers(address[] calldata _callers, bool[] calldata _isWhitelisteds) external onlyOwner {
+    if (_callers.length != _isWhitelisteds.length) revert TLCHook_BadArgs();
+    for (uint256 i = 0; i < _callers.length; ) {
+      whitelistedCallers[_callers[i]] = _isWhitelisteds[i];
+
+      emit LogSetWhitelistedCaller(_callers[i], _isWhitelisteds[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

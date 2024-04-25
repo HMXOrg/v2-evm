@@ -14,23 +14,19 @@ contract TC02_02 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
   LimitTradeHelper internal limitTradeHelper;
 
-  // TC02.1 - trader could take profit both long and short position
-  // This integration test add position max size limit into test
-  function testCorrectness_TC0202_TradeWithLargerPositionThanLimitScenario() external {
+  // TC02.2 - trader could take profit both long and short position
+  // This integration test will test the min profit duration during increase and decrease position
+  function testCorrectness_TC0201_TradeWithLargerPositionThanLimitScenario() external {
     limitTradeHelper = new LimitTradeHelper(address(configStorage), address(perpStorage));
 
-    // Set limit trade of ETHUSD market to trade 300 USD and position size 50_000 usd
-    limitTradeHandler.setLimitTradeHelper(address(limitTradeHelper));
+    // Set min profit duration for ETHUSD and BTCUSD as 300 seconds
     uint256[] memory marketIndexes = new uint256[](1);
-    marketIndexes[0] = wethMarketIndex;
-    uint256[] memory positionSizeLimits = new uint256[](1);
-    positionSizeLimits[0] = 500 * 1e30;
-    uint256[] memory tradeSizeLimits = new uint256[](1);
-    tradeSizeLimits[0] = 300 * 1e30;
-    limitTradeHelper.setLimitByMarketIndex(marketIndexes, positionSizeLimits, tradeSizeLimits);
+    marketIndexes[0] = 0;
+    uint256[] memory minProfitDurations = new uint256[](1);
+    minProfitDurations[0] = 300;
+    configStorage.setMinProfitDurations(marketIndexes, minProfitDurations);
 
     // prepare token for wallet
-
     // mint native token
     vm.deal(BOB, 1 ether);
     vm.deal(ALICE, 1 ether);
@@ -46,199 +42,58 @@ contract TC02_02 is BaseIntTest_WithActions {
     // T1: BOB provide liquidity as WBTC 1 token
     // note: price has no changed0
     addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
-    {
-      // When Bob provide 1 BTC as liquidity
-      assertTokenBalanceOf(BOB, address(wbtc), 99 * 1e8, "T1: ");
-
-      // Then Bob should pay fee for 0.3% = 0.003 BTC
-
-      // Assert HLP Liquidity
-      //    BTC = 0.997 (amount - fee)
-      assertHLPLiquidity(address(wbtc), 0.997 * 1e8, "T1: ");
-
-      // When HLP Token price is 1$
-      // Then HLP Token should Mint = 0.997 btc * 20,000 USD = 19,940 USD
-      //                            = 19940 / 1 = 19940 Tokens
-      assertHLPTotalSupply(19_940 * 1e18, "T1: ");
-
-      // Assert Fee distribution
-      // According from T0
-      // Vault's fees has nothing
-
-      // Then after Bob provide liquidity, then Bob pay fees
-      //    Add Liquidity fee
-      //      BTC - 0.003 btc
-      //          - distribute all  protocol fee
-
-      // In Summarize Vault's fees
-      //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
-
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
-
-      // Finally after Bob add liquidity Vault balance should be correct
-      // note: token balance is including all liquidity, dev fee and protocol fee
-      //    BTC - 1
-      assertVaultTokenBalance(address(wbtc), 1 * 1e8, "T1: ");
-    }
 
     // time passed for 60 seconds
     skip(60);
 
     // T2: alice deposit BTC 200 USD at price 20,000
     // 200 / 20000 = 0.01 BTC
-    address _aliceSubAccount0 = getSubAccount(ALICE, 0);
     depositCollateral(ALICE, 0, wbtc, 0.01 * 1e8);
-    {
-      // When Alice deposit Collateral for 0.01 btc
-      assertTokenBalanceOf(ALICE, address(wbtc), 99.99 * 1e8, "T2: ");
-
-      // Then Vault btc's balance should be increased by 0.01
-      assertVaultTokenBalance(address(wbtc), 1.01 * 1e8, "T2: ");
-
-      // And Alice's sub-account balances should be correct
-      //    BTC - 0.01
-      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01 * 1e8, "T2: ");
-
-      // And HLP total supply and Liquidity must not be changed
-      // note: data from T1
-      assertHLPTotalSupply(19_940 * 1e18, "T2: ");
-      assertHLPLiquidity(address(wbtc), 0.997 * 1e8, "T2: ");
-
-      // And Alice should not pay any fee
-      // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
-    }
 
     // time passed for 60 seconds
     skip(60);
 
-    // T3: ALICE market buy weth with 301 USD (over trade size limit) at price 20,000 USD
-    // should revert Max Position Size
-    vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MarketMaxTradeSize()"));
-    limitTradeHandler.createOrder{ value: executionOrderFee }(
-      0,
-      wethMarketIndex,
-      int256(301 * 1e30),
-      0, // trigger price always be 0
-      type(uint256).max,
-      true, // trigger above threshold
-      executionOrderFee, // 0.0001 ether
-      false, // reduce only (allow flip or not)
-      address(0)
-    );
-    vm.stopPrank();
-
-    // T4: ALICE market buy weth with 300 USD at price 20,000 USD
+    // T3: ALICE market buy weth with 300 USD at price 1574.87614416 USD
     //     Then Alice should has Long Position in WETH market
-    // initialPriceFeedDatas is from
+    tickPrices[0] = 73623; // ETHUSD = 1574.87614416
     marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     bytes32 _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
 
-    // T5: ALICE market buy BTCUSD with 10_000 USD.
-    //     This should work as BTC doesn't has limit
-    marketBuy(ALICE, 0, wbtcMarketIndex, 10_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
-    _positionId = keccak256(abi.encodePacked(ALICE, wbtcMarketIndex));
-    _position = perpStorage.getPositionById(_positionId);
-    assertEq(_position.positionSizeE30, 10_000 * 1e30);
-
-    // T6: ALICE try to increase her 300 USD to 501 USD
-    // should revert cuz max is 500 USD
-    // should revert Max Position Size
-    vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MarketMaxPositionSize()"));
-    limitTradeHandler.createOrder{ value: executionOrderFee }(
-      0,
-      wethMarketIndex,
-      int256(201 * 1e30),
-      0, // trigger price always be 0
-      type(uint256).max,
-      true, // trigger above threshold
-      executionOrderFee, // 0.0001 ether
-      false, // reduce only (allow flip or not)
-      address(0)
-    );
-    vm.stopPrank();
-
-    // Set max position size to 1 USD
-    positionSizeLimits[0] = 1 * 1e30;
-    limitTradeHelper.setLimitByMarketIndex(marketIndexes, positionSizeLimits, tradeSizeLimits);
-
+    // T4: ALICE market buy weth with 100 USD at price 1622.83582907 USD under Min Profit Duration
+    // This would fail because min profit duration is still active and the position is profitable.
+    tickPrices[0] = 73923; // ETHUSD = 1622.83582907
+    marketBuy(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
 
-    // T7: ALICE try to decrease her 300 USD to 299 USD
-    // should revert cuz max is 1 USD
-    // should revert Max Position Size
-    vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MarketMaxPositionSize()"));
-    limitTradeHandler.createOrder{ value: executionOrderFee }(
-      0,
-      wethMarketIndex,
-      -int256(1 * 1e30),
-      0, // trigger price always be 0
-      type(uint256).max,
-      true, // trigger above threshold
-      executionOrderFee, // 0.0001 ether
-      false, // reduce only (allow flip or not)
-      address(0)
-    );
-    vm.stopPrank();
+    // time passed for 300 seconds
+    skip(300);
 
-    // T8: ALICE try to fully close her 300 USD position
-    // should work
-    marketSell(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    // T5: ALICE market buy weth with 100 USD at price 1622.83582907 USD
+    // This would pass as the min profit duration has already expired.
+    tickPrices[0] = 73923; // ETHUSD = 1622.83582907
+    marketBuy(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
-    assertEq(_position.positionSizeE30, 0);
+    assertEq(_position.positionSizeE30, 400 * 1e30);
 
-    // T9: ALICE try to sell with 400 USD
-    // should revert from max trade size
-    vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MarketMaxTradeSize()"));
-    limitTradeHandler.createOrder{ value: executionOrderFee }(
-      0,
-      wethMarketIndex,
-      -int256(400 * 1e30),
-      0, // trigger price always be 0
-      type(uint256).max,
-      true, // trigger above threshold
-      executionOrderFee, // 0.0001 ether
-      false, // reduce only (allow flip or not)
-      address(0)
-    );
-    vm.stopPrank();
+    // T6: ALICE market sell weth with 100 USD at price 1622.83582907 USD under Min Profit Duration
+    // This would fail because min profit duration is still active and the position is profitable.
+    tickPrices[0] = 73923; // ETHUSD = 1622.83582907
+    marketSell(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 400 * 1e30);
 
-    // TP/SL order should be creatable
-    vm.startPrank(ALICE);
-    limitTradeHandler.createOrder{ value: executionOrderFee }(
-      0,
-      wethMarketIndex,
-      type(int256).max,
-      0, // trigger price always be 0
-      type(uint256).max,
-      true, // trigger above threshold
-      executionOrderFee, // 0.0001 ether
-      true, // reduce only (allow flip or not)
-      address(0)
-    );
-    vm.stopPrank();
-
-    vm.startPrank(ALICE);
-    limitTradeHandler.createOrder{ value: executionOrderFee }(
-      0,
-      wethMarketIndex,
-      type(int256).min,
-      0, // trigger price always be 0
-      type(uint256).max,
-      true, // trigger above threshold
-      executionOrderFee, // 0.0001 ether
-      true, // reduce only (allow flip or not)
-      address(0)
-    );
-    vm.stopPrank();
+    // T7: ALICE market sell weth with 100 USD at price 1528.33381234 USD under Min Profit Duration
+    // This should be possible because the position is not profitable.
+    tickPrices[0] = 73323; // ETHUSD = 1528.33381234
+    marketSell(ALICE, 0, wethMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 300 * 1e30);
   }
 }

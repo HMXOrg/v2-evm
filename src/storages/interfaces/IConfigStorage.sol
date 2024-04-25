@@ -15,6 +15,7 @@ interface IConfigStorage {
   error IConfigStorage_NotAcceptedLiquidity();
   error IConfigStorage_MaxFeeBps();
   error IConfigStorage_InvalidAssetClass();
+  error IConfigStorage_MaxDurationForMinProfit();
 
   /**
    * Structs
@@ -44,7 +45,7 @@ interface IConfigStorage {
 
   struct FundingRate {
     uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
-    uint256 maxFundingRate; // maximum funding rate
+    uint256 maxFundingRate; // The maximum rate per day that the funding rate would change
   }
 
   struct MarketConfig {
@@ -92,6 +93,12 @@ interface IConfigStorage {
 
   struct LiquidationConfig {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
+  }
+
+  struct StepMinProfitDuration {
+    uint256 fromSize;
+    uint256 toSize;
+    uint256 minProfitDuration;
   }
 
   /**
@@ -191,7 +198,8 @@ interface IConfigStorage {
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig calldata _newConfig
+    MarketConfig calldata _newConfig,
+    bool isAdaptiveFeeEnabled
   ) external returns (MarketConfig memory _marketConfig);
 
   function setHlpTokenConfig(
@@ -223,9 +231,41 @@ interface IConfigStorage {
 
   function setTradeServiceHooks(address[] calldata _newHooks) external;
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
+  function addMarketConfig(
+    MarketConfig calldata _newConfig,
+    bool isAdaptiveFeeEnabled
+  ) external returns (uint256 _index);
 
   function delistMarket(uint256 _marketIndex) external;
 
   function removeAcceptedToken(address _token) external;
+
+  function minProfitDurations(uint256 marketIndex) external view returns (uint256 minProfitDuration);
+
+  function setMinProfitDurations(uint256[] calldata _marketIndexs, uint256[] calldata _minProfitDurations) external;
+
+  function minimumPositionSize() external view returns (uint256);
+
+  function getAssetClassConfigsLength() external view returns (uint256);
+
+  function isAdaptiveFeeEnabledByMarketIndex(uint256 marketIndex) external view returns (bool);
+
+  function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external;
+
+  function setStepMinProfitDuration(
+    uint256[] memory indexes,
+    StepMinProfitDuration[] memory _stepMinProfitDurations
+  ) external;
+
+  function removeLastStepMinProfitDuration() external;
+
+  function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256);
+
+  function setIsStepMinProfitEnabledByMarketIndex(uint256[] memory marketIndexes, bool[] memory isEnableds) external;
+
+  function setMakerTakerFeeByMarketIndexes(
+    uint256[] memory marketIndexes,
+    uint256[] memory makerFees,
+    uint256[] memory takerFees
+  ) external;
 }

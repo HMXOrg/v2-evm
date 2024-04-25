@@ -28,6 +28,7 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
    * Events
    */
   event LogSetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
+  event LogSetMovingWindowConfig(uint256 length, uint256 interval);
 
   /**
    * States
@@ -43,6 +44,11 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
 
   EnumerableSet.Bytes32Set private activePositionIds;
   EnumerableSet.AddressSet private activeSubAccounts;
+
+  mapping(uint256 marketIndex => mapping(uint256 timestamp => uint256 buyVolume)) public epochVolumeBuy;
+  mapping(uint256 marketIndex => mapping(uint256 timestamp => uint256 sellVolume)) public epochVolumeSell;
+  uint256 public movingWindowLength;
+  uint256 public movingWindowInterval;
 
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -181,6 +187,12 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
     }
   }
 
+  function setMovingWindowConfig(uint256 length, uint256 interval) external onlyOwner {
+    emit LogSetMovingWindowConfig(length, interval);
+    movingWindowLength = length;
+    movingWindowInterval = interval;
+  }
+
   function _setServiceExecutor(address _executorAddress, bool _isServiceExecutor) internal {
     serviceExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
@@ -284,6 +296,36 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
     } else {
       markets[_marketIndex].shortPositionSize -= _size;
     }
+  }
+
+  function increaseEpochVolume(bool isBuy, uint256 marketIndex, uint256 absSizeDelta) external onlyWhitelistedExecutor {
+    uint256 epochTimestamp = _getCurrentEpochVolumeTimestamp();
+
+    if (isBuy) {
+      epochVolumeBuy[marketIndex][epochTimestamp] += absSizeDelta;
+    } else {
+      epochVolumeSell[marketIndex][epochTimestamp] += absSizeDelta;
+    }
+  }
+
+  function getEpochVolume(bool isBuy, uint256 marketIndex) external view returns (uint256 epochVolume) {
+    uint256 epochTimestamp = _getCurrentEpochVolumeTimestamp();
+
+    if (isBuy) {
+      for (uint256 i; i < movingWindowLength; i++) {
+        epochVolume += epochVolumeBuy[marketIndex][epochTimestamp];
+        epochTimestamp -= movingWindowInterval;
+      }
+    } else {
+      for (uint256 i; i < movingWindowLength; i++) {
+        epochVolume += epochVolumeSell[marketIndex][epochTimestamp];
+        epochTimestamp -= movingWindowInterval;
+      }
+    }
+  }
+
+  function _getCurrentEpochVolumeTimestamp() internal view returns (uint256 epochTimestamp) {
+    return movingWindowInterval > 0 ? (block.timestamp / movingWindowInterval) * movingWindowInterval : block.timestamp;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

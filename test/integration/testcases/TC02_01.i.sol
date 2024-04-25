@@ -16,12 +16,18 @@ contract TC02_01 is BaseIntTest_WithActions {
 
   // TC02.1 - trader could take profit both long and short position
   // This integration test add position max size limit into test
-  function testCorrectness_TC0201_TradeWithTakeProfitScenario() external {
+  function testCorrectness_TC0201_TradeWithLargerPositionThanLimitScenario() external {
     limitTradeHelper = new LimitTradeHelper(address(configStorage), address(perpStorage));
 
-    // Set max position size to 300 USD
+    // Set limit trade of ETHUSD market to trade 300 USD and position size 50_000 usd
     limitTradeHandler.setLimitTradeHelper(address(limitTradeHelper));
-    limitTradeHelper.setPositionSizeLimit(0, 300 * 1e30, 100_000 * 1e30);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wethMarketIndex;
+    uint256[] memory positionSizeLimits = new uint256[](1);
+    positionSizeLimits[0] = 500 * 1e30;
+    uint256[] memory tradeSizeLimits = new uint256[](1);
+    tradeSizeLimits[0] = 300 * 1e30;
+    limitTradeHelper.setLimit(marketIndexes, positionSizeLimits, tradeSizeLimits);
 
     // prepare token for wallet
 
@@ -67,7 +73,13 @@ contract TC02_01 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: (0.003 * 1e8 * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T1: "
+      });
 
       // Finally after Bob add liquidity Vault balance should be correct
       // note: token balance is including all liquidity, dev fee and protocol fee
@@ -100,21 +112,26 @@ contract TC02_01 is BaseIntTest_WithActions {
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: ((0.003 * 1e8) * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T2: "
+      });
     }
 
     // time passed for 60 seconds
     skip(60);
 
-    // T3: ALICE market buy weth with 200,000 USD (1000x) at price 20,000 USD
+    // T3: ALICE market buy weth with 301 USD (over trade size limit) at price 20,000 USD
     // should revert Max Position Size
-    // note: price has no changed
     vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxPositionSize()"));
+    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxTradeSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,
-      int256(100_000 * 1e30),
+      int256(301 * 1e30),
       0, // trigger price always be 0
       type(uint256).max,
       true, // trigger above threshold
@@ -132,20 +149,22 @@ contract TC02_01 is BaseIntTest_WithActions {
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
 
-    marketBuy(ALICE, 0, wbtcMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    // T5: ALICE market buy BTCUSD with 10_000 USD.
+    //     This should work as BTC doesn't has limit
+    marketBuy(ALICE, 0, wbtcMarketIndex, 10_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     _positionId = keccak256(abi.encodePacked(ALICE, wbtcMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
-    assertEq(_position.positionSizeE30, 300 * 1e30);
+    assertEq(_position.positionSizeE30, 10_000 * 1e30);
 
-    // T5: ALICE try to increase her 300 USD to 301 USD
-    // should revert cuz max is 300 USD
+    // T6: ALICE try to increase her 300 USD to 501 USD
+    // should revert cuz max is 500 USD
     // should revert Max Position Size
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,
-      int256(1 * 1e30),
+      int256(201 * 1e30),
       0, // trigger price always be 0
       type(uint256).max,
       true, // trigger above threshold
@@ -156,13 +175,14 @@ contract TC02_01 is BaseIntTest_WithActions {
     vm.stopPrank();
 
     // Set max position size to 1 USD
-    limitTradeHelper.setPositionSizeLimit(0, 1 * 1e30, 300 * 1e30);
+    positionSizeLimits[0] = 1 * 1e30;
+    limitTradeHelper.setLimit(marketIndexes, positionSizeLimits, tradeSizeLimits);
 
     _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
 
-    // T6: ALICE try to decrease her 300 USD to 299 USD
+    // T7: ALICE try to decrease her 300 USD to 299 USD
     // should revert cuz max is 1 USD
     // should revert Max Position Size
     vm.startPrank(ALICE);
@@ -180,14 +200,14 @@ contract TC02_01 is BaseIntTest_WithActions {
     );
     vm.stopPrank();
 
-    // T7: ALICE try to fully close her 300 USD position
+    // T8: ALICE try to fully close her 300 USD position
     // should work
     marketSell(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 0);
 
-    // T8: ALICE try to sell with 400 USD
+    // T9: ALICE try to sell with 400 USD
     // should revert from max trade size
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxTradeSize()"));

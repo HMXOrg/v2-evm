@@ -17,8 +17,10 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder.sol";
+import { IEcoPythCalldataBuilder3 } from "@hmx/oracles/interfaces/IEcoPythCalldataBuilder3.sol";
 import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { ICIXPriceAdapter } from "@hmx/oracles/interfaces/ICIXPriceAdapter.sol";
 import { ILeanPyth } from "@hmx/oracles/interfaces/ILeanPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
@@ -27,11 +29,14 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { ICrossMarginHandler02 } from "@hmx/handlers/interfaces/ICrossMarginHandler02.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
+import { IRebalanceHLPv2Handler } from "@hmx/handlers/interfaces/IRebalanceHLPv2Handler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
@@ -60,7 +65,14 @@ import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/inter
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-import { OrderReader } from "@hmx/readers/OrderReader.sol";
+import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
+
+import { IOrderReader } from "@hmx/readers/interfaces/IOrderReader.sol";
+import { IDistributeSTIPARBStrategy } from "@hmx/strategies/interfaces/IDistributeSTIPARBStrategy.sol";
+import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveStrategy.sol";
+import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
+import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
+import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -117,11 +129,27 @@ library Deployer {
       );
   }
 
+  function deployEcoPythCalldataBuilder3(
+    address _ecoPyth,
+    address _ocLens,
+    address _cLens,
+    bool _l2BlockNumber
+  ) internal returns (IEcoPythCalldataBuilder3) {
+    return
+      IEcoPythCalldataBuilder3(
+        deployContractWithArguments("EcoPythCalldataBuilder3", abi.encode(_ecoPyth, _ocLens, _cLens, _l2BlockNumber))
+      );
+  }
+
   function deployPythAdapter(address _proxyAdmin, address _pyth) internal returns (IPythAdapter) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/PythAdapter.sol/PythAdapter.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pyth);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IPythAdapter(payable(_proxy));
+  }
+
+  function deployCIXPriceAdapter() internal returns (ICIXPriceAdapter) {
+    return ICIXPriceAdapter(deployContract("CIXPriceAdapter"));
   }
 
   function deployStakedGlpOracleAdapter(
@@ -205,6 +233,25 @@ library Deployer {
     return ICrossMarginHandler(payable(_proxy));
   }
 
+  function deployCrossMarginHandler02(
+    address _proxyAdmin,
+    address _crossMarginService,
+    address _pyth,
+    uint256 _executionOrderFee
+  ) internal returns (ICrossMarginHandler02) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/CrossMarginHandler02.sol/CrossMarginHandler02.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _crossMarginService,
+      _pyth,
+      _executionOrderFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ICrossMarginHandler02(payable(_proxy));
+  }
+
   function deployLiquidityHandler(
     address _proxyAdmin,
     address _liquidityService,
@@ -222,6 +269,23 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILiquidityHandler(payable(_proxy));
+  }
+
+  function deployLiquidityHandler02(
+    address _proxyAdmin,
+    address _liquidityService,
+    address _pyth,
+    uint256 _executionOrderFee
+  ) internal returns (ILiquidityHandler02) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LiquidityHandler02.sol/LiquidityHandler02.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _liquidityService,
+      _pyth,
+      _executionOrderFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ILiquidityHandler02(payable(_proxy));
   }
 
   function deployLimitTradeHandler(
@@ -251,18 +315,16 @@ library Deployer {
     address _liquidationService,
     address _liquidityService,
     address _tradeService,
-    address _pyth,
-    uint256 _maxExecutionChuck
+    address _pyth
   ) internal returns (IExt01Handler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Ext01Handler.sol/Ext01Handler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,address,address,address)")),
       _crossMarginService,
       _liquidationService,
       _liquidityService,
       _tradeService,
-      _pyth,
-      _maxExecutionChuck
+      _pyth
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IExt01Handler(payable(_proxy));
@@ -575,6 +637,54 @@ library Deployer {
     return IConvertedGlpStrategy(payable(_proxy));
   }
 
+  function deployRebalanceHLPv2Handler(
+    address _proxyAdmin,
+    address _rebalanceHLPv2Service,
+    address _weth,
+    uint256 _minExecutionFee
+  ) internal returns (IRebalanceHLPv2Handler) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPv2Handler.sol/RebalanceHLPv2Handler.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _rebalanceHLPv2Service,
+      _weth,
+      _minExecutionFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPv2Handler(payable(_proxy));
+  }
+
+  function deployRebalanceHLPv2Service(
+    address _proxyAdmin,
+    address _weth,
+    address _vaultStorage,
+    address _configStorage,
+    address _exchangeRouter,
+    address _depositVault,
+    address _depositHandler,
+    address _withdrawalVault,
+    address _withdrawalHandler
+  ) internal returns (IRebalanceHLPv2Service) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPv2Service.sol/RebalanceHLPv2Service.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,address,address,address,address)")),
+      _weth,
+      _vaultStorage,
+      _configStorage,
+      _exchangeRouter,
+      _depositVault,
+      _depositHandler,
+      _withdrawalVault,
+      _withdrawalHandler
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPv2Service(payable(_proxy));
+  }
+
   /**
    * Extensions
    */
@@ -609,8 +719,104 @@ library Deployer {
     address _perpStorage,
     address _oracleMiddleware,
     address _limitTradeHandler
-  ) internal returns (OrderReader) {
-    return new OrderReader(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler);
+  ) internal returns (IOrderReader) {
+    return
+      IOrderReader(
+        deployContractWithArguments(
+          "OrderReader",
+          abi.encode(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler)
+        )
+      );
+  }
+
+  function deployDistributeSTIPARBStrategy(
+    address _proxyAdmin,
+    address _vaultStorage,
+    address _rewarder,
+    address _arb,
+    uint256 _devFeeBps,
+    address _treasury,
+    address _approveStrat
+  ) internal returns (IDistributeSTIPARBStrategy) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/DistributeSTIPARBStrategy.sol/DistributeSTIPARBStrategy.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,uint256,address,address)")),
+      _vaultStorage,
+      _rewarder,
+      _arb,
+      _devFeeBps,
+      _treasury,
+      _approveStrat
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IDistributeSTIPARBStrategy(payable(_proxy));
+  }
+
+  function deployERC20ApproveStrategy(
+    address _proxyAdmin,
+    address _vaultStorage
+  ) internal returns (IERC20ApproveStrategy) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/ERC20ApproveStrategy.sol/ERC20ApproveStrategy.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _vaultStorage);
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IERC20ApproveStrategy(payable(_proxy));
+  }
+
+  function deployTradeOrderHelper(
+    address _configStorage,
+    address _perpStorage,
+    address _oracle,
+    address _tradeService
+  ) internal returns (ITradeOrderHelper) {
+    return
+      ITradeOrderHelper(
+        deployContractWithArguments(
+          "TradeOrderHelper",
+          abi.encode(_configStorage, _perpStorage, _oracle, _tradeService)
+        )
+      );
+  }
+
+  function deployIntentHandler(
+    address _proxyAdmin,
+    address _pyth,
+    address _configStorage,
+    address _tradeOrderHelper,
+    address _gasService
+  ) internal returns (IIntentHandler) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/IntentHandler.sol/IntentHandler.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address)")),
+      _pyth,
+      _configStorage,
+      _tradeOrderHelper,
+      _gasService
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IIntentHandler(payable(_proxy));
+  }
+
+  function deployGasService(
+    address _proxyAdmin,
+    address _vaultStorage,
+    address _configStorage,
+    uint256 _executionFeeInUsd,
+    address _executionFeeTreasury
+  ) internal returns (IGasService) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/GasService.sol/GasService.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256,address)")),
+      _vaultStorage,
+      _configStorage,
+      _executionFeeInUsd,
+      _executionFeeTreasury
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IGasService(payable(_proxy));
   }
 
   /**

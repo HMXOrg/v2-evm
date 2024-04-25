@@ -20,6 +20,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
 // Interfaces
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
@@ -49,6 +50,14 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 amount,
     address receiver
   );
+  event LogTransferCollateral(
+    address indexed fromPrimaryAccount,
+    uint8 fromSubAccountId,
+    address indexed toPrimaryAccount,
+    uint8 toSubAccountId,
+    address token,
+    uint256 amount
+  );
   event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
   event LogConvertSGlpCollateral(
     address primaryAccount,
@@ -57,6 +66,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 amountIn,
     uint256 amountOut
   );
+  event LogSetTradeHelper(address indexed oldTradeHelper, address newTradeHelper);
 
   /**
    * Structs
@@ -82,6 +92,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public perpStorage;
   /// @notice DEPRECATED.
   address public convertedSglpStrategy;
+  address public tradeHelper;
 
   /// @dev Initializes the CrossMarginService contract.
   /// @param _configStorage The address of the ConfigStorage contract.
@@ -165,7 +176,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Update token balance
     uint256 deltaBalance = _vaultStorage.pullToken(_token);
-    if (deltaBalance < _amount) revert ICrossMarginService_InvalidDepositBalance();
+    if (deltaBalance != _amount) revert ICrossMarginService_InvalidDepositBalance();
 
     emit LogDepositCollateral(_primaryAccount, _subAccount, _token, _amount);
   }
@@ -211,6 +222,62 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
 
+  /// @notice Calculate new trader balance after transfer collateral token.
+  /// @param _params The parameters to transfer collateral.
+  function transferCollateral(
+    TransferCollateralParams calldata _params
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_params.token) {
+    (
+      address _fromPrimaryAccount,
+      uint8 _fromSubAccountId,
+      address _toPrimaryAccount,
+      uint8 _toSubAccountId,
+      address _token,
+      uint256 _amount
+    ) = (
+        _params.fromPrimaryAccount,
+        _params.fromSubAccountId,
+        _params.toPrimaryAccount,
+        _params.toSubAccountId,
+        _params.token,
+        _params.amount
+      );
+    // SLOAD
+    Calculator _calculator = Calculator(calculator);
+
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+
+    // Get trader's sub-account address to withdraw from
+    address _fromSubAccount = HMXLib.getSubAccount(_fromPrimaryAccount, _fromSubAccountId);
+    // Get trader's sub-account address to deposit to
+    address _toSubAccount = HMXLib.getSubAccount(_toPrimaryAccount, _toSubAccountId);
+
+    // Get current collateral token balance of trader's subaccount
+    // and deduct with new token withdrawing amount
+    uint256 _oldBalance = _vaultStorage.traderBalances(_fromSubAccount, _token);
+    if (_amount > _oldBalance) revert ICrossMarginService_InsufficientBalance();
+
+    // Decrease collateral token balance of current subaccount
+    _vaultStorage.decreaseTraderBalance(_fromSubAccount, _token, _amount);
+
+    // Calculate validation for if new Equity is below IMR or not
+    int256 equity = _calculator.getEquity(_fromSubAccount, 0, 0);
+    if (equity < 0 || uint256(equity) < _calculator.getIMR(_fromSubAccount))
+      revert ICrossMarginService_WithdrawBalanceBelowIMR();
+
+    // Increase collateral token balance on target subaccount
+    _vaultStorage.increaseTraderBalance(_toSubAccount, _token, _amount);
+
+    emit LogTransferCollateral(
+      _fromPrimaryAccount,
+      _fromSubAccountId,
+      _toPrimaryAccount,
+      _toSubAccountId,
+      _token,
+      _amount
+    );
+  }
+
   /// @notice Check funding fee surplus and transfer to HLP
   /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
   ///      - If yes means exceed value are the surplus for platform and can be booked to HLP
@@ -233,12 +300,18 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     for (uint256 i = 0; i < len; ) {
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
-      // Only sum up the negative funding fee,
-      // (negative funding fee means trader will receive funding fee)
-      // we only care about negative funding fee here because
-      // we would like to know how much the protocol owed the traders,
-      // so that we will not withdraw too much funding fee surplus to the point that we can't pay the traders
-      if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
+      // Update funding rate of the market to the latest value
+      if (tradeHelper != address(0)) TradeHelper(tradeHelper).updateFundingRate(i);
+
+      if (_market.accumFundingLong < 0) {
+        // Only sum up the negative funding fee,
+        // (negative funding fee means trader will receive funding fee)
+        // we only care about negative funding fee here because
+        // we would like to know how much the protocol owed the traders,
+        // so that we will not withdraw too much funding fee surplus to the point that we can't pay the traders
+        _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
+      }
+
       if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
       unchecked {
@@ -275,14 +348,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     }
 
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
-  }
-
-  struct SwitchCollateralParams {
-    address primaryAccount;
-    uint8 subAccountId;
-    uint248 amount;
-    address[] path;
-    uint256 minToAmount;
   }
 
   /// @notice Switch from one collateral token to another.
@@ -325,7 +390,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Send last token to VaultStorage and pull
     ERC20Upgradeable(_tokenOut).safeTransfer(address(_vaultStorage), _toAmount);
     uint256 _deltaBalance = _vaultStorage.pullToken(_tokenOut);
-    if (_deltaBalance < _toAmount) revert ICrossMarginService_InvalidDepositBalance();
+    if (_deltaBalance != _toAmount) revert ICrossMarginService_InvalidDepositBalance();
     // Increase trader's balance
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _toAmount);
 
@@ -383,6 +448,18 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Sanity check
     Calculator(_calculator).oracle();
+  }
+
+  /// @notice Set new TradeHelper contract address.
+  /// @param _tradeHelper New TradeHelper contract address.
+  function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
+    if (_tradeHelper == address(0)) revert ICrossMarginService_InvalidAddress();
+
+    emit LogSetTradeHelper(tradeHelper, _tradeHelper);
+    tradeHelper = _tradeHelper;
+
+    // Sanity check
+    TradeHelper(_tradeHelper).perpStorage();
   }
 
   /**

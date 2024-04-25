@@ -13,6 +13,9 @@ interface IRebalanceHLPService {
   error RebalanceHLPService_InvalidTokenAmount();
   error RebalanceHLPService_HlpTvlDropExceedMin();
   error RebalanceHLPService_AmountIsZero();
+  error RebalanceHLPService_Slippage();
+  error RebalanceHLPService_InvalidPath();
+  error RebalanceHLPService_OneInchSwapFailed();
 
   /// @param token: the address of ERC20 token that will be converted into GLP.
   /// @param tokenMedium: Medium token for swapping, in case of swap before rebalance.
@@ -34,6 +37,12 @@ interface IRebalanceHLPService {
     uint256 minOut;
   }
 
+  struct SwapParams {
+    uint256 amountIn;
+    uint256 minAmountOut;
+    address[] path;
+  }
+
   struct WithdrawGlpResult {
     address token;
     uint256 amount;
@@ -43,6 +52,10 @@ interface IRebalanceHLPService {
   function addGlp(AddGlpParams[] calldata params) external returns (uint256 receivedGlp);
 
   function withdrawGlp(WithdrawGlpParams[] calldata params) external returns (WithdrawGlpResult[] memory result);
+
+  function swap(SwapParams calldata params) external returns (uint256 amountOut);
+
+  function oneInchSwap(SwapParams calldata params, bytes calldata oneInchData) external returns (uint256 amountOut);
 
   // Setter
   function setMinHLPValueLossBPS(uint16 minTvlBPS) external;

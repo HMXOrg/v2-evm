@@ -25,6 +25,8 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
 
     _setUpPnlFactor();
     _setMinimumPositionSize();
+
+    perpStorage.setMovingWindowConfig(15, 1 minutes);
   }
 
   function _setLiquidityConfig() private {
@@ -51,11 +53,16 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
         fundingInterval: 1, // second
-        devFeeRateBPS: 1500, // 15%
+        devFeeRateBPS: 1000, // 10%
         minProfitDuration: 15, // second
         maxPosition: 10
       })
     );
+    uint256[] memory _marketIndexs = new uint256[](1);
+    _marketIndexs[0] = 0;
+    uint256[] memory _minProfitDurations = new uint256[](1);
+    _minProfitDurations[0] = 15;
+    configStorage.setMinProfitDurations(_marketIndexs, _minProfitDurations);
   }
 
   function _setUpAssetClassConfigs() private {

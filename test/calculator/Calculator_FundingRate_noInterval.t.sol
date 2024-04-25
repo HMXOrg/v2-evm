@@ -33,7 +33,8 @@ contract Calculator_FundingRate is Calculator_Base {
         allowIncreasePosition: false,
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e18, maxSkewScaleUSD: 3_000_000 * 1e30 })
-      })
+      }),
+      false
     );
 
     // Simulate ALICE contains 1 opening LONG position
@@ -49,7 +50,8 @@ contract Calculator_FundingRate is Calculator_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreaseSize: 0
       })
     );
 
@@ -66,7 +68,8 @@ contract Calculator_FundingRate is Calculator_Base {
         lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        lastIncreaseSize: 0
       })
     );
   }

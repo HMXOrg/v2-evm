@@ -7,7 +7,6 @@ pragma solidity 0.8.18;
 // Base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // Interfaces
@@ -19,7 +18,6 @@ import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/inter
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
-  using SafeERC20Upgradeable for ERC20Upgradeable;
   using AddressUpgradeable for address;
 
   /**
@@ -51,6 +49,9 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
   event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
+  event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
+  event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
+  event LogSetMakerTakerFee(uint256 marketIndex, uint256 makerFee, uint256 takerFee);
 
   /**
    * Constants
@@ -96,6 +97,17 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(address => bool) public configExecutors;
   // SwithCollateralRouter
   address public switchCollateralRouter;
+  // Min Profit Duration by Market
+  mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
+  // If enabled, this market will used Adaptive Fee based on CEX orderbook liquidity depth
+  mapping(uint256 marketIndex => bool isEnabled) public isAdaptiveFeeEnabledByMarketIndex;
+  // Min profit duration in steps based on trade size
+  StepMinProfitDuration[] public stepMinProfitDurations;
+  mapping(uint256 marketIndex => bool isStepMinProfitEnabled) public isStepMinProfitEnabledByMarketIndex;
+
+  // Cannot put these inside MarketConfig due to backward incompatibility
+  mapping(uint256 marketIndex => uint256 takerFeeE8) public takerFeeE8ByMarketIndex;
+  mapping(uint256 marketIndex => uint256 makerFeeE8) public makerFeeE8ByMarketIndex;
 
   /**
    * Modifiers
@@ -330,7 +342,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bool[] calldata _isServiceExecutors
   ) external onlyOwner {
     if (
-      _contractAddresses.length != _executorAddresses.length && _executorAddresses.length != _isServiceExecutors.length
+      _contractAddresses.length != _executorAddresses.length || _executorAddresses.length != _isServiceExecutors.length
     ) revert IConfigStorage_BadArgs();
 
     for (uint256 i = 0; i < _contractAddresses.length; ) {
@@ -365,7 +377,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig calldata _newConfig
+    MarketConfig calldata _newConfig,
+    bool _isAdaptiveFeeEnabled
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
@@ -375,6 +388,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
+    isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
     return _newConfig;
   }
 
@@ -564,7 +578,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     assetClassConfigs[_index] = _newConfig;
   }
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _newMarketIndex) {
+  function addMarketConfig(
+    MarketConfig calldata _newConfig,
+    bool _isAdaptiveFeeEnabled
+  ) external onlyOwner returns (uint256 _newMarketIndex) {
     // pre-validate
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
@@ -574,6 +591,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
+    isAdaptiveFeeEnabledByMarketIndex[_newMarketIndex] = _isAdaptiveFeeEnabled;
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
   }
@@ -621,6 +639,119 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetTradeServiceHooks(tradeServiceHooks, _newHooks);
 
     tradeServiceHooks = _newHooks;
+  }
+
+  function setMinProfitDurations(
+    uint256[] calldata _marketIndexs,
+    uint256[] calldata _minProfitDurations
+  ) external onlyOwner {
+    if (_marketIndexs.length != _minProfitDurations.length) revert IConfigStorage_BadArgs();
+
+    uint256 MAX_DURATION = 30 minutes;
+
+    for (uint256 i; i < _marketIndexs.length; ) {
+      if (_minProfitDurations[i] > MAX_DURATION) revert IConfigStorage_MaxDurationForMinProfit();
+
+      minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
+
+      emit LogMinProfitDuration(_marketIndexs[i], _minProfitDurations[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function addStepMinProfitDuration(StepMinProfitDuration[] memory _stepMinProfitDurations) external onlyOwner {
+    uint256 length = _stepMinProfitDurations.length;
+    for (uint256 i; i < length; ) {
+      if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
+      stepMinProfitDurations.push(_stepMinProfitDurations[i]);
+      emit LogSetStepMinProfitDuration(stepMinProfitDurations.length - 1, _stepMinProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setStepMinProfitDuration(
+    uint256[] memory indexes,
+    StepMinProfitDuration[] memory _stepMinProfitDurations
+  ) external onlyOwner {
+    if (indexes.length != _stepMinProfitDurations.length) revert IConfigStorage_BadLen();
+    uint256 length = _stepMinProfitDurations.length;
+    for (uint256 i; i < length; ) {
+      if (_stepMinProfitDurations[i].fromSize >= _stepMinProfitDurations[i].toSize) revert IConfigStorage_BadArgs();
+      stepMinProfitDurations[indexes[i]] = _stepMinProfitDurations[i];
+      emit LogSetStepMinProfitDuration(indexes[i], _stepMinProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function removeLastStepMinProfitDuration() external onlyOwner {
+    emit LogSetStepMinProfitDuration(
+      stepMinProfitDurations.length - 1,
+      IConfigStorage.StepMinProfitDuration({ fromSize: 0, toSize: 0, minProfitDuration: 0 })
+    );
+    stepMinProfitDurations.pop();
+  }
+
+  function getStepMinProfitDuration(uint256 marketIndex, uint256 sizeDelta) external view returns (uint256) {
+    uint256 length = stepMinProfitDurations.length;
+    if (length == 0 || !isStepMinProfitEnabledByMarketIndex[marketIndex]) {
+      return minProfitDurations[marketIndex];
+    }
+    for (uint256 i; i < length; ) {
+      if (sizeDelta >= stepMinProfitDurations[i].fromSize && sizeDelta < stepMinProfitDurations[i].toSize) {
+        // In-range
+        return stepMinProfitDurations[i].minProfitDuration;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    return minProfitDurations[marketIndex];
+  }
+
+  function getStepMinProfitDurations() external view returns (StepMinProfitDuration[] memory) {
+    return stepMinProfitDurations;
+  }
+
+  function setIsStepMinProfitEnabledByMarketIndex(
+    uint256[] memory marketIndexes,
+    bool[] memory isEnableds
+  ) external onlyOwner {
+    if (marketIndexes.length != isEnableds.length) revert IConfigStorage_BadLen();
+    uint256 length = marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      isStepMinProfitEnabledByMarketIndex[marketIndexes[i]] = isEnableds[i];
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setMakerTakerFeeByMarketIndexes(
+    uint256[] memory marketIndexes,
+    uint256[] memory makerFees,
+    uint256[] memory takerFees
+  ) external onlyOwner {
+    if (marketIndexes.length != makerFees.length || makerFees.length != takerFees.length)
+      revert IConfigStorage_BadLen();
+    uint256 length = marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      makerFeeE8ByMarketIndex[marketIndexes[i]] = makerFees[i];
+      takerFeeE8ByMarketIndex[marketIndexes[i]] = takerFees[i];
+
+      emit LogSetMakerTakerFee(marketIndexes[i], makerFees[i], takerFees[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

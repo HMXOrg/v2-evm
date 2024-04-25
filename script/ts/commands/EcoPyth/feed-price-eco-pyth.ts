@@ -6,7 +6,8 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
+import HmxApiWrapper from "../../wrappers/HMXAPIWrapper";
+import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -31,15 +32,18 @@ async function main(chainId: number) {
       return;
   }
 
-  console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
-  await hmxApi.refreshAssetIds();
-  console.log("[cmds/EcoPyth] Success!");
   console.log("[cmds/EcoPyth] Feed Price...");
   const tx = await (
     await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)
   ).wait();
   console.log(`[cmds/EcoPyth] Done: ${tx.transactionHash}`);
   console.log("[cmds/EcoPyth] Feed Price success!");
+  console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
+  await hmxApi.refreshAssetIds();
+  console.log("[cmds/EcoPyth] Success!");
+  console.log("[cmds/EcoPyth] Refreshing Market Ids at HMX API...");
+  await hmxApi.refreshMarketIds();
+  console.log("[cmds/EcoPyth] Success!");
 }
 
 const prog = new Command();

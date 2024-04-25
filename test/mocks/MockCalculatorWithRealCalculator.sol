@@ -6,6 +6,7 @@ pragma solidity 0.8.18;
 
 import { MockCalculator } from "./MockCalculator.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { console } from "forge-std/console.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
@@ -32,11 +33,15 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     actualFunction[keccak256(_funcName)] = true;
   }
 
-  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) public view override returns (uint256) {
+  function getTradingFee(
+    int256 _size,
+    uint256 _baseFeeRateBPS,
+    uint256 _marketIndex
+  ) public view override returns (uint256) {
     if (actualFunction[keccak256("getTradingFee")]) {
-      return c.getTradingFee(_size, _baseFeeRateBPS);
+      return c.getTradingFee(_size, _baseFeeRateBPS, _marketIndex);
     } else {
-      return super.getTradingFee(_size, _baseFeeRateBPS);
+      return super.getTradingFee(_size, _baseFeeRateBPS, _marketIndex);
     }
   }
 
@@ -123,16 +128,45 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
   }
 
   function getDelta(
+    IPerpStorage.Position memory position,
+    uint256 _markPrice
+  ) public view override returns (bool, uint256) {
+    if (actualFunction[keccak256("getDelta")]) {
+      return c.getDelta(position, _markPrice);
+    } else {
+      return super.getDelta(position, _markPrice);
+    }
+  }
+
+  function getDelta(
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice,
-    uint256 _lastIncreaseTimestamp
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
   ) public view override returns (bool, uint256) {
     if (actualFunction[keccak256("getDelta")]) {
-      return c.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
+      return c.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
     } else {
-      return super.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
+      return super.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
+    }
+  }
+
+  function getDelta(
+    address _subAccount,
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
+  ) public view override returns (bool, uint256) {
+    if (actualFunction[keccak256("getDelta")]) {
+      return c.getDelta(_subAccount, _size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
+    } else {
+      return
+        super.getDelta(_subAccount, _size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp, _marketIndex);
     }
   }
 

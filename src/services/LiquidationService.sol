@@ -22,6 +22,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
 /// @title LiquidationService
 /// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
@@ -74,26 +75,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     int256 unrealizedPnL;
     VaultStorage vaultStorage;
     TradeHelper tradeHelper;
-    Calculator calculator;
-    ConfigStorage configStorage;
-  }
-
-  struct LiquidatePositionVars {
-    bytes32 positionId;
-    uint256 absPositionSizeE30;
-    uint256 oldSumSe;
-    uint256 oldSumS2e;
-    uint256 tradingFee;
-    uint256 borrowingFee;
-    int256 fundingFee;
-    bool isLong;
-    IPerpStorage.Position position;
-    PerpStorage.Market globalMarket;
-    ConfigStorage.MarketConfig marketConfig;
-    VaultStorage vaultStorage;
-    TradeHelper tradeHelper;
-    PerpStorage perpStorage;
-    OracleMiddleware oracle;
     Calculator calculator;
     ConfigStorage configStorage;
   }
@@ -273,6 +254,27 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Private Functions
    */
+  struct LiquidatePositionVars {
+    bytes32 positionId;
+    uint256 absPositionSizeE30;
+    uint256 oldSumSe;
+    uint256 oldSumS2e;
+    uint256 tradingFee;
+    uint256 borrowingFee;
+    int256 fundingFee;
+    bool isLong;
+    IPerpStorage.Position position;
+    PerpStorage.Market globalMarket;
+    ConfigStorage.MarketConfig marketConfig;
+    VaultStorage vaultStorage;
+    TradeHelper tradeHelper;
+    PerpStorage perpStorage;
+    OracleMiddleware oracle;
+    Calculator calculator;
+    ConfigStorage configStorage;
+    uint256 len;
+    bytes32[] positionIds;
+  }
 
   /// @dev Liquidates positions associated with a given sub-account.
   /// It iterates over the list of position IDs and updates borrowing rate,
@@ -296,12 +298,12 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     // Get the list of position ids associated with the sub-account
-    bytes32[] memory positionIds = _vars.perpStorage.getPositionIds(_subAccount);
+    _vars.positionIds = _vars.perpStorage.getPositionIds(_subAccount);
 
-    uint256 _len = positionIds.length;
-    for (uint256 i; i < _len; ) {
+    _vars.len = _vars.positionIds.length;
+    for (uint256 i; i < _vars.len; ) {
       // Get the current position id from the list
-      _vars.positionId = positionIds[i];
+      _vars.positionId = _vars.positionIds[i];
       _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
       _vars.absPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
 
@@ -320,10 +322,11 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.positionId,
           _subAccount,
           _vars.position,
-          HMXLib.abs(_vars.position.positionSizeE30),
+          -_vars.position.positionSizeE30,
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
-          _vars.position.marketIndex
+          _vars.position.marketIndex,
+          _vars.configStorage.isAdaptiveFeeEnabledByMarketIndex(_vars.position.marketIndex)
         );
         tradingFee += _vars.tradingFee;
         borrowingFee += _vars.borrowingFee;
@@ -349,11 +352,13 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
         uint256 absPositionSize = HMXLib.abs(_vars.position.positionSizeE30);
 
         (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
+          _subAccount,
           absPositionSize,
           _vars.position.positionSizeE30 > 0,
           _adaptivePrice,
           _vars.position.avgEntryPriceE30,
-          _vars.position.lastIncreaseTimestamp
+          _vars.position.lastIncreaseTimestamp,
+          _vars.position.marketIndex
         );
 
         // if trader has profit more than reserved value then trader's profit maximum is reserved value
@@ -365,6 +370,13 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
         _unrealizedPnL += _realizedPnl;
 
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);
+
+        _decreasePositionHooks(
+          _vars.position.primaryAccount,
+          _vars.position.subAccountId,
+          _vars.position.marketIndex,
+          absPositionSize
+        );
 
         // remove the position's value in storage
         _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);
@@ -382,21 +394,42 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
       // Update counter trade states
       {
-        _vars.isLong
-          ? _vars.perpStorage.updateGlobalLongMarketById(
+        if (_vars.isLong) {
+          _vars.perpStorage.updateGlobalLongMarketById(
             _vars.position.marketIndex,
             _vars.globalMarket.longPositionSize - _vars.absPositionSizeE30,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumSE - _vars.oldSumSe) : 0,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumS2E - _vars.oldSumS2e) : 0
-          )
-          : _vars.perpStorage.updateGlobalShortMarketById(
+          );
+          // Decrease Long = Sell
+          _vars.perpStorage.increaseEpochVolume(false, _vars.position.marketIndex, _vars.absPositionSizeE30);
+        } else {
+          _vars.perpStorage.updateGlobalShortMarketById(
             _vars.position.marketIndex,
             _vars.globalMarket.shortPositionSize - _vars.absPositionSizeE30,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumSE - _vars.oldSumSe) : 0,
             _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumS2E - _vars.oldSumS2e) : 0
           );
+          // Decrease Short = Buy
+          _vars.perpStorage.increaseEpochVolume(true, _vars.position.marketIndex, _vars.absPositionSizeE30);
+        }
       }
 
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _decreasePositionHooks(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sizeDelta
+  ) private {
+    address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
+    for (uint256 i; i < _hooks.length; ) {
+      ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
       unchecked {
         ++i;
       }

@@ -15,10 +15,12 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is OwnableUpgradeable, ICalculator {
   using SafeCastUpgradeable for int256;
@@ -36,6 +38,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   event LogSetVaultStorage(address indexed oldVaultStorage, address indexed vaultStorage);
   event LogSetConfigStorage(address indexed oldConfigStorage, address indexed configStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address indexed perpStorage);
+  event LogSetTradeHelper(address indexed oldTradeHelper, address indexed tradeHelper);
 
   /**
    * States
@@ -44,6 +47,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   address public vaultStorage;
   address public configStorage;
   address public perpStorage;
+  address public tradeHelper;
 
   function initialize(
     address _oracle,
@@ -70,18 +74,23 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value in E30 format
-  function getAUME30(bool _isMaxPrice) external view returns (uint256) {
+  /// @return aum HLP Value in E30 format
+  function getAUME30(bool _isMaxPrice) external view returns (uint256 aum) {
     // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
-    // hlpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
+    // hlpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee + fundingFeeDebt
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     uint256 borrowingFeeDebt = _vaultStorage.globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
 
     uint256 lossDebt = _vaultStorage.globalLossDebt();
-    uint256 aum = _getHLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
+    aum =
+      _getHLPValueE30(_isMaxPrice) +
+      pendingBorrowingFeeE30 +
+      borrowingFeeDebt +
+      lossDebt +
+      _vaultStorage.hlpLiquidityDebtUSDE30();
 
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
@@ -90,8 +99,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     } else {
       aum += uint256(pnlE30);
     }
-
-    return aum;
   }
 
   function getGlobalPNLE30() external view returns (int256) {
@@ -122,9 +129,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
       // Formula:
       // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
-      _pendingBorrowingFee +=
-        (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
-        _borrowingFeeE30;
+      if (_assetClassState.sumBorrowingFeeE30 > _assetClassState.sumSettledBorrowingFeeE30) {
+        _pendingBorrowingFee +=
+          (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
+          _borrowingFeeE30;
+      } else {
+        if (_assetClassState.sumSettledBorrowingFeeE30 - _assetClassState.sumBorrowingFeeE30 > 1e30) {
+          revert ICalculator_InvalidBorrowingFee();
+        }
+        _pendingBorrowingFee += _borrowingFeeE30;
+      }
 
       unchecked {
         ++i;
@@ -143,42 +157,40 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice GetHLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value
-  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
+  /// @return assetValue HLP Value
+  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256 assetValue) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     bytes32[] memory _hlpAssetIds = _configStorage.getHlpAssetIds();
-    uint256 assetValue = 0;
     uint256 _len = _hlpAssetIds.length;
 
-    for (uint256 i = 0; i < _len; ) {
-      uint256 value = _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
-      unchecked {
-        assetValue += value;
-        ++i;
+    unchecked {
+      for (uint256 i; i < _len; ++i) {
+        assetValue += _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
       }
     }
-
-    return assetValue;
   }
 
   /// @notice Get HLP underlying asset value in E30
   /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value
+  /// @return value HLP Value
   function _getHLPUnderlyingAssetValueE30(
     bytes32 _underlyingAssetId,
     ConfigStorage _configStorage,
     bool _isMaxPrice
-  ) internal view returns (uint256) {
+  ) internal view returns (uint256 value) {
+    VaultStorage _vs = VaultStorage(vaultStorage);
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
-    (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
-    uint256 value = (VaultStorage(vaultStorage).hlpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
-      (10 ** _assetConfig.decimals);
+    uint256 _totalAssets = _vs.hlpLiquidity(_assetConfig.tokenAddress) +
+      _vs.hlpLiquidityOnHold(_assetConfig.tokenAddress);
+    if (_totalAssets == 0) return 0;
 
-    return value;
+    (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
+
+    value = (_totalAssets * _priceE30) / (10 ** _assetConfig.decimals);
   }
 
   /// @notice getHLPPrice in e18 format
@@ -233,12 +245,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
       }
 
-      {
-        unchecked {
-          ++i;
-          totalPnlLong += _pnlLongE30;
-          totalPnlShort += _pnlShortE30;
-        }
+      unchecked {
+        ++i;
+        totalPnlLong += _pnlLongE30;
+        totalPnlShort += _pnlShortE30;
       }
     }
 
@@ -464,6 +474,13 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     perpStorage = _perpStorage;
   }
 
+  function setTradeHelper(address _tradeHelper) external onlyOwner {
+    if (_tradeHelper == address(0)) revert ICalculator_InvalidAddress();
+    TradeHelper(_tradeHelper).maxAdaptiveFeeBps();
+    emit LogSetTradeHelper(_tradeHelper, tradeHelper);
+    tradeHelper = _tradeHelper;
+  }
+
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
@@ -554,7 +571,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     VaultStorage vaultStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
-    uint256 decimals;
+    uint8 decimals;
     uint256 amount;
     uint256 priceE30;
     bytes32 tokenAssetId;
@@ -638,19 +655,22 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
       {
         // Calculate pnl
-        (_var.isProfit, _var.delta) = _getDelta(
-          _var.absSize,
-          _var.isLong,
-          _var.priceE30,
-          _var.position.avgEntryPriceE30,
-          _var.position.lastIncreaseTimestamp
-        );
+        GetDeltaVars2 memory gdVars;
+        gdVars.subAccount = HMXLib.getSubAccount(_var.position.primaryAccount, _var.position.subAccountId);
+        gdVars.size = _var.absSize;
+        gdVars.isLong = _var.isLong;
+        gdVars.markPrice = _var.priceE30;
+        gdVars.averagePrice = _var.position.avgEntryPriceE30;
+        gdVars.lastIncreaseTimestamp = _var.position.lastIncreaseTimestamp;
+        gdVars.marketIndex = _var.position.marketIndex;
+        gdVars.useMinProfitDuration = false;
+        (_var.isProfit, _var.delta) = _getDelta(gdVars);
 
         if (_var.isProfit) {
           if (_var.delta >= _var.position.reserveValueE30) {
             _var.delta = _var.position.reserveValueE30;
           }
-          _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);
+          _unrealizedPnlE30 += int256(_var.delta);
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);
         }
@@ -675,7 +695,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           int256 _proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
           int256 nextFundingRate = _market.currentFundingRate +
             ((_getFundingRateVelocity(_var.position.marketIndex) * _proportionalElapsedInDay) / 1e18);
-          int256 lastFundingAccrued = _market.fundingAccrued;
+          int256 lastFundingAccrued = _var.position.lastFundingAccrued;
           int256 currentFundingAccrued = _market.fundingAccrued +
             ((_market.currentFundingRate + nextFundingRate) * _proportionalElapsedInDay) /
             2 /
@@ -683,7 +703,13 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           _unrealizedFeeE30 += getFundingFee(_var.position.positionSizeE30, currentFundingAccrued, lastFundingAccrued);
         }
         // Calculate trading fee
-        _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
+        _unrealizedFeeE30 += int256(
+          _getTradingFee(
+            -_var.position.positionSizeE30,
+            _marketConfig.decreasePositionFeeRateBPS,
+            _var.position.marketIndex
+          )
+        );
       }
 
       unchecked {
@@ -694,6 +720,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     if (_len != 0) {
       // Calculate liquidation fee
       _unrealizedFeeE30 += int256(liquidationFee);
+    }
+
+    if (_unrealizedPnlE30 > 0) {
+      _unrealizedPnlE30 = ((pnlFactorBps * _unrealizedPnlE30.toUint256()) / BPS).toInt256();
     }
 
     return (_unrealizedPnlE30, _unrealizedFeeE30);
@@ -1075,12 +1105,130 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _hlpTVL;
   }
 
-  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) external pure returns (uint256 tradingFee) {
-    return _getTradingFee(_size, _baseFeeRateBPS);
+  function getTradingFee(
+    int256 _size,
+    uint256 _baseFeeRateBPS,
+    uint256 _marketIndex
+  ) external view returns (uint256 tradingFee) {
+    return _getTradingFee(_size, _baseFeeRateBPS, _marketIndex);
   }
 
-  function _getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) internal pure returns (uint256 tradingFee) {
-    return (_size * _baseFeeRateBPS) / BPS;
+  function _getTradingFee(
+    int256 _size,
+    uint256 _baseFeeRateBPS,
+    uint256 _marketIndex
+  ) internal view returns (uint256 tradingFee) {
+    TradeHelper th = TradeHelper(tradeHelper);
+    bool _isAdaptiveFee = ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_marketIndex);
+    IPerpStorage.Market memory market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
+    int256 skew = int256(market.longPositionSize) - int256(market.shortPositionSize);
+    uint256 takerFeeE8 = ConfigStorage(configStorage).takerFeeE8ByMarketIndex(_marketIndex);
+    uint256 makerFeeE8 = ConfigStorage(configStorage).makerFeeE8ByMarketIndex(_marketIndex);
+    uint256 absSizeDelta = HMXLib.abs(_size);
+    if (takerFeeE8 > 0 || makerFeeE8 > 0) {
+      // If _sizeDelta and _skew are in the same direction
+      // (multiply them together; if they have the same sign, the result will be positive.)
+      if (_size * skew > 0) {
+        // _skew will be larger, we will charge takerFee only
+        // Calculate the trading fee
+
+        if (_isAdaptiveFee) {
+          takerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, takerFeeE8);
+        }
+        tradingFee = (absSizeDelta * takerFeeE8) / 1e8;
+      } else {
+        // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
+        if (absSizeDelta > HMXLib.abs(skew)) {
+          // Collect makerFee first on the part equal to current market skew
+          if (_isAdaptiveFee) {
+            makerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, makerFeeE8);
+          }
+          tradingFee = (HMXLib.abs(skew) * makerFeeE8) / 1e8;
+
+          // Then collect takerFee from the part that make marketSkew worse
+          if (_isAdaptiveFee) {
+            takerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, takerFeeE8);
+          }
+          tradingFee += (HMXLib.abs(_size + skew) * takerFeeE8) / 1e8;
+        } else {
+          // if _size does not flip _skew, it makes _skew better
+          // we collect makerFee only
+          if (_isAdaptiveFee) {
+            makerFeeE8 = th.getAdaptiveFeeE8(_size, _marketIndex, makerFeeE8);
+          }
+          tradingFee = (absSizeDelta * makerFeeE8) / 1e8;
+        }
+      }
+    } else {
+      // If taker and maker fee is not set, use legacy trading fee
+      if (_isAdaptiveFee) {
+        _baseFeeRateBPS = th.getAdaptiveFeeBps(_size, _marketIndex, uint32(_baseFeeRateBPS));
+      }
+
+      tradingFee = (absSizeDelta * _baseFeeRateBPS) / BPS;
+    }
+  }
+
+  struct GetDeltaVars {
+    uint256 priceDelta;
+    uint256 delta;
+    bool isProfit;
+    bool isLong;
+    uint256 minProfitDuration;
+    PerpStorage.Market market;
+    ConfigStorage.MarketConfig marketConfig;
+  }
+
+  function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) public view returns (bool, uint256) {
+    GetDeltaVars memory vars;
+    // Check for invalid input: averagePrice cannot be zero.
+    if (position.avgEntryPriceE30 == 0) return (false, 0);
+
+    // Calculate the difference between the average price and the fixed price.
+    vars.priceDelta;
+    unchecked {
+      vars.priceDelta = position.avgEntryPriceE30 > _markPrice
+        ? position.avgEntryPriceE30 - _markPrice
+        : _markPrice - position.avgEntryPriceE30;
+    }
+
+    // Calculate the delta, adjusted for the size of the order.
+    vars.delta = (HMXLib.abs(position.positionSizeE30) * vars.priceDelta) / position.avgEntryPriceE30;
+
+    // Determine if the position is profitable or not based on the averagePrice and the mark price.
+    vars.isProfit;
+    vars.isLong = position.positionSizeE30 > 0;
+    if (vars.isLong) {
+      vars.isProfit = _markPrice > position.avgEntryPriceE30;
+    } else {
+      vars.isProfit = _markPrice < position.avgEntryPriceE30;
+    }
+
+    // In case of profit, we need to check the current timestamp against minProfitDuration
+    // in order to prevent front-run attack, or price manipulation.
+    // Check `isProfit` first, to save SLOAD in loss case.
+    if (vars.isProfit) {
+      vars.minProfitDuration = ConfigStorage(configStorage).getStepMinProfitDuration(
+        position.marketIndex,
+        position.lastIncreaseSize
+      );
+      if (block.timestamp < position.lastIncreaseTimestamp + vars.minProfitDuration) {
+        vars.market = PerpStorage(perpStorage).getMarketByIndex(position.marketIndex);
+        vars.marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(position.marketIndex);
+        OracleMiddleware(oracle).getLatestAdaptivePrice(
+          vars.marketConfig.assetId,
+          vars.isLong, // if current position is SHORT position, then we use max price
+          (int(vars.market.longPositionSize) - int(vars.market.shortPositionSize)),
+          -position.positionSizeE30,
+          vars.marketConfig.fundingRate.maxSkewScaleUSD,
+          0
+        );
+        return (vars.isProfit, 0);
+      }
+    }
+
+    // Return the values of isProfit and delta.
+    return (vars.isProfit, vars.delta);
   }
 
   function getDelta(
@@ -1088,9 +1236,41 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice,
-    uint256 _lastIncreaseTimestamp
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
   ) external view returns (bool, uint256) {
-    return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
+    GetDeltaVars2 memory vars;
+    vars.size = _size;
+    vars.isLong = _isLong;
+    vars.markPrice = _markPrice;
+    vars.averagePrice = _averagePrice;
+    vars.lastIncreaseTimestamp = _lastIncreaseTimestamp;
+    vars.marketIndex = _marketIndex;
+    vars.useMinProfitDuration = false;
+
+    return _getDelta(vars);
+  }
+
+  function getDelta(
+    address _subAccount,
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
+  ) external view returns (bool, uint256) {
+    GetDeltaVars2 memory vars;
+    vars.subAccount = _subAccount;
+    vars.size = _size;
+    vars.isLong = _isLong;
+    vars.markPrice = _markPrice;
+    vars.averagePrice = _averagePrice;
+    vars.lastIncreaseTimestamp = _lastIncreaseTimestamp;
+    vars.marketIndex = _marketIndex;
+    vars.useMinProfitDuration = true;
+
+    return _getDelta(vars);
   }
 
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
@@ -1100,45 +1280,60 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @param _averagePrice The average price of the position.
   /// @return isProfit A boolean value indicating whether the position is profitable or not.
   /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
-  function _getDelta(
-    uint256 _size,
-    bool _isLong,
-    uint256 _markPrice,
-    uint256 _averagePrice,
-    uint256 _lastIncreaseTimestamp
-  ) internal view returns (bool, uint256) {
+  struct GetDeltaVars2 {
+    address subAccount;
+    uint256 size;
+    bool isLong;
+    uint256 markPrice;
+    uint256 averagePrice;
+    uint256 lastIncreaseTimestamp;
+    uint256 marketIndex;
+    bool useMinProfitDuration;
+    uint256 priceDelta;
+    uint256 delta;
+    bool isProfit;
+  }
+
+  function _getDelta(GetDeltaVars2 memory vars) internal view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
-    if (_averagePrice == 0) return (false, 0);
+    if (vars.averagePrice == 0) return (false, 0);
 
     // Calculate the difference between the average price and the fixed price.
-    uint256 priceDelta;
+    vars.priceDelta;
     unchecked {
-      priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
+      vars.priceDelta = vars.averagePrice > vars.markPrice
+        ? vars.averagePrice - vars.markPrice
+        : vars.markPrice - vars.averagePrice;
     }
 
     // Calculate the delta, adjusted for the size of the order.
-    uint256 delta = (_size * priceDelta) / _averagePrice;
+    vars.delta = (vars.size * vars.priceDelta) / vars.averagePrice;
 
     // Determine if the position is profitable or not based on the averagePrice and the mark price.
-    bool isProfit;
-    if (_isLong) {
-      isProfit = _markPrice > _averagePrice;
+    vars.isProfit;
+    if (vars.isLong) {
+      vars.isProfit = vars.markPrice > vars.averagePrice;
     } else {
-      isProfit = _markPrice < _averagePrice;
+      vars.isProfit = vars.markPrice < vars.averagePrice;
     }
 
     // In case of profit, we need to check the current timestamp against minProfitDuration
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
-    if (isProfit) {
-      IConfigStorage.TradingConfig memory _tradingConfig = ConfigStorage(configStorage).getTradingConfig();
-      if (block.timestamp < _lastIncreaseTimestamp + _tradingConfig.minProfitDuration) {
-        return (isProfit, 0);
+    if (vars.isProfit && vars.useMinProfitDuration) {
+      bytes32 positionId = HMXLib.getPositionId(vars.subAccount, vars.marketIndex);
+      IPerpStorage.Position memory position = PerpStorage(perpStorage).getPositionById(positionId);
+      uint256 minProfitDuration = ConfigStorage(configStorage).getStepMinProfitDuration(
+        vars.marketIndex,
+        position.lastIncreaseSize
+      );
+      if (block.timestamp < vars.lastIncreaseTimestamp + minProfitDuration) {
+        return (vars.isProfit, 0);
       }
     }
 
     // Return the values of isProfit and delta.
-    return (isProfit, delta);
+    return (vars.isProfit, vars.delta);
   }
 
   function _getGlobalMarketPnl(

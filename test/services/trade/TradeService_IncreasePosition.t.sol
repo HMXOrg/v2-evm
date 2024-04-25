@@ -60,7 +60,8 @@ contract TradeService_IncreasePosition is TradeService_Base {
         allowIncreasePosition: false,
         active: true,
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
-      })
+      }),
+      false
     );
 
     // Increase Long ETH size 1,000,000

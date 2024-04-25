@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
@@ -13,6 +13,7 @@ interface ICalculator {
   error ICalculator_InvalidAveragePrice();
   error ICalculator_InvalidPrice();
   error ICalculator_PoolImbalance();
+  error ICalculator_InvalidBorrowingFee();
 
   /**
    * Structs
@@ -38,19 +39,19 @@ interface ICalculator {
   /**
    * States
    */
-  function oracle() external returns (address _address);
+  function oracle() external view returns (address _address);
 
-  function vaultStorage() external returns (address _address);
+  function vaultStorage() external view returns (address _address);
 
-  function configStorage() external returns (address _address);
+  function configStorage() external view returns (address _address);
 
-  function perpStorage() external returns (address _address);
+  function perpStorage() external view returns (address _address);
 
   /**
    * Functions
    */
 
-  function getAUME30(bool isMaxPrice) external returns (uint256);
+  function getAUME30(bool isMaxPrice) external view returns (uint256);
 
   function getGlobalPNLE30() external view returns (int256);
 
@@ -62,7 +63,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _freeCollateral);
 
-  function getHLPPrice(uint256 aum, uint256 supply) external returns (uint256);
+  function getHLPPrice(uint256 aum, uint256 supply) external view returns (uint256);
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);
 
@@ -70,13 +71,13 @@ interface ICalculator {
     address _token,
     uint256 _tokenValue,
     ConfigStorage _configStorage
-  ) external returns (uint32);
+  ) external view returns (uint32);
 
   function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external returns (uint32);
+  ) external view returns (uint32);
 
   function getEquity(
     address _subAccount,
@@ -100,7 +101,7 @@ interface ICalculator {
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external view returns (uint256);
 
   function getCollateralValue(
     address _subAccount,
@@ -110,12 +111,25 @@ interface ICalculator {
 
   function getFundingRateVelocity(uint256 _marketIndex) external view returns (int256);
 
+  function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) external view returns (bool, uint256);
+
   function getDelta(
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice,
-    uint256 _lastIncreaseTimestamp
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
+  ) external view returns (bool, uint256);
+
+  function getDelta(
+    address _subAccount,
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
   ) external view returns (bool, uint256);
 
   function getPendingBorrowingFeeE30() external view returns (uint256);
@@ -138,5 +152,24 @@ interface ICalculator {
 
   function setPerpStorage(address _address) external;
 
+  function setTradeHelper(address _address) external;
+
   function proportionalElapsedInDay(uint256 _marketIndex) external view returns (uint256 elapsed);
+
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _hlpTVL
+  ) external view returns (uint256 _nextBorrowingRate);
+
+  function getFundingFee(
+    int256 _size,
+    int256 _currentFundingAccrued,
+    int256 _lastFundingAccrued
+  ) external view returns (int256 fundingFee);
+
+  function getBorrowingFee(
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) external view returns (uint256 borrowingFee);
 }

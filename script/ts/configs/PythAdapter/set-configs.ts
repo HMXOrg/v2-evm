@@ -7,18 +7,13 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("NVDA"),
-    pythPriceId: ethers.utils.formatBytes32String("NVDA"),
+    assetId: ethers.utils.formatBytes32String("W"),
+    pythPriceId: ethers.utils.formatBytes32String("W"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("LINK"),
-    pythPriceId: ethers.utils.formatBytes32String("LINK"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("CHF"),
-    pythPriceId: ethers.utils.formatBytes32String("CHF"),
+    assetId: ethers.utils.formatBytes32String("ENA"),
+    pythPriceId: ethers.utils.formatBytes32String("ENA"),
     inverse: false,
   },
 ];
@@ -26,10 +21,10 @@ const inputs = [
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
-  console.log("[PythAdapter] Setting configs...");
+  console.log("[configs/PythAdapter] Setting configs...");
   const tx = await safeWrapper.proposeTransaction(
     pythAdapter.address,
     0,
@@ -39,8 +34,7 @@ async function main(chainId: number) {
       inputs.map((each) => each.inverse),
     ])
   );
-  console.log(`[PythAdapter] Tx: ${tx}`);
-  console.log("[PythAdapter] Finished");
+  console.log(`[configs/PythAdapter] Tx: ${tx}`);
 }
 
 const program = new Command();

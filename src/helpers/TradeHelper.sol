@@ -16,6 +16,9 @@ import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/m
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
+import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeCastUpgradeable for uint256;
@@ -107,6 +110,18 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
   event LogFundingRate(uint256 indexed marketIndex, int256 oldFundingRate, int256 newFundingRate);
+  event LogSetAdaptiveFeeCalculator(address indexed oldAdaptiveFeeCalculator, address indexed adaptiveFeeCalculator);
+  event LogSetOrderbookOracle(address indexed oldOrderbookOracle, address indexed orderbookOracle);
+  event LogSetMaxAdaptiveFeeBps(uint32 indexed oldMaxAdaptiveFeeBps, uint32 indexed maxAdaptiveFeeBps);
+  event LogSettleMakerTakerFee(
+    bytes32 positionId,
+    uint256 marketIndex,
+    address subAccount,
+    uint256 makerFeeE8,
+    uint256 makerSizeDelta,
+    uint256 takerFeeE8,
+    uint256 takerSizeDelta
+  );
 
   /**
    * Structs
@@ -167,6 +182,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   address public vaultStorage;
   address public configStorage;
   Calculator public calculator; // cache this from configStorage
+  OrderbookOracle public orderbookOracle;
+  AdaptiveFeeCalculator public adaptiveFeeCalculator;
+  uint32 public maxAdaptiveFeeBps;
 
   /// @notice Initializes the contract by setting the addresses for PerpStorage, VaultStorage, and ConfigStorage.
   /// @dev This function must be called after the contract is deployed and before it can be used.
@@ -294,13 +312,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   /// @notice Settles all fees for a given position and updates the fee states.
   /// @param _positionId The ID of the position to settle fees for.
   /// @param _position The Position object for the position to settle fees for.
-  /// @param _absSizeDelta The absolute value of the size delta for the position.
+  /// @param _sizeDelta The value of the size delta for the position.
   /// @param _positionFeeBPS The position fee basis points for the position.
   /// @param _assetClassIndex The index of the asset class for the position.
   function settleAllFees(
     bytes32 _positionId,
     PerpStorage.Position memory _position,
-    uint256 _absSizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex
   ) external nonReentrant onlyWhitelistedExecutor {
@@ -312,10 +330,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _positionId,
       _vars.subAccount,
       _position,
-      _absSizeDelta,
+      _sizeDelta,
       _positionFeeBPS,
       _assetClassIndex,
-      _position.marketIndex
+      _position.marketIndex,
+      ConfigStorage(configStorage).isAdaptiveFeeEnabledByMarketIndex(_position.marketIndex)
     );
 
     // increase collateral
@@ -338,11 +357,12 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   function updateFeeStates(
     bytes32 _positionId,
     address _subAccount,
-    PerpStorage.Position memory _position,
-    uint256 _sizeDelta,
+    IPerpStorage.Position memory _position,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool isAdaptiveFee
   )
     external
     nonReentrant
@@ -356,7 +376,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _sizeDelta,
       _positionFeeBPS,
       _assetClassIndex,
-      _marketIndex
+      _marketIndex,
+      isAdaptiveFee
     );
   }
 
@@ -409,24 +430,95 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   /**
    * Private Functions
    */
+  struct UpdateFeeStateLocalVars {
+    Calculator calculator;
+    IPerpStorage.Market market;
+    uint256 absSizeDelta;
+    int256 skew;
+    uint256 takerFeeE8;
+    uint256 makerFeeE8;
+    uint256 takerFeeSizeDelta;
+    uint256 makerFeeSizeDelta;
+    bool isLong;
+  }
 
   function _updateFeeStates(
-    bytes32 /*_positionId*/,
-    address /*_subAccount*/,
+    bytes32 _positionId,
+    address _subAccount,
     PerpStorage.Position memory _position,
-    uint256 _sizeDelta,
+    int256 _sizeDelta,
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    bool _isAdaptiveFee
   ) internal returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
+    UpdateFeeStateLocalVars memory vars;
     // SLOAD
-    Calculator _calculator = calculator;
+    vars.calculator = calculator;
+    vars.market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
+    vars.absSizeDelta = HMXLib.abs(_sizeDelta);
 
-    // Calculate the trading fee
-    _tradingFee = (_sizeDelta * _positionFeeBPS) / BPS;
+    vars.skew = int256(vars.market.longPositionSize) - int256(vars.market.shortPositionSize);
+    vars.takerFeeE8 = ConfigStorage(configStorage).takerFeeE8ByMarketIndex(_marketIndex);
+    vars.makerFeeE8 = ConfigStorage(configStorage).makerFeeE8ByMarketIndex(_marketIndex);
+    if (vars.takerFeeE8 > 0 || vars.makerFeeE8 > 0) {
+      // If _sizeDelta and _skew are in the same direction
+      // (multiply them together; if they have the same sign, the result will be positive.)
+      if (_sizeDelta * vars.skew > 0) {
+        // _skew will be larger, we will charge takerFee only
+        // Calculate the trading fee
+
+        if (_isAdaptiveFee) {
+          vars.takerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.takerFeeE8);
+        }
+        vars.takerFeeSizeDelta = vars.absSizeDelta;
+        _tradingFee = (vars.takerFeeSizeDelta * vars.takerFeeE8) / 1e8;
+      } else {
+        // If _sizeDelta will flip _skew, then both taker fee and maker fee will be charged.
+        if (vars.absSizeDelta > HMXLib.abs(vars.skew)) {
+          // Collect makerFee first on the part equal to current market skew
+          if (_isAdaptiveFee) {
+            vars.makerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.makerFeeE8);
+          }
+          vars.makerFeeSizeDelta = HMXLib.abs(vars.skew);
+          _tradingFee = (vars.makerFeeSizeDelta * vars.makerFeeE8) / 1e8;
+
+          // Then collect takerFee from the part that make marketSkew worse
+          if (_isAdaptiveFee) {
+            vars.takerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.takerFeeE8);
+          }
+          vars.takerFeeSizeDelta = HMXLib.abs(_sizeDelta + vars.skew);
+          _tradingFee += (vars.takerFeeSizeDelta * vars.takerFeeE8) / 1e8;
+        } else {
+          // if _sizeDelta does not flip _skew, it makes _skew better
+          // we collect makerFee only
+          if (_isAdaptiveFee) {
+            vars.makerFeeE8 = getAdaptiveFeeE8(_sizeDelta, _marketIndex, vars.makerFeeE8);
+          }
+          vars.makerFeeSizeDelta = vars.absSizeDelta;
+          _tradingFee = (vars.makerFeeSizeDelta * vars.makerFeeE8) / 1e8;
+        }
+      }
+      emit LogSettleMakerTakerFee(
+        _positionId,
+        _marketIndex,
+        _subAccount,
+        vars.makerFeeE8,
+        vars.makerFeeSizeDelta,
+        vars.takerFeeE8,
+        vars.takerFeeSizeDelta
+      );
+    } else {
+      // If taker and maker fee is not set, use legacy trading fee
+      if (_isAdaptiveFee) {
+        _positionFeeBPS = getAdaptiveFeeBps(_sizeDelta, _position.marketIndex, _positionFeeBPS);
+      }
+
+      _tradingFee = (vars.absSizeDelta * _positionFeeBPS) / BPS;
+    }
 
     // Calculate the borrowing fee
-    _borrowingFee = _calculator.getBorrowingFee(
+    _borrowingFee = vars.calculator.getBorrowingFee(
       _assetClassIndex,
       _position.reserveValueE30,
       _position.entryBorrowingRate
@@ -436,15 +528,15 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Calculate the funding fee
     // We are assuming that the market state has been updated with the latest funding rate
-    bool _isLong = _position.positionSizeE30 > 0;
-    _fundingFee = _calculator.getFundingFee(
+    vars.isLong = _position.positionSizeE30 > 0;
+    _fundingFee = vars.calculator.getFundingFee(
       _position.positionSizeE30,
-      PerpStorage(perpStorage).getMarketByIndex(_marketIndex).fundingAccrued,
+      vars.market.fundingAccrued,
       _position.lastFundingAccrued
     );
 
     // Update global state
-    _isLong
+    vars.isLong
       ? _updateAccumFundingLong(_marketIndex, -_fundingFee)
       : _updateAccumFundingShort(_marketIndex, -_fundingFee);
 
@@ -470,7 +562,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   ) internal {
     IncreaseCollateralVars memory _vars;
     // SLOAD
-    _vars.vaultStorage = VaultStorage(vaultStorage);
     _vars.vaultStorage = VaultStorage(vaultStorage);
     _vars.configStorage = ConfigStorage(configStorage);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
@@ -568,23 +659,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
-
-      // Calculate for settlement fee
-      uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _repayValue);
-      uint256 _settlementFeeAmount = (_repayAmount * _settlementFeeRate) / 1e18;
-      uint256 _settlementFeeValue = (_repayValue * _settlementFeeRate) / 1e18;
-
       // book the balances
-      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, _settlementFeeAmount);
-
-      emit LogSettleSettlementFeeAmount(
-        _vars.positionId,
-        _vars.marketIndex,
-        _vars.subAccount,
-        _vars.token,
-        _settlementFeeValue,
-        _settlementFeeAmount
-      );
+      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
 
       // deduct _vars.unrealizedPnlToBeReceived with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.unrealizedPnlToBeReceived -= _repayValue;
@@ -991,6 +1067,57 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  function getAdaptiveFeeBps(
+    int256 _sizeDelta,
+    uint256 _marketIndex,
+    uint32 _baseFeeBps
+  ) public view returns (uint32 feeBps) {
+    (uint256 askDepth, uint256 bidDepth, uint256 coeffVariants) = orderbookOracle.getData(_marketIndex);
+    bool isBuy = _sizeDelta > 0;
+    uint256 epochOI = PerpStorage(perpStorage).getEpochVolume(isBuy, _marketIndex);
+    feeBps = adaptiveFeeCalculator.getAdaptiveFeeBps(
+      HMXLib.abs(_sizeDelta) / 1e22,
+      epochOI / 1e22,
+      isBuy ? askDepth : bidDepth,
+      coeffVariants,
+      _baseFeeBps,
+      maxAdaptiveFeeBps
+    );
+  }
+
+  function getAdaptiveFeeE8(
+    int256 _sizeDelta,
+    uint256 _marketIndex,
+    uint256 _baseFeeE8
+  ) public view returns (uint256 feeBps) {
+    (uint256 askDepth, uint256 bidDepth, uint256 coeffVariants) = orderbookOracle.getData(_marketIndex);
+    bool isBuy = _sizeDelta > 0;
+    uint256 epochOI = PerpStorage(perpStorage).getEpochVolume(isBuy, _marketIndex);
+    feeBps = adaptiveFeeCalculator.getAdaptiveFeeE8(
+      HMXLib.abs(_sizeDelta) / 1e22,
+      epochOI / 1e22,
+      isBuy ? askDepth : bidDepth,
+      coeffVariants,
+      _baseFeeE8,
+      maxAdaptiveFeeBps * 1e4
+    );
+  }
+
+  function setAdaptiveFeeCalculator(address _adaptiveFeeCalculator) external onlyOwner {
+    emit LogSetAdaptiveFeeCalculator(address(adaptiveFeeCalculator), _adaptiveFeeCalculator);
+    adaptiveFeeCalculator = AdaptiveFeeCalculator(_adaptiveFeeCalculator);
+  }
+
+  function setOrderbookOracle(address _orderbookOracle) external onlyOwner {
+    emit LogSetOrderbookOracle(address(orderbookOracle), _orderbookOracle);
+    orderbookOracle = OrderbookOracle(_orderbookOracle);
+  }
+
+  function setMaxAdaptiveFeeBps(uint32 _maxAdaptiveFeeBps) external onlyOwner {
+    emit LogSetMaxAdaptiveFeeBps(maxAdaptiveFeeBps, _maxAdaptiveFeeBps);
+    maxAdaptiveFeeBps = _maxAdaptiveFeeBps;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

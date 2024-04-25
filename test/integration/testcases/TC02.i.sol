@@ -57,7 +57,13 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: (0.003 * 1e8 * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T1: "
+      });
 
       // Finally after Bob add liquidity Vault balance should be correct
       // note: token balance is including all liquidity, dev fee and protocol fee
@@ -90,7 +96,13 @@ contract TC02 is BaseIntTest_WithActions {
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: (0.003 * 1e8 * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T2: "
+      });
     }
 
     // time passed for 60 seconds
@@ -115,6 +127,8 @@ contract TC02 is BaseIntTest_WithActions {
     //     Then Alice should has Long Position in WETH market
     // initialPriceFeedDatas is from
     marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 300 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
     {
       // When Alice Buy WETH Market
       // And Alice has no position
@@ -204,8 +218,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.997 btc
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00301275 * 1e8,
-        _devFee: 0.00000225 * 1e8,
+        _fee: 0.00271215 * 1e8,
+        _devFee: 0.0003015 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T4: "
       });
@@ -243,6 +257,8 @@ contract TC02 is BaseIntTest_WithActions {
     // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8, 0);
     tickPrices[0] = 73623;
     marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 300 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 150 * 1e30);
     {
       // When Alice Sell WETH Market
       // And Alice has Long position
@@ -410,8 +426,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Vault
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00301913 * 1e8,
-        _devFee: 0.00000337 * 1e8,
+        _fee: 0.00271890 * 1e8,
+        _devFee: 0.00030225 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T6: "
       });
@@ -453,6 +469,8 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T7: Alice Sell JPY Market for 6000 USD with same Sub-account
     marketSell(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochVolume(true, jpyMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, jpyMarketIndex), 6_000 * 1e30);
     {
       // When Alice Sell JPY Market
       // And Alice has no position
@@ -545,8 +563,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.99662501 btc
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00309563 * 1e8,
-        _devFee: 0.00001687 * 1e8,
+        _fee: 0.0027999 * 1e8,
+        _devFee: 0.00031125 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T7: "
       });
@@ -579,6 +597,8 @@ contract TC02 is BaseIntTest_WithActions {
     tickPrices[1] = 99039;
     tickPrices[6] = 86999;
     marketBuy(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochVolume(true, jpyMarketIndex), 6_000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, jpyMarketIndex), 6_000 * 1e30);
     {
       // When Alice Buy JPY Market
       // And Alice has Short position
@@ -744,8 +764,8 @@ contract TC02 is BaseIntTest_WithActions {
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00317213 * 1e8,
-        _devFee: 0.00003038 * 1e8,
+        _fee: 0.0028809 * 1e8,
+        _devFee: 0.00032026 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T8: "
       });
@@ -809,6 +829,8 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochVolume(true, wbtcMarketIndex), 0);
+    assertEq(perpStorage.getEpochVolume(false, wbtcMarketIndex), 0);
 
     // T12: Btc Price has changed to 17,500 USD
     //      Execute Bob order index 0
@@ -935,8 +957,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00317213 btc
-      //        - dev fee       = 0.00003038 btc
+      //    BTC - protocol fee  = 0.0028809 btc
+      //        - dev fee       = 0.00032026 btc
 
       // HLP's liquidity before settle payment
       //    BTC - 0.99572425 btc
@@ -945,9 +967,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee   - 3 USD
       //      BTC - 3 / 17500               = 0.00017142 btc
-      //          - pay for dev (15%)       = 0.00002571 btc
-      //          - pay for protocol (85%)  = 0.00017142 - 0.00002571
-      //                                    = 0.00014571 btc
+      //          - pay for dev (10%)       = 0.00001714 btc
+      //          - pay for protocol (90%)  = 0.00015428
 
       // And HLP has to pay
       //     nothing
@@ -958,13 +979,13 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.00982858 * 1e8, "T12: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00317213 + 0.00014571 = 0.00331784 btc
-      //        - dev fee       = 0.00003038 + 0.00002571 = 0.00005609 btc
+      //    BTC - protocol fee  = 0.0028809 + 0.00015428 = 0.00303518 btc
+      //        - dev fee       = 0.00032026 + 0.00001714 = 0.0003374 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00331784 * 1e8,
-        _devFee: 0.00005609 * 1e8,
+        _fee: 0.00303518 * 1e8,
+        _devFee: 0.0003374 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T12: "
       });
@@ -1044,6 +1065,8 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochVolume(true, wbtcMarketIndex), 3000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wbtcMarketIndex), 3000 * 1e30);
     {
       // When Limit order index 1 has executed
       // Then Bob Btc Long position would decreased by 3000 USD at price 18,900 USD
@@ -1148,8 +1171,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.00982858 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00331784 btc
-      //        - dev fee       = 0.00005609 btc
+      //    BTC - protocol fee  = 0.00303518 btc
+      //        - dev fee       = 0.0003374 btc
 
       // HLP's liquidity before settle payment
       //    BTC - 0.99572425 btc
@@ -1158,14 +1181,12 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee - 3 USD
       //      BTC - 3 / 18900.01                    = 0.00015873 btc
-      //          - pay for dev (15%)               = 0.00002380 btc
-      //          - pay for protocol (85%)          = 0.00015873 - 0.00002380
-      //                                            = 0.00013493 btc
+      //          - pay for dev (10%)               = 0.00001587 btc
+      //          - pay for protocol (90%)          = 0.00014286
       //    Borrowing fee - 0.02440433326798917 USD
       //      BTC - 0.02440433326798917 / 18900.01  = 0.00000129 btc
-      //          - pay for dev (15%)               = 0.00000019 btc
-      //          - pay for HLP (85%)               = 0.00000129 - 0.00000019
-      //                                            = 0.0000011
+      //          - pay for dev (10%)               = 0.00000012 btc
+      //          - pay for HLP (90%)               = 0.00000117
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 18900.01              = 0.00000003 btc
       //          - pay for funding fee (100%)      = 0.00000003 btc
@@ -1182,14 +1203,14 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01760503 * 1e8, "T15: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00331784 + 0.00013493              = 0.00345277 btc
-      //        - dev fee       = 0.00005609 + 0.00002380 + 0.00000019 = 0.00008008 btc
+      //    BTC - protocol fee  = 0.00303518 + 0.00014286              = 0.00317804 btc
+      //        - dev fee       = 0.0003374 + 0.00001587 + 0.00000012  = 0.00035339 btc
       //        - funding fee   = 0.00000014 + 0.00000003              = 0.00000017 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00345277 * 1e8,
-        _devFee: 0.00008008 * 1e8,
+        _fee: 0.00317804 * 1e8,
+        _devFee: 0.00035339 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T15: "
       });
@@ -1263,6 +1284,8 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochVolume(true, wbtcMarketIndex), 3000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wbtcMarketIndex), 6000 * 1e30);
     {
       // When Limit order index 2 has executed
       // Then Bob would has Btc Short position size 3000 USD at price 21,000 USD
@@ -1364,8 +1387,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01760503 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00345277 btc
-      //        - dev fee       = 0.00008008 btc
+      //    BTC - protocol fee  = 0.00317804 btc
+      //        - dev fee       = 0.00035339 btc
       //        - funding fee   = 0.00000017 btc
 
       // HLP's liquidity before settle payment
@@ -1375,9 +1398,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee - 3 USD
       //      BTC - 3 / 21500                    = 0.00013953 btc
-      //          - pay for dev (15%)            = 0.00002092 btc
-      //          - pay for protocol (85%)       = 0.00013953 - 0.00002092
-      //                                         = 0.00011861 btc
+      //          - pay for dev (10%)            = 0.00001395 btc
+      //          - pay for protocol (90%)       = 0.00012558
 
       // And HLP has to pay
       //    nothing
@@ -1389,14 +1411,14 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01746550 * 1e8, "T17: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00345277 + 0.00011861 = 0.00357138 btc
-      //        - dev fee       = 0.00008008 + 0.00002092 = 0.00010100 btc
+      //    BTC - protocol fee  = 0.00317804 + 0.00012558 = 0.00330362 btc
+      //        - dev fee       = 0.00035339 + 0.00001395 = 0.00036734 btc
       //        - funding fee   = 0.00000017              = 0.00000017 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00357138 * 1e8,
-        _devFee: 0.00010100 * 1e8,
+        _fee: 0.00330362 * 1e8,
+        _devFee: 0.00036734 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T17: "
       });
@@ -1484,6 +1506,8 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+    assertEq(perpStorage.getEpochVolume(true, wbtcMarketIndex), 6000 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wbtcMarketIndex), 6000 * 1e30);
 
     skip(60);
     {
@@ -1591,8 +1615,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01746550 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00331784 btc
-      //        - dev fee       = 0.00005609 btc
+      //    BTC - protocol fee  = 0.00330362 btc
+      //        - dev fee       = 0.00036734 btc
 
       // HLP's liquidity before settle payment
       //    BTC - 0.98778885 btc
@@ -1601,14 +1625,12 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee - 3 USD
       //      BTC - 3 / 17500                       = 0.00017142 btc
-      //          - pay for dev (15%)               = 0.00002571 btc
-      //          - pay for protocol (85%)          = 0.00017142 - 0.00002571
-      //                                            = 0.00014571 btc
+      //          - pay for dev (10%)               = 0.00001714 btc
+      //          - pay for protocol (90%)          = 0.00015428
       //    Borrowing fee - 0.02656843109739486 USD
       //      BTC - 0.02656843109739486 / 17500     = 0.00000151 btc
-      //          - pay for dev (15%)               = 0.00000022 btc
-      //          - pay for HLP (85%)               = 0.00000151 - 0.00000022
-      //                                            = 0.00000129 btc
+      //          - pay for dev (10%)               = 0.00000015 btc
+      //          - pay for HLP (90%)               = 0.00000136
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 17500                 = 0.00000004 btc
       //          - pay for funding fee (100%)      = 0.00000004 btc
@@ -1624,14 +1646,14 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.03272110 * 1e8, "T19: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00357138 + 0.00014571              = 0.00371709 btc
-      //        - dev fee       = 0.00010100 + 0.00002571 + 0.00000022 = 0.00012693 btc
+      //    BTC - protocol fee  = 0.00330362 + 0.00015428              = 0.0034579 btc
+      //        - dev fee       = 0.00036734 + 0.00001714 + 0.00000015 = 0.00038463 btc
       //        - funding fee   = 0.00000017 + 0.00000004              = 0.00000021 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00371709 * 1e8,
-        _devFee: 0.00012693 * 1e8,
+        _fee: 0.0034579 * 1e8,
+        _devFee: 0.00038463 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T19: "
       });
@@ -1658,5 +1680,19 @@ contract TC02 is BaseIntTest_WithActions {
       assertAssetClassReserve(2, 0, "T19: ");
       assertAssetClassReserve(1, 0, "T19: ");
     }
+
+    // Test where epoch length is changed
+    skip(30 minutes);
+
+    marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 300 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
+
+    perpStorage.setMovingWindowConfig(15, 1 minutes);
+
+    skip(2 minutes);
+
+    assertEq(perpStorage.getEpochVolume(true, wethMarketIndex), 300 * 1e30);
+    assertEq(perpStorage.getEpochVolume(false, wethMarketIndex), 0);
   }
 }

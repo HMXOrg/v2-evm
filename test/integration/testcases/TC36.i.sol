@@ -24,7 +24,7 @@ contract TC36 is BaseIntTest_WithActions {
     _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
     _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
 
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig);
+    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);

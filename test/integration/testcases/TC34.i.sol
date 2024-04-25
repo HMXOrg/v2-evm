@@ -42,7 +42,7 @@ contract TC34 is BaseIntTest_WithActions {
         totalAmount: _amount,
         hlpLiquidity: 49_850_000,
         hlpAmount: 9_970 ether, //
-        fee: 150_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
+        fee: (150_000 * 9000) / 1e4, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8 // 10% to dev
         executionFee: _totalExecutionOrderFee
       })
     );
@@ -90,7 +90,7 @@ contract TC34 is BaseIntTest_WithActions {
         totalAmount: 434132,
         hlpLiquidity: 5001,
         hlpAmount: 1 ether,
-        fee: 429131,
+        fee: (429130 * 9000) / 1e4,
         executionFee: _totalExecutionOrderFee
       })
     );

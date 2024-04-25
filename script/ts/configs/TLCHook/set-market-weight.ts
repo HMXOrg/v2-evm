@@ -1,4 +1,3 @@
-import { ethers } from "ethers";
 import { TLCHook__factory } from "../../../../typechain";
 import { loadConfig, loadMarketConfig } from "../../utils/config";
 import { Command } from "commander";
@@ -16,20 +15,16 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 24, // NVDAUSD
+      marketIndex: 52, // WUSD
       weightBPS: 5 * BPS,
     },
     {
-      marketIndex: 25, // LINKUSD
-      weightBPS: 7 * BPS,
-    },
-    {
-      marketIndex: 26, // USDCHF
-      weightBPS: 1 * BPS,
+      marketIndex: 53, // ENAUSD
+      weightBPS: 5 * BPS,
     },
   ];
 

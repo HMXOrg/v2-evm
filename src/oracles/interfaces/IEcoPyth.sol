@@ -23,7 +23,11 @@ interface IEcoPyth {
 
   function setUpdater(address _account, bool _isActive) external;
 
+  function setUpdaters(address[] calldata _accounts, bool[] calldata _isActives) external;
+
   function insertAssetId(bytes32 _assetId) external;
 
   function insertAssetIds(bytes32[] calldata _assetIds) external;
+
+  function mapAssetIdToIndex(bytes32 assetId) external view returns (uint256 index);
 }

@@ -29,7 +29,7 @@ contract Calculator_GetDelta is Calculator_Base {
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
 
-    (, uint256 delta) = calculator.getDelta(size, isLong, 1e30, avgPriceE30, 0);
+    (, uint256 delta) = calculator.getDelta(address(this), size, isLong, 1e30, avgPriceE30, 0, 0);
 
     // So that, we expect getDelta to gracefully return 0 instead of revert.
     assertEq(delta, 0 ether);
@@ -42,7 +42,7 @@ contract Calculator_GetDelta is Calculator_Base {
     uint256 size = 1_000 * 1e30;
 
     // price up 10% -> profit 10% of size
-    (bool isProfit, uint256 delta) = calculator.getDelta(size, isLong, nextPrice, avgPriceE30, 0);
+    (bool isProfit, uint256 delta) = calculator.getDelta(address(this), size, isLong, nextPrice, avgPriceE30, 0, 0);
 
     assertEq(isProfit, true);
     assertEq(delta, 100 * 1e30);
@@ -55,7 +55,7 @@ contract Calculator_GetDelta is Calculator_Base {
     uint256 size = 1_000 * 1e30;
 
     // price down 15% -> loss 15% of size
-    (bool isProfit, uint256 delta) = calculator.getDelta(size, isLong, nextPrice, avgPriceE30, 0);
+    (bool isProfit, uint256 delta) = calculator.getDelta(address(this), size, isLong, nextPrice, avgPriceE30, 0, 0);
 
     assertEq(isProfit, false);
     assertEq(delta, 150 * 1e30);
@@ -68,7 +68,7 @@ contract Calculator_GetDelta is Calculator_Base {
     uint256 size = 1_000 * 1e30;
 
     // price up 5% -> loss 5% of size
-    (bool isProfit, uint256 delta) = calculator.getDelta(size, isLong, nextPrice, avgPriceE30, 0);
+    (bool isProfit, uint256 delta) = calculator.getDelta(address(this), size, isLong, nextPrice, avgPriceE30, 0, 0);
 
     assertEq(isProfit, false);
     assertEq(delta, 50 * 1e30);
@@ -81,7 +81,7 @@ contract Calculator_GetDelta is Calculator_Base {
     uint256 size = 1_000 * 1e30;
 
     // price down 50% -> profit 50% of size
-    (bool isProfit, uint256 delta) = calculator.getDelta(size, isLong, nextPrice, avgPriceE30, 0);
+    (bool isProfit, uint256 delta) = calculator.getDelta(address(this), size, isLong, nextPrice, avgPriceE30, 0, 0);
 
     assertEq(isProfit, true);
     assertEq(delta, 500 * 1e30);
@@ -103,19 +103,33 @@ contract Calculator_GetDelta is Calculator_Base {
       })
     );
 
+    uint256[] memory _marketIndexs = new uint256[](1);
+    _marketIndexs[0] = 0;
+    uint256[] memory _minProfitDurations = new uint256[](1);
+    _minProfitDurations[0] = 30;
+    configStorage.setMinProfitDurations(_marketIndexs, _minProfitDurations);
+
     // Assume
     uint256 lastIncrease = block.timestamp;
     uint256 afterMinProfitDuration = lastIncrease + 30;
 
     // price up -> profit
-    (bool isProfit, uint256 delta) = calculator.getDelta(size, isLong, nextPrice, avgPriceE30, lastIncrease);
+    (bool isProfit, uint256 delta) = calculator.getDelta(
+      address(this),
+      size,
+      isLong,
+      nextPrice,
+      avgPriceE30,
+      lastIncrease,
+      0
+    );
     assertEq(isProfit, true);
     assertEq(delta, 0);
 
     vm.warp(afterMinProfitDuration);
 
     // price up -> profit
-    (isProfit, delta) = calculator.getDelta(size, isLong, nextPrice, avgPriceE30, lastIncrease);
+    (isProfit, delta) = calculator.getDelta(address(this), size, isLong, nextPrice, avgPriceE30, lastIncrease, 0);
     assertEq(isProfit, true);
     assertEq(delta, 500000000000000000000000000000000);
   }

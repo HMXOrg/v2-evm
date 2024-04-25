@@ -7,6 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 
 contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /**
@@ -122,6 +123,32 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
   }
 
+  /**
+   * Cross Margin
+   */
+  /// @notice Helper function to deposit weth as collateral via handler
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token to deposit
+  /// @param _depositAmount amount to deposit
+  function depositCollateral(
+    address _account,
+    uint8 _subAccountId,
+    ERC20 _collateralToken,
+    uint256 _depositAmount,
+    bool _shouldWrap
+  ) internal {
+    vm.startPrank(_account);
+    _collateralToken.approve(address(crossMarginHandler), _depositAmount);
+    crossMarginHandler.depositCollateral{ value: _depositAmount }(
+      _subAccountId,
+      address(_collateralToken),
+      _depositAmount,
+      _shouldWrap
+    );
+    vm.stopPrank();
+  }
+
   /// @notice Helper function to withdraw collateral via handler
   /// @param _account Trader's address
   /// @param _subAccountId Trader's sub-account ID
@@ -156,6 +183,38 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
       _minPublishTime: block.timestamp,
       _encodedVaas: keccak256("someEncodedVaas")
     });
+  }
+
+  /**
+   * Cross Margin
+   */
+  /// @notice Helper function to transfer collateral between subAccount via handler
+  /// @param _account Trader's address
+  /// @param _subAccountIdFrom Trader's sub-account to withdraw from
+  /// @param _subAccountIdTo Trader's sub-account to transfer to
+  /// @param _collateralToken Collateral token to deposit
+  /// @param _depositAmount amount to deposit
+  function transferCollateralSubAccount(
+    address _account,
+    uint8 _subAccountIdFrom,
+    uint8 _subAccountIdTo,
+    address _collateralToken,
+    uint256 _depositAmount
+  ) internal returns (uint256[] memory _orderIndexes) {
+    vm.startPrank(_account);
+    uint256[] memory orderIndexes = new uint256[](1);
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 2,
+        executionFee: 0.1 * 1e9,
+        mainAccount: _account,
+        subAccountId: _subAccountIdFrom,
+        data: abi.encode(_subAccountIdFrom, _subAccountIdTo, _collateralToken, _depositAmount)
+      })
+    );
+    vm.stopPrank();
+    orderIndexes[0] = _orderIndex;
+    _orderIndexes = orderIndexes;
   }
 
   /**
@@ -541,7 +600,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   function toggleMarket(uint256 _marketIndex) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
     _marketConfig.active = !_marketConfig.active;
-    configStorage.setMarketConfig(_marketIndex, _marketConfig);
+    configStorage.setMarketConfig(_marketIndex, _marketConfig, false);
   }
 
   function isStringNotEmpty(string memory str) public pure returns (bool) {

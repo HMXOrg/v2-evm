@@ -30,9 +30,39 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d", // SOLUSD
   "0x9695e2b96ea7b3859da9ed25b7a46a920a776e2fdae19a7bcfdf2b219230452d", // QQQUSD
   "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8", // XRPUSD
-  "0xb1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a593", // NVDA
-  "0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221", // LINK
-  "0x0b1e3297e69f162877b577b0d6a47a0d63b2392bc8499e6540da4187a63e28f8", // CHF
+  "0xb1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a593", // NVDAUSD
+  "0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221", // LINKUSD
+  "0x0b1e3297e69f162877b577b0d6a47a0d63b2392bc8499e6540da4187a63e28f8", // USDCHF
+  "0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c", // DOGEUSD
+  "0x3112b03a41c910ed446852aacf67118cb1bec67b2cd0b9a214c58cc0eaa2ecca", // USDCAD
+  "0x396a969a9c1480fa15ed50bc59149e2c0075a72fe8f458ed941ddec48bdb4918", // USDSGD
+  "wstETH",
+  "0xeef52e09c878ad41f6a81803e3640fe04dceea727de894edd4ea117e2e332e66", // USDCNH
+  "0x19d75fde7fee50fe67753fdc825e583594eb2f51ae84e114a5246c4ab23aff4c", // USDHKD
+  "0x3dd2b63686a450ec7290df3a1e0b583c0481f651351edfa7636f39aed55cf8a3", // BCHUSD
+  "0xcd2cee36951a571e035db0dfad138e6ecdb06b517cc3373cd7db5d3609b7927c", // MEMEUSD
+  "GM-BTCUSD",
+  "GM-ETHUSD",
+  "0x8ccb376aa871517e807358d4e3cf0bc7fe4950474dbe6c9ffc21ef64e43fc676", // USDSEK
+  "DIX",
+  "0xb43660a5f790c69354b0729a5ef9d50d68f1df92107540210b9cccba1f947cc2", // JTOUSD
+  "0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17", // STXUSD
+  "0x193c739db502aadcef37c2589738b1e37bdb257d58cf1ab3c7ebc8e6df4e3ec0", // ORDIUSD
+  "0x09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723", // TIAUSD
+  "0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7", // AVAXUSD
+  "0x7a5bc1d2b56ad029048cd63964b3ad2776eadf812edc1a43a31406cb54bff592", // INJUSD
+  "0xca3eed9b267293f6595901c734c7525ce8ef49adafe8284606ceb307afa2ca5b", // DOTUSD
+  "0x53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb", // SEIUSD
+  "0xb00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819", // ATOMUSD
+  "0xd69731a2e74ac1ce884fc3890f7ee324b6deb66147055249568869ed700882e4", // PEPEUSD
+  "0xf0d57deca57b3da2fe63a493f4c25925fdfd8edf834b20f93e1f84dbd1504d4a", // SHIBUSD
+  "0xc9907d786c5821547777780a1e4f89484f3417cb14dd244f2b0a34ea7a554d67", // ICPUSD
+  "0xc3883bcf1101c111e9fcfe2465703c47f2b638e21fef2cce0502e6c8f416e0e2", // MANTAUSD
+  "0x6a182399ff70ccf3e06024898942028204125a819e519a335ffa4579e66cd870", // STRKUSD,
+  "0x0bbf28e9a841a1cc788f6a361b17ca072d0ea3098a1e5df1c3922d06719579ff", // PYTHUSD
+  "0x9a4df90b25497f66b1afb012467e316e801ca3d839456db028892fe8c70c8016", // PENDLEUSD
+  "0xeff7446475e218517566ea99e72a4abec2e1bd8498b43b7d8331e29dcb059389", // WUSD
+  "0xb7910ba7322db020416fcac28b48c01212fd9cc8fbcbaf7d30477ed8605f6bd4", // ENAUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -66,6 +96,36 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("NVDA"),
   ethers.utils.formatBytes32String("LINK"),
   ethers.utils.formatBytes32String("CHF"),
+  ethers.utils.formatBytes32String("DOGE"),
+  ethers.utils.formatBytes32String("CAD"),
+  ethers.utils.formatBytes32String("SGD"),
+  ethers.utils.formatBytes32String("wstETH"),
+  ethers.utils.formatBytes32String("CNH"),
+  ethers.utils.formatBytes32String("HKD"),
+  ethers.utils.formatBytes32String("BCH"),
+  ethers.utils.formatBytes32String("MEME"),
+  ethers.utils.formatBytes32String("GM-BTCUSD"),
+  ethers.utils.formatBytes32String("GM-ETHUSD"),
+  ethers.utils.formatBytes32String("SEK"),
+  ethers.utils.formatBytes32String("DIX"),
+  ethers.utils.formatBytes32String("JTO"),
+  ethers.utils.formatBytes32String("STX"),
+  ethers.utils.formatBytes32String("ORDI"),
+  ethers.utils.formatBytes32String("TIA"),
+  ethers.utils.formatBytes32String("AVAX"),
+  ethers.utils.formatBytes32String("INJ"),
+  ethers.utils.formatBytes32String("DOT"),
+  ethers.utils.formatBytes32String("SEI"),
+  ethers.utils.formatBytes32String("ATOM"),
+  ethers.utils.formatBytes32String("1000PEPE"),
+  ethers.utils.formatBytes32String("1000SHIB"),
+  ethers.utils.formatBytes32String("ICP"),
+  ethers.utils.formatBytes32String("MANTA"),
+  ethers.utils.formatBytes32String("STRK"),
+  ethers.utils.formatBytes32String("PYTH"),
+  ethers.utils.formatBytes32String("PENDLE"),
+  ethers.utils.formatBytes32String("W"),
+  ethers.utils.formatBytes32String("ENA"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -99,4 +159,38 @@ export const ecoPythHoomanReadableByIndex = [
   "NVDA",
   "LINK",
   "CHF",
+  "DOGE",
+  "CAD",
+  "SGD",
+  "wstETH",
+  "CNH",
+  "HKD",
+  "BCH",
+  "MEME",
+  "GM-BTCUSD",
+  "GM-ETHUSD",
+  "SEK",
+  "DIX",
+  "JTO",
+  "STX",
+  "ORDI",
+  "TIA",
+  "AVAX",
+  "INJ",
+  "DOT",
+  "SEI",
+  "ATOM",
+  "1000PEPE",
+  "1000SHIB",
+  "ICP",
+  "MANTA",
+  "STRK",
+  "PYTH",
+  "PENDLE",
+  "W",
+  "ENA",
 ];
+export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
+  [ethers.utils.formatBytes32String("1000SHIB"), 1000],
+  [ethers.utils.formatBytes32String("1000PEPE"), 1000],
+]);

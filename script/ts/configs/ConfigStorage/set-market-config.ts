@@ -38,9 +38,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
       increasePositionFeeRateBPS: 2, // 0.02%
       decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 350000, // 3500%
+      maxProfitRateBPS: 200000, // 2000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -57,9 +57,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
       increasePositionFeeRateBPS: 2, // 0.02%
       decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 350000, // 3500%
+      maxProfitRateBPS: 200000, // 2000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -70,129 +70,15 @@ async function main(chainId: number) {
       isAdaptiveFeeEnabled: false,
     },
     {
-      marketIndex: 2,
-      assetId: ethers.utils.formatBytes32String("JPY"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 3,
-      assetId: ethers.utils.formatBytes32String("XAU"),
-      maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
-      increasePositionFeeRateBPS: 5, // 0.05%
-      decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 100, // MMF = 1%
-      maxProfitRateBPS: 75000, // 750%
-      assetClass: assetClasses.commodities,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 4,
-      assetId: ethers.utils.formatBytes32String("EUR"),
-      maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 5,
-      assetId: ethers.utils.formatBytes32String("XAG"),
-      maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
-      increasePositionFeeRateBPS: 5, // 0.05%
-      decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 100, // MMF = 1%
-      maxProfitRateBPS: 75000, // 750%
-      assetClass: assetClasses.commodities,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 6,
-      assetId: ethers.utils.formatBytes32String("AUD"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 7,
-      assetId: ethers.utils.formatBytes32String("GBP"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
       marketIndex: 8,
       assetId: ethers.utils.formatBytes32String("ADA"),
       maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -200,7 +86,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 9,
@@ -209,9 +95,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -219,7 +105,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 10,
@@ -228,9 +114,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -238,7 +124,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 11,
@@ -247,9 +133,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -257,7 +143,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 12,
@@ -266,9 +152,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -276,7 +162,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 13,
@@ -285,9 +171,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -295,7 +181,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 14,
@@ -304,9 +190,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -314,7 +200,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 15,
@@ -323,9 +209,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("300000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -333,7 +219,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 16,
@@ -342,9 +228,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -352,7 +238,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 17,
@@ -361,34 +247,15 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
-      },
-      isAdaptiveFeeEnabled: true,
-    },
-    {
-      marketIndex: 18,
-      assetId: ethers.utils.formatBytes32String("CHF"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       isAdaptiveFeeEnabled: false,
     },
@@ -399,91 +266,15 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: true,
-    },
-    {
-      marketIndex: 20,
-      assetId: ethers.utils.formatBytes32String("CAD"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 800% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 21,
-      assetId: ethers.utils.formatBytes32String("SGD"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 22,
-      assetId: ethers.utils.formatBytes32String("CNH"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 23,
-      assetId: ethers.utils.formatBytes32String("HKD"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 800% per day
       },
       isAdaptiveFeeEnabled: false,
     },
@@ -494,9 +285,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -504,7 +295,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 25,
@@ -513,34 +304,15 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("400000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
-      },
-      isAdaptiveFeeEnabled: true,
-    },
-    {
-      marketIndex: 26,
-      assetId: ethers.utils.formatBytes32String("DIX"),
-      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 250000, // 2500%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 800% per day
       },
       isAdaptiveFeeEnabled: false,
     },
@@ -551,9 +323,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -561,7 +333,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 28,
@@ -570,9 +342,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -580,7 +352,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 29,
@@ -589,9 +361,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -599,7 +371,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 30,
@@ -608,9 +380,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -618,7 +390,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 31,
@@ -627,9 +399,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -637,7 +409,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 32,
@@ -646,9 +418,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -656,7 +428,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 33,
@@ -665,9 +437,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -675,7 +447,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 34,
@@ -684,9 +456,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -694,7 +466,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 35,
@@ -703,9 +475,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -713,7 +485,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 36,
@@ -722,9 +494,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -732,7 +504,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 37,
@@ -741,34 +513,15 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 100000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: true,
-    },
-    {
-      marketIndex: 38,
-      assetId: ethers.utils.formatBytes32String("SEK"),
-      maxLongPositionSize: ethers.utils.parseUnits("600000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("600000", 30),
-      increasePositionFeeRateBPS: 1, // 0.01%
-      decreasePositionFeeRateBPS: 1, // 0.01%
-      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
-      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
-      maxProfitRateBPS: 500000, // 5000%
-      assetClass: assetClasses.forex,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("10000000000", 30), // 10B
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       isAdaptiveFeeEnabled: false,
     },
@@ -779,9 +532,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -789,7 +542,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 40,
@@ -798,9 +551,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -808,7 +561,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 41,
@@ -817,9 +570,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -827,7 +580,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("50000000", 30), // 50 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 42,
@@ -836,9 +589,9 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 400000, // 4000%
+      maxProfitRateBPS: 40000, // 400%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
@@ -846,7 +599,64 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("50000000", 30), // 50 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
+    },
+    {
+      marketIndex: 43,
+      assetId: ethers.utils.formatBytes32String("PENDLE"),
+      maxLongPositionSize: ethers.utils.parseUnits("200000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
+      increasePositionFeeRateBPS: 5, // 0.05%
+      decreasePositionFeeRateBPS: 5, // 0.05%
+      initialMarginFractionBPS: 1000, // IMF = 10%, Max leverage = 10
+      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
+      maxProfitRateBPS: 40000, // 400%
+      assetClass: assetClasses.crypto,
+      allowIncreasePosition: true,
+      active: true,
+      fundingRate: {
+        maxSkewScaleUSD: ethers.utils.parseUnits("50000000", 30), // 50 M
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
+      },
+      isAdaptiveFeeEnabled: false,
+    },
+    {
+      marketIndex: 44,
+      assetId: ethers.utils.formatBytes32String("W"),
+      maxLongPositionSize: ethers.utils.parseUnits("200000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
+      increasePositionFeeRateBPS: 5, // 0.05%
+      decreasePositionFeeRateBPS: 5, // 0.05%
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
+      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
+      maxProfitRateBPS: 100000, // 1000%
+      assetClass: assetClasses.crypto,
+      allowIncreasePosition: true,
+      active: true,
+      fundingRate: {
+        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
+      },
+      isAdaptiveFeeEnabled: false,
+    },
+    {
+      marketIndex: 45,
+      assetId: ethers.utils.formatBytes32String("ENA"),
+      maxLongPositionSize: ethers.utils.parseUnits("200000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("200000", 30),
+      increasePositionFeeRateBPS: 5, // 0.05%
+      decreasePositionFeeRateBPS: 5, // 0.05%
+      initialMarginFractionBPS: 400, // IMF = 4%, Max leverage = 25
+      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
+      maxProfitRateBPS: 100000, // 1000%
+      assetClass: assetClasses.crypto,
+      allowIncreasePosition: true,
+      active: true,
+      fundingRate: {
+        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
+      },
+      isAdaptiveFeeEnabled: false,
     },
   ];
 

@@ -12,7 +12,7 @@ async function main(chainId: number) {
   const withdrawalParams = [
     {
       market: config.tokens.gmBTCUSD,
-      amount: ethers.utils.parseUnits("307503", 18),
+      amount: ethers.utils.parseUnits("320000", 18),
       minLongTokenAmount: 0,
       minShortTokenAmount: 0,
       gasLimit: 1000000,

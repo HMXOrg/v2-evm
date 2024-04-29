@@ -8,8 +8,8 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
-  const tokenAddress = config.tokens.usdc;
-  const amount = ethers.utils.parseUnits("1000000", 6);
+  const tokenAddress = config.tokens.wusdm;
+  const amount = ethers.utils.parseUnits("1000000", 18);
   const mintTo = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
 
   console.log("[MockErc20] mint...");

@@ -71,6 +71,9 @@ contract TokenSettingHelper is ITokenSettingHelper, ReentrancyGuardUpgradeable, 
         ++i;
       }
     }
+
+    // We also add trader tokens here to handle case where new collateral tokens are added,
+    // but users have not updated their settings.
     uint256 traderTokensLength = traderTokens.length;
     for (uint256 i; i < traderTokensLength; ) {
       tokenSettingsWithTraderTokens[tokenSettingsLength + i] = traderTokens[i];

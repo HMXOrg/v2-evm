@@ -19,6 +19,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { OrderbookOracle } from "@hmx/oracles/OrderbookOracle.sol";
 import { AdaptiveFeeCalculator } from "@hmx/contracts/AdaptiveFeeCalculator.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { ITokenSettingHelper } from "@hmx/helpers/interfaces/ITokenSettingHelper.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeCastUpgradeable for uint256;
@@ -113,6 +114,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetAdaptiveFeeCalculator(address indexed oldAdaptiveFeeCalculator, address indexed adaptiveFeeCalculator);
   event LogSetOrderbookOracle(address indexed oldOrderbookOracle, address indexed orderbookOracle);
   event LogSetMaxAdaptiveFeeBps(uint32 indexed oldMaxAdaptiveFeeBps, uint32 indexed maxAdaptiveFeeBps);
+  event LogSetTokenSettingHelper(address oldTokenSettingHelper, address newTokenSettingHelper);
   event LogSettleMakerTakerFee(
     bytes32 positionId,
     uint256 marketIndex,
@@ -185,6 +187,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   OrderbookOracle public orderbookOracle;
   AdaptiveFeeCalculator public adaptiveFeeCalculator;
   uint32 public maxAdaptiveFeeBps;
+  ITokenSettingHelper public tokenSettingHelper;
 
   /// @notice Initializes the contract by setting the addresses for PerpStorage, VaultStorage, and ConfigStorage.
   /// @dev This function must be called after the contract is deployed and before it can be used.
@@ -757,8 +760,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     _vars.subAccount = _subAccount;
     _vars.marketIndex = _marketIndex;
 
-    bytes32[] memory _hlpAssetIds = _vars.configStorage.getHlpAssetIds();
-    uint256 _len = _hlpAssetIds.length;
+    address[] memory _traderTokens = _vars.vaultStorage.getTraderTokens(_subAccount);
 
     // check loss
     if (_unrealizedPnl < 0) {
@@ -790,8 +792,16 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     emit LogSettleLiquidationFeeValue(_vars.positionId, _vars.marketIndex, _vars.subAccount, _liquidationFee);
 
     // loop for settle
+    address[] memory _settleTokens;
+    if (address(tokenSettingHelper) != address(0)) {
+      _settleTokens = tokenSettingHelper.getTokenSettingsBySubAccount(_subAccount);
+    } else {
+      _settleTokens = _traderTokens;
+    }
+
+    uint256 _len = _settleTokens.length;
     for (uint256 i = 0; i < _len; ) {
-      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_hlpAssetIds[i]);
+      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_settleTokens[i]);
       _vars.tokenDecimal = _assetConfig.decimals;
       _vars.token = _assetConfig.tokenAddress;
       (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
@@ -1118,6 +1128,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   function setMaxAdaptiveFeeBps(uint32 _maxAdaptiveFeeBps) external onlyOwner {
     emit LogSetMaxAdaptiveFeeBps(maxAdaptiveFeeBps, _maxAdaptiveFeeBps);
     maxAdaptiveFeeBps = _maxAdaptiveFeeBps;
+  }
+
+  function setTokenSettingHelper(address _tokenSettingHelper) external onlyOwner {
+    emit LogSetTokenSettingHelper(address(tokenSettingHelper), _tokenSettingHelper);
+    tokenSettingHelper = ITokenSettingHelper(_tokenSettingHelper);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

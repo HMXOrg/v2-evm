@@ -32,44 +32,6 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      marketIndex: 0,
-      assetId: ethers.utils.formatBytes32String("ETH"),
-      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
-      increasePositionFeeRateBPS: 2, // 0.02%
-      decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 200000, // 2000%
-      assetClass: assetClasses.crypto,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("2000000000", 30), // 2000 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 1,
-      assetId: ethers.utils.formatBytes32String("BTC"),
-      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
-      increasePositionFeeRateBPS: 2, // 0.02%
-      decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 200000, // 2000%
-      assetClass: assetClasses.crypto,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("3000000000", 30), // 3000 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
       marketIndex: 8,
       assetId: ethers.utils.formatBytes32String("ADA"),
       maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
@@ -86,7 +48,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 9,
@@ -105,7 +67,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 10,
@@ -124,7 +86,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 11,
@@ -143,7 +105,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 12,
@@ -162,7 +124,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 13,
@@ -181,7 +143,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 14,
@@ -200,7 +162,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 15,
@@ -219,7 +181,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 16,
@@ -238,7 +200,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 17,
@@ -257,7 +219,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 19,
@@ -276,7 +238,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 100% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 24,
@@ -295,7 +257,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 25,
@@ -314,7 +276,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 27,
@@ -333,7 +295,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 28,
@@ -352,7 +314,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 29,
@@ -371,7 +333,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 30,
@@ -390,7 +352,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 31,
@@ -409,7 +371,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 32,
@@ -428,7 +390,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 33,
@@ -447,7 +409,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 34,
@@ -466,7 +428,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 35,
@@ -485,7 +447,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 36,
@@ -504,7 +466,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 37,
@@ -523,7 +485,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 39,
@@ -542,7 +504,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 40,
@@ -561,7 +523,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 41,
@@ -580,7 +542,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("50000000", 30), // 50 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 42,
@@ -599,7 +561,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("50000000", 30), // 50 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 43,
@@ -618,7 +580,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("50000000", 30), // 50 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 44,
@@ -637,7 +599,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
     {
       marketIndex: 45,
@@ -656,7 +618,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: false,
+      isAdaptiveFeeEnabled: true,
     },
   ];
 

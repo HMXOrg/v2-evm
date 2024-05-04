@@ -21,7 +21,7 @@ async function main(chainId: number, nonce?: number) {
 
   console.log(`[cmds/VaultStorage] Withdraw dev fee to ${TREASURY_ADDRESS}...`);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, signer);
-  const ecoPyth = EcoPyth2__factory.connect(config.oracles.ecoPyth2, signer);
+  const ecoPyth = EcoPyth2__factory.connect(config.oracles.ecoPyth2!, signer);
   const calls = Object.entries(collaterals).reduce((acc, c) => {
     acc.push({
       contract: vaultStorage,

@@ -11,15 +11,16 @@ async function main(chainId: number) {
   const inputs = [
     {
       marketIndex: 0, // ETHUSD
-      makerFee: 20000, // 0.02%
-      takerFee: 55000, // 0.055%
+      makerFee: 17500, // 0.0175%
+      takerFee: 62500, // 0.0625%
     },
     {
       marketIndex: 1, // BTCUSD
-      makerFee: 20000, // 0.02%
-      takerFee: 55000, // 0.055%
+      makerFee: 17500, // 0.0175%
+      takerFee: 62500, // 0.0625%
     },
   ];
+
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);

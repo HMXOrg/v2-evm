@@ -18,8 +18,8 @@ async function main(chainId: number) {
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const weightConfigs: Array<WeightConfig> = [
-    { marketIndex: 0, weightBPS: 37500 },
-    { marketIndex: 1, weightBPS: 37500 },
+    { marketIndex: 0, weightBPS: 40000 },
+    { marketIndex: 1, weightBPS: 40000 },
   ];
 
   const tlcHook = TLCHook__factory.connect(config.hooks.tlc, deployer);

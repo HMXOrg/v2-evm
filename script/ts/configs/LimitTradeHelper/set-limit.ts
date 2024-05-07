@@ -9,13 +9,8 @@ async function main(chainId: number) {
   const inputs = [
     {
       marketIndex: 52,
-      tradeSizeLimit: 100000,
-      positionSizeLimit: 100000,
-    },
-    {
-      marketIndex: 53,
-      tradeSizeLimit: 200000,
-      positionSizeLimit: 200000,
+      tradeSizeLimit: 30000,
+      positionSizeLimit: 30000,
     },
   ];
 

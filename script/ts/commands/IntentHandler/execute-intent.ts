@@ -12,18 +12,18 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const signer = signers.deployer(chainId);
-  const intentBuilder = IntentBuilder__factory.connect("0x2fDE86903B987CA4FB3Ccfe9bc97CED9E297D361", signer);
-  const intentHandler = IntentHandler__factory.connect(config.handlers.intent, signer);
+  const intentBuilder = IntentBuilder__factory.connect("0xD26Da09B5e88c163DdE25F1c5Ec53d7fD1E74342", signer);
+  const intentHandler = IntentHandler__factory.connect(config.handlers.intent!, signer);
 
   const account = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
   const subAccountId = 0;
   const marketIndex = 0;
   const sizeDelta = ethers.utils.parseUnits("100", 30);
   const triggerPrice = 0;
-  const acceptablePrice = ethers.utils.parseUnits("50000", 30);
+  const acceptablePrice = ethers.utils.parseUnits("150000", 30);
   const triggerAboveThreshold = true;
   const reduceOnly = false;
-  const tpToken = config.tokens.usdt;
+  const tpToken = config.tokens.ybeth!;
   const createdTimestamp = Math.round(new Date().valueOf() / 1000);
   const expiryTimestamp = Math.round(new Date().valueOf() / 1000) + 60 * 60 * 5;
 

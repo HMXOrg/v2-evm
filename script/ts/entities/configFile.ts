@@ -36,6 +36,7 @@ export interface Handlers {
   rebalanceHLP?: string;
   ext01?: string;
   rebalanceHLPv2?: string;
+  intent?: string;
 }
 
 export interface Helpers {

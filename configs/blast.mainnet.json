@@ -1,6 +1,6 @@
 {
   "proxyAdmin": "0xeCF1C3dA8bd9B5b164f2acfe91eEC8Eb2C4cEbA9",
-  "multicall": "",
+  "multicall": "0xcA11bde05977b3631167028862bE2a173976CA11",
   "timelock": "",
   "safe": "",
   "storages": {
@@ -73,7 +73,7 @@
     "tlc": "0x9302624e5A7079b892296d39e6e969790CDeE19b"
   },
   "calculator": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
-  "adaptiveFeeCalculator": "0x2728D7AC20E8b89187bFCB23bE066822A47b318c",
+  "adaptiveFeeCalculator": "0xDE74A9f2339e9924b40F951da1e7065E4A43baFD",
   "accountAbstraction": {
     "entryPoint": "",
     "factory": ""

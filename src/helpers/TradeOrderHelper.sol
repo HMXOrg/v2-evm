@@ -118,7 +118,7 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
 
   function execute(
     IIntentHandler.ExecuteTradeOrderVars memory vars
-  ) external returns (uint256 _oraclePrice, uint256 _executedPrice, bool _isFullClose) {
+  ) external onlyWhitelistedCaller returns (uint256 _oraclePrice, uint256 _executedPrice, bool _isFullClose) {
     // Retrieve existing position
     vars.positionId = HMXLib.getPositionId(
       HMXLib.getSubAccount(vars.order.account, vars.order.subAccountId),
@@ -131,10 +131,15 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
+    // Check if the order is TP/SL, then make the sizeDelta = -positionSize
     int256 revisedSizeDelta = vars.order.sizeDelta;
     bool isDecreasePosition = !vars.isNewPosition &&
       ((vars.positionIsLong && vars.order.sizeDelta < 0) || (!vars.positionIsLong && vars.order.sizeDelta > 0));
-    if (isDecreasePosition && HMXLib.abs(vars.order.sizeDelta) > HMXLib.abs(_existingPosition.positionSizeE30)) {
+    if (
+      isDecreasePosition &&
+      vars.order.reduceOnly &&
+      HMXLib.abs(vars.order.sizeDelta) > HMXLib.abs(_existingPosition.positionSizeE30)
+    ) {
       if (vars.order.sizeDelta > 0) {
         revisedSizeDelta = int256(HMXLib.abs(_existingPosition.positionSizeE30));
       } else {

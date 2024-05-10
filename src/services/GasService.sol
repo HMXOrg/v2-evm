@@ -22,6 +22,8 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   ConfigStorage public configStorage;
   uint256 public executionFeeInUsd;
   address public executionFeeTreasury;
+  uint256 public subsidizedExecutionFeeValue; // The total value of gas fee that is subsidized by the platform in E30
+  uint256 public waviedExecutionFeeMinTradeSize; // The minimum trade size (E30) that we will waive exeuction fee
 
   function initialize(
     address _vaultStorage,
@@ -29,6 +31,9 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     uint256 _executionFeeInUsd,
     address _executionFeeTreasury
   ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     vaultStorage = VaultStorage(_vaultStorage);
     configStorage = ConfigStorage(_configStorage);
     executionFeeInUsd = _executionFeeInUsd;
@@ -46,53 +51,88 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   /**
    * Functions
    */
+  struct VarsCollectExecutionFeeFromCollateral {
+    address subAccount;
+    address[] traderTokens;
+    uint256 len;
+    OracleMiddleware oracle;
+    uint256 executionFeeToBePaidInUsd;
+    bytes32 assetId;
+    ConfigStorage.AssetConfig assetConfig;
+    address token;
+    uint256 userBalance;
+    uint256 tokenPrice;
+    uint8 tokenDecimal;
+    uint256 payAmount;
+    uint256 payValue;
+  }
+
   function collectExecutionFeeFromCollateral(
     address _primaryAccount,
-    uint8 _subAccountId
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _absSizeDelta
   ) external onlyWhitelistedExecutor {
-    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
-    address[] memory _traderTokens = vaultStorage.getTraderTokens(_subAccount);
-    uint256 _len = _traderTokens.length;
-    OracleMiddleware _oracle = OracleMiddleware(configStorage.oracle());
+    VarsCollectExecutionFeeFromCollateral memory vars;
 
-    emit LogCollectExecutionFeeValue(executionFeeInUsd);
-    uint256 _executionFeeToBePaidInUsd = executionFeeInUsd;
-    for (uint256 _i; _i < _len; ) {
-      bytes32 _assetId = configStorage.tokenAssetIds(_traderTokens[_i]);
-      ConfigStorage.AssetConfig memory _assetConfig = configStorage.getAssetConfig(_assetId);
-      address _token = _assetConfig.tokenAddress;
-      uint256 _userBalance = vaultStorage.traderBalances(_subAccount, _token);
+    vars.subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
+    vars.traderTokens = vaultStorage.getTraderTokens(vars.subAccount);
+    vars.len = vars.traderTokens.length;
+    vars.oracle = OracleMiddleware(configStorage.oracle());
 
-      if (_userBalance > 0) {
-        (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_assetConfig.assetId, false);
-        uint8 _tokenDecimal = _assetConfig.decimals;
+    if (_absSizeDelta >= waviedExecutionFeeMinTradeSize) {
+      emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, executionFeeInUsd);
+      subsidizedExecutionFeeValue += executionFeeInUsd;
+    } else {
+      emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, executionFeeInUsd);
+      vars.executionFeeToBePaidInUsd = executionFeeInUsd;
+      for (uint256 _i; _i < vars.len; ) {
+        vars.assetId = configStorage.tokenAssetIds(vars.traderTokens[_i]);
+        vars.assetConfig = configStorage.getAssetConfig(vars.assetId);
+        vars.token = vars.assetConfig.tokenAddress;
+        vars.userBalance = vaultStorage.traderBalances(vars.subAccount, vars.token);
 
-        (uint256 _payAmount, uint256 _payValue) = _getPayAmount(
-          _userBalance,
-          _executionFeeToBePaidInUsd,
-          _tokenPrice,
-          _tokenDecimal
-        );
-        emit LogCollectExecutionFeeAmount(_token, _payAmount);
+        if (vars.userBalance > 0) {
+          (vars.tokenPrice, ) = vars.oracle.getLatestPrice(vars.assetConfig.assetId, false);
+          vars.tokenDecimal = vars.assetConfig.decimals;
 
-        vaultStorage.decreaseTraderBalance(_subAccount, _token, _payAmount);
-        vaultStorage.increaseTraderBalance(executionFeeTreasury, _token, _payAmount);
+          (vars.payAmount, vars.payValue) = _getPayAmount(
+            vars.userBalance,
+            vars.executionFeeToBePaidInUsd,
+            vars.tokenPrice,
+            vars.tokenDecimal
+          );
+          emit LogCollectExecutionFeeAmount(vars.subAccount, _marketIndex, vars.token, vars.payAmount);
 
-        _executionFeeToBePaidInUsd -= _payValue;
+          vaultStorage.decreaseTraderBalance(vars.subAccount, vars.token, vars.payAmount);
+          vaultStorage.increaseTraderBalance(executionFeeTreasury, vars.token, vars.payAmount);
 
-        if (_executionFeeToBePaidInUsd == 0) {
-          break;
+          vars.executionFeeToBePaidInUsd -= vars.payValue;
+
+          if (vars.executionFeeToBePaidInUsd == 0) {
+            break;
+          }
+        }
+
+        unchecked {
+          ++_i;
         }
       }
 
-      unchecked {
-        ++_i;
+      if (vars.executionFeeToBePaidInUsd > 0) {
+        vaultStorage.addTradingFeeDebt(vars.subAccount, vars.executionFeeToBePaidInUsd);
       }
     }
+  }
 
-    if (_executionFeeToBePaidInUsd > 0) {
-      revert GasService_NotEnoughCollateral();
+  function adjustSubsidizedExecutionFeeValue(int256 deltaValueE30) external onlyWhitelistedExecutor {
+    uint256 previousValue = subsidizedExecutionFeeValue;
+    if (deltaValueE30 >= 0) {
+      subsidizedExecutionFeeValue += uint256(deltaValueE30);
+    } else {
+      subsidizedExecutionFeeValue -= uint256(-deltaValueE30);
     }
+    emit LogAdjustSubsidizedExecutionFeeValue(previousValue, subsidizedExecutionFeeValue, deltaValueE30);
   }
 
   function _getPayAmount(
@@ -118,5 +158,11 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     executionFeeTreasury = _executionFeeTreasury;
 
     emit LogSetParams(_executionFeeInUsd, _executionFeeTreasury);
+  }
+
+  function setWaviedExecutionFeeMinTradeSize(uint256 _waviedExecutionFeeMinTradeSize) external onlyOwner {
+    waviedExecutionFeeMinTradeSize = _waviedExecutionFeeMinTradeSize;
+
+    emit LogSetWaviedExecutionFeeMinTradeSize(waviedExecutionFeeMinTradeSize);
   }
 }

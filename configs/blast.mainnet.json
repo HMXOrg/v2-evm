@@ -21,7 +21,8 @@
     "trade": "0x9F1f13eBC178122C3ef6c14FA3A523680563F58b",
     "limitTrade": "0x7ee71aACc0bE34D503A6A1B560f939307Fc36A6A",
     "tradeOrder": "",
-    "intentBuilder": ""
+    "intentBuilder": "",
+    "tokenSetting": ""
   },
   "services": {
     "crossMargin": "0x0b71cBBAd974B9DF8BDF6A83973B710AAa48e7ac",

@@ -24,12 +24,6 @@ async function main(chainId: number) {
     {
       index: 2,
       fromSize: ethers.utils.parseUnits("100000", 30),
-      toSize: ethers.utils.parseUnits("200000", 30),
-      minProfitDuration: 300,
-    },
-    {
-      index: 3,
-      fromSize: ethers.utils.parseUnits("200000", 30),
       toSize: ethers.constants.MaxUint256,
       minProfitDuration: 600,
     },

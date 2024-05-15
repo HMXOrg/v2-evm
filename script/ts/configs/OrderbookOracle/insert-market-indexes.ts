@@ -9,7 +9,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const inputs = [43, 44, 45];
+  const inputs = [0, 1];
 
   const orderbookOracle = OrderbookOracle__factory.connect(config.oracles.orderbook!, deployer);
 

@@ -6,7 +6,7 @@ import { TradeOrderHelper__factory } from "../../../../typechain";
 import { ethers } from "ethers";
 
 async function main(chainId: number) {
-  const inputs = [{ marketIndex: 52, positionSizeLimit: 30000, tradeSizeLimit: 30000 }];
+  const inputs = [{ marketIndex: 53, positionSizeLimit: 50000, tradeSizeLimit: 50000 }];
 
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);

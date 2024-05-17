@@ -8,9 +8,9 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 52,
-      tradeSizeLimit: 30000,
-      positionSizeLimit: 30000,
+      marketIndex: 53,
+      tradeSizeLimit: 50000,
+      positionSizeLimit: 50000,
     },
   ];
 

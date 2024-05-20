@@ -48,7 +48,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("2000000000", 30), // 2000 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
     {
       marketIndex: 1,
@@ -67,7 +67,7 @@ async function main(chainId: number) {
         maxSkewScaleUSD: ethers.utils.parseUnits("3000000000", 30), // 3000 M
         maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
       },
-      isAdaptiveFeeEnabled: true,
+      isAdaptiveFeeEnabled: false,
     },
   ];
 

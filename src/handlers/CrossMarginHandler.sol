@@ -515,7 +515,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     IEcoPyth(_pyth).getAssetIds();
   }
 
-  function setBanlist(address[] memory users, bool[] memory isBanned) external onlyOwner {
+  function setBanlist(address[] memory users, bool[] memory isBanned) external {
+    if (!orderExecutors[msg.sender] && msg.sender != owner()) revert ICrossMarginHandler_NotWhitelisted();
+
     for (uint256 i = 0; i < users.length; i++) {
       banlist[users[i]] = isBanned[i];
     }

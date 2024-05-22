@@ -9,13 +9,13 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const tradeOrderHelper = TradeOrderHelper__factory.connect(config.helpers.tradeOrder, deployer);
-  console.log(`[configs/TradingStakingHook] Set Whitelisted Callers`);
+  const tradeOrderHelper = TradeOrderHelper__factory.connect(config.helpers.tradeOrder!, deployer);
+  console.log(`[configs/TradeOrderHelper] Set Whitelisted Callers`);
   await ownerWrapper.authExec(
     tradeOrderHelper.address,
-    tradeOrderHelper.interface.encodeFunctionData("setWhitelistedCaller", [config.handlers.intent])
+    tradeOrderHelper.interface.encodeFunctionData("setWhitelistedCaller", [config.handlers.intent!])
   );
-  console.log("[configs/TradingStakingHook] Finished");
+  console.log("[configs/TradeOrderHelper] Finished");
 }
 
 const prog = new Command();

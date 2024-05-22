@@ -7,7 +7,7 @@ import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
 
-  const inputs = [{ updater: config.handlers.ext01!, isUpdater: true }];
+  const inputs = [{ updater: config.handlers.intent!, isUpdater: true }];
 
   const deployer = signers.deployer(chainId);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2!, deployer);

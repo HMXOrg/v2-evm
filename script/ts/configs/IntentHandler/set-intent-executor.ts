@@ -9,10 +9,10 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const intentExecutor = "0x0578C797798Ae89b688Cd5676348344d7d0EC35E";
+  const intentExecutor = "0x7FDD623c90a0097465170EdD352Be27A9f3ad817";
   const isAllow = true;
 
-  const intentHandler = IntentHandler__factory.connect(config.handlers.intent, deployer);
+  const intentHandler = IntentHandler__factory.connect(config.handlers.intent!, deployer);
   console.log(`[configs/IntentHandler] Set Intent Executor`);
   await ownerWrapper.authExec(
     intentHandler.address,

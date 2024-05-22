@@ -7,8 +7,8 @@ const config = getConfig();
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
-  const executionFeeInUsd = ethers.utils.parseUnits("0.1", 30);
-  const executionFeeTreasury = "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872";
+  const executionFeeInUsd = ethers.utils.parseUnits("0.2", 30);
+  const executionFeeTreasury = "0x7FDD623c90a0097465170EdD352Be27A9f3ad817";
 
   const Contract = await ethers.getContractFactory("GasService", deployer);
 

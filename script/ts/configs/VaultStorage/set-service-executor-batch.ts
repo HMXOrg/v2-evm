@@ -9,7 +9,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      executorAddress: config.rewardDistributor,
+      executorAddress: config.services.gas!,
       isServiceExecutor: true,
     },
   ];

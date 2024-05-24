@@ -34,8 +34,8 @@ async function main(chainId: number) {
     {
       marketIndex: 0,
       assetId: ethers.utils.formatBytes32String("ETH"),
-      maxLongPositionSize: ethers.utils.parseUnits("5500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("5500000", 30),
+      maxLongPositionSize: ethers.utils.parseUnits("3500000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("3500000", 30),
       increasePositionFeeRateBPS: 4, // 0.04%
       decreasePositionFeeRateBPS: 4, // 0.04%
       initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
@@ -53,8 +53,8 @@ async function main(chainId: number) {
     {
       marketIndex: 1,
       assetId: ethers.utils.formatBytes32String("BTC"),
-      maxLongPositionSize: ethers.utils.parseUnits("6000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("6000000", 30),
+      maxLongPositionSize: ethers.utils.parseUnits("3500000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("3500000", 30),
       increasePositionFeeRateBPS: 4, // 0.04%
       decreasePositionFeeRateBPS: 4, // 0.04%
       initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
@@ -85,16 +85,16 @@ async function main(chainId: number) {
       console.log(`marketIndex ${marketConfigs[i].marketIndex} wrong asset id`);
       throw "bad asset id";
     }
-    await safeWrapper.proposeTransaction(
-      tradeHelper.address,
-      0,
-      tradeHelper.interface.encodeFunctionData("updateBorrowingRate", [marketConfigs[i].assetClass])
-    );
-    await safeWrapper.proposeTransaction(
-      tradeHelper.address,
-      0,
-      tradeHelper.interface.encodeFunctionData("updateFundingRate", [marketConfigs[i].marketIndex])
-    );
+    // await safeWrapper.proposeTransaction(
+    //   tradeHelper.address,
+    //   0,
+    //   tradeHelper.interface.encodeFunctionData("updateBorrowingRate", [marketConfigs[i].assetClass])
+    // );
+    // await safeWrapper.proposeTransaction(
+    //   tradeHelper.address,
+    //   0,
+    //   tradeHelper.interface.encodeFunctionData("updateFundingRate", [marketConfigs[i].marketIndex])
+    // );
     const tx = await safeWrapper.proposeTransaction(
       configStorage.address,
       0,

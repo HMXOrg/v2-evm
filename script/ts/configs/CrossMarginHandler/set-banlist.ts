@@ -8,7 +8,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
 
-  const users: Array<string> = ["0x50be4f4a59593221810af975c66936257a04e931"];
+  const users: Array<string> = ["0xbfd5dfd7dccfb83d49d788c71b7ac27a002b3159"];
   const isBanned: Array<boolean> = [true];
 
   console.log("[configs/CrossMarginHandler] Set banlist");

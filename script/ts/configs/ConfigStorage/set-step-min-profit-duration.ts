@@ -19,7 +19,7 @@ async function main(chainId: number) {
       index: 1,
       fromSize: ethers.utils.parseUnits("200000", 30),
       toSize: ethers.constants.MaxUint256,
-      minProfitDuration: 300,
+      minProfitDuration: 600,
     },
   ];
 

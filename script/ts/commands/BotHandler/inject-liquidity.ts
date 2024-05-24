@@ -35,11 +35,12 @@ async function main(chainId: number, token: string, amount: string) {
   const amountWei = ethers.utils.parseUnits(amount, collaterals[token].decimals);
   if (allowance.lt(amountWei)) {
     console.log(`[cmds/BotHandler] Approving ${amount} ${token}...`);
-    await safeWrapper.proposeTransaction(
-      injectingToken.address,
-      0,
-      injectingToken.interface.encodeFunctionData("approve", [config.handlers.bot, ethers.constants.MaxUint256])
-    );
+    // await safeWrapper.proposeTransaction(
+    //   injectingToken.address,
+    //   0,
+    //   injectingToken.interface.encodeFunctionData("approve", [config.handlers.bot, ethers.constants.MaxUint256])
+    // );
+    await injectingToken.approve(config.handlers.bot, ethers.constants.MaxUint256);
   }
   console.log(`[cmds/BotHandler] Approved ${amount} ${token}.`);
 

@@ -12,9 +12,9 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const PARAMS = [
     {
-      amountIn: "2316.332067366771798254",
-      minAmountOut: "0",
-      path: [config.tokens.ybusdb!, config.tokens.usdb!, config.tokens.ybusdb2!],
+      amountIn: "10",
+      minAmountOut: "36940",
+      path: [config.tokens.ybeth2!, config.tokens.weth!, config.tokens.usdb!, config.tokens.ybusdb2!],
     },
   ];
 
@@ -58,7 +58,8 @@ async function main(chainId: number) {
       priceUpdateData,
       publishTimeDiffUpdateData,
       minPublishedTime,
-      hashedVaas
+      hashedVaas,
+      { gasLimit: 2000000 }
     );
     console.log(`[commands/RebalanceHLPHandler] Tx: ${tx.hash}`);
   }

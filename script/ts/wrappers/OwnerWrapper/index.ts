@@ -16,24 +16,28 @@ export class OwnerWrapper {
     this.signer = signer;
   }
 
-  async authExec(to: string, data: string) {
+  async authExec(to: string, data: string, msgValue?: ethers.BigNumberish) {
     const ownable = OwnableUpgradeable__factory.connect(to, this.signer);
     const owner = await ownable.owner();
     const signerAddress = await this.signer.getAddress();
     const timelockAddress = this.timelockWrapper.getAddress();
     const safeWrapperAddress = this.safeWrapper.getAddress();
 
+    if (msgValue == undefined) {
+      msgValue = 0;
+    }
+
     if (owner === signerAddress) {
       console.log(`[wrapper/Owner] Signer is the owner of ${to}`);
       console.log(`[wrapper/Owner] Executing tx right away...`);
-      const tx = await this.signer.sendTransaction({ to, data });
+      const tx = await this.signer.sendTransaction({ to, data, value: msgValue });
       console.log(`[wrapper/Owner] Tx: ${tx.hash}`);
     } else if (owner === timelockAddress) {
       throw new Error("Not implemented when owner is Timelock yet");
     } else if (owner === safeWrapperAddress) {
       console.log(`[wrapper/Owner] Safe is the owner of ${to}`);
       console.log(`[wrapper/Owner] Proposing tx...`);
-      const tx = await this.safeWrapper.proposeTransaction(to, 0, data);
+      const tx = await this.safeWrapper.proposeTransaction(to, msgValue, data);
       console.log(`[wrapper/Owner] Tx: ${tx}`);
     } else {
       throw new Error("Unknown owner");

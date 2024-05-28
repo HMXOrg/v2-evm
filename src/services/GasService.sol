@@ -13,6 +13,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { console2 } from "forge-std/console2.sol";
 
 // interfaces
 import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
@@ -24,12 +25,14 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   address public executionFeeTreasury;
   uint256 public subsidizedExecutionFeeValue; // The total value of gas fee that is subsidized by the platform in E30
   uint256 public waviedExecutionFeeMinTradeSize; // The minimum trade size (E30) that we will waive exeuction fee
+  bytes32 public gasTokenAssetId;
 
   function initialize(
     address _vaultStorage,
     address _configStorage,
     uint256 _executionFeeInUsd,
-    address _executionFeeTreasury
+    address _executionFeeTreasury,
+    bytes32 _gasTokenAssetId
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -38,6 +41,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     configStorage = ConfigStorage(_configStorage);
     executionFeeInUsd = _executionFeeInUsd;
     executionFeeTreasury = _executionFeeTreasury;
+    gasTokenAssetId = _gasTokenAssetId;
   }
 
   /**
@@ -71,7 +75,8 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     address _primaryAccount,
     uint8 _subAccountId,
     uint256 _marketIndex,
-    uint256 _absSizeDelta
+    uint256 _absSizeDelta,
+    uint256 _gasBefore
   ) external onlyWhitelistedExecutor {
     VarsCollectExecutionFeeFromCollateral memory vars;
 
@@ -80,12 +85,18 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     vars.len = vars.traderTokens.length;
     vars.oracle = OracleMiddleware(configStorage.oracle());
 
+    uint256 gasConsumed = _gasBefore - gasleft();
+    console2.log("gasConsumed", gasConsumed);
+    console2.log("tx.gasprice", tx.gasprice);
+    (vars.tokenPrice, ) = vars.oracle.getLatestPrice(gasTokenAssetId, false);
+    uint256 gasConsumedInUsd = (gasConsumed * tx.gasprice * vars.tokenPrice) / 1e18;
+
     if (_absSizeDelta >= waviedExecutionFeeMinTradeSize) {
-      emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, executionFeeInUsd);
-      subsidizedExecutionFeeValue += executionFeeInUsd;
+      emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, gasConsumedInUsd);
+      subsidizedExecutionFeeValue += gasConsumedInUsd;
     } else {
-      emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, executionFeeInUsd);
-      vars.executionFeeToBePaidInUsd = executionFeeInUsd;
+      emit LogCollectExecutionFeeValue(vars.subAccount, _marketIndex, gasConsumedInUsd);
+      vars.executionFeeToBePaidInUsd = gasConsumedInUsd;
       for (uint256 _i; _i < vars.len; ) {
         vars.assetId = configStorage.tokenAssetIds(vars.traderTokens[_i]);
         vars.assetConfig = configStorage.getAssetConfig(vars.assetId);

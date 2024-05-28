@@ -20,7 +20,8 @@ interface IGasService {
     address _primaryAccount,
     uint8 _subAccountId,
     uint256 _marketIndex,
-    uint256 _absSizeDelta
+    uint256 _absSizeDelta,
+    uint256 _gasBefore
   ) external;
 
   function setWaviedExecutionFeeMinTradeSize(uint256 _waviedExecutionFeeMinTradeSize) external;

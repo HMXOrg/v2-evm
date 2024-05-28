@@ -21,6 +21,7 @@ contract TC43 is BaseIntTest_WithActions {
 
   function setUp() public {
     gasService.setWaviedExecutionFeeMinTradeSize(type(uint256).max);
+    vm.txGasPrice(10000000); // 0.01 GWEI
   }
 
   function testCorrectness_TC43_intentHandler_executeMarketOrderSuccess() external {

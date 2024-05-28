@@ -73,8 +73,10 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
 
     _localVars.cmdsLength = inputs.accountAndSubAccountIds.length;
     _localVars.tpTokens = configStorage.getHlpTokens();
+    _localVars.gasBefore;
 
     for (uint256 _i; _i < _localVars.cmdsLength; ) {
+      _localVars.gasBefore = gasleft();
       _localVars.mainAccount = address(uint160(inputs.accountAndSubAccountIds[_i].decodeUint(0, 160)));
       _localVars.subAccountId = uint8(inputs.accountAndSubAccountIds[_i].decodeUint(160, 8));
       _localVars.cmd = Command(inputs.cmds[_i].decodeUint(0, 3));
@@ -104,20 +106,6 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
 
         if (!_validateSignature(_vars.order, inputs.signatures[_i], _localVars.mainAccount)) {
           emit LogBadSignature(_localVars.key);
-          unchecked {
-            ++_i;
-          }
-          continue;
-        }
-        try
-          gasService.collectExecutionFeeFromCollateral(
-            _localVars.mainAccount,
-            _localVars.subAccountId,
-            _vars.order.marketIndex,
-            HMXLib.abs(_vars.order.sizeDelta)
-          )
-        {} catch {
-          emit LogCollectExecutionFeeFailed(_localVars.key);
           unchecked {
             ++_i;
           }
@@ -161,6 +149,22 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
         } else if (!_localVars.isSuccess && _vars.order.triggerPrice == 0) {
           executedIntents[_localVars.key] = true;
         }
+      }
+
+      try
+        gasService.collectExecutionFeeFromCollateral(
+          _localVars.mainAccount,
+          _localVars.subAccountId,
+          _vars.order.marketIndex,
+          HMXLib.abs(_vars.order.sizeDelta),
+          _localVars.gasBefore
+        )
+      {} catch {
+        emit LogCollectExecutionFeeFailed(_localVars.key);
+        unchecked {
+          ++_i;
+        }
+        continue;
       }
 
       unchecked {

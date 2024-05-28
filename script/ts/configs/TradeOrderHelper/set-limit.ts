@@ -7,22 +7,10 @@ import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const inputs = [
-    { marketIndex: 27, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 34, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 33, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 24, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 13, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 8, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 39, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 35, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 9, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 40, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 32, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 30, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 10, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 28, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 25, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 29, tradeSizeLimit: 0, positionSizeLimit: 0 },
+    { marketIndex: 42, tradeSizeLimit: 30000, positionSizeLimit: 30000 },
+    { marketIndex: 43, tradeSizeLimit: 30000, positionSizeLimit: 30000 },
+    { marketIndex: 44, tradeSizeLimit: 15000, positionSizeLimit: 15000 },
+    { marketIndex: 45, tradeSizeLimit: 25000, positionSizeLimit: 25000 },
   ];
 
   const config = loadConfig(chainId);

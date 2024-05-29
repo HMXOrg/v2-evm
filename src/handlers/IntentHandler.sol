@@ -267,6 +267,11 @@ contract IntentHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, EIP712
     tradeOrderHelper = TradeOrderHelper(_newTradeOrderHelper);
   }
 
+  function setGasService(address _newGasService) external nonReentrant onlyOwner {
+    emit LogSetGasService(address(gasService), _newGasService);
+    gasService = GasService(_newGasService);
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();

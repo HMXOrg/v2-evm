@@ -58,6 +58,7 @@ interface IIntentHandler {
   event LogIntentReplay(bytes32 indexed key);
   event LogBadSignature(bytes32 indexed key);
   event LogCollectExecutionFeeFailed(bytes32 indexed key);
+  event LogSetGasService(address oldGasService, address newGasService);
 
   enum Command {
     // +-----------------------+-----------+----------+-----------+---------------+
@@ -133,4 +134,6 @@ interface IIntentHandler {
   function setIntentExecutor(address _executor, bool _isAllow) external;
 
   function getDigest(IIntentHandler.TradeOrder memory _tradeOrder) external view returns (bytes32 _digest);
+
+  function setGasService(address _newGasService) external;
 }

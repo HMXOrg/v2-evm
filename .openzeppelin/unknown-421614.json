@@ -124,6 +124,11 @@
       "address": "0xdbdaCA3C5F52e3F287B48b08713De8a3639D0fE5",
       "txHash": "0xe376fac1434fe9ed991f9b536ffc4b30efd7acf2e37e412145fc319a5f6221ea",
       "kind": "transparent"
+    },
+    {
+      "address": "0x6b233069c9aDd456Bd83A8b8572e91ADcB43848c",
+      "txHash": "0xb521ad654052f79f779c9de412f958fb996cbb3a424570dd91557fcd20114621",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -12942,6 +12947,210 @@
           "t_contract(VaultStorage)78116": {
             "label": "contract VaultStorage",
             "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "f86c96f1f8f6d4a656ff4076e75c6f36927329929c0090dd2b79fd388f44eec2": {
+      "address": "0x2CeFDE166aafadb2c85B7D9b816A5313b9437bCf",
+      "txHash": "0xfd616992bf3857954e754202e409591a32afd5aba91d320ceef88d0f5ed68c91",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "_HASHED_NAME",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_bytes32",
+            "contract": "EIP712Upgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/cryptography/EIP712Upgradeable.sol:32"
+          },
+          {
+            "label": "_HASHED_VERSION",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_bytes32",
+            "contract": "EIP712Upgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/cryptography/EIP712Upgradeable.sol:33"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "EIP712Upgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/cryptography/EIP712Upgradeable.sol:120"
+          },
+          {
+            "label": "pyth",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_contract(IEcoPyth)55608",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:31"
+          },
+          {
+            "label": "configStorage",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_contract(ConfigStorage)75409",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:32"
+          },
+          {
+            "label": "tradeOrderHelper",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_contract(TradeOrderHelper)42539",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:33"
+          },
+          {
+            "label": "gasService",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_contract(GasService)59887",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:34"
+          },
+          {
+            "label": "executedIntents",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:35"
+          },
+          {
+            "label": "intentExecutors",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:36"
+          },
+          {
+            "label": "delegations",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "IntentHandler",
+            "src": "src/handlers/IntentHandler.sol:37"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(ConfigStorage)75409": {
+            "label": "contract ConfigStorage",
+            "numberOfBytes": "20"
+          },
+          "t_contract(GasService)59887": {
+            "label": "contract GasService",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IEcoPyth)55608": {
+            "label": "contract IEcoPyth",
+            "numberOfBytes": "20"
+          },
+          "t_contract(TradeOrderHelper)42539": {
+            "label": "contract TradeOrderHelper",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)",
+            "numberOfBytes": "32"
           },
           "t_uint256": {
             "label": "uint256",

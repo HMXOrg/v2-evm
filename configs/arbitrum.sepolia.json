@@ -31,7 +31,7 @@
     "trade": "0x2859751c033E64b1050f5E9642C4848293D3caE1",
     "rebalanceHLP": "",
     "rebalanceHLPv2": "",
-    "gas": "0x65540FFe4DE16A4b392390cbad069D66140541b1"
+    "gas": "0x6b233069c9aDd456Bd83A8b8572e91ADcB43848c"
   },
   "oracles": {
     "ecoPyth": "0x934dD689e9962427aab71b226b386945F5d190bC",

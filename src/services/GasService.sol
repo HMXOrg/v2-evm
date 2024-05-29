@@ -13,7 +13,6 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { console2 } from "forge-std/console2.sol";
 
 // interfaces
 import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
@@ -86,10 +85,9 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     vars.oracle = OracleMiddleware(configStorage.oracle());
 
     uint256 gasConsumed = _gasBefore - gasleft();
-    console2.log("gasConsumed", gasConsumed);
-    console2.log("tx.gasprice", tx.gasprice);
     (vars.tokenPrice, ) = vars.oracle.getLatestPrice(gasTokenAssetId, false);
     uint256 gasConsumedInUsd = (gasConsumed * tx.gasprice * vars.tokenPrice) / 1e18;
+    gasConsumedInUsd = HMXLib.max(gasConsumedInUsd, executionFeeInUsd); // max between these two value to at least collect some execution fee
 
     if (_absSizeDelta >= waviedExecutionFeeMinTradeSize) {
       emit LogSubsidizeExecutionFee(vars.subAccount, _marketIndex, gasConsumedInUsd);
@@ -169,6 +167,12 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     executionFeeTreasury = _executionFeeTreasury;
 
     emit LogSetParams(_executionFeeInUsd, _executionFeeTreasury);
+  }
+
+  function setGasTokenAssetId(bytes32 _gasTokenAssetId) external onlyOwner {
+    gasTokenAssetId = _gasTokenAssetId;
+
+    emit LogSetGasTokenAssetId(gasTokenAssetId);
   }
 
   function setWaviedExecutionFeeMinTradeSize(uint256 _waviedExecutionFeeMinTradeSize) external onlyOwner {

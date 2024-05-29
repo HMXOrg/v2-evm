@@ -14,10 +14,7 @@ async function main(chainId: number) {
 
   const gasService = GasService__factory.connect(config.services.gas, deployer);
   console.log(`[configs/GasService] Set Gas Token Asset Id`);
-  await ownerWrapper.authExec(
-    gasService.address,
-    gasService.interface.encodeFunctionData("setGasTokenAssetId", [gasTokenAssetId])
-  );
+  await gasService.setGasTokenAssetId(gasTokenAssetId);
   console.log("[configs/GasService] Finished");
 }
 

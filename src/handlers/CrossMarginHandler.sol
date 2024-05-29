@@ -292,6 +292,46 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     return _orderId;
   }
 
+  function createWithdrawCollateralOrderOnBehalf(
+    address _account,
+    uint8 _subAccountId,
+    address _token,
+    uint256 _amount,
+    uint256 _executionFee,
+    bool _shouldUnwrap
+  ) external payable nonReentrant onlyAcceptedToken(_token) onlyOwner returns (uint256 _orderId) {
+    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
+    if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
+    if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
+    if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
+      revert ICrossMarginHandler_NotWNativeToken();
+    if (!banlist[_account]) revert ICrossMarginHandler_Unauthorized();
+
+    // convert native to WNative (including executionFee)
+    _transferInETH();
+
+    _orderId = withdrawOrders.length;
+
+    withdrawOrders.push(
+      WithdrawOrder({
+        account: payable(_account),
+        orderId: _orderId,
+        token: _token,
+        amount: _amount,
+        executionFee: _executionFee,
+        shouldUnwrap: _shouldUnwrap,
+        subAccountId: _subAccountId,
+        crossMarginService: CrossMarginService(crossMarginService),
+        createdTimestamp: uint48(block.timestamp),
+        executedTimestamp: 0,
+        status: WithdrawOrderStatus.PENDING
+      })
+    );
+
+    emit LogCreateWithdrawOrder(_account, _subAccountId, _orderId, _token, _amount, _executionFee, _shouldUnwrap);
+    return _orderId;
+  }
+
   /// @notice Executes a batch of pending withdraw orders.
   /// @param _endIndex The index of the last withdraw order to execute.
   /// @param _feeReceiver The address to receive the total execution fee.

@@ -113,6 +113,7 @@ interface IIntentHandler {
     bool isFullClose;
     bytes32 key;
     Command cmd;
+    uint256 gasBefore;
   }
 
   struct ExecuteIntentInputs {

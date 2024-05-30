@@ -10,12 +10,7 @@ async function main(chainId: number) {
   const inputs = [
     {
       contractAddress: config.services.gas!,
-      executorAddress: config.handlers.intent!,
-      isServiceExecutor: true,
-    },
-    {
-      contractAddress: config.services.trade,
-      executorAddress: config.helpers.tradeOrder!,
+      executorAddress: config.rewardDistributor!,
       isServiceExecutor: true,
     },
   ];

@@ -73,6 +73,7 @@ import { IERC20ApproveStrategy } from "@hmx/strategies/interfaces/IERC20ApproveS
 import { IIntentHandler } from "@hmx/handlers/interfaces/IIntentHandler.sol";
 import { ITradeOrderHelper } from "@hmx/helpers/interfaces/ITradeOrderHelper.sol";
 import { IGasService } from "@hmx/services/interfaces/IGasService.sol";
+import { ITokenSettingHelper } from "@hmx/helpers/interfaces/ITokenSettingHelper.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -817,6 +818,21 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IGasService(payable(_proxy));
+  }
+
+  function deployTokenSettingHelper(
+    address _proxyAdmin,
+    address _vaultStorage,
+    address _configStorage
+  ) internal returns (ITokenSettingHelper) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/TokenSettingHelper.sol/TokenSettingHelper.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address)")),
+      _vaultStorage,
+      _configStorage
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ITokenSettingHelper(payable(_proxy));
   }
 
   /**

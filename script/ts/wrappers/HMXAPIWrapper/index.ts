@@ -45,6 +45,7 @@ export default class {
     try {
       await axios.post(endpoint);
     } catch (e: any) {
+      console.log(e);
       const statusCode = e.response.data.status.code;
       if (statusCode === 8900) {
         console.log("lastest market id cache is equal to the contract");

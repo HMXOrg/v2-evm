@@ -7,10 +7,21 @@ import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const inputs = [
-    { marketIndex: 50, tradeSizeLimit: 50000, positionSizeLimit: 50000 },
-    { marketIndex: 51, tradeSizeLimit: 75000, positionSizeLimit: 75000 },
-    { marketIndex: 52, tradeSizeLimit: 0, positionSizeLimit: 0 },
-    { marketIndex: 53, tradeSizeLimit: 50000, positionSizeLimit: 50000 },
+    {
+      marketIndex: 21, // SOLUSD
+      tradeSizeLimit: 500000,
+      positionSizeLimit: 500000,
+    },
+    {
+      marketIndex: 23, // XRPUSD
+      tradeSizeLimit: 500000,
+      positionSizeLimit: 500000,
+    },
+    {
+      marketIndex: 45, // 1000SHIBUSD
+      tradeSizeLimit: 50000,
+      positionSizeLimit: 50000,
+    },
   ];
 
   const config = loadConfig(chainId);

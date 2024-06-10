@@ -12,7 +12,7 @@ async function main(chainId: number) {
 
   const gasTokenAssetId = ethers.utils.formatBytes32String("ETH");
 
-  const gasService = GasService__factory.connect(config.services.gas, deployer);
+  const gasService = GasService__factory.connect(config.services.gas!, deployer);
   console.log(`[configs/GasService] Set Gas Token Asset Id`);
   await ownerWrapper.authExec(
     gasService.address,

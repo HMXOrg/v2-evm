@@ -13,14 +13,14 @@
     "crossMargin": "0xE7D96684A56e60ffBAAe0fC0683879da48daB383",
     "limitTrade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
     "liquidity": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
-    "intent": "",
+    "intent": "0x3f56D669b19a55085602961d3981f53a2E103Eee",
     "ext01": "0x7d975c289598E13dc95E48D04042F106e8d6d06a",
     "rebalanceHLP": "0xc2c45a6d0FD1A74888aAE64a45144165fB90e109"
   },
   "helpers": {
     "trade": "0x9F1f13eBC178122C3ef6c14FA3A523680563F58b",
     "limitTrade": "0x7ee71aACc0bE34D503A6A1B560f939307Fc36A6A",
-    "tradeOrder": "",
+    "tradeOrder": "0x100e964b87F4f60ad78423b006b76ea63Dd35535",
     "intentBuilder": ""
   },
   "services": {
@@ -28,7 +28,7 @@
     "liquidity": "0xF0D92907236418Fa8Ee900E384b4c6928f7cADfc",
     "liquidation": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
     "trade": "0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A",
-    "gas": "",
+    "gas": "0xEB478A92F784B03fa9B35Bac15199B1aA33D7d5A",
     "rebalanceHLP": "0x04979ee0d378ec830e087301d4d1454Bb75066e1"
   },
   "oracles": {

@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HmxApiWrapper from "../../wrappers/HMXAPIWrapper";
+import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);

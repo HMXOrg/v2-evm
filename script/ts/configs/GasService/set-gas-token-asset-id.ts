@@ -1,24 +1,24 @@
-import { IntentHandler__factory } from "../../../../typechain";
+import { GasService__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
+import { ethers } from "ethers";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  const intentExecutor = "0x7FDD623c90a0097465170EdD352Be27A9f3ad817";
-  const isAllow = true;
+  const gasTokenAssetId = ethers.utils.formatBytes32String("ETH");
 
-  const intentHandler = IntentHandler__factory.connect(config.handlers.intent!, deployer);
-  console.log(`[configs/IntentHandler] Set Intent Executor`);
+  const gasService = GasService__factory.connect(config.services.gas, deployer);
+  console.log(`[configs/GasService] Set Gas Token Asset Id`);
   await ownerWrapper.authExec(
-    intentHandler.address,
-    intentHandler.interface.encodeFunctionData("setIntentExecutor", [intentExecutor, isAllow])
+    gasService.address,
+    gasService.interface.encodeFunctionData("setGasTokenAssetId", [gasTokenAssetId])
   );
-  console.log("[configs/IntentHandler] Finished");
+  console.log("[configs/GasService] Finished");
 }
 
 const prog = new Command();

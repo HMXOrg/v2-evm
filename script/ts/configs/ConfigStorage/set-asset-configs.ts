@@ -13,11 +13,11 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("PYTH"),
+      assetId: ethers.utils.formatBytes32String("WUSDM"),
       config: {
-        assetId: ethers.utils.formatBytes32String("PYTH"),
-        tokenAddress: config.tokens.pyth,
-        decimals: 6,
+        assetId: ethers.utils.formatBytes32String("WUSDM"),
+        tokenAddress: config.tokens.wusdm,
+        decimals: 18,
         isStableCoin: false,
       },
     },

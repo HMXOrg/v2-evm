@@ -10,12 +10,8 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const priceAdapters = [
     {
-      priceId: ethers.utils.formatBytes32String("GLP"),
-      adapter: config.oracles.priceAdapters.glp,
-    },
-    {
-      priceId: ethers.utils.formatBytes32String("wstETH"),
-      adapter: config.oracles.priceAdapters.wstEth,
+      priceId: ethers.utils.formatBytes32String("WUSDM"),
+      adapter: config.oracles.priceAdapters.wusdm,
     },
   ];
 

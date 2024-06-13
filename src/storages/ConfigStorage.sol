@@ -52,6 +52,9 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
   event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
   event LogSetMakerTakerFee(uint256 marketIndex, uint256 makerFee, uint256 takerFee);
+  event LogSetMarketMaxOI(uint256 marketIndex, uint256 maxLongPositionSize, uint256 maxShortPositionSize);
+  event LogSetMarketIMF(uint256 marketIndex, uint32 imf);
+  event LogSetMarketMaxProfit(uint256 marketIndex, uint32 maxProfitRateBPS);
 
   /**
    * Constants
@@ -390,6 +393,59 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     marketConfigs[_marketIndex] = _newConfig;
     isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
     return _newConfig;
+  }
+
+  function setMarketMaxOI(
+    uint256[] memory _marketIndexes,
+    uint256[] memory _maxLongPositionSizes,
+    uint256[] memory _maxShortPositionSizes
+  ) external onlyWhitelistedExecutor {
+    if (
+      _marketIndexes.length != _maxLongPositionSizes.length ||
+      _maxLongPositionSizes.length != _maxShortPositionSizes.length
+    ) revert IConfigStorage_BadLen();
+    uint256 length = _marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      marketConfigs[_marketIndexes[i]].maxLongPositionSize = _maxLongPositionSizes[i];
+      marketConfigs[_marketIndexes[i]].maxShortPositionSize = _maxShortPositionSizes[i];
+
+      emit LogSetMarketMaxOI(_marketIndexes[i], _maxLongPositionSizes[i], _maxShortPositionSizes[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setMarketIMF(uint256[] memory _marketIndexes, uint32[] memory _imfs) external onlyWhitelistedExecutor {
+    if (_marketIndexes.length != _imfs.length) revert IConfigStorage_BadLen();
+    uint256 length = _marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      marketConfigs[_marketIndexes[i]].initialMarginFractionBPS = _imfs[i];
+
+      emit LogSetMarketIMF(_marketIndexes[i], _imfs[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setMarketMaxProfit(
+    uint256[] memory _marketIndexes,
+    uint32[] memory _maxProfitRateBPSs
+  ) external onlyWhitelistedExecutor {
+    if (_marketIndexes.length != _maxProfitRateBPSs.length) revert IConfigStorage_BadLen();
+    uint256 length = _marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      marketConfigs[_marketIndexes[i]].maxProfitRateBPS = _maxProfitRateBPSs[i];
+
+      emit LogSetMarketMaxProfit(_marketIndexes[i], _maxProfitRateBPSs[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function setHlpTokenConfig(

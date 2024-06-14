@@ -555,13 +555,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     weth = _weth;
   }
 
-  function setSGlp(address _sglp) external onlyOwner {
-    if (!_sglp.isContract()) revert IConfigStorage_BadArgs();
-
-    emit LogSetToken(sglp, _sglp);
-    sglp = _sglp;
-  }
-
   /// @notice Set switch collateral router.
   /// @param _newSwitchCollateralRouter The new switch collateral router.
   function setSwitchCollateralRouter(address _newSwitchCollateralRouter) external onlyOwner {
@@ -650,11 +643,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     isAdaptiveFeeEnabledByMarketIndex[_newMarketIndex] = _isAdaptiveFeeEnabled;
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
-  }
-
-  function delistMarket(uint256 _marketIndex) external onlyOwner {
-    emit LogDelistMarket(_marketIndex);
-    delete marketConfigs[_marketIndex].active;
   }
 
   /// @notice Remove underlying token.

@@ -30,6 +30,25 @@ export default class SafeWrapper {
     return this._safeAddress;
   }
 
+  async signPendingTransactions(): Promise<void> {
+    const safeSdk = await Safe.create({
+      ethAdapter: this._ethAdapter,
+      safeAddress: this._safeAddress,
+    });
+
+    const pendingTxsResp = await this._safeServiceClient.getPendingTransactions(this._safeAddress);
+    let pendingTxs = pendingTxsResp.results.length - 1;
+    let signedTx = 1;
+    for (let i = pendingTxsResp.results.length - 1; i >= 0; i--) {
+      console.log(
+        `[SafeWrapper/signPendingTransactions][${signedTx++}/${pendingTxs}] Signing tx ${
+          pendingTxsResp.results[i].safeTxHash
+        }`
+      );
+      await safeSdk.signTransaction(pendingTxsResp.results[i]);
+    }
+  }
+
   async executePendingTransactions(): Promise<void> {
     const safeSdk = await Safe.create({
       ethAdapter: this._ethAdapter,

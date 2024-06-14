@@ -30,45 +30,48 @@ contract Smoke_Debug is ForkEnv {
   }
 
   function test() external {
-    vm.createSelectFork(vm.envString("BLAST_SEPOLIA_RPC"), 4534854);
+    // vm.createSelectFork(vm.envString("BLAST_SEPOLIA_RPC"), 6798187);
+    vm.createSelectFork(vm.envString("BLAST_SEPOLIA_RPC"));
 
     vm.startPrank(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a);
 
-    bytes32[] memory priceData = new bytes32[](6);
-    priceData[0] = 0x013ad701b102ffffff000001fffffe00c4f0012f76000281008200ffeece0000;
-    priceData[1] = 0x000858ffe54dfff369000cfd0007680023a900ad8500f99000c382ffe7860000;
-    priceData[2] = 0x006bb5fffc64ffb852000c5f000c0b004d6500506800f349ff75fe005d580000;
-    priceData[3] = 0x00b4c70034990028c6009867005f6d008db30082e0004d41ffeda200553e0000;
-    priceData[4] = 0xff38c2ff72a5006a04001a22013adb00001a000b1ffff0a3004517ffedbb0000;
-    priceData[5] = 0x00024b0000000000000000000000000000000000000000000000000000000000;
+    // bytes32[] memory priceData = new bytes32[](6);
+    // priceData[0] = 0x013eb001b275ffffff000000ffffff00c58b012eb60002fd0083fffff0160000;
+    // priceData[1] = 0x000993ffdeebffed91ffffa6fffd8f001c1900aaa200fa3f00c3b4ffe3b10000;
+    // priceData[2] = 0x006a8efffba9ffb41b000c67000bb0004d7d00504b00ee21ff6991005b840000;
+    // priceData[3] = 0x00b459002c890020220099650051ae00873a00850f00490effe19b004f2f0000;
+    // priceData[4] = 0xff544eff69e2005999000ceb013eb600002c000065ffda88003fb6ffe4330000;
+    // priceData[5] = 0xfff2180000000000000000000000000000000000000000000000000000000000;
 
-    bytes32[] memory publishTimeData = new bytes32[](6);
-    publishTimeData[0] = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    publishTimeData[1] = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    publishTimeData[2] = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    publishTimeData[3] = 0x0000030000000000000000000000000000000000000000000000000000000000;
-    publishTimeData[4] = 0x0000000000000000000000000000030000030000000000000000000000000000;
-    publishTimeData[5] = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    // bytes32[] memory publishTimeData = new bytes32[](6);
+    // publishTimeData[0] = 0x0000030000030000030000030000000000000000000000000000000000000000;
+    // publishTimeData[1] = 0x0000000000030000030000030000030000030000030000030000030000030000;
+    // publishTimeData[2] = 0x0000030000000000030000000000000000000000000000030000030000000000;
+    // publishTimeData[3] = 0x0000040000030000030000030000030000030000030000030000030000030000;
+    // publishTimeData[4] = 0x0000030000000000030000000000040000040000030000030000000000000000;
+    // publishTimeData[5] = 0x0000030000000000000000000000000000000000000000000000000000000000;
 
-    address[] memory _accounts = new address[](1);
-    _accounts[0] = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a;
+    // address[] memory _accounts = new address[](1);
+    // _accounts[0] = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a;
 
-    uint8[] memory _subAccountIds = new uint8[](1);
-    _subAccountIds[0] = 1;
+    // uint8[] memory _subAccountIds = new uint8[](1);
+    // _subAccountIds[0] = 1;
 
-    uint256[] memory _orderIndexes = new uint256[](1);
-    _orderIndexes[0] = 50;
+    // uint256[] memory _orderIndexes = new uint256[](1);
+    // _orderIndexes[0] = 50;
 
-    ILimitTradeHandler(payable(0xF1b49fd29240a6f91988f18322e7851cB9a88BEe)).executeOrders(
-      _accounts,
-      _subAccountIds,
-      _orderIndexes,
-      payable(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a),
-      priceData,
-      publishTimeData,
-      1713756389,
-      0xe14423cae1bfe5774ec5916d5a3777f22da1659180f0af60fd9ab7e05bbd1916,
-      true
+    // ILiquidityHandler(payable(0xFc99D238c7A20895ba3756Ee04FD8BfD442c18fD)).executeOrder(
+    //   265,
+    //   payable(0x0578C797798Ae89b688Cd5676348344d7d0EC35E),
+    //   priceData,
+    //   publishTimeData,
+    //   1718283050,
+    //   0x259c68b8d20b4292c8465ea4c94c75481334bc86e42803313f8545a7f78e6182
+    // );
+
+    IBotHandler(0x34eFfFEdbD326796256B4C253dC3F8F1dfe23D63).removeTokenFromHlpLiquidity(
+      0xfAE1131D79E9B13CA11c3Fb3D7b588D8Fa44401c,
+      18628136730
     );
 
     vm.stopPrank();

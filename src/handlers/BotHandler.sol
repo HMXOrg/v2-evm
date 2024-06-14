@@ -544,6 +544,14 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     emit LogInjectTokenToHlpLiquidity(msg.sender, _token, _amount);
   }
 
+  function removeTokenFromHlpLiquidity(address _token, uint256 _amount) external nonReentrant onlyOwner {
+    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+
+    // do accounting on vault storage
+    _vaultStorage.removeHLPLiquidity(_token, _amount);
+    _vaultStorage.pushToken(_token, msg.sender, _amount);
+  }
+
   /// @notice This function transfers tokens to the vault storage and performs accounting.
   /// @param _token The address of the token to be transferred.
   /// @param _amount The amount of tokens to be transferred.

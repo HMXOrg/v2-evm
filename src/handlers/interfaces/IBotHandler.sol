@@ -132,4 +132,6 @@ interface IBotHandler {
   function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external;
 
   function setTradeService(address _newAddress) external;
+
+  function removeTokenFromHlpLiquidity(address _token, uint256 _amount) external;
 }

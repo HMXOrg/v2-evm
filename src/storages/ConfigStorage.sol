@@ -13,7 +13,6 @@ import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/Ad
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
-import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -359,11 +358,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   function setPnlFactor(uint32 _pnlFactorBPS) external onlyOwner {
     emit LogSetPnlFactor(pnlFactorBPS, _pnlFactorBPS);
     pnlFactorBPS = _pnlFactorBPS;
-  }
-
-  function setSwapConfig(SwapConfig calldata _newConfig) external onlyOwner {
-    emit LogSetSwapConfig(swapConfig, _newConfig);
-    swapConfig = _newConfig;
   }
 
   function setTradingConfig(TradingConfig calldata _newConfig) external onlyOwner {

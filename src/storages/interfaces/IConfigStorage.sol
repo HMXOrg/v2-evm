@@ -190,8 +190,6 @@ interface IConfigStorage {
 
   function setPnlFactor(uint32 _pnlFactor) external;
 
-  function setSwapConfig(SwapConfig calldata _newConfig) external;
-
   function setTradingConfig(TradingConfig calldata _newConfig) external;
 
   function setLiquidationConfig(LiquidationConfig calldata _newConfig) external;

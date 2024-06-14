@@ -46,7 +46,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
   }
 
   function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
+    // configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
   }
 
   function _setUpTradingConfig() private {

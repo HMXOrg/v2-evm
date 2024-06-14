@@ -240,7 +240,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   /// @notice set up swap config
   function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
+    // configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
   }
 
   /// @notice set up trading config

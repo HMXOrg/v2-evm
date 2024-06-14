@@ -13,7 +13,6 @@ import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/Ad
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
-import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -364,11 +363,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     pnlFactorBPS = _pnlFactorBPS;
   }
 
-  function setSwapConfig(SwapConfig calldata _newConfig) external onlyOwner {
-    emit LogSetSwapConfig(swapConfig, _newConfig);
-    swapConfig = _newConfig;
-  }
-
   function setTradingConfig(TradingConfig calldata _newConfig) external onlyOwner {
     if (_newConfig.fundingInterval == 0 || _newConfig.devFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_ExceedLimitSetting();
@@ -558,13 +552,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     weth = _weth;
   }
 
-  function setSGlp(address _sglp) external onlyOwner {
-    if (!_sglp.isContract()) revert IConfigStorage_BadArgs();
-
-    emit LogSetToken(sglp, _sglp);
-    sglp = _sglp;
-  }
-
   /// @notice Set switch collateral router.
   /// @param _newSwitchCollateralRouter The new switch collateral router.
   function setSwitchCollateralRouter(address _newSwitchCollateralRouter) external onlyOwner {
@@ -653,11 +640,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     isAdaptiveFeeEnabledByMarketIndex[_newMarketIndex] = _isAdaptiveFeeEnabled;
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
-  }
-
-  function delistMarket(uint256 _marketIndex) external onlyOwner {
-    emit LogDelistMarket(_marketIndex);
-    delete marketConfigs[_marketIndex].active;
   }
 
   /// @notice Remove underlying token.

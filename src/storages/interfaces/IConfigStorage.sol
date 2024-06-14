@@ -273,4 +273,14 @@ interface IConfigStorage {
   function ybTokenOf(address _token) external view returns (address);
 
   function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external;
+
+  function setMarketMaxOI(
+    uint256[] memory _marketIndexes,
+    uint256[] memory _maxLongPositionSizes,
+    uint256[] memory _maxShortPositionSizes
+  ) external;
+
+  function setMarketIMF(uint256[] memory _marketIndexes, uint32[] memory _imfs) external;
+
+  function setMarketMaxProfit(uint256[] memory _marketIndexes, uint32[] memory _maxProfitRateBPSs) external;
 }

@@ -210,10 +210,7 @@ interface IConfigStorage {
     CollateralTokenConfig calldata _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
-  function setAssetConfig(
-    bytes32 assetId,
-    AssetConfig calldata _newConfig
-  ) external returns (AssetConfig memory _assetConfig);
+  function setAssetConfigs(bytes32[] calldata _assetIds, AssetConfig[] calldata _newConfigs) external;
 
   function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external;
 

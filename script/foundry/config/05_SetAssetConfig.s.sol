@@ -17,30 +17,53 @@ contract SetAssetConfig is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    _addAssetConfig(wethAssetId, getJsonAddress(".tokens.weth"), 18, false);
-    _addAssetConfig(wbtcAssetId, getJsonAddress(".tokens.wbtc"), 8, false);
-    _addAssetConfig(daiAssetId, getJsonAddress(".tokens.dai"), 18, true);
-    _addAssetConfig(usdcAssetId, getJsonAddress(".tokens.usdc"), 6, true);
-    _addAssetConfig(usdtAssetId, getJsonAddress(".tokens.usdt"), 6, true);
-    _addAssetConfig(glpAssetId, getJsonAddress(".tokens.sglp"), 18, false);
+    bytes32[] memory _assetIds = new bytes32[](6);
+    _assetIds[0] = wethAssetId;
+    _assetIds[1] = wbtcAssetId;
+    _assetIds[2] = daiAssetId;
+    _assetIds[3] = usdcAssetId;
+    _assetIds[4] = usdtAssetId;
+    _assetIds[5] = glpAssetId;
 
-    vm.stopBroadcast();
-  }
-
-  /// @notice to add asset config with some default value
-  /// @param _assetId Asset's ID
-  /// @param _token token address
-  /// @param _decimals decimal of token
-  /// @param _isStableCoin is stable coin
-  function _addAssetConfig(bytes32 _assetId, address _token, uint8 _decimals, bool _isStableCoin) private {
-    IConfigStorage.AssetConfig memory _assetConfig;
+    IConfigStorage.AssetConfig[] memory _newConfigs = new IConfigStorage.AssetConfig[](6);
+    _newConfigs[0] = IConfigStorage.AssetConfig({
+      assetId: wethAssetId,
+      tokenAddress: getJsonAddress(".tokens.weth"),
+      decimals: 18,
+      isStableCoin: false
+    });
+    _newConfigs[1] = IConfigStorage.AssetConfig({
+      assetId: wbtcAssetId,
+      tokenAddress: getJsonAddress(".tokens.wbtc"),
+      decimals: 8,
+      isStableCoin: false
+    });
+    _newConfigs[2] = IConfigStorage.AssetConfig({
+      assetId: daiAssetId,
+      tokenAddress: getJsonAddress(".tokens.dai"),
+      decimals: 18,
+      isStableCoin: false
+    });
+    _newConfigs[3] = IConfigStorage.AssetConfig({
+      assetId: usdcAssetId,
+      tokenAddress: getJsonAddress(".tokens.usdc"),
+      decimals: 6,
+      isStableCoin: false
+    });
+    _newConfigs[4] = IConfigStorage.AssetConfig({
+      assetId: usdtAssetId,
+      tokenAddress: getJsonAddress(".tokens.usdt"),
+      decimals: 6,
+      isStableCoin: false
+    });
+    _newConfigs[5] = IConfigStorage.AssetConfig({
+      assetId: glpAssetId,
+      tokenAddress: getJsonAddress(".tokens.sglp"),
+      decimals: 18,
+      isStableCoin: false
+    });
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));
-
-    _assetConfig.assetId = _assetId;
-    _assetConfig.tokenAddress = _token;
-    _assetConfig.decimals = _decimals;
-    _assetConfig.isStableCoin = _isStableCoin;
-
-    configStorage.setAssetConfig(_assetId, _assetConfig);
+    configStorage.setAssetConfigs(_assetIds, _newConfigs);
+    vm.stopBroadcast();
   }
 }

@@ -507,13 +507,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return assetCollateralTokenConfigs[_assetId];
   }
 
-  function setAssetConfig(
-    bytes32 _assetId,
-    AssetConfig calldata _newConfig
-  ) external onlyOwner returns (AssetConfig memory _assetConfig) {
-    return _setAssetConfig(_assetId, _newConfig);
-  }
-
   function setAssetConfigs(bytes32[] calldata _assetIds, AssetConfig[] calldata _newConfigs) external onlyOwner {
     if (_assetIds.length != _newConfigs.length) revert IConfigStorage_BadLen();
     for (uint256 i = 0; i < _assetIds.length; ) {

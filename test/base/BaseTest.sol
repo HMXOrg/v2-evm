@@ -401,45 +401,45 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   }
 
   function _setUpAssetConfigs() private {
-    IConfigStorage.AssetConfig memory _assetConfigYbEth = IConfigStorage.AssetConfig({
+    bytes32[] memory _assetIds = new bytes32[](5);
+    _assetIds[0] = ybethAssetId;
+    _assetIds[1] = wbtcAssetId;
+    _assetIds[2] = usdtAssetId;
+    _assetIds[3] = usdcAssetId;
+    _assetIds[4] = ybusdbAssetId;
+
+    IConfigStorage.AssetConfig[] memory _newConfigs = new IConfigStorage.AssetConfig[](5);
+    _newConfigs[0] = IConfigStorage.AssetConfig({
       tokenAddress: address(ybeth),
       assetId: ybethAssetId,
       decimals: 18,
       isStableCoin: false
     });
-    configStorage.setAssetConfig(ybethAssetId, _assetConfigYbEth);
-
-    IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
+    _newConfigs[1] = IConfigStorage.AssetConfig({
       tokenAddress: address(wbtc),
       assetId: wbtcAssetId,
       decimals: 8,
       isStableCoin: false
     });
-    configStorage.setAssetConfig(wbtcAssetId, _assetConfigWbtc);
-
-    IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
+    _newConfigs[2] = IConfigStorage.AssetConfig({
       tokenAddress: address(usdt),
       assetId: usdtAssetId,
       decimals: 6,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(usdtAssetId, _assetConfigUsdt);
-
-    IConfigStorage.AssetConfig memory _assetConfigUsdc = IConfigStorage.AssetConfig({
+    _newConfigs[3] = IConfigStorage.AssetConfig({
       tokenAddress: address(usdc),
       assetId: usdcAssetId,
       decimals: 6,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(usdcAssetId, _assetConfigUsdc);
-
-    IConfigStorage.AssetConfig memory _assetConfigYbUsdb = IConfigStorage.AssetConfig({
+    _newConfigs[4] = IConfigStorage.AssetConfig({
       tokenAddress: address(ybusdb),
       assetId: ybusdbAssetId,
       decimals: 18,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(ybusdbAssetId, _assetConfigYbUsdb);
+    configStorage.setAssetConfigs(_assetIds, _newConfigs);
   }
 
   function _setUpBlastConfigs() private {

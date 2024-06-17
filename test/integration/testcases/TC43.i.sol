@@ -21,6 +21,8 @@ contract TC43 is BaseIntTest_WithActions {
 
   function setUp() public {
     gasService.setWaviedExecutionFeeMinTradeSize(type(uint256).max);
+
+    configStorage.setConfigExecutor(address(this), true);
   }
 
   function testCorrectness_TC43_intentHandler_executeMarketOrderSuccess() external {
@@ -32,9 +34,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -186,9 +192,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -310,9 +320,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -432,9 +446,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -541,9 +559,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -636,9 +658,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -815,9 +841,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -907,9 +937,13 @@ contract TC43 is BaseIntTest_WithActions {
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
-    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig, false);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = wbtcMarketIndex;
+    uint256[] memory maxLongPositionSizes = new uint256[](1);
+    maxLongPositionSizes[0] = 20_000_000 * 1e30;
+    uint256[] memory maxShortPositionSizes = new uint256[](1);
+    maxShortPositionSizes[0] = 20_000_000 * 1e30;
+    configStorage.setMarketMaxOI(marketIndexes, maxLongPositionSizes, maxShortPositionSizes);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);

@@ -190,8 +190,6 @@ interface IConfigStorage {
 
   function setPnlFactor(uint32 _pnlFactor) external;
 
-  function setSwapConfig(SwapConfig calldata _newConfig) external;
-
   function setTradingConfig(TradingConfig calldata _newConfig) external;
 
   function setLiquidationConfig(LiquidationConfig calldata _newConfig) external;
@@ -221,8 +219,6 @@ interface IConfigStorage {
 
   function setWeth(address _weth) external;
 
-  function setSGlp(address _sglp) external;
-
   function addOrUpdateAcceptedToken(address[] calldata _tokens, HLPTokenConfig[] calldata _configs) external;
 
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
@@ -235,8 +231,6 @@ interface IConfigStorage {
     MarketConfig calldata _newConfig,
     bool isAdaptiveFeeEnabled
   ) external returns (uint256 _index);
-
-  function delistMarket(uint256 _marketIndex) external;
 
   function removeAcceptedToken(address _token) external;
 
@@ -267,5 +261,17 @@ interface IConfigStorage {
     uint256[] memory marketIndexes,
     uint256[] memory makerFees,
     uint256[] memory takerFees
+  ) external;
+
+  function setMarketMaxOI(
+    uint256[] memory _marketIndexes,
+    uint256[] memory _maxLongPositionSizes,
+    uint256[] memory _maxShortPositionSizes
+  ) external;
+
+  function setMarketIMFAndMaxProfit(
+    uint256[] memory _marketIndexes,
+    uint32[] memory _imfs,
+    uint32[] memory _maxProfitRateBPSs
   ) external;
 }

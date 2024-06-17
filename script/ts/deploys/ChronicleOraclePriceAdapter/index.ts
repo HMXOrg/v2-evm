@@ -3,9 +3,9 @@ import { getConfig, writeConfigFile } from "../../utils/config";
 
 const config = getConfig();
 
-const chroniclePriceFeedAddress = "";
-
 async function main() {
+  const chroniclePriceFeedAddress = "0xdC6720c996Fad27256c7fd6E0a271e2A4687eF18";
+
   const deployer = (await ethers.getSigners())[0];
   const contract = await ethers.deployContract("ChronicleOraclePriceAdapter", [chroniclePriceFeedAddress], deployer);
 

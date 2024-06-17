@@ -2,22 +2,20 @@ import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import { EcoPyth2__factory, VaultStorage__factory } from "../../../../typechain";
-import MultiCall from "@indexed-finance/multicall";
-import chains from "../../entities/chains";
 import collaterals from "../../entities/collaterals";
 import { ethers } from "ethers";
 import * as readlineSync from "readline-sync";
 import { TREASURY_ADDRESS } from "../../constants/important-addresses";
-import SafeWrapper from "../../wrappers/SafeWrapper";
 import { IMultiContractCall } from "../../wrappers/MulticallWrapper/interface";
 import { MulticallWrapper } from "../../wrappers/MulticallWrapper";
 import { PythEvmPriceStruct } from "../../entities/pyth";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number, nonce?: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
   const multicallWrapper = new MulticallWrapper(config.multicall, signer);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, signer);
+  const ownerWrapper = new OwnerWrapper(chainId, signer);
 
   console.log(`[cmds/VaultStorage] Withdraw dev fee to ${TREASURY_ADDRESS}...`);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, signer);
@@ -72,24 +70,13 @@ async function main(chainId: number, nonce?: number) {
       i++;
       continue;
     }
-    const tx = await safeWrapper.proposeTransaction(
+    await ownerWrapper.authExec(
       vaultStorage.address,
-      0,
       vaultStorage.interface.encodeFunctionData("withdrawDevFee", [
         c.address,
         ret[offset] as ethers.BigNumber,
         TREASURY_ADDRESS,
-      ]),
-      { nonce }
-    );
-    if (nonce != undefined) {
-      nonce++;
-    }
-    console.log(
-      `[cmds/VaultStorage] Proposed tx to withdraw ${ethers.utils.formatUnits(
-        ret[offset] as ethers.BigNumber,
-        c.decimals
-      )} ${key}: ${tx}`
+      ])
     );
     i++;
   }

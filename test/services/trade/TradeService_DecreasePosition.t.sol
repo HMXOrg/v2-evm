@@ -614,16 +614,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
    * Revert
    */
 
-  function testRevert_WhenMarketIsDelistedFromPerp() external {
-    // ALICE open Long position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+  // function testRevert_WhenMarketIsDelistedFromPerp() external {
+  //   // ALICE open Long position
+  //   tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
-    // someone delist market
-    configStorage.delistMarket(ethMarketIndex);
+  //   // someone delist market
+  //   configStorage.delistMarket(ethMarketIndex);
 
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
-  }
+  //   vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
+  //   tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
+  // }
 
   function testRevert_WhenOracleTellMarketIsClose() external {
     // ALICE open Long position

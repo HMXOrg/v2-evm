@@ -3,16 +3,11 @@ import { CalcPriceLens__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import { Command } from "commander";
-import SafeWrapper from "../../wrappers/SafeWrapper";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const priceAdapters = [
-    {
-      priceId: ethers.utils.formatBytes32String("ybETH2"),
-      adapter: config.oracles.priceAdapters.ybeth2!,
-    },
     {
       priceId: ethers.utils.formatBytes32String("ybUSDB2"),
       adapter: config.oracles.priceAdapters.ybusdb2!,

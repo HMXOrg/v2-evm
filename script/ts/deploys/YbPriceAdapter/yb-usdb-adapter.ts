@@ -6,7 +6,7 @@ async function main() {
   const chainId = (await ethers.provider.getNetwork()).chainId;
   const config = loadConfig(chainId);
   const ybToken = config.tokens.ybusdb2!;
-  const assetId = ethers.utils.formatBytes32String("DAI");
+  const assetId = ethers.utils.formatBytes32String("USDB");
   const contract = await ethers.deployContract("YbPriceAdapter", [ybToken, assetId], deployer);
 
   console.log(`[deploys/YbPriceAdapter] Deploying YbPriceAdapter for ybUSDB Contract`);

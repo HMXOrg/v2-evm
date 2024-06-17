@@ -1,25 +1,24 @@
-import { ethers } from "hardhat";
+import { Command } from "commander";
 import { ConfigStorage__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
-
-const config = getConfig();
+import signers from "../../entities/signers";
+import { loadConfig } from "../../utils/config";
 
 const liquidityConfig = {
   depositFeeRateBPS: 0, // 0%
-  withdrawFeeRateBPS: 30, // 0.3%
+  withdrawFeeRateBPS: 30, // 1%
   maxHLPUtilizationBPS: 8000, // 80%
   hlpTotalTokenWeight: 0, // DEFAULT
   hlpSafetyBufferBPS: 2000, // 20%
-  taxFeeRateBPS: 0, // 0.5%
+  taxFeeRateBPS: 50, // 0.5%
   flashLoanFeeRateBPS: 0,
   dynamicFeeEnabled: true,
   enabled: true,
 };
 
-async function main() {
-  const chainId = (await ethers.provider.getNetwork()).chainId;
-  const deployer = (await ethers.getSigners())[0];
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
@@ -30,7 +29,15 @@ async function main() {
   );
 }
 
-main().catch((error) => {
+const prog = new Command();
+
+prog.requiredOption("--chain-id <number>", "chain id", parseInt);
+
+prog.parse(process.argv);
+
+const opts = prog.opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

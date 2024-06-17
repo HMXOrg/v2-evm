@@ -271,7 +271,9 @@ interface IConfigStorage {
     uint256[] memory _maxShortPositionSizes
   ) external;
 
-  function setMarketIMF(uint256[] memory _marketIndexes, uint32[] memory _imfs) external;
-
-  function setMarketMaxProfit(uint256[] memory _marketIndexes, uint32[] memory _maxProfitRateBPSs) external;
+  function setMarketIMFAndMaxProfit(
+    uint256[] memory _marketIndexes,
+    uint32[] memory _imfs,
+    uint32[] memory _maxProfitRateBPSs
+  ) external;
 }

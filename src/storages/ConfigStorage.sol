@@ -54,7 +54,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetMakerTakerFee(uint256 marketIndex, uint256 makerFee, uint256 takerFee);
   event LogSetMarketMaxOI(uint256 marketIndex, uint256 maxLongPositionSize, uint256 maxShortPositionSize);
   event LogSetMarketIMF(uint256 marketIndex, uint32 imf);
-  event LogSetMarketMaxProfit(uint256 marketIndex, uint32 maxProfitRateBPS);
+  event LogSetMarketIMFAndMaxProfit(uint256 marketIndex, uint32 imf, uint32 maxProfitRateBPS);
 
   /**
    * Constants
@@ -414,30 +414,18 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     }
   }
 
-  function setMarketIMF(uint256[] memory _marketIndexes, uint32[] memory _imfs) external onlyWhitelistedExecutor {
+  function setMarketIMFAndMaxProfit(
+    uint256[] memory _marketIndexes,
+    uint32[] memory _imfs,
+    uint32[] memory _maxProfitRateBPSs
+  ) external onlyWhitelistedExecutor {
     if (_marketIndexes.length != _imfs.length) revert IConfigStorage_BadLen();
     uint256 length = _marketIndexes.length;
     for (uint256 i; i < length; ) {
       marketConfigs[_marketIndexes[i]].initialMarginFractionBPS = _imfs[i];
-
-      emit LogSetMarketIMF(_marketIndexes[i], _imfs[i]);
-
-      unchecked {
-        ++i;
-      }
-    }
-  }
-
-  function setMarketMaxProfit(
-    uint256[] memory _marketIndexes,
-    uint32[] memory _maxProfitRateBPSs
-  ) external onlyWhitelistedExecutor {
-    if (_marketIndexes.length != _maxProfitRateBPSs.length) revert IConfigStorage_BadLen();
-    uint256 length = _marketIndexes.length;
-    for (uint256 i; i < length; ) {
       marketConfigs[_marketIndexes[i]].maxProfitRateBPS = _maxProfitRateBPSs[i];
 
-      emit LogSetMarketMaxProfit(_marketIndexes[i], _maxProfitRateBPSs[i]);
+      emit LogSetMarketIMFAndMaxProfit(_marketIndexes[i], _imfs[i], _maxProfitRateBPSs[i]);
 
       unchecked {
         ++i;

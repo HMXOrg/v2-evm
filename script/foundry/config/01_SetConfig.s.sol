@@ -45,7 +45,7 @@ contract SetConfig is ConfigJsonRepo {
   }
 
   function _setUpSwapConfig(IConfigStorage configStorage) private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
+    // configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
   }
 
   function _setUpTradingConfig(IConfigStorage configStorage) private {

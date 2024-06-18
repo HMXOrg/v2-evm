@@ -10,26 +10,44 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetAssetConfigs is BaseIntTest_SetCollateralTokens {
   constructor() {
-    _addAssetConfig(ybethAssetId, address(ybeth), 18, false);
-    _addAssetConfig(wbtcAssetId, address(wbtc), 8, false);
-    _addAssetConfig(ybusdbAssetId, address(ybusdb), 18, true);
-    _addAssetConfig(usdcAssetId, address(usdc), 6, true);
-    _addAssetConfig(usdtAssetId, address(usdt), 6, true);
-  }
+    bytes32[] memory _assetIds = new bytes32[](5);
+    _assetIds[0] = ybethAssetId;
+    _assetIds[1] = wbtcAssetId;
+    _assetIds[2] = ybusdbAssetId;
+    _assetIds[3] = usdcAssetId;
+    _assetIds[4] = usdtAssetId;
 
-  /// @notice to add asset config with some default value
-  /// @param _assetId Asset's ID
-  /// @param _token token address
-  /// @param _decimals decimal of token
-  /// @param _isStableCoin is stable coin
-  function _addAssetConfig(bytes32 _assetId, address _token, uint8 _decimals, bool _isStableCoin) private {
-    IConfigStorage.AssetConfig memory _assetConfig;
-
-    _assetConfig.assetId = _assetId;
-    _assetConfig.tokenAddress = _token;
-    _assetConfig.decimals = _decimals;
-    _assetConfig.isStableCoin = _isStableCoin;
-
-    configStorage.setAssetConfig(_assetId, _assetConfig);
+    IConfigStorage.AssetConfig[] memory _newConfigs = new IConfigStorage.AssetConfig[](5);
+    _newConfigs[0] = IConfigStorage.AssetConfig({
+      tokenAddress: address(ybeth),
+      assetId: ybethAssetId,
+      decimals: 18,
+      isStableCoin: false
+    });
+    _newConfigs[1] = IConfigStorage.AssetConfig({
+      tokenAddress: address(wbtc),
+      assetId: wbtcAssetId,
+      decimals: 8,
+      isStableCoin: false
+    });
+    _newConfigs[2] = IConfigStorage.AssetConfig({
+      tokenAddress: address(ybusdb),
+      assetId: ybusdbAssetId,
+      decimals: 18,
+      isStableCoin: true
+    });
+    _newConfigs[3] = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdc),
+      assetId: usdcAssetId,
+      decimals: 6,
+      isStableCoin: true
+    });
+    _newConfigs[4] = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdt),
+      assetId: usdtAssetId,
+      decimals: 6,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfigs(_assetIds, _newConfigs);
   }
 }

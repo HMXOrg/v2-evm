@@ -25,7 +25,7 @@ contract Smoke_IntentTrade is ForkEnv {
   }
 
   function test() external {
-    vm.createSelectFork(vm.envString("ARBITRUM_MAINNET_RPC"), 214327844);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 214327844);
 
     vm.startPrank(ForkEnv.multiSig);
     Deployer.upgrade("GasService", address(ForkEnv.proxyAdmin), 0xe54f0C6cD09617c5fC73647A0303AB35789a23Be);

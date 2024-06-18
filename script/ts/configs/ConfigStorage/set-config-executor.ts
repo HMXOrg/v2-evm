@@ -9,7 +9,11 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      executorAddress: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872",
+      executorAddress: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872", // Deployer
+      isServiceExecutor: true,
+    },
+    {
+      executorAddress: "0x60F80329d206A432D8aE3E4b34F505920cb17CdE", // J.Xina Signer
       isServiceExecutor: true,
     },
   ];

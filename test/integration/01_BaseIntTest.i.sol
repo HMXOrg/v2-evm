@@ -342,7 +342,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(vaultStorage),
       address(configStorage),
       0.1 * 1e30,
-      FEEVER
+      FEEVER,
+      "WETHUSD"
     );
 
     intentHandler = Deployer.deployIntentHandler(

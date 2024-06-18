@@ -9,7 +9,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      executorAddress: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872",
+      executorAddress: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
       isServiceExecutor: true,
     },
   ];
@@ -21,13 +21,9 @@ async function main(chainId: number) {
   console.log("[config/ConfigStorage] Set Config Executors...");
   console.table(inputs);
   for (let i = 0; i < inputs.length; i++) {
-    await ownerWrapper.authExec(
-      configStorage.address,
-      configStorage.interface.encodeFunctionData("setConfigExecutor", [
-        inputs[i].executorAddress,
-        inputs[i].isServiceExecutor,
-      ])
-    );
+    await configStorage.setConfigExecutor(inputs[i].executorAddress, inputs[i].isServiceExecutor, {
+      gasLimit: 10000000,
+    });
   }
   console.log("[config/ConfigStorage] Done");
 }

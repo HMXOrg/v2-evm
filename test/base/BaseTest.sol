@@ -192,7 +192,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     // configStorage setup
     _setUpAssetConfigs();
     _setUpLiquidityConfig();
-    _setUpSwapConfig();
+    // _setUpSwapConfig();
     _setUpTradingConfig();
     _setUpAssetClassConfigs();
     _setUpMarketConfigs();
@@ -224,9 +224,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   }
 
   /// @notice set up swap config
-  function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
-  }
+  // function _setUpSwapConfig() private {
+  //   configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
+  // }
 
   /// @notice set up trading config
   function _setUpTradingConfig() private {

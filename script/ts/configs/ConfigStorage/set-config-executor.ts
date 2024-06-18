@@ -1,20 +1,44 @@
-import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
+import { ConfigStorage__factory } from "../../../../typechain";
+import { loadConfig } from "../../utils/config";
+import { Command } from "commander";
+import signers from "../../entities/signers";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 
-const config = getConfig();
-const executor = config.handlers.bot;
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
 
-async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const inputs = [
+    {
+      executorAddress: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872",
+      isServiceExecutor: true,
+    },
+  ];
+
+  const deployer = signers.deployer(chainId);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("> ConfigStorage: Set Config Executor...");
-  await (await configStorage.setConfigExecutor(executor, true)).wait();
-  console.log("> ConfigStorage: Set Config Executor success!");
+  console.log("[config/ConfigStorage] Set Config Executors...");
+  console.table(inputs);
+  for (let i = 0; i < inputs.length; i++) {
+    await ownerWrapper.authExec(
+      configStorage.address,
+      configStorage.interface.encodeFunctionData("setConfigExecutor", [
+        inputs[i].executorAddress,
+        inputs[i].isServiceExecutor,
+      ])
+    );
+  }
+  console.log("[config/ConfigStorage] Done");
 }
 
-main().catch((error) => {
+const prog = new Command();
+
+prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+
+const opts = prog.parse(process.argv).opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

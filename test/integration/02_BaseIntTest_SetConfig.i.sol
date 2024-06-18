@@ -15,7 +15,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     // Setup Liquidity config for global used
     _setLiquidityConfig();
     // Setup Swap config for global used
-    _setUpSwapConfig();
+    // _setUpSwapConfig();
     // Setup Trading config for global used
     _setUpTradingConfig();
     // Setup Asset Class config for global used
@@ -45,9 +45,9 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     );
   }
 
-  function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
-  }
+  // function _setUpSwapConfig() private {
+  //   configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
+  // }
 
   function _setUpTradingConfig() private {
     configStorage.setTradingConfig(

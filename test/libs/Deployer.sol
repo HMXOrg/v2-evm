@@ -805,15 +805,17 @@ library Deployer {
     address _vaultStorage,
     address _configStorage,
     uint256 _executionFeeInUsd,
-    address _executionFeeTreasury
+    address _executionFeeTreasury,
+    bytes32 _gasTokenAssetId
   ) internal returns (IGasService) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/GasService.sol/GasService.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,uint256,address)")),
+      bytes4(keccak256("initialize(address,address,uint256,address,bytes32)")),
       _vaultStorage,
       _configStorage,
       _executionFeeInUsd,
-      _executionFeeTreasury
+      _executionFeeTreasury,
+      _gasTokenAssetId
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IGasService(payable(_proxy));

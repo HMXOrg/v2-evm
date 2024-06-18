@@ -19,7 +19,7 @@ contract SetConfig is ConfigJsonRepo {
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));
 
     _setLiquidityConfig(configStorage);
-    _setUpSwapConfig(configStorage);
+    // _setUpSwapConfig(configStorage);
     _setUpTradingConfig(configStorage);
     _setUpAssetClassConfigs(configStorage);
     _setUpLiquidationConfig(configStorage);
@@ -44,9 +44,9 @@ contract SetConfig is ConfigJsonRepo {
     );
   }
 
-  function _setUpSwapConfig(IConfigStorage configStorage) private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
-  }
+  // function _setUpSwapConfig(IConfigStorage configStorage) private {
+  //   configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
+  // }
 
   function _setUpTradingConfig(IConfigStorage configStorage) private {
     configStorage.setTradingConfig(

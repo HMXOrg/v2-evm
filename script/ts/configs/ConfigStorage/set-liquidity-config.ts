@@ -10,7 +10,7 @@ const liquidityConfig = {
   maxHLPUtilizationBPS: 8000, // 80%
   hlpTotalTokenWeight: 0, // DEFAULT
   hlpSafetyBufferBPS: 2000, // 20%
-  taxFeeRateBPS: 50, // 0.5%
+  taxFeeRateBPS: 100, // 1%
   flashLoanFeeRateBPS: 0,
   dynamicFeeEnabled: true,
   enabled: true,

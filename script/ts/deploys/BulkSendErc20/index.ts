@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { BulkSendErc20__factory } from "../../../../typechain";
 
 async function main() {
@@ -10,9 +10,9 @@ async function main() {
   await bulkSendErc20.deployed();
   console.log(`[deploy/BulkSendErc20] Deployed at: ${bulkSendErc20.address}`);
 
-  await tenderly.verify({
+  await run("verify:verify", {
     address: bulkSendErc20.address,
-    name: "BulkSendErc20",
+    constructorArguments: [],
   });
 }
 

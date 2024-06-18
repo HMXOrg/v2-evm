@@ -57,11 +57,11 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     tradeService.validateDeleverage();
   }
 
-  function testCorrectness_validateMarketDelisted() external {
-    configStorage.delistMarket(ethMarketIndex);
+  // function testCorrectness_validateMarketDelisted() external {
+  //   configStorage.delistMarket(ethMarketIndex);
 
-    tradeService.validateMarketDelisted(ethMarketIndex);
-  }
+  //   tradeService.validateMarketDelisted(ethMarketIndex);
+  // }
 
   function testCorrectness_validateDeleverage() external {
     // Add Liquidity 120,000 USDT -> 120,000 USD

@@ -256,7 +256,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
    */
 
   function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external onlyOwner {
-    if (!_executorAddress.isContract()) revert IConfigStorage_InvalidAddress();
     configExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetConfigExecutor(_executorAddress, _isServiceExecutor);
   }

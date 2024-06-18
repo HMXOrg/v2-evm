@@ -13,7 +13,6 @@ import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/Ad
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
-import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -53,6 +52,9 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetYbTokenOf(address token, address ybToken);
   event LogSetStepMinProfitDuration(uint256 index, StepMinProfitDuration _stepMinProfitDuration);
   event LogSetMakerTakerFee(uint256 marketIndex, uint256 makerFee, uint256 takerFee);
+  event LogSetMarketMaxOI(uint256 marketIndex, uint256 maxLongPositionSize, uint256 maxShortPositionSize);
+  event LogSetMarketIMF(uint256 marketIndex, uint32 imf);
+  event LogSetMarketIMFAndMaxProfit(uint256 marketIndex, uint32 imf, uint32 maxProfitRateBPS);
 
   /**
    * Constants
@@ -254,7 +256,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
    */
 
   function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external onlyOwner {
-    if (!_executorAddress.isContract()) revert IConfigStorage_InvalidAddress();
     configExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetConfigExecutor(_executorAddress, _isServiceExecutor);
   }
@@ -361,11 +362,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     pnlFactorBPS = _pnlFactorBPS;
   }
 
-  function setSwapConfig(SwapConfig calldata _newConfig) external onlyOwner {
-    emit LogSetSwapConfig(swapConfig, _newConfig);
-    swapConfig = _newConfig;
-  }
-
   function setTradingConfig(TradingConfig calldata _newConfig) external onlyOwner {
     if (_newConfig.fundingInterval == 0 || _newConfig.devFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_ExceedLimitSetting();
@@ -393,6 +389,47 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     marketConfigs[_marketIndex] = _newConfig;
     isAdaptiveFeeEnabledByMarketIndex[_marketIndex] = _isAdaptiveFeeEnabled;
     return _newConfig;
+  }
+
+  function setMarketMaxOI(
+    uint256[] memory _marketIndexes,
+    uint256[] memory _maxLongPositionSizes,
+    uint256[] memory _maxShortPositionSizes
+  ) external onlyWhitelistedExecutor {
+    if (
+      _marketIndexes.length != _maxLongPositionSizes.length ||
+      _maxLongPositionSizes.length != _maxShortPositionSizes.length
+    ) revert IConfigStorage_BadLen();
+    uint256 length = _marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      marketConfigs[_marketIndexes[i]].maxLongPositionSize = _maxLongPositionSizes[i];
+      marketConfigs[_marketIndexes[i]].maxShortPositionSize = _maxShortPositionSizes[i];
+
+      emit LogSetMarketMaxOI(_marketIndexes[i], _maxLongPositionSizes[i], _maxShortPositionSizes[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function setMarketIMFAndMaxProfit(
+    uint256[] memory _marketIndexes,
+    uint32[] memory _imfs,
+    uint32[] memory _maxProfitRateBPSs
+  ) external onlyWhitelistedExecutor {
+    if (_marketIndexes.length != _imfs.length) revert IConfigStorage_BadLen();
+    uint256 length = _marketIndexes.length;
+    for (uint256 i; i < length; ) {
+      marketConfigs[_marketIndexes[i]].initialMarginFractionBPS = _imfs[i];
+      marketConfigs[_marketIndexes[i]].maxProfitRateBPS = _maxProfitRateBPSs[i];
+
+      emit LogSetMarketIMFAndMaxProfit(_marketIndexes[i], _imfs[i], _maxProfitRateBPSs[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function setHlpTokenConfig(
@@ -457,13 +494,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return assetCollateralTokenConfigs[_assetId];
   }
 
-  function setAssetConfig(
-    bytes32 _assetId,
-    AssetConfig calldata _newConfig
-  ) external onlyOwner returns (AssetConfig memory _assetConfig) {
-    return _setAssetConfig(_assetId, _newConfig);
-  }
-
   function setAssetConfigs(bytes32[] calldata _assetIds, AssetConfig[] calldata _newConfigs) external onlyOwner {
     if (_assetIds.length != _newConfigs.length) revert IConfigStorage_BadLen();
     for (uint256 i = 0; i < _assetIds.length; ) {
@@ -500,13 +530,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetToken(weth, _weth);
     weth = _weth;
-  }
-
-  function setSGlp(address _sglp) external onlyOwner {
-    if (!_sglp.isContract()) revert IConfigStorage_BadArgs();
-
-    emit LogSetToken(sglp, _sglp);
-    sglp = _sglp;
   }
 
   /// @notice Set switch collateral router.
@@ -597,11 +620,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     isAdaptiveFeeEnabledByMarketIndex[_newMarketIndex] = _isAdaptiveFeeEnabled;
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
-  }
-
-  function delistMarket(uint256 _marketIndex) external onlyOwner {
-    emit LogDelistMarket(_marketIndex);
-    delete marketConfigs[_marketIndex].active;
   }
 
   /// @notice Remove underlying token.

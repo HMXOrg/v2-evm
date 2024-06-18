@@ -15,14 +15,19 @@ contract TC04_1 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   function setUp() external {
-    // Raised maxProfitRateBPS so that positions can be increased
-    IConfigStorage.MarketConfig memory _wbtcMarketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
-    _wbtcMarketConfig.maxProfitRateBPS = 1500_00; // 1500%
-    configStorage.setMarketConfig(wbtcMarketIndex, _wbtcMarketConfig, false);
+    configStorage.setConfigExecutor(address(this), true);
 
-    IConfigStorage.MarketConfig memory _jpyMarketConfig = configStorage.getMarketConfigByIndex(jpyMarketIndex);
-    _jpyMarketConfig.maxProfitRateBPS = 1500_00; // 1500%
-    configStorage.setMarketConfig(jpyMarketIndex, _jpyMarketConfig, false);
+    // Raised maxProfitRateBPS so that positions can be increased
+    uint256[] memory marketIndexes = new uint256[](2);
+    marketIndexes[0] = wbtcMarketIndex;
+    marketIndexes[1] = jpyMarketIndex;
+    uint32[] memory _imfs = new uint32[](2);
+    _imfs[0] = 100;
+    _imfs[1] = 10;
+    uint32[] memory maxProfitRateBPSs = new uint32[](2);
+    maxProfitRateBPSs[0] = 1500_00; // 1500%
+    maxProfitRateBPSs[1] = 1500_00; // 1500%
+    configStorage.setMarketIMFAndMaxProfit(marketIndexes, _imfs, maxProfitRateBPSs);
   }
 
   // ## TC04.1 - manage position, adjust with profit and loss

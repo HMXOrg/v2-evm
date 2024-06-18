@@ -190,8 +190,6 @@ interface IConfigStorage {
 
   function setPnlFactor(uint32 _pnlFactor) external;
 
-  function setSwapConfig(SwapConfig calldata _newConfig) external;
-
   function setTradingConfig(TradingConfig calldata _newConfig) external;
 
   function setLiquidationConfig(LiquidationConfig calldata _newConfig) external;
@@ -212,16 +210,11 @@ interface IConfigStorage {
     CollateralTokenConfig calldata _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
-  function setAssetConfig(
-    bytes32 assetId,
-    AssetConfig calldata _newConfig
-  ) external returns (AssetConfig memory _assetConfig);
+  function setAssetConfigs(bytes32[] calldata _assetIds, AssetConfig[] calldata _newConfigs) external;
 
   function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external;
 
   function setWeth(address _weth) external;
-
-  function setSGlp(address _sglp) external;
 
   function addOrUpdateAcceptedToken(address[] calldata _tokens, HLPTokenConfig[] calldata _configs) external;
 
@@ -235,8 +228,6 @@ interface IConfigStorage {
     MarketConfig calldata _newConfig,
     bool isAdaptiveFeeEnabled
   ) external returns (uint256 _index);
-
-  function delistMarket(uint256 _marketIndex) external;
 
   function removeAcceptedToken(address _token) external;
 
@@ -273,4 +264,16 @@ interface IConfigStorage {
   function ybTokenOf(address _token) external view returns (address);
 
   function setYbTokenOfMany(address[] calldata _tokens, address[] calldata _ybTokens) external;
+
+  function setMarketMaxOI(
+    uint256[] memory _marketIndexes,
+    uint256[] memory _maxLongPositionSizes,
+    uint256[] memory _maxShortPositionSizes
+  ) external;
+
+  function setMarketIMFAndMaxProfit(
+    uint256[] memory _marketIndexes,
+    uint32[] memory _imfs,
+    uint32[] memory _maxProfitRateBPSs
+  ) external;
 }

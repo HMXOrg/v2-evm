@@ -73,7 +73,8 @@
     "gmETHUSD": "0x4698dfd87e7f2D0c77B24393eC9F317cbC5B1404",
     "usdcNative": "0x536F8241be9Bb5010759648c96E4E1E6Ead4ad0f",
     "pyth": "",
-    "wusdm": ""
+    "wusdm": "",
+    "link": ""
   },
   "vendors": {
     "gmx": {

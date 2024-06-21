@@ -15,9 +15,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("WUSDM"),
+      assetId: ethers.utils.formatBytes32String("LINK"),
       collateralConfig: {
-        collateralFactorBPS: 1 * BPS,
+        collateralFactorBPS: 0.7 * BPS,
         accepted: true,
         settleStrategy: ethers.constants.AddressZero,
       },

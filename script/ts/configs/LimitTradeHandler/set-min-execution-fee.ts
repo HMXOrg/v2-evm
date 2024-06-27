@@ -1,27 +1,23 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers } from "hardhat";
-import { EvmPriceServiceConnection } from "@pythnetwork/pyth-evm-js";
-import {
-  IPyth__factory,
-  LimitTradeHandler__factory,
-  MockPyth__factory,
-  PythAdapter__factory,
-} from "../../../../typechain";
-import { getConfig } from "../../utils/config";
-
-const config = getConfig();
-const BigNumber = ethers.BigNumber;
-const parseUnits = ethers.utils.parseUnits;
+import { LimitTradeHandler__factory } from "../../../../typechain";
+import { loadConfig } from "../../utils/config";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
+import signers from "../../entities/signers";
+import { ethers } from "ethers";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const config = loadConfig(42161);
+  const deployer = signers.deployer(42161);
+  const ownerWrapper = new OwnerWrapper(42161, deployer);
+  const minExecutionFee = ethers.utils.parseEther("0.042");
 
   console.log("> LimitTradeHandler: setMinExecutionFee...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  await (await limitTradeHandler.setMinExecutionFee(0)).wait();
-  console.log("> LimitTradeHandler: setMinExecutionFee success!");
+  await ownerWrapper.authExec(
+    limitTradeHandler.address,
+    limitTradeHandler.interface.encodeFunctionData("setMinExecutionFee", [minExecutionFee])
+  );
 }
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

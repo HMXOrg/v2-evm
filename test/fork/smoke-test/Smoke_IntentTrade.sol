@@ -21,7 +21,7 @@ contract Smoke_IntentTrade is ForkEnv {
   int64[] priceE8s;
 
   function setUp() external {
-    vm.txGasPrice(10000000); // 0.01 GWEI
+    // vm.txGasPrice(10000000); // 0.01 GWEI
   }
 
   function test() external {

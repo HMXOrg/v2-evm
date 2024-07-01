@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { ConfigStorage__factory, TradeHelper__factory } from "../../../../typechain";
+import { ConfigStorage__factory, IConfigStorage__factory, TradeHelper__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
@@ -7,7 +7,7 @@ import assetClasses from "../../entities/asset-classes";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 import * as readlineSync from "readline-sync";
 
-type AddMarketConfig = {
+type UnstrictedMarketConfig = {
   marketIndex: number;
   increasePositionFeeRateBPS?: number | undefined;
   decreasePositionFeeRateBPS?: number | undefined;
@@ -25,12 +25,32 @@ type AddMarketConfig = {
   isAdaptiveFeeEnabled?: boolean | undefined;
 };
 
+type StrictedMarketConfig = {
+  marketIndex: number;
+  assetId: string;
+  increasePositionFeeRateBPS: number;
+  decreasePositionFeeRateBPS: number;
+  initialMarginFractionBPS: number;
+  maintenanceMarginFractionBPS: number;
+  maxProfitRateBPS: number;
+  assetClass: number;
+  allowIncreasePosition: boolean;
+  active: boolean;
+  fundingRate: {
+    maxSkewScaleUSD: ethers.BigNumber;
+    maxFundingRate: ethers.BigNumber;
+  };
+  maxLongPositionSize: ethers.BigNumber;
+  maxShortPositionSize: ethers.BigNumber;
+  isAdaptiveFeeEnabled: boolean;
+};
+
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const BigNumber = ethers.BigNumber;
 
-  const inputMarketConfigs: Array<AddMarketConfig> = [
+  const inputMarketConfigs: Array<UnstrictedMarketConfig> = [
     {
       marketIndex: 3,
       allowIncreasePosition: true,
@@ -38,7 +58,6 @@ async function main(chainId: number) {
   ];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  const tradeHelper = TradeHelper__factory.connect(config.helpers.trade, deployer);
   const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   const currentMarketConfigs = await configStorage.getMarketConfigs();
@@ -49,7 +68,7 @@ async function main(chainId: number) {
         ...currentMarketConfigs[each.marketIndex],
         isAdaptiveFeeEnabled: await configStorage.isAdaptiveFeeEnabledByMarketIndex(each.marketIndex),
         ...each,
-      };
+      } as StrictedMarketConfig;
     })
   );
   console.log("Press Option+Z for the console text to overflow");
@@ -124,9 +143,9 @@ async function main(chainId: number) {
       configStorage.address,
       0,
       configStorage.interface.encodeFunctionData("setMarketConfig", [
-        toBeMarketConfigs[i].marketIndex,
+        toBeMarketConfigs[i].marketIndex!,
         toBeMarketConfigs[i],
-        toBeMarketConfigs[i].isAdaptiveFeeEnabled,
+        toBeMarketConfigs[i].isAdaptiveFeeEnabled!,
       ])
     );
     console.log(`[ConfigStorage] Tx: ${tx}`);

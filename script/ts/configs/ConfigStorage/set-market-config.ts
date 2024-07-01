@@ -1,11 +1,31 @@
 import { ethers } from "ethers";
-import { ConfigStorage__factory, TradeHelper__factory } from "../../../../typechain";
+import { ConfigStorage__factory, IConfigStorage__factory, TradeHelper__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
+import assetClasses from "../../entities/asset-classes";
 import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
+import * as readlineSync from "readline-sync";
 
-type AddMarketConfig = {
+type UnstrictedMarketConfig = {
+  marketIndex: number;
+  increasePositionFeeRateBPS?: number | undefined;
+  decreasePositionFeeRateBPS?: number | undefined;
+  initialMarginFractionBPS?: number | undefined;
+  maintenanceMarginFractionBPS?: number | undefined;
+  maxProfitRateBPS?: number | undefined;
+  allowIncreasePosition?: boolean | undefined;
+  active?: boolean | undefined;
+  fundingRate?: {
+    maxSkewScaleUSD?: ethers.BigNumber | undefined;
+    maxFundingRate?: ethers.BigNumber | undefined;
+  };
+  maxLongPositionSize?: ethers.BigNumber | undefined;
+  maxShortPositionSize?: ethers.BigNumber | undefined;
+  isAdaptiveFeeEnabled?: boolean | undefined;
+};
+
+type StrictedMarketConfig = {
   marketIndex: number;
   assetId: string;
   increasePositionFeeRateBPS: number;
@@ -28,78 +48,103 @@ type AddMarketConfig = {
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
+  const BigNumber = ethers.BigNumber;
 
-  const marketConfigs: Array<AddMarketConfig> = [
+  const inputMarketConfigs: Array<UnstrictedMarketConfig> = [
     {
-      marketIndex: 0,
-      assetId: ethers.utils.formatBytes32String("ETH"),
-      maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
-      increasePositionFeeRateBPS: 2, // 0.02%
-      decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 200000, // 2000%
-      assetClass: 0,
+      marketIndex: 3,
       allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("2000000000", 30), // 2000 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: false,
-    },
-    {
-      marketIndex: 1,
-      assetId: ethers.utils.formatBytes32String("BTC"),
-      maxLongPositionSize: ethers.utils.parseUnits("500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("500000", 30),
-      increasePositionFeeRateBPS: 2, // 0.02%
-      decreasePositionFeeRateBPS: 2, // 0.02%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 200000, // 2000%
-      assetClass: 0,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("3000000000", 30), // 3000 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 900% per day
-      },
-      isAdaptiveFeeEnabled: false,
     },
   ];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  const tradeHelper = TradeHelper__factory.connect(config.helpers.trade, deployer);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
-  console.log("[ConfigStorage] Setting market config...");
-  for (let i = 0; i < marketConfigs.length; i++) {
-    console.log(
-      `[ConfigStorage] Setting ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`
+  const currentMarketConfigs = await configStorage.getMarketConfigs();
+
+  const toBeMarketConfigs = await Promise.all(
+    inputMarketConfigs.map(async (each) => {
+      return {
+        ...currentMarketConfigs[each.marketIndex],
+        isAdaptiveFeeEnabled: await configStorage.isAdaptiveFeeEnabledByMarketIndex(each.marketIndex),
+        ...each,
+      } as StrictedMarketConfig;
+    })
+  );
+  console.log("Press Option+Z for the console text to overflow");
+  for (let i = 0; i < toBeMarketConfigs.length; i++) {
+    const each = toBeMarketConfigs[i];
+    const existingMarketConfig = currentMarketConfigs[each.marketIndex];
+    const existing = {
+      marketIndex: each.marketIndex,
+      assetId: ethers.utils.parseBytes32String(existingMarketConfig.assetId),
+      increasePositionFeeRateBPS: existingMarketConfig.increasePositionFeeRateBPS,
+      decreasePositionFeeRateBPS: existingMarketConfig.decreasePositionFeeRateBPS,
+      initialMarginFractionBPS: existingMarketConfig.initialMarginFractionBPS,
+      maintenanceMarginFractionBPS: existingMarketConfig.maintenanceMarginFractionBPS,
+      maxProfitRateBPS: existingMarketConfig.maxProfitRateBPS,
+      assetClass: existingMarketConfig.assetClass,
+      allowIncreasePosition: existingMarketConfig.allowIncreasePosition,
+      active: existingMarketConfig.active,
+      fundingRate: {
+        maxSkewScaleUSD: existingMarketConfig.fundingRate.maxSkewScaleUSD.toString(),
+        maxFundingRate: existingMarketConfig.fundingRate.maxFundingRate.toString(),
+      },
+      maxLongPositionSize: existingMarketConfig.maxLongPositionSize.toString(),
+      maxShortPositionSize: existingMarketConfig.maxShortPositionSize.toString(),
+      isAdaptiveFeeEnabled: await configStorage.isAdaptiveFeeEnabledByMarketIndex(each.marketIndex),
+    };
+    const newOne = {
+      marketIndex: each.marketIndex,
+      assetId: ethers.utils.parseBytes32String(each.assetId),
+      increasePositionFeeRateBPS: each.increasePositionFeeRateBPS,
+      decreasePositionFeeRateBPS: each.decreasePositionFeeRateBPS,
+      initialMarginFractionBPS: each.initialMarginFractionBPS,
+      maintenanceMarginFractionBPS: each.maintenanceMarginFractionBPS,
+      maxProfitRateBPS: each.maxProfitRateBPS,
+      assetClass: each.assetClass,
+      allowIncreasePosition: each.allowIncreasePosition,
+      active: each.active,
+      fundingRate: {
+        maxSkewScaleUSD: each.fundingRate.maxSkewScaleUSD?.toString(),
+        maxFundingRate: each.fundingRate.maxFundingRate?.toString(),
+      },
+      maxLongPositionSize: each.maxLongPositionSize.toString(),
+      maxShortPositionSize: each.maxShortPositionSize.toString(),
+      isAdaptiveFeeEnabled: each.isAdaptiveFeeEnabled,
+    };
+    console.table({ existing, newOne });
+    const confirm = readlineSync.question(
+      `[configs/ConfigStorage] Confirm to update market index ${each.marketIndex}? (y/n): `
     );
-    const existingMarketConfig = await configStorage.marketConfigs(marketConfigs[i].marketIndex);
-    if (existingMarketConfig.assetId !== marketConfigs[i].assetId) {
-      console.log(`marketIndex ${marketConfigs[i].marketIndex} wrong asset id`);
+    switch (confirm) {
+      case "y":
+        break;
+      case "n":
+        console.log("[configs/ConfigStorage] Set Market Config cancelled!");
+        return;
+      default:
+        console.log("[configs/ConfigStorage] Invalid input!");
+        return;
+    }
+  }
+
+  console.log("[ConfigStorage] Setting market config...");
+  for (let i = 0; i < toBeMarketConfigs.length; i++) {
+    console.log(
+      `[ConfigStorage] Setting ${ethers.utils.parseBytes32String(toBeMarketConfigs[i].assetId)} market config...`
+    );
+    const existingMarketConfig = currentMarketConfigs[toBeMarketConfigs[i].marketIndex];
+    if (existingMarketConfig.assetId !== toBeMarketConfigs[i].assetId) {
+      console.log(`marketIndex ${toBeMarketConfigs[i].marketIndex} wrong asset id`);
       throw "bad asset id";
     }
-    // await safeWrapper.proposeTransaction(
-    //   tradeHelper.address,
-    //   0,
-    //   tradeHelper.interface.encodeFunctionData("updateBorrowingRate", [marketConfigs[i].assetClass])
-    // );
-    // await safeWrapper.proposeTransaction(
-    //   tradeHelper.address,
-    //   0,
-    //   tradeHelper.interface.encodeFunctionData("updateFundingRate", [marketConfigs[i].marketIndex])
-    // );
     await ownerWrapper.authExec(
       configStorage.address,
       configStorage.interface.encodeFunctionData("setMarketConfig", [
-        marketConfigs[i].marketIndex,
-        marketConfigs[i],
-        marketConfigs[i].isAdaptiveFeeEnabled,
+        toBeMarketConfigs[i].marketIndex!,
+        toBeMarketConfigs[i],
+        toBeMarketConfigs[i].isAdaptiveFeeEnabled!,
       ])
     );
   }

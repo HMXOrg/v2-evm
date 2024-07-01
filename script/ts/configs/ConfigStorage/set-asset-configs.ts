@@ -13,10 +13,10 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      assetId: ethers.utils.formatBytes32String("WUSDM"),
+      assetId: ethers.utils.formatBytes32String("LINK"),
       config: {
-        assetId: ethers.utils.formatBytes32String("WUSDM"),
-        tokenAddress: config.tokens.wusdm,
+        assetId: ethers.utils.formatBytes32String("LINK"),
+        tokenAddress: config.tokens.link,
         decimals: 18,
         isStableCoin: false,
       },

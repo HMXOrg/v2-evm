@@ -56,14 +56,13 @@ async function main(chainId: number) {
       console.log("[configs/ConfigStorage] Invalid input!");
       return;
   }
-  await ownerWrapper.authExec(
-    configStorage.address,
-    configStorage.interface.encodeFunctionData("setMarketMaxOI", [
-      inputs.map((e) => e.marketIndex),
-      inputs.map((e) => ethers.utils.parseUnits(e.maxLongPositionSize.toString(), 30)),
-      inputs.map((e) => ethers.utils.parseUnits(e.maxShortPositionSize.toString(), 30)),
-    ])
+  const tx = await configStorage.setMarketMaxOI(
+    inputs.map((e) => e.marketIndex),
+    inputs.map((e) => ethers.utils.parseUnits(e.maxLongPositionSize.toString(), 30)),
+    inputs.map((e) => ethers.utils.parseUnits(e.maxShortPositionSize.toString(), 30))
   );
+  console.log(`[config/ConfigStorage] Tx: ${tx.hash}`);
+  await tx.wait();
   console.log("[config/ConfigStorage] Done");
 }
 

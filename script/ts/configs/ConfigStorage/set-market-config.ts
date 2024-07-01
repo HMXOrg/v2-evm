@@ -52,8 +52,14 @@ async function main(chainId: number) {
 
   const inputMarketConfigs: Array<UnstrictedMarketConfig> = [
     {
-      marketIndex: 3,
-      allowIncreasePosition: true,
+      marketIndex: 21,
+      initialMarginFractionBPS: 400,
+      maxProfitRateBPS: 400000,
+    },
+    {
+      marketIndex: 22,
+      initialMarginFractionBPS: 400,
+      maxProfitRateBPS: 400000,
     },
   ];
 

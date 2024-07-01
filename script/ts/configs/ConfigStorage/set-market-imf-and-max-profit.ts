@@ -12,7 +12,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      marketIndex: 0,
+      marketIndex: 21,
       imfBps: 200,
       maxProfitRateBps: 200000,
     },

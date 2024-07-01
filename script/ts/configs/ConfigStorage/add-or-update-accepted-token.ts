@@ -13,7 +13,7 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      tokenAddress: config.tokens.wusdm,
+      tokenAddress: config.tokens.link,
       config: {
         targetWeight: ethers.utils.parseEther("0"), // 0%
         bufferLiquidity: 0,

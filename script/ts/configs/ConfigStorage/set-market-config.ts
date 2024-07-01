@@ -4,7 +4,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
 import assetClasses from "../../entities/asset-classes";
-import SafeWrapper from "../../wrappers/SafeWrapper";
+import { OwnerWrapper } from "../../wrappers/OwnerWrapper";
 import * as readlineSync from "readline-sync";
 
 type UnstrictedMarketConfig = {
@@ -64,7 +64,7 @@ async function main(chainId: number) {
   ];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
+  const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const currentMarketConfigs = await configStorage.getMarketConfigs();
 
@@ -145,16 +145,14 @@ async function main(chainId: number) {
       console.log(`marketIndex ${toBeMarketConfigs[i].marketIndex} wrong asset id`);
       throw "bad asset id";
     }
-    const tx = await safeWrapper.proposeTransaction(
+    await ownerWrapper.authExec(
       configStorage.address,
-      0,
       configStorage.interface.encodeFunctionData("setMarketConfig", [
         toBeMarketConfigs[i].marketIndex!,
         toBeMarketConfigs[i],
         toBeMarketConfigs[i].isAdaptiveFeeEnabled!,
       ])
     );
-    console.log(`[ConfigStorage] Tx: ${tx}`);
   }
   console.log("[ConfigStorage] Finished");
 }

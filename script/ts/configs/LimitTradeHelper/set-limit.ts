@@ -8,29 +8,144 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 11, // ARBUSD
+      marketIndex: 0, // ETHUSD
+      tradeSizeLimit: 150000,
+      positionSizeLimit: 150000,
+    },
+    {
+      marketIndex: 1, // BTCUSD
+      tradeSizeLimit: 150000,
+      positionSizeLimit: 150000,
+    },
+    {
+      marketIndex: 2, // USDJPY
       tradeSizeLimit: 100000,
       positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 3, // XAUUSD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 4, // EURUSD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 5, // XAGUSD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 6, // AUDUSD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 7, // GBPUSD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 18, // USDCHF
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 20, // USDCAD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 21, // USDSGD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 22, // USDCNH
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 23, // USDHKD
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 26, // DIX
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 38, // USDSEK
+      tradeSizeLimit: 100000,
+      positionSizeLimit: 100000,
+    },
+    {
+      marketIndex: 11, // ARBUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 12, // OPUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 14, // BNBUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
     },
     {
       marketIndex: 15, // SOLUSD
-      tradeSizeLimit: 100000,
-      positionSizeLimit: 100000,
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 16, // XRPUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
     },
     {
       marketIndex: 17, // LINKUSD
-      tradeSizeLimit: 100000,
-      positionSizeLimit: 100000,
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
     },
     {
       marketIndex: 19, // DOGEUSD
-      tradeSizeLimit: 100000,
-      positionSizeLimit: 100000,
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
     },
     {
       marketIndex: 31, // AVAXUSD
-      tradeSizeLimit: 100000,
-      positionSizeLimit: 100000,
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 36, // 1000PEPEUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 37, // 1000SHIBUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 42, // PYTHUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 43, // PENDLEUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
+    },
+    {
+      marketIndex: 45, // ENAUSD
+      tradeSizeLimit: 75000,
+      positionSizeLimit: 75000,
     },
   ];
 

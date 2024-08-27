@@ -10,6 +10,7 @@ async function main() {
 
   const ConfigStorage = await ethers.getContractFactory("ConfigStorage", deployer);
   const configStorageAddress = config.storages.config;
+  console.log("configStorageAddress", configStorageAddress);
 
   console.log(`[upgrade/ConfigStorage] Preparing to upgrade ConfigStorage`);
   const newImplementation = await upgrades.prepareUpgrade(configStorageAddress, ConfigStorage);

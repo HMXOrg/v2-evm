@@ -16,6 +16,7 @@ import { IEcoPythCalldataBuilder } from "@hmx/oracles/interfaces/IEcoPythCalldat
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 import { IntentBuilder } from "@hmx-test/libs/IntentBuilder.sol";
 import { console } from "forge-std/console.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 contract Smoke_Debug is ForkEnv {
   int64[] priceE8s;
@@ -69,9 +70,21 @@ contract Smoke_Debug is ForkEnv {
     //   0x259c68b8d20b4292c8465ea4c94c75481334bc86e42803313f8545a7f78e6182
     // );
 
-    IBotHandler(0x34eFfFEdbD326796256B4C253dC3F8F1dfe23D63).removeTokenFromHlpLiquidity(
-      0xfAE1131D79E9B13CA11c3Fb3D7b588D8Fa44401c,
-      18628136730
+    uint256[] memory _marketIndexes = new uint256[](1);
+    _marketIndexes[0] = 0;
+    uint256[] memory _maxLongPositionSizes = new uint256[](1);
+    _maxLongPositionSizes[0] = 0;
+    uint256[] memory _maxShortPositionSizes = new uint256[](1);
+    _maxShortPositionSizes[0] = 0;
+
+    ConfigStorage(0x4Dc3c929DDa7451012F408d1f376221621dD2a56).setConfigExecutor(
+      0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a,
+      true
+    );
+    ConfigStorage(0x4Dc3c929DDa7451012F408d1f376221621dD2a56).setMarketMaxOI(
+      _marketIndexes,
+      _maxLongPositionSizes,
+      _maxShortPositionSizes
     );
 
     vm.stopPrank();

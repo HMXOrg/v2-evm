@@ -11,18 +11,13 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
 
-  const inputs = [
-    {
-      marketIndex: 0,
-      maxLongPositionSize: 2000000,
-      maxShortPositionSize: 2000000,
-    },
-    {
-      marketIndex: 1,
-      maxLongPositionSize: 2000000,
-      maxShortPositionSize: 2000000,
-    },
-  ];
+  const inputs = Array.from(Array(46)).map((e, i) => {
+    return {
+      marketIndex: i,
+      maxLongPositionSize: 0,
+      maxShortPositionSize: 0,
+    };
+  });
 
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
@@ -68,7 +63,10 @@ async function main(chainId: number) {
   const tx = await configStorage.setMarketMaxOI(
     inputs.map((e) => e.marketIndex),
     inputs.map((e) => ethers.utils.parseUnits(e.maxLongPositionSize.toString(), 30)),
-    inputs.map((e) => ethers.utils.parseUnits(e.maxShortPositionSize.toString(), 30))
+    inputs.map((e) => ethers.utils.parseUnits(e.maxShortPositionSize.toString(), 30)),
+    {
+      gasLimit: 10000000,
+    }
   );
   console.log(`[config/ConfigStorage] Tx: ${tx.hash}`);
   await tx.wait();

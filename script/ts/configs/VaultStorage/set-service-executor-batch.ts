@@ -8,8 +8,8 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const inputs = [
     {
-      executorAddress: config.services.gas,
-      isServiceExecutor: true,
+      executorAddress: "0x6409ba830719cd0fE27ccB3051DF1b399C90df4a",
+      isServiceExecutor: false,
     },
   ];
 

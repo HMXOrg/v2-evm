@@ -11,13 +11,13 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const marketConfig = loadMarketConfig(chainId);
 
-  const inputs = [
-    {
-      marketIndex: 0,
-      maxLongPositionSize: 1000000,
-      maxShortPositionSize: 1000000,
-    },
-  ];
+  const inputs = Array.from(Array(46)).map((e, i) => {
+    return {
+      marketIndex: i,
+      maxLongPositionSize: 0,
+      maxShortPositionSize: 0,
+    };
+  });
 
   const deployer = signers.deployer(chainId);
   const ownerWrapper = new OwnerWrapper(chainId, deployer);

@@ -141,7 +141,7 @@ contract OrderReader {
     bool _triggerAboveThreshold,
     uint256 _price
   ) internal pure returns (bool) {
-    return _triggerAboveThreshold ? _price > _triggerPrice : _price < _triggerPrice;
+    return _triggerAboveThreshold ? _price >= _triggerPrice : _price <= _triggerPrice;
   }
 
   function _isTpSlOrder(ILimitTradeHandler.LimitOrder memory _order) internal pure returns (bool) {

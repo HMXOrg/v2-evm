@@ -10,10 +10,10 @@ async function main(chainId: number) {
   const ownerWrapper = new OwnerWrapper(chainId, deployer);
 
   const intentHandler = IntentHandler__factory.connect(config.handlers.intent, deployer);
-  console.log(`[configs/IntentHandler] Set Trade Order Helper`);
+  console.log(`[configs/IntentHandler] Set TradeOrderHelper`);
   await ownerWrapper.authExec(
     intentHandler.address,
-    intentHandler.interface.encodeFunctionData("setTradeOrderHelper", [config.helpers.tradeOrder])
+    intentHandler.interface.encodeFunctionData("setTradeOrderHelper", [config.helpers.trade])
   );
   console.log("[configs/IntentHandler] Finished");
 }

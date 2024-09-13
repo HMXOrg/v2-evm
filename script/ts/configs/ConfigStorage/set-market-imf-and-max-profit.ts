@@ -25,24 +25,29 @@ async function main(chainId: number) {
   const currentMarketConfigs = await configStorage.getMarketConfigs();
 
   console.log("[config/ConfigStorage] Set Market IMF and Max Profits...");
-  console.table(
-    inputs.map((e) => {
-      const existingImfBps = (currentMarketConfigs[e.marketIndex].initialMarginFractionBPS / 1e4) * 100;
-      const existingMaxProfitRateBps = (currentMarketConfigs[e.marketIndex].maxProfitRateBPS / 1e4) * 100;
-      const newImfBps = (e.imfBps / 1e4) * 100;
-      const newMaxProfitRateBps = (e.maxProfitRateBps / 1e4) * 100;
-      return {
-        marketIndex: e.marketIndex,
-        marketName: marketConfig.markets[e.marketIndex].name,
-        existingImfBps: existingImfBps + "%",
-        newImfBps: newImfBps + "%",
-        existingMaxLeverage: 100 / existingImfBps,
-        newMaxLeverage: 100 / newImfBps,
-        existingMaxProfitRateBps: existingMaxProfitRateBps + "%",
-        maxProfitRateBps: newMaxProfitRateBps + "%",
-      };
-    })
-  );
+  for (let i = 0; i < inputs.length; i++) {
+    const each = inputs[i];
+    const existingImfBps = (currentMarketConfigs[each.marketIndex].initialMarginFractionBPS / 1e4) * 100;
+    const existingMaxProfitRateBps = (currentMarketConfigs[each.marketIndex].maxProfitRateBPS / 1e4) * 100;
+    const newImfBps = (each.imfBps / 1e4) * 100;
+    const newMaxProfitRateBps = (each.maxProfitRateBps / 1e4) * 100;
+    console.table({
+      existing: {
+        marketIndex: each.marketIndex,
+        marketName: marketConfig.markets[each.marketIndex].name,
+        imf: existingImfBps + "%",
+        maxLeverage: 100 / existingImfBps,
+        maxProfitRate: existingMaxProfitRateBps + "%",
+      },
+      newOne: {
+        marketIndex: each.marketIndex,
+        marketName: marketConfig.markets[each.marketIndex].name,
+        imf: newImfBps + "%",
+        maxLeverage: 100 / newImfBps,
+        maxProfitRate: newMaxProfitRateBps + "%",
+      },
+    });
+  }
   const confirm = readlineSync.question(`[configs/ConfigStorage] Confirm to update IMF and Max Profit Rate? (y/n): `);
   switch (confirm) {
     case "y":

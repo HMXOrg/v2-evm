@@ -21,7 +21,7 @@
   "helpers": {
     "trade": "0xFd89a05652492D748a94cD24c636e33054E9F4c2",
     "limitTrade": "0xF738a396c235Ab83bbfE114BdfFD7fC3689215fE",
-    "tradeOrder": "0x6fC060290d90b35Ce015f4d3150F308F22daeF03",
+    "tradeOrder": "0xa9A80dDb4C630De57eF6203575940d53f9674573",
     "intentBuilder": "0x57086ef989B3707Bee64C83Caa539aE993158B09"
   },
   "services": {
@@ -141,7 +141,7 @@
   },
   "rewardDistributor": "0x9fa1eaF7539F8bAfFfE1ec7Bedd9d0F8269aD330",
   "reader": {
-    "order": "0xa9301FcA0652cEc32Ae7e3563b4023431931ec67",
+    "order": "0x2Eca49A9060E7D6a704657459A88fe003876C89f",
     "position": "0xe05Ce9A99181C785b50bCBfB8FD644D7Ce234AEC",
     "liquidation": "0xEc55B65C20421500D80B190e263356aCFE91f63c"
   },

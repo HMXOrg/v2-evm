@@ -884,7 +884,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _len = _orderIndices.length;
-    for (uint256 _i; _i < _len;) {
+    for (uint256 _i; _i < _len; ) {
       uint256 _orderIndex = _orderIndices[_i];
       LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
       // Check if this order still exists
@@ -1221,9 +1221,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Validate trigger price with oracle price
     (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);
-    vars.isPriceValid = _triggerAboveThreshold ? vars.oraclePrice > _triggerPrice : vars.oraclePrice < _triggerPrice;
+    vars.isPriceValid = _triggerAboveThreshold ? vars.oraclePrice >= _triggerPrice : vars.oraclePrice <= _triggerPrice;
 
-    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution(vars.oraclePrice, _triggerPrice);
 
     // Validate acceptable price with adaptive price
     (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(

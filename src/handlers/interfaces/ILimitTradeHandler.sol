@@ -16,7 +16,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_InvalidSender();
   error ILimitTradeHandler_NonExistentOrder();
   error ILimitTradeHandler_MarketIsClosed();
-  error ILimitTradeHandler_InvalidPriceForExecution();
+  error ILimitTradeHandler_InvalidPriceForExecution(uint256 oraclePrice, uint256 triggerPrice);
   error ILimitTradeHandler_WrongSizeDelta();
   error ILimitTradeHandler_UnknownOrderType();
   error ILimitTradeHandler_MaxExecutionFee();
@@ -159,11 +159,7 @@ interface ILimitTradeHandler {
 
   function cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
-  function batchCancelOrders(
-    address _mainAccount,
-    uint8 _subAccountId,
-    uint256[] calldata _orderIndices
-  ) external;
+  function batchCancelOrders(address _mainAccount, uint8 _subAccountId, uint256[] calldata _orderIndices) external;
 
   function updateOrder(
     address _mainAccount,

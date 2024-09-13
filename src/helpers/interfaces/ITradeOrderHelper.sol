@@ -32,7 +32,7 @@ interface ITradeOrderHelper {
   error TradeOrderHelper_MaxPositionSize();
   error TradeOrderHelper_PriceSlippage();
   error TradeOrderHelper_MarketIsClosed();
-  error TradeOrderHelper_InvalidPriceForExecution();
+  error TradeOrderHelper_InvalidPriceForExecution(uint256 oraclePrice, uint256 triggerPrice);
   error TradeOrderHelper_NotWhiteListed();
   error TradeOrderHelper_OrderStale();
 

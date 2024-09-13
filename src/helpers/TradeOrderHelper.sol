@@ -90,9 +90,9 @@ contract TradeOrderHelper is Ownable, ITradeOrderHelper {
 
     // Validate trigger price with oracle price
     (vars.oraclePrice, ) = oracle.getLatestPrice(vars.marketConfig.assetId, true);
-    vars.isPriceValid = triggerAboveThreshold ? vars.oraclePrice > triggerPrice : vars.oraclePrice < triggerPrice;
+    vars.isPriceValid = triggerAboveThreshold ? vars.oraclePrice >= triggerPrice : vars.oraclePrice <= triggerPrice;
 
-    if (!vars.isPriceValid) revert TradeOrderHelper_InvalidPriceForExecution();
+    if (!vars.isPriceValid) revert TradeOrderHelper_InvalidPriceForExecution(vars.oraclePrice, triggerPrice);
 
     // Validate acceptable price with adaptive price
     (vars.adaptivePrice, , vars.marketStatus) = oracle.getLatestAdaptivePriceWithMarketStatus(

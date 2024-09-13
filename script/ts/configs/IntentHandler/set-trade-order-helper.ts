@@ -13,7 +13,7 @@ async function main(chainId: number) {
   console.log(`[configs/IntentHandler] Set TradeOrderHelper`);
   await ownerWrapper.authExec(
     intentHandler.address,
-    intentHandler.interface.encodeFunctionData("setTradeOrderHelper", [config.helpers.trade])
+    intentHandler.interface.encodeFunctionData("setTradeOrderHelper", [config.helpers.tradeOrder])
   );
   console.log("[configs/IntentHandler] Finished");
 }

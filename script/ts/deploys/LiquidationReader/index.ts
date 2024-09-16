@@ -1,4 +1,4 @@
-import { ethers, tenderly } from "hardhat";
+import { ethers, run } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 
 const config = getConfig();
@@ -16,9 +16,9 @@ async function main() {
   config.reader.liquidation = contract.address;
   writeConfigFile(config);
 
-  await tenderly.verify({
-    address: contract.address,
-    name: "LiquidationReader",
+  await run("verify:verify", {
+    address: config.reader.liquidation,
+    constructorArguments: [config.storages.perp, config.calculator],
   });
 }
 

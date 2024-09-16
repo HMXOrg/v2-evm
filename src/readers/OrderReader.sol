@@ -208,11 +208,7 @@ contract OrderReader {
   }
 
   function _convertPrice(uint64 _priceE8, bool _shouldInvert) internal pure returns (uint256) {
-    uint160 _priceE18 = SqrtX96Codec.encode(uint(_priceE8) * 10 ** uint32(10));
-    int24 _tick = TickMath.getTickAtSqrtRatio(_priceE18);
-    uint160 _sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
-    uint256 _spotPrice = SqrtX96Codec.decode(_sqrtPriceX96);
-    uint256 _priceE30 = _spotPrice * 1e12;
+    uint256 _priceE30 = _priceE8 * 1e22;
 
     if (!_shouldInvert) return _priceE30;
 

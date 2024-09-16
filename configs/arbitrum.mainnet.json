@@ -42,8 +42,8 @@
     "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f",
     "ecoPythCalldataBuilder2": "0x7dbf13AD71da2405D73c9bda64B4769620EFfdd6",
     "unsafeEcoPythCalldataBuilder2": "0xCF43C575359D25280672c606E4F7F50bc668a813",
-    "ecoPythCalldataBuilder3": "0xC1353B3bff066C441f631dAEC245b1F5C08a7F07",
-    "unsafeEcoPythCalldataBuilder3": "0x0DFC62854cAE5898Ed10A46Eb4C8Cc947993D3CF",
+    "ecoPythCalldataBuilder3": "0x9CcF1bFBA360C1EaAf0FCB210EB168a50f969c16",
+    "unsafeEcoPythCalldataBuilder3": "0xD49ab266c3765cB7E3FaE20D6c9222C8f9b83935",
     "onChainPriceLens": "0x7D8eAa8dF02526c711F4ff1f97F6c5324212DBBa",
     "calcPriceLens": "0x8CE09F789235bdca8EC2EeE990B11c42E35909Fc",
     "priceAdapters": {

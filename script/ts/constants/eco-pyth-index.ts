@@ -14,7 +14,7 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0x67a6f93030420c1c9e3fe37c1ab6b77966af82f995944a9fefce357a22854a80", // AUDUSD
   "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1", // GBPUSD
   "0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d", // ADAUSD
-  "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52", // MATICUSD
+  "0xffd11c5a1cfd42f80afb2df4d9f264c15f956d68153335374ec10722edd70472", // POLUSD
   "0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744", // SUIUSD
   "0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5", // ARBUSD
   "0x385f64d993f7b77d8182ed5003d97c60aa3361f3cecfe711544d2d59165e9bdf", // OPUSD
@@ -53,7 +53,6 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0x9a4df90b25497f66b1afb012467e316e801ca3d839456db028892fe8c70c8016", // PENDLEUSD
   "0xeff7446475e218517566ea99e72a4abec2e1bd8498b43b7d8331e29dcb059389", // WUSD
   "0xb7910ba7322db020416fcac28b48c01212fd9cc8fbcbaf7d30477ed8605f6bd4", // ENAUSD
-  "0x41283d3f78ccb459a24e5f1f1b9f5a72a415a26ff9ce0391a6878f4cda6b477b", // USDB
 ];
 export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("ETH"),
@@ -107,7 +106,6 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("PENDLE"),
   ethers.utils.formatBytes32String("W"),
   ethers.utils.formatBytes32String("ENA"),
-  ethers.utils.formatBytes32String("USDB"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -161,7 +159,6 @@ export const ecoPythHoomanReadableByIndex = [
   "PENDLE",
   "W",
   "ENA",
-  "USDB",
 ];
 export const multiplicationFactorMapByAssetId: Map<string, number> = new Map([
   [ethers.utils.formatBytes32String("1000SHIB"), 1000],

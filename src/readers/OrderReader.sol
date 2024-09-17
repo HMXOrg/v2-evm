@@ -208,7 +208,7 @@ contract OrderReader {
   }
 
   function _convertPrice(uint64 _priceE8, bool _shouldInvert) internal pure returns (uint256) {
-    uint256 _priceE30 = _priceE8 * 1e22;
+    uint256 _priceE30 = uint256(_priceE8) * 1e22;
 
     if (!_shouldInvert) return _priceE30;
 

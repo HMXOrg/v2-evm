@@ -140,9 +140,9 @@
   },
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
   "reader": {
-    "order": "0x4E6abACb2DbABB04C78c1dc4a8fF391523Bb8887",
+    "order": "0x80db6Ab9293Eb0f5c295ecbA6CdF1545bD8749b3",
     "position": "0x8B406047A942DB7F2c15839b11E3ADc7b62a67E0",
-    "liquidation": "0x0d8D970CC6F67866940Bdd43BB14f115F9dc6274",
+    "liquidation": "0xF816037500583F50F27CC77f1B0362466Eb75214",
     "collateral": ""
   },
   "extension": {

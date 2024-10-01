@@ -13,9 +13,9 @@ import oneInch from "../../entities/one-inch";
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const PARAMS = {
-    amountIn: "100",
-    minAmountOut: "264500",
-    path: [config.tokens.weth, config.tokens.usdc],
+    amountIn: "79216",
+    minAmountOut: "39000",
+    path: [config.tokens.arb, config.tokens.usdc],
   };
 
   const chainInfo = chains[chainId];

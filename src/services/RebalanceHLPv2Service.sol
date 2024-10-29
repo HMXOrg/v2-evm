@@ -57,6 +57,11 @@ contract RebalanceHLPv2Service is
     uint256 receivedShortTokens
   );
   event LogWithdrawalCancelled(bytes32 gmxOrderKey, WithdrawalParams withdrawParam, uint256 returnedMarketTokens);
+  event LogSetGmxV2DepositHandler(address oldGmxV2DepositHandler, address newGmxV2DepositHandler);
+  event LogSetGmxV2WithdrawalHandler(address oldGmxV2WithdrawalHandler, address newGmxV2WithdrawalHandler);
+  event LogSetGmxV2DepositVault(address oldGmxV2DepositVault, address newGmxV2DepositVault);
+  event LogSetGmxV2WithdrawalVault(address oldGmxV2WithdrawalVault, address newGmxV2WithdrawalVault);
+  event LogSetGmxV2ExchangeRouter(address oldGmxV2ExchangeRouter, address newGmxV2ExchangeRouter);
 
   function initialize(
     IERC20Upgradeable _weth,
@@ -359,6 +364,31 @@ contract RebalanceHLPv2Service is
   /// @dev This is likely unused execution fee.
   function claimETH() external onlyOwner {
     payable(owner()).transfer(address(this).balance);
+  }
+
+  function setGmxV2DepositHandler(address _gmxV2DepositHandler) external onlyOwner {
+    emit LogSetGmxV2DepositHandler(gmxV2DepositHandler, _gmxV2DepositHandler);
+    gmxV2DepositHandler = _gmxV2DepositHandler;
+  }
+
+  function setGmxV2WithdrawalHandler(address _gmxV2WithdrawalHandler) external onlyOwner {
+    emit LogSetGmxV2WithdrawalHandler(gmxV2WithdrawalHandler, _gmxV2WithdrawalHandler);
+    gmxV2WithdrawalHandler = _gmxV2WithdrawalHandler;
+  }
+
+  function setGmxV2DepositVault(address _gmxV2DepositVault) external onlyOwner {
+    emit LogSetGmxV2DepositVault(gmxV2DepositVault, _gmxV2DepositVault);
+    gmxV2DepositVault = _gmxV2DepositVault;
+  }
+
+  function setGmxV2WithdrawalVault(address _gmxV2WithdrawalVault) external onlyOwner {
+    emit LogSetGmxV2WithdrawalVault(gmxV2WithdrawalVault, _gmxV2WithdrawalVault);
+    gmxV2WithdrawalVault = _gmxV2WithdrawalVault;
+  }
+
+  function setGmxV2ExchangeRouter(address _gmxV2ExchangeRouter) external onlyOwner {
+    emit LogSetGmxV2ExchangeRouter(address(gmxV2ExchangeRouter), address(_gmxV2ExchangeRouter));
+    gmxV2ExchangeRouter = IGmxV2ExchangeRouter(_gmxV2ExchangeRouter);
   }
 
   /// @notice Receive unspent execution fee from GMXv2

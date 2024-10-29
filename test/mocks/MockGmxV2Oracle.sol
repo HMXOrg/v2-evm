@@ -8,12 +8,15 @@ import { IGmxV2Oracle } from "@hmx/interfaces/gmx-v2/IGmxV2Oracle.sol";
 contract MockGmxV2Oracle is IGmxV2Oracle {
   mapping(address => IGmxV2Types.PriceProps) public prices;
 
-  function setPrices(address /* dataStore */, address /* eventEmitter */, SetPricesParams memory params) external {
-    for (uint i = 0; i < params.realtimeFeedTokens.length; i++) {
-      (uint256 min, uint256 max) = abi.decode(params.realtimeFeedData[i], (uint256, uint256));
-      prices[params.realtimeFeedTokens[i]] = IGmxV2Types.PriceProps({ min: min, max: max });
-    }
+  function minTimestamp() external pure returns (uint256) {
+    return type(uint256).max;
   }
+
+  function maxTimestamp() external pure returns (uint256) {
+    return 1;
+  }
+
+  function setPrices(IGmxV2Oracle.SetPricesParams memory params) external {}
 
   function getPrimaryPrice(address token) external view returns (IGmxV2Types.PriceProps memory) {
     return prices[token];

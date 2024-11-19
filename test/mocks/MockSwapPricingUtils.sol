@@ -9,4 +9,6 @@ contract MockSwapPricingUtils is IGmxV2SwapPricingUtils {
   ) external view returns (int256) {
     return 0;
   }
+
+  fallback() external {}
 }

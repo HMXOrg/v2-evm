@@ -17,6 +17,10 @@ import { IGmxV2WithdrawalCallbackReceiver } from "@hmx/interfaces/gmx-v2/IGmxV2W
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
+import { EventUtils } from "@hmx/interfaces/gmx-v2/EventUtils.sol";
+import { Deposit } from "@hmx/interfaces/gmx-v2/Deposit.sol";
+import { Withdrawal } from "@hmx/interfaces/gmx-v2/Withdrawal.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract RebalanceHLPv2Service is
   OwnableUpgradeable,
@@ -212,8 +216,8 @@ contract RebalanceHLPv2Service is
   /// @param _eventData The event data emitted by GMXv2
   function afterDepositExecution(
     bytes32 _key,
-    IGmxV2Types.DepositProps memory /* deposit */,
-    IGmxV2Types.EventLogData memory _eventData
+    Deposit.Props memory deposit,
+    EventUtils.EventLogData memory _eventData
   ) external onlyGmxDepositHandler {
     // Check
     DepositParams memory _depositParam = pendingDeposit[_key];
@@ -251,8 +255,8 @@ contract RebalanceHLPv2Service is
   /// @param _key the key of the deposit
   function afterDepositCancellation(
     bytes32 _key,
-    IGmxV2Types.DepositProps memory /* deposit */,
-    IGmxV2Types.EventLogData memory /* eventData */
+    Deposit.Props memory deposit,
+    EventUtils.EventLogData memory eventData
   ) external onlyGmxDepositHandler {
     // Check
     DepositParams memory _depositParam = pendingDeposit[_key];
@@ -291,8 +295,8 @@ contract RebalanceHLPv2Service is
   /// @notice Called by GMXv2 after a withdrawal execution
   function afterWithdrawalExecution(
     bytes32 _key,
-    IGmxV2Types.WithdrawalProps memory,
-    IGmxV2Types.EventLogData memory _eventData
+    Withdrawal.Props memory withdrawal,
+    EventUtils.EventLogData memory _eventData
   ) external override onlyGmxWithdrawalHandler {
     // Check
     WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];
@@ -326,8 +330,8 @@ contract RebalanceHLPv2Service is
   /// @notice Called by GMXv2 if a withdrawal was cancelled/reverted
   function afterWithdrawalCancellation(
     bytes32 _key,
-    IGmxV2Types.WithdrawalProps memory,
-    IGmxV2Types.EventLogData memory
+    Withdrawal.Props memory withdrawal,
+    EventUtils.EventLogData memory eventData
   ) external override onlyGmxWithdrawalHandler {
     // Check
     WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];
@@ -393,6 +397,10 @@ contract RebalanceHLPv2Service is
 
   /// @notice Receive unspent execution fee from GMXv2
   receive() external payable {}
+
+  fallback() external payable {
+    console2.log("fallback");
+  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {

@@ -14,7 +14,7 @@ import { MockGmxV2Oracle } from "@hmx-test/mocks/MockGmxV2Oracle.sol";
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 268417783);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 276050252);
     super.setUp();
 
     assertGt(MockGmxV2Oracle(0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4).minTimestamp(), 0);
@@ -36,7 +36,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     );
   }
 
-  function testCorrectness_WhenNoOneJamInTheMiddle() external {
+  function testCorrectness_RebalanceHLPv2Withdrawal_WhenNoOneJamInTheMiddle() external {
     SnapshotUint256 memory tvlSnap;
     SnapshotUint256 memory aumSnap;
     SnapshotUint256 memory gmEthBalanceSnap;

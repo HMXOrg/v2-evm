@@ -52,8 +52,8 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     // Mock GmxV2Oracle
     MockGmxV2Oracle mockGmxV2Oracle = new MockGmxV2Oracle();
     vm.etch(gmxV2DepositHandler.oracle(), address(mockGmxV2Oracle).code);
-    MockSwapPricingUtils mockSwapPricingUtils = new MockSwapPricingUtils();
-    vm.etch(0x6bB5894e971EdDE873C89033f1FF77dE01A4049b, address(mockSwapPricingUtils).code);
+    // MockSwapPricingUtils mockSwapPricingUtils = new MockSwapPricingUtils();
+    // vm.etch(0x6bB5894e971EdDE873C89033f1FF77dE01A4049b, address(mockSwapPricingUtils).code);
 
     // Mock EcoPyth
     makeEcoPythMockable();

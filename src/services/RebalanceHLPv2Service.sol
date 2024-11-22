@@ -20,7 +20,6 @@ import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2
 import { EventUtils } from "@hmx/interfaces/gmx-v2/EventUtils.sol";
 import { Deposit } from "@hmx/interfaces/gmx-v2/Deposit.sol";
 import { Withdrawal } from "@hmx/interfaces/gmx-v2/Withdrawal.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract RebalanceHLPv2Service is
   OwnableUpgradeable,
@@ -397,10 +396,6 @@ contract RebalanceHLPv2Service is
 
   /// @notice Receive unspent execution fee from GMXv2
   receive() external payable {}
-
-  fallback() external payable {
-    console2.log("fallback");
-  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {

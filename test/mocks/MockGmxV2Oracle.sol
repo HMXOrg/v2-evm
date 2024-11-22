@@ -63,4 +63,6 @@ contract MockGmxV2Oracle is IGmxV2Oracle {
   }
 
   function clearAllPrices() external {}
+
+  function validateSequencerUp() external view {}
 }

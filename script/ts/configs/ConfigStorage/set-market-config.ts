@@ -53,7 +53,47 @@ async function main(chainId: number) {
   const inputMarketConfigs: Array<UnstrictedMarketConfig> = [
     {
       marketIndex: 3,
-      allowIncreasePosition: true,
+      active: false,
+    },
+    {
+      marketIndex: 8,
+      active: false,
+    },
+    {
+      marketIndex: 10,
+      active: false,
+    },
+    {
+      marketIndex: 11,
+      active: false,
+    },
+    {
+      marketIndex: 26,
+      active: false,
+    },
+    {
+      marketIndex: 28,
+      active: false,
+    },
+    {
+      marketIndex: 29,
+      active: false,
+    },
+    {
+      marketIndex: 30,
+      active: false,
+    },
+    {
+      marketIndex: 31,
+      active: false,
+    },
+    {
+      marketIndex: 34,
+      active: false,
+    },
+    {
+      marketIndex: 46,
+      active: false,
     },
   ];
 

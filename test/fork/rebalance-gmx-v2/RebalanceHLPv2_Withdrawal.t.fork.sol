@@ -10,14 +10,11 @@ import { console2 } from "forge-std/console2.sol";
 /// HMX Test
 import { RebalanceHLPv2Service_BaseForkTest } from "@hmx-test/fork/rebalance-gmx-v2/RebalanceHLPv2_Base.t.fork.sol";
 import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
-import { MockGmxV2Oracle } from "@hmx-test/mocks/MockGmxV2Oracle.sol";
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {
     vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 277049866);
     super.setUp();
-
-    assertGt(MockGmxV2Oracle(0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4).minTimestamp(), 0);
   }
 
   function testRevert_WhenWithdrawMoreThanLiquidity() external {

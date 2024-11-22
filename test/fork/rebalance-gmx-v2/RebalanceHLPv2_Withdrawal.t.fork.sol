@@ -23,7 +23,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
   function testRevert_WhenWithdrawMoreThanLiquidity() external {
     rebalanceHLPv2_createWithdrawalOrder(
       GM_ETHUSDC_ASSET_ID,
-      8912412145575829437124,
+      type(uint256).max,
       0,
       0,
       "IVaultStorage_HLPBalanceRemaining()"
@@ -124,18 +124,18 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       wethTotalSnap.after1,
       "WETH total should increase by 252263802429486770"
     );
-    // assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
-    // assertEq(wethLiquiditySnap.before + 252263802429486770, wethLiquiditySnap.after1, "WETH liquidity should increase");
-    // assertEq(usdcBalanceSnap.before + 840591325, usdcBalanceSnap.after1, "USDC balance should increase by 840591325");
-    // assertEq(usdcTotalSnap.before + 840591325, usdcTotalSnap.after1, "USDC total should increase by 840591325");
-    // assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
-    // assertEq(usdcLiquiditySnap.before + 840591325, usdcLiquiditySnap.after1, "USDC liquidity should increase");
+    assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
+    assertEq(wethLiquiditySnap.before + 252263802429486770, wethLiquiditySnap.after1, "WETH liquidity should increase");
+    assertEq(usdcBalanceSnap.before + 840591325, usdcBalanceSnap.after1, "USDC balance should increase by 840591325");
+    assertEq(usdcTotalSnap.before + 840591325, usdcTotalSnap.after1, "USDC total should increase by 840591325");
+    assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
+    assertEq(usdcLiquiditySnap.before + 840591325, usdcLiquiditySnap.after1, "USDC liquidity should increase");
   }
 
-  function testCorrectness_WhenErr_WhenNoOneJamInTheMiddle() external {
+  function testCorrectness_RebalanceHLPv2Withdrawal_WhenErr_WhenNoOneJamInTheMiddle() external {
     uint256 tvlBefore = calculator.getHLPValueE30(false);
     uint256 aumBefore = calculator.getAUME30(false);
-    uint256 gmEthBalanceBefore = gmETHUSD.balanceOf(address(vaultStorage));
+    uint256 gmEthBalanceBefore = vaultStorage.hlpLiquidity(address(gmETHUSD));
     uint256 gmEthTotalBefore = vaultStorage.totalAmount(address(gmETHUSD));
 
     // Create withdrawal orders
@@ -148,7 +148,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
 
     uint256 tvlAfter = calculator.getHLPValueE30(false);
     uint256 aumAfter = calculator.getAUME30(false);
-    uint256 gmEthBalanceAfter = gmETHUSD.balanceOf(address(vaultStorage));
+    uint256 gmEthBalanceAfter = vaultStorage.hlpLiquidity(address(gmETHUSD));
     uint256 gmEthTotalAfter = vaultStorage.totalAmount(address(gmETHUSD));
 
     assertEq(
@@ -158,7 +158,11 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     );
     assertEq(tvlAfter, tvlBefore, "TVL should not change");
     assertEq(aumAfter, aumBefore, "AUM should not change");
-    assertEq(gmEthBalanceAfter, 0, "GM(ETH-USDC) balance should be 0");
+    assertEq(
+      gmEthBalanceAfter,
+      gmEthBalanceBefore - 8912412145575829437123,
+      "GM(ETH-USDC) balance should be reduced by 8912412145575829437123."
+    );
     assertEq(gmEthTotalAfter, gmEthTotalBefore, "GM(ETH-USDC) total should not change");
 
     tvlBefore = tvlAfter;
@@ -171,29 +175,30 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
 
     tvlAfter = calculator.getHLPValueE30(false);
     aumAfter = calculator.getAUME30(false);
-    gmEthBalanceAfter = gmETHUSD.balanceOf(address(vaultStorage));
+    gmEthBalanceAfter = vaultStorage.hlpLiquidity(address(gmETHUSD));
     gmEthTotalAfter = vaultStorage.totalAmount(address(gmETHUSD));
 
     assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
     assertEq(
+      gmEthBalanceBefore + 8912412145575829437123,
       vaultStorage.hlpLiquidity(address(gmETHUSD)),
-      8912412145575829437123,
-      "GM(ETH-USDC) liquidity should revert to 8912412145575829437123"
+      "GM(ETH-USDC) liquidity should revert to before value."
     );
     assertEq(tvlAfter, tvlBefore, "TVL should not change");
     assertEq(aumAfter, aumBefore, "AUM should not change");
-    assertEq(gmEthBalanceAfter, 8912412145575829437123, "GM(ETH-USDC) balance should be 8912412145575829437123");
     assertEq(
-      gmEthTotalAfter,
-      8912412145575829437123,
-      "GM(ETH-USDC) after executed total should be 8912412145575829437123"
+      gmEthBalanceAfter,
+      gmEthBalanceBefore + 8912412145575829437123,
+      "GM(ETH-USDC) balance should be the same."
     );
+    assertEq(gmEthTotalAfter, gmEthTotalBefore, "GM(ETH-USDC) after executed total should be the same.");
   }
 
-  function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
+  function testCorrectness_RebalanceHLPv2Withdrawal__WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
     SnapshotUint256 memory tvlSnap;
     SnapshotUint256 memory aumSnap;
 
+    uint256 gmETHBalanceBefore = vaultStorage.hlpLiquidity(address(gmETHUSD));
     tvlSnap.before = calculator.getHLPValueE30(false);
     aumSnap.before = calculator.getAUME30(false);
 
@@ -226,7 +231,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertApproxEqAbs(
       aumSnap.before + liquidityValue,
       aumSnap.after1,
-      0.16 * 1e30,
+      15 * 1e30,
       "AUM should increase by liquidity value"
     );
 
@@ -246,13 +251,13 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertApproxEqAbs(
       tvlSnap.before - estimateWithdrawValueE30,
       tvlSnap.after1,
-      25500 * 1e30,
+      55500 * 1e30,
       "TVL should decrease by withdraw value"
     );
     assertApproxEqAbs(
       aumSnap.before - estimateWithdrawValueE30,
       aumSnap.after1,
-      25500 * 1e30,
+      55500 * 1e30,
       "AUM should decrease by withdraw value"
     );
 
@@ -271,7 +276,11 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       "Withdrawal order should be deleted"
     );
     assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
-    assertEq(vaultStorage.hlpLiquidity(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity should be 0");
+    assertEq(
+      vaultStorage.hlpLiquidity(address(gmETHUSD)),
+      gmETHBalanceBefore - 8912412145575829437123,
+      "GM(ETH-USDC) liquidity should be reduced by the withdrawal amount."
+    );
     assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
     assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
     assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
@@ -279,13 +288,14 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
   }
 
-  function testCorrectness_WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
+  function testCorrectness_RebalanceHLPv2Withdrawal__WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
     SnapshotUint256 memory tvlSnap;
     SnapshotUint256 memory aumSnap;
     SnapshotUint256 memory usdcTotalSnap;
     SnapshotUint256 memory usdcBalanceSnap;
     SnapshotUint256 memory wethTotalSnap;
     SnapshotUint256 memory wethBalanceSnap;
+    uint256 gmETHBalanceBefore = vaultStorage.hlpLiquidity(address(gmETHUSD));
 
     tvlSnap.before = calculator.getHLPValueE30(false);
     aumSnap.before = calculator.getAUME30(false);
@@ -384,25 +394,29 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       "Withdrawal order should be deleted"
     );
     assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
-    assertEq(vaultStorage.hlpLiquidity(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity should be 0");
+    assertEq(
+      vaultStorage.hlpLiquidity(address(gmETHUSD)),
+      gmETHBalanceBefore - 8912412145575829437123,
+      "GM(ETH-USDC) liquidity should be 0"
+    );
     assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
     assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
     assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
     assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
     assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(
-      wethTotalSnap.before + 2522039333159539803,
+      wethTotalSnap.before + 2248278976661699318,
       wethTotalSnap.after1,
-      "WETH total should increase by 2522039333159539803"
+      "WETH total should increase by 2248278976661699318"
     );
     assertEq(
-      wethBalanceSnap.before + 2522039333159539803,
+      wethBalanceSnap.before + 2248278976661699318,
       wethBalanceSnap.after1,
-      "WETH balance should increase by 2522039333159539803"
+      "WETH balance should increase by 2248278976661699318"
     );
     assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
-    assertEq(usdcTotalSnap.before + 4226796583, usdcTotalSnap.after1, "USDC total should increase by 4226796583");
-    assertEq(usdcBalanceSnap.before + 4226796583, usdcBalanceSnap.after1, "USDC balance should increase by 4226796583");
+    assertEq(usdcTotalSnap.before + 7491696337, usdcTotalSnap.after1, "USDC total should increase by 7491696337");
+    assertEq(usdcBalanceSnap.before + 7491696337, usdcBalanceSnap.after1, "USDC balance should increase by 7491696337");
     assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
   }
 
@@ -415,6 +429,7 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     SnapshotUint256 memory usdcTotalSnap;
     SnapshotUint256 memory usdcBalanceSnap;
     SnapshotUint256 memory usdcLiquiditySnap;
+    uint256 gmETHBalanceBefore = vaultStorage.hlpLiquidity(address(gmETHUSD));
 
     tvlSnap.before = calculator.getHLPValueE30(false);
     aumSnap.before = calculator.getAUME30(false);
@@ -478,31 +493,35 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       "Withdrawal order should be deleted"
     );
     assertEq(vaultStorage.hlpLiquidityOnHold(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity on hold should be 0");
-    assertEq(vaultStorage.hlpLiquidity(address(gmETHUSD)), 0, "GM(ETH-USDC) liquidity should be 0");
+    assertEq(
+      vaultStorage.hlpLiquidity(address(gmETHUSD)),
+      gmETHBalanceBefore - 8912412145575829437123,
+      "GM(ETH-USDC) liquidity should be 0"
+    );
     assertEq(vaultStorage.pullToken(address(gmETHUSD)), 0, "GM(ETH-USDC) pull token should be 0");
     assertEq(vaultStorage.pullToken(address(weth)), 0, "WETH pull token should be 0");
     assertEq(vaultStorage.pullToken(address(usdc)), 0, "USDC pull token should be 0");
     assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
     assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(
-      wethTotalSnap.before + 2522039519212270023,
+      wethTotalSnap.before + 2248279572410838650,
       wethTotalSnap.after1,
-      "WETH total should increase by 2522039519212270023"
+      "WETH total should increase by 2248279572410838650"
     );
     assertEq(
-      wethBalanceSnap.before + 2522039519212270023,
+      wethBalanceSnap.before + 2248279572410838650,
       wethBalanceSnap.after1,
-      "WETH balance should increase by 2522039519212270023"
+      "WETH balance should increase by 2248279572410838650"
     );
     assertEq(
-      wethLiquiditySnap.before + 2522039519212270023,
+      wethLiquiditySnap.before + 2248279572410838650,
       wethLiquiditySnap.after1,
       "WETH liquidity should increase"
     );
     assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
-    assertEq(usdcTotalSnap.before + 4226796895, usdcTotalSnap.after1, "USDC total should increase by 4226796895");
-    assertEq(usdcBalanceSnap.before + 4226796895, usdcBalanceSnap.after1, "USDC balance should increase by 4226796895");
-    assertEq(usdcLiquiditySnap.before + 4226796895, usdcLiquiditySnap.after1, "USDC liquidity should increase");
+    assertEq(usdcTotalSnap.before + 7491698322, usdcTotalSnap.after1, "USDC total should increase by 7491698322");
+    assertEq(usdcBalanceSnap.before + 7491698322, usdcBalanceSnap.after1, "USDC balance should increase by 7491698322");
+    assertEq(usdcLiquiditySnap.before + 7491698322, usdcLiquiditySnap.after1, "USDC liquidity should increase");
     assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
   }
 }

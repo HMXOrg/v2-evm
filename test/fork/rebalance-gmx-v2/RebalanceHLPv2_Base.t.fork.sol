@@ -226,12 +226,15 @@ abstract contract RebalanceHLPv2Service_BaseForkTest is ForkEnvWithActions, Chea
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_ETHUSDC_ASSET_ID, 0.98014296 * 1e8);
     MockEcoPyth(address(ecoPyth2)).overridePrice(USDC_NATIVE_ASSET_ID, 1 * 1e8);
 
-    uint256[] memory _marketIndexes = new uint256[](1);
+    uint256[] memory _marketIndexes = new uint256[](2);
     _marketIndexes[0] = 0;
-    uint256[] memory _positionSizeLimits = new uint256[](1);
-    _positionSizeLimits[0] = 2_000_000 * 1e30;
-    uint256[] memory _tradeSizeLimits = new uint256[](1);
-    _tradeSizeLimits[0] = 2_000_000 * 1e30;
+    _marketIndexes[1] = 1;
+    uint256[] memory _positionSizeLimits = new uint256[](2);
+    _positionSizeLimits[0] = 20_000_000 * 1e30;
+    _positionSizeLimits[1] = 20_000_000 * 1e30;
+    uint256[] memory _tradeSizeLimits = new uint256[](2);
+    _tradeSizeLimits[0] = 20_000_000 * 1e30;
+    _tradeSizeLimits[1] = 20_000_000 * 1e30;
 
     vm.prank(0x6409ba830719cd0fE27ccB3051DF1b399C90df4a);
     LimitTradeHelper(0x0E7C0d58f2e4a6b28597D51a34C4b7acDA1Ee719).setLimit(

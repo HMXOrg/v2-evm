@@ -5,20 +5,9 @@ import { IGmxV2Types } from "@hmx/interfaces/gmx-v2/IGmxV2Types.sol";
 
 interface IGmxV2Oracle {
   struct SetPricesParams {
-    uint256 signerInfo;
     address[] tokens;
-    uint256[] compactedMinOracleBlockNumbers;
-    uint256[] compactedMaxOracleBlockNumbers;
-    uint256[] compactedOracleTimestamps;
-    uint256[] compactedDecimals;
-    uint256[] compactedMinPrices;
-    uint256[] compactedMinPricesIndexes;
-    uint256[] compactedMaxPrices;
-    uint256[] compactedMaxPricesIndexes;
-    bytes[] signatures;
-    address[] priceFeedTokens;
-    address[] realtimeFeedTokens;
-    bytes[] realtimeFeedData;
+    address[] providers;
+    bytes[] data;
   }
 
   struct RealtimeFeedReport {

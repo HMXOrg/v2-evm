@@ -8,19 +8,9 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 21, // SOLUSD
-      tradeSizeLimit: 500000,
-      positionSizeLimit: 500000,
-    },
-    {
-      marketIndex: 23, // XRPUSD
-      tradeSizeLimit: 500000,
-      positionSizeLimit: 500000,
-    },
-    {
-      marketIndex: 45, // 1000SHIBUSD
-      tradeSizeLimit: 50000,
-      positionSizeLimit: 50000,
+      marketIndex: 14, // SUIUSD
+      tradeSizeLimit: 300000,
+      positionSizeLimit: 300000,
     },
   ];
 

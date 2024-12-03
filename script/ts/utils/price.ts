@@ -43,7 +43,7 @@ export async function getUpdatePriceData(
   const config = loadConfig(chainId);
 
   const MAX_PRICE_DIFF = 1500_00;
-  const connection = new EvmPriceServiceConnection("https://hermes.pyth.network/", {
+  const connection = new EvmPriceServiceConnection(process.env.PYTH_HERMES_URL!, {
     logger: console,
   });
 

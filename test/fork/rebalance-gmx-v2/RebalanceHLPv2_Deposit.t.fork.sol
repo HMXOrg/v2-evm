@@ -21,7 +21,7 @@ import { IGmxV2Oracle } from "@hmx/interfaces/gmx-v2/IGmxV2Oracle.sol";
 
 contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 277049866);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 283542883);
     super.setUp();
   }
 
@@ -347,11 +347,11 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     depositCollateral(ALICE, 0, wbtc, 1 * 1e8);
 
     // Assert the following conditions:
-    // 1. WBTC's total amount should 21.2605784
-    // 2. WBTC's balance should 21.2505784
+    // 1. WBTC's total amount should 23.48908996
+    // 2. WBTC's balance should 23.47908996
     // 3. Alice's WBTC balance in HMX should be 1e8
-    assertEq(vaultStorage.totalAmount(address(wbtc)), 21.2605784 * 1e8, "totalAmount should be 21.2605784 WBTC");
-    assertEq(wbtc.balanceOf(address(vaultStorage)), 21.2505784 * 1e8, "balance should be 21.2505784 WBTC");
+    assertEq(vaultStorage.totalAmount(address(wbtc)), 23.48908996 * 1e8, "totalAmount should be 23.48908996 WBTC");
+    assertEq(wbtc.balanceOf(address(vaultStorage)), 23.47908996 * 1e8, "balance should be 23.47908996 WBTC");
     assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 1 * 1e8, "Alice's WBTC balance should be 1e8");
 
     // Alice try withdraw 1 WBTC as collateral in the middle
@@ -359,12 +359,12 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     withdrawCollateral(ALICE, 0, wbtc, 1 * 1e8);
 
     // Assert the following conditions:
-    // 1. WBTC's total amount should 20.2605784
-    // 2. WBTC's balance should 20.2505784
+    // 1. WBTC's total amount should 22.48908996
+    // 2. WBTC's balance should 22.47908996
     // 3. Alice's WBTC balance in HMX should be 0
     // 4. Alice's WBTC balance should be 1e8
-    assertEq(vaultStorage.totalAmount(address(wbtc)), 20.2605784 * 1e8, "totalAmount should be 20.2605784 WBTC");
-    assertEq(wbtc.balanceOf(address(vaultStorage)), 20.2505784 * 1e8, "balance should be 20.2505784 WBTC");
+    assertEq(vaultStorage.totalAmount(address(wbtc)), 22.48908996 * 1e8, "totalAmount should be 22.48908996 WBTC");
+    assertEq(wbtc.balanceOf(address(vaultStorage)), 22.47908996 * 1e8, "balance should be 22.47908996 WBTC");
     assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 0, "Alice's WBTC balance should be 0");
     assertEq(wbtc.balanceOf(ALICE), 1 * 1e8, "Alice's WBTC balance should be 1e8 (not in HMX)");
 

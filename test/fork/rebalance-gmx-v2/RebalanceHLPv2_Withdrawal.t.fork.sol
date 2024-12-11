@@ -13,7 +13,7 @@ import { MockEcoPyth } from "@hmx-test/mocks/MockEcoPyth.sol";
 
 contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 277049866);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 283542883);
     super.setUp();
   }
 
@@ -111,22 +111,29 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
       gmEthTotalSnap.after1,
       "GM(ETH-USDC) after executed total should be 0"
     );
+    assertGt(wethBalanceSnap.after1, wethBalanceSnap.before, "WETH balance should increase.address");
     assertEq(
-      wethBalanceSnap.before + 252263802429486770,
+      wethBalanceSnap.before + 265502233368359725,
       wethBalanceSnap.after1,
-      "WETH balance should increase by 252263802429486770"
+      "WETH balance should increase by 265502233368359725"
     );
+    assertGt(wethTotalSnap.after1, wethTotalSnap.before, "WETH total should increase.");
     assertEq(
-      wethTotalSnap.before + 252263802429486770,
+      wethTotalSnap.before + 265502233368359725,
       wethTotalSnap.after1,
-      "WETH total should increase by 252263802429486770"
+      "WETH total should increase by 265502233368359725"
     );
     assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
-    assertEq(wethLiquiditySnap.before + 252263802429486770, wethLiquiditySnap.after1, "WETH liquidity should increase");
-    assertEq(usdcBalanceSnap.before + 840591325, usdcBalanceSnap.after1, "USDC balance should increase by 840591325");
-    assertEq(usdcTotalSnap.before + 840591325, usdcTotalSnap.after1, "USDC total should increase by 840591325");
+    assertGt(wethLiquiditySnap.after1, wethLiquiditySnap.before, "WETH liquidity should increase.");
+    assertEq(
+      wethLiquiditySnap.before + 265502233368359725,
+      wethLiquiditySnap.after1,
+      "WETH liquidity should increase by 265502233368359725"
+    );
+    assertEq(usdcBalanceSnap.before + 957531237, usdcBalanceSnap.after1, "USDC balance should increase by 957531237");
+    assertEq(usdcTotalSnap.before + 957531237, usdcTotalSnap.after1, "USDC total should increase by 957531237");
     assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
-    assertEq(usdcLiquiditySnap.before + 840591325, usdcLiquiditySnap.after1, "USDC liquidity should increase");
+    assertEq(usdcLiquiditySnap.before + 957531237, usdcLiquiditySnap.after1, "USDC liquidity should increase");
   }
 
   function testCorrectness_RebalanceHLPv2Withdrawal_WhenErr_WhenNoOneJamInTheMiddle() external {
@@ -402,18 +409,18 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
     assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(
-      wethTotalSnap.before + 2248278976661699318,
+      wethTotalSnap.before + 2366265329349677477,
       wethTotalSnap.after1,
-      "WETH total should increase by 2248278976661699318"
+      "WETH total should increase by 2366265329349677477"
     );
     assertEq(
-      wethBalanceSnap.before + 2248278976661699318,
+      wethBalanceSnap.before + 2366265329349677477,
       wethBalanceSnap.after1,
-      "WETH balance should increase by 2248278976661699318"
+      "WETH balance should increase by 2366265329349677477"
     );
     assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
-    assertEq(usdcTotalSnap.before + 7491696337, usdcTotalSnap.after1, "USDC total should increase by 7491696337");
-    assertEq(usdcBalanceSnap.before + 7491696337, usdcBalanceSnap.after1, "USDC balance should increase by 7491696337");
+    assertEq(usdcTotalSnap.before + 8533913024, usdcTotalSnap.after1, "USDC total should increase by 8533913024");
+    assertEq(usdcBalanceSnap.before + 8533913024, usdcBalanceSnap.after1, "USDC balance should increase by 8533913024");
     assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
   }
 
@@ -501,24 +508,24 @@ contract RebalanceHLPv2Service_WithdrawalForkTest is RebalanceHLPv2Service_BaseF
     assertApproxEqAbs(tvlSnap.after1, tvlSnap.before, 5_000 * 1e30, "TVL should not change more than 5,000 USD");
     assertApproxEqAbs(aumSnap.after1, aumSnap.before, 5_000 * 1e30, "AUM should not change more than 5,000 USD");
     assertEq(
-      wethTotalSnap.before + 2248279572410838650,
+      wethTotalSnap.before + 2366267244408626030,
       wethTotalSnap.after1,
-      "WETH total should increase by 2248279572410838650"
+      "WETH total should increase by 2366267244408626030"
     );
     assertEq(
-      wethBalanceSnap.before + 2248279572410838650,
+      wethBalanceSnap.before + 2366267244408626030,
       wethBalanceSnap.after1,
-      "WETH balance should increase by 2248279572410838650"
+      "WETH balance should increase by 2366267244408626030"
     );
     assertEq(
-      wethLiquiditySnap.before + 2248279572410838650,
+      wethLiquiditySnap.before + 2366267244408626030,
       wethLiquiditySnap.after1,
       "WETH liquidity should increase"
     );
     assertEq(wethTotalSnap.after1, wethBalanceSnap.after1, "WETH total should equal to WETH balance");
-    assertEq(usdcTotalSnap.before + 7491698322, usdcTotalSnap.after1, "USDC total should increase by 7491698322");
-    assertEq(usdcBalanceSnap.before + 7491698322, usdcBalanceSnap.after1, "USDC balance should increase by 7491698322");
-    assertEq(usdcLiquiditySnap.before + 7491698322, usdcLiquiditySnap.after1, "USDC liquidity should increase");
+    assertEq(usdcTotalSnap.before + 8533919931, usdcTotalSnap.after1, "USDC total should increase by 8533919931");
+    assertEq(usdcBalanceSnap.before + 8533919931, usdcBalanceSnap.after1, "USDC balance should increase by 8533919931");
+    assertEq(usdcLiquiditySnap.before + 8533919931, usdcLiquiditySnap.after1, "USDC liquidity should increase");
     assertEq(usdcTotalSnap.after1, usdcBalanceSnap.after1, "USDC total should equal to USDC balance");
   }
 }

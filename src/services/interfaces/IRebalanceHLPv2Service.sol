@@ -8,6 +8,7 @@ interface IRebalanceHLPv2Service {
   error IRebalanceHLPv2Service_KeyNotFound();
   error IRebalanceHLPv2Service_Unauthorized();
   error IRebalanceHLPv2Service_ZeroGmReceived();
+  error IRebalanceHLPv2Service_InvalidAddress();
 
   struct DepositParams {
     address market;

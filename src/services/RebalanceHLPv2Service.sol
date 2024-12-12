@@ -370,26 +370,31 @@ contract RebalanceHLPv2Service is
   }
 
   function setGmxV2DepositHandler(address _gmxV2DepositHandler) external onlyOwner {
+    if (_gmxV2DepositHandler == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
     emit LogSetGmxV2DepositHandler(gmxV2DepositHandler, _gmxV2DepositHandler);
     gmxV2DepositHandler = _gmxV2DepositHandler;
   }
 
   function setGmxV2WithdrawalHandler(address _gmxV2WithdrawalHandler) external onlyOwner {
+    if (_gmxV2WithdrawalHandler == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
     emit LogSetGmxV2WithdrawalHandler(gmxV2WithdrawalHandler, _gmxV2WithdrawalHandler);
     gmxV2WithdrawalHandler = _gmxV2WithdrawalHandler;
   }
 
   function setGmxV2DepositVault(address _gmxV2DepositVault) external onlyOwner {
+    if (_gmxV2DepositVault == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
     emit LogSetGmxV2DepositVault(gmxV2DepositVault, _gmxV2DepositVault);
     gmxV2DepositVault = _gmxV2DepositVault;
   }
 
   function setGmxV2WithdrawalVault(address _gmxV2WithdrawalVault) external onlyOwner {
+    if (_gmxV2WithdrawalVault == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
     emit LogSetGmxV2WithdrawalVault(gmxV2WithdrawalVault, _gmxV2WithdrawalVault);
     gmxV2WithdrawalVault = _gmxV2WithdrawalVault;
   }
 
   function setGmxV2ExchangeRouter(address _gmxV2ExchangeRouter) external onlyOwner {
+    if (_gmxV2ExchangeRouter == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
     emit LogSetGmxV2ExchangeRouter(address(gmxV2ExchangeRouter), address(_gmxV2ExchangeRouter));
     gmxV2ExchangeRouter = IGmxV2ExchangeRouter(_gmxV2ExchangeRouter);
   }

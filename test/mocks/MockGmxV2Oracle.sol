@@ -16,6 +16,25 @@ contract MockGmxV2Oracle is IGmxV2Oracle {
     return 1;
   }
 
+  function setPrices(IGmxV2Oracle.SetPricesParams memory params) external {
+    prices[0x47904963fc8b2340414262125aF798B9655E58Cd] = IGmxV2Types.PriceProps({
+      min: 344234240000000000000000000,
+      max: 344264600000000000000000000
+    });
+    prices[0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f] = IGmxV2Types.PriceProps({
+      min: 344234240000000000000000000,
+      max: 344264600000000000000000000
+    });
+    prices[0xaf88d065e77c8cC2239327C5EDb3A432268e5831] = IGmxV2Types.PriceProps({
+      min: 999900890000000000000000,
+      max: 1000148200000000000000000
+    });
+    prices[0x82aF49447D8a07e3bd95BD0d56f35241523fBab1] = IGmxV2Types.PriceProps({
+      min: 1784642714660000,
+      max: 1784736100000000
+    });
+  }
+
   function getPrimaryPrice(address token) external view returns (IGmxV2Types.PriceProps memory) {
     return prices[token];
   }

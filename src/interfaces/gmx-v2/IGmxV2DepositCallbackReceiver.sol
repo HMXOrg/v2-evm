@@ -1,4 +1,4 @@
-// SPDX-Licsense-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { Deposit } from "@hmx/interfaces/gmx-v2/Deposit.sol";

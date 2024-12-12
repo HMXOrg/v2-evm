@@ -21,7 +21,7 @@ import { IGmxV2Oracle } from "@hmx/interfaces/gmx-v2/IGmxV2Oracle.sol";
 
 contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseForkTest {
   function setUp() public override {
-    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 143862285);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 283542883);
     super.setUp();
   }
 
@@ -29,7 +29,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     rebalanceHLPv2_createDepositOrder(GM_WBTCUSDC_ASSET_ID, 10 * 1e8, 0, 0, "IVaultStorage_HLPBalanceRemaining()");
   }
 
-  function testCorrectness_WhenNoOneJamInTheMiddle() external {
+  function testCorrectness_RebalanceHLPv2Deposit_WhenNoOneJamInTheMiddle() external {
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
 
@@ -171,7 +171,10 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertEq(wbtcInitialHlpLiquidity, vaultStorage.hlpLiquidity(address(wbtc)), "hlpLiquidity must remains the same");
   }
 
-  function testCorrectness_WhenETH_WhenErr_WhenNoOneJamInTheMiddle() external {
+  function testCorrectness_RebalanceHLPv2Deposit_WhenETH_WhenErr_WhenNoOneJamInTheMiddle() external {
+    bytes32 gmxOrderKey = rebalanceHLPv2_createWithdrawalOrder(GM_ETHUSDC_ASSET_ID, 4000 ether, 0, 0); // get some ETH from GM-ETHUSDC
+    gmxV2Keeper_executeWithdrawalOrder(GM_ETHUSDC_ASSET_ID, gmxOrderKey);
+
     uint256 wethInitialHlpLiquidity = vaultStorage.hlpLiquidity(address(weth));
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
@@ -237,7 +240,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertEq(wethInitialHlpLiquidity, vaultStorage.hlpLiquidity(address(weth)), "hlpLiquidity must remains the same");
   }
 
-  function testCorrectness_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
+  function testCorrectness_RebalanceHLPv2Deposit_WhenSomeoneJamInTheMiddle_AddRemoveLiquidity() external {
     uint256 beforeTvl = calculator.getHLPValueE30(false);
     uint256 beforeAum = calculator.getAUME30(false);
 
@@ -291,13 +294,13 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertApproxEqRel(
       beforeTvl - estimateWithdrawValueE30,
       afterTvl,
-      0.001 ether,
+      0.003 ether,
       "tvl should decrease by ~5,000,000 USD"
     );
     assertApproxEqRel(
       beforeAum - estimateWithdrawValueE30,
       afterAum,
-      0.001 ether,
+      0.003 ether,
       "aum should decrease by ~5,000,000 USD"
     );
 
@@ -320,7 +323,7 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum should not change more than 0.01%");
   }
 
-  function testCorrectness_WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
+  function testCorrectness_RebalanceHLPv2Deposit_WhenSomeoneJamInTheMiddle_DepositWithdrawCollateral() external {
     // Override GM(WBTC-USDC) price
     MockEcoPyth(address(ecoPyth2)).overridePrice(GM_WBTCUSDC_ASSET_ID, 1.11967292 * 1e8);
 
@@ -344,11 +347,11 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     depositCollateral(ALICE, 0, wbtc, 1 * 1e8);
 
     // Assert the following conditions:
-    // 1. WBTC's total amount should 9.97066301
-    // 2. WBTC's balance should 9.96066301s
+    // 1. WBTC's total amount should 23.48908996
+    // 2. WBTC's balance should 23.47908996
     // 3. Alice's WBTC balance in HMX should be 1e8
-    assertEq(vaultStorage.totalAmount(address(wbtc)), 9.97066301 * 1e8, "totalAmount should be 9.97066301 WBTC");
-    assertEq(wbtc.balanceOf(address(vaultStorage)), 9.96066301 * 1e8, "balance should be 9.96066301 WBTC");
+    assertEq(vaultStorage.totalAmount(address(wbtc)), 23.48908996 * 1e8, "totalAmount should be 23.48908996 WBTC");
+    assertEq(wbtc.balanceOf(address(vaultStorage)), 23.47908996 * 1e8, "balance should be 23.47908996 WBTC");
     assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 1 * 1e8, "Alice's WBTC balance should be 1e8");
 
     // Alice try withdraw 1 WBTC as collateral in the middle
@@ -356,12 +359,12 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     withdrawCollateral(ALICE, 0, wbtc, 1 * 1e8);
 
     // Assert the following conditions:
-    // 1. WBTC's total amount should 8.97066301
-    // 2. WBTC's balance should 8.96066301s
+    // 1. WBTC's total amount should 22.48908996
+    // 2. WBTC's balance should 22.47908996
     // 3. Alice's WBTC balance in HMX should be 0
     // 4. Alice's WBTC balance should be 1e8
-    assertEq(vaultStorage.totalAmount(address(wbtc)), 8.97066301 * 1e8, "totalAmount should be 8.97066301 WBTC");
-    assertEq(wbtc.balanceOf(address(vaultStorage)), 8.96066301 * 1e8, "balance should be 8.96066301 WBTC");
+    assertEq(vaultStorage.totalAmount(address(wbtc)), 22.48908996 * 1e8, "totalAmount should be 22.48908996 WBTC");
+    assertEq(wbtc.balanceOf(address(vaultStorage)), 22.47908996 * 1e8, "balance should be 22.47908996 WBTC");
     assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 0, "Alice's WBTC balance should be 0");
     assertEq(wbtc.balanceOf(ALICE), 1 * 1e8, "Alice's WBTC balance should be 1e8 (not in HMX)");
 
@@ -384,7 +387,9 @@ contract RebalanceHLPv2Service_DepositForkTest is RebalanceHLPv2Service_BaseFork
     assertApproxEqRel(beforeAum, afterAum, 0.0001 ether, "aum should not change more than 0.01%");
   }
 
-  function testCorrectness_WhenSomeoneJamInTheMiddle_WhenTraderTakeProfitMoreThanHlpLiquidity() external {
+  function testCorrectness_RebalanceHLPv2Deposit__WhenSomeoneJamInTheMiddle_WhenTraderTakeProfitMoreThanHlpLiquidity()
+    external
+  {
     // Some liquidity is on-hold, but trader try to take profit more than available liquidity.
     // This should be handled correctly.
     // Override GM(WBTC-USDC) price

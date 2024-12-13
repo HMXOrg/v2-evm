@@ -24,7 +24,7 @@ contract Smoke_Trade is ForkEnv {
   uint8 internal constant SUB_ACCOUNT_NO = 0;
   uint256 internal constant MARKET_INDEX = 1;
   // eth | jpy | xag | sol | chf
-  uint256[] internal ARRAY_MARKET_INDEX = [0, 3, 9, 21, 26];
+  uint256[] internal ARRAY_MARKET_INDEX = [0, 1, 15, 20, 21];
 
   function openClosePosition() external {
     _depositCollateral();

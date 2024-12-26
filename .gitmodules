@@ -27,3 +27,6 @@
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
 	branch = v1.8.2
+[submodule "lib/uni-v3-lib"]
+	path = lib/uni-v3-lib
+	url = https://github.com/HMXOrg/uni-v3-lib

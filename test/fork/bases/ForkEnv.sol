@@ -163,7 +163,7 @@ abstract contract ForkEnv is Test {
   IGmxVault internal gmxVault = IGmxVault(getAddress(".vendors.gmx.gmxVault"));
   /// GMXv2
   address internal gmxV2Admin = 0xE7BfFf2aB721264887230037940490351700a068;
-  address internal gmxV2Timelock = 0x62aB76Ed722C507f297f2B97920dCA04518fe274;
+  address internal gmxV2Timelock = 0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698;
   address internal gmxV2Oracle = address(getAddress(".vendors.gmxV2.oracle"));
   IGmxV2Reader internal gmxV2Reader = IGmxV2Reader(getAddress(".vendors.gmxV2.reader"));
   IGmxV2ExchangeRouter internal gmxV2ExchangeRouter = IGmxV2ExchangeRouter(getAddress(".vendors.gmxV2.exchangeRouter"));
@@ -182,6 +182,7 @@ abstract contract ForkEnv is Test {
   address internal gmxV2MarketStoreUtils = address(getAddress(".vendors.gmxV2.marketStoreUtils"));
   address internal gmxV2DataStore = address(getAddress(".vendors.gmxV2.dataStore"));
   IGmxV2RoleStore internal gmxV2RoleStore = IGmxV2RoleStore(getAddress(".vendors.gmxV2.roleStore"));
+  address internal gmxV2OracleProvider = 0x83cBb05AA78014305194450c4AADAc887fe5DF7F;
   /// Curve
   IStableSwap internal curveWstEthPool = IStableSwap(getAddress(".vendors.curve.wstEthEthPool"));
   /// OneInch

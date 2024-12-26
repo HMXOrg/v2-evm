@@ -17,6 +17,9 @@ import { IGmxV2WithdrawalCallbackReceiver } from "@hmx/interfaces/gmx-v2/IGmxV2W
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IRebalanceHLPv2Service } from "@hmx/services/interfaces/IRebalanceHLPv2Service.sol";
+import { EventUtils } from "@hmx/interfaces/gmx-v2/EventUtils.sol";
+import { Deposit } from "@hmx/interfaces/gmx-v2/Deposit.sol";
+import { Withdrawal } from "@hmx/interfaces/gmx-v2/Withdrawal.sol";
 
 contract RebalanceHLPv2Service is
   OwnableUpgradeable,
@@ -57,6 +60,11 @@ contract RebalanceHLPv2Service is
     uint256 receivedShortTokens
   );
   event LogWithdrawalCancelled(bytes32 gmxOrderKey, WithdrawalParams withdrawParam, uint256 returnedMarketTokens);
+  event LogSetGmxV2DepositHandler(address oldGmxV2DepositHandler, address newGmxV2DepositHandler);
+  event LogSetGmxV2WithdrawalHandler(address oldGmxV2WithdrawalHandler, address newGmxV2WithdrawalHandler);
+  event LogSetGmxV2DepositVault(address oldGmxV2DepositVault, address newGmxV2DepositVault);
+  event LogSetGmxV2WithdrawalVault(address oldGmxV2WithdrawalVault, address newGmxV2WithdrawalVault);
+  event LogSetGmxV2ExchangeRouter(address oldGmxV2ExchangeRouter, address newGmxV2ExchangeRouter);
 
   function initialize(
     IERC20Upgradeable _weth,
@@ -207,8 +215,8 @@ contract RebalanceHLPv2Service is
   /// @param _eventData The event data emitted by GMXv2
   function afterDepositExecution(
     bytes32 _key,
-    IGmxV2Types.DepositProps memory /* deposit */,
-    IGmxV2Types.EventLogData memory _eventData
+    Deposit.Props memory deposit,
+    EventUtils.EventLogData memory _eventData
   ) external onlyGmxDepositHandler {
     // Check
     DepositParams memory _depositParam = pendingDeposit[_key];
@@ -246,8 +254,8 @@ contract RebalanceHLPv2Service is
   /// @param _key the key of the deposit
   function afterDepositCancellation(
     bytes32 _key,
-    IGmxV2Types.DepositProps memory /* deposit */,
-    IGmxV2Types.EventLogData memory /* eventData */
+    Deposit.Props memory deposit,
+    EventUtils.EventLogData memory eventData
   ) external onlyGmxDepositHandler {
     // Check
     DepositParams memory _depositParam = pendingDeposit[_key];
@@ -286,8 +294,8 @@ contract RebalanceHLPv2Service is
   /// @notice Called by GMXv2 after a withdrawal execution
   function afterWithdrawalExecution(
     bytes32 _key,
-    IGmxV2Types.WithdrawalProps memory,
-    IGmxV2Types.EventLogData memory _eventData
+    Withdrawal.Props memory withdrawal,
+    EventUtils.EventLogData memory _eventData
   ) external override onlyGmxWithdrawalHandler {
     // Check
     WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];
@@ -321,8 +329,8 @@ contract RebalanceHLPv2Service is
   /// @notice Called by GMXv2 if a withdrawal was cancelled/reverted
   function afterWithdrawalCancellation(
     bytes32 _key,
-    IGmxV2Types.WithdrawalProps memory,
-    IGmxV2Types.EventLogData memory
+    Withdrawal.Props memory withdrawal,
+    EventUtils.EventLogData memory eventData
   ) external override onlyGmxWithdrawalHandler {
     // Check
     WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];
@@ -359,6 +367,36 @@ contract RebalanceHLPv2Service is
   /// @dev This is likely unused execution fee.
   function claimETH() external onlyOwner {
     payable(owner()).transfer(address(this).balance);
+  }
+
+  function setGmxV2DepositHandler(address _gmxV2DepositHandler) external onlyOwner {
+    if (_gmxV2DepositHandler == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
+    emit LogSetGmxV2DepositHandler(gmxV2DepositHandler, _gmxV2DepositHandler);
+    gmxV2DepositHandler = _gmxV2DepositHandler;
+  }
+
+  function setGmxV2WithdrawalHandler(address _gmxV2WithdrawalHandler) external onlyOwner {
+    if (_gmxV2WithdrawalHandler == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
+    emit LogSetGmxV2WithdrawalHandler(gmxV2WithdrawalHandler, _gmxV2WithdrawalHandler);
+    gmxV2WithdrawalHandler = _gmxV2WithdrawalHandler;
+  }
+
+  function setGmxV2DepositVault(address _gmxV2DepositVault) external onlyOwner {
+    if (_gmxV2DepositVault == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
+    emit LogSetGmxV2DepositVault(gmxV2DepositVault, _gmxV2DepositVault);
+    gmxV2DepositVault = _gmxV2DepositVault;
+  }
+
+  function setGmxV2WithdrawalVault(address _gmxV2WithdrawalVault) external onlyOwner {
+    if (_gmxV2WithdrawalVault == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
+    emit LogSetGmxV2WithdrawalVault(gmxV2WithdrawalVault, _gmxV2WithdrawalVault);
+    gmxV2WithdrawalVault = _gmxV2WithdrawalVault;
+  }
+
+  function setGmxV2ExchangeRouter(address _gmxV2ExchangeRouter) external onlyOwner {
+    if (_gmxV2ExchangeRouter == address(0)) revert IRebalanceHLPv2Service_InvalidAddress();
+    emit LogSetGmxV2ExchangeRouter(address(gmxV2ExchangeRouter), address(_gmxV2ExchangeRouter));
+    gmxV2ExchangeRouter = IGmxV2ExchangeRouter(_gmxV2ExchangeRouter);
   }
 
   /// @notice Receive unspent execution fee from GMXv2

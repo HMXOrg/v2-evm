@@ -18,9 +18,8 @@ async function main(chainId: number) {
 
   const perpStorage = PerpStorage__factory.connect(config.storages.perp, provider);
   const activePositions = await perpStorage.getActivePositions(1000, 0);
-  const fxPositions = activePositions.filter((each) =>
-    [3, 8, 10, 11, 26, 28, 29, 30, 31, 46].includes(each.marketIndex.toNumber())
-  );
+  const fxPositions = activePositions.filter((each) => [34].includes(each.marketIndex.toNumber()));
+
   console.table(
     fxPositions.map((each) => {
       return {

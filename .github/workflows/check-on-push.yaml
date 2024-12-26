@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: true
     name: Foundry Test
-    runs-on: self-hosted
+    runs-on: ARM64
     steps:
       - uses: actions/checkout@v3
         with:
@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "16.16.0"
+          node-version: "18.20.5"
 
       - name: Yarn
         run: |

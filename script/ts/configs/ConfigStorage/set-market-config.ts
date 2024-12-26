@@ -48,18 +48,17 @@ type StrictedMarketConfig = {
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const BigNumber = ethers.BigNumber;
 
   const inputMarketConfigs: Array<UnstrictedMarketConfig> = [
     {
-      marketIndex: 21,
-      initialMarginFractionBPS: 400,
-      maxProfitRateBPS: 400000,
+      marketIndex: 0,
+      maxLongPositionSize: ethers.utils.parseUnits("1500000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("1500000", 30),
     },
     {
-      marketIndex: 22,
-      initialMarginFractionBPS: 400,
-      maxProfitRateBPS: 400000,
+      marketIndex: 1,
+      maxLongPositionSize: ethers.utils.parseUnits("1500000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("1500000", 30),
     },
   ];
 

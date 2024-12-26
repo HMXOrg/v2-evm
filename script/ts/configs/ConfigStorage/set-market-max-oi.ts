@@ -13,9 +13,14 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      marketIndex: 21,
-      maxLongPositionSize: 2000000,
-      maxShortPositionSize: 2000000,
+      marketIndex: 0,
+      maxLongPositionSize: 2_000_000,
+      maxShortPositionSize: 2_000_000,
+    },
+    {
+      marketIndex: 1,
+      maxLongPositionSize: 2_000_000,
+      maxShortPositionSize: 2_000_000,
     },
   ];
 

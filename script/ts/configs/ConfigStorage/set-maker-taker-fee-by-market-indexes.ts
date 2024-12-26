@@ -24,14 +24,9 @@ async function main(chainId: number) {
 
   const inputs = [
     {
-      marketIndex: 0, // ETHUSD
-      makerFee: 15000, // 0.015%
-      takerFee: 35000, // 0.035%
-    },
-    {
-      marketIndex: 1, // BTCUSD
-      makerFee: 15000, // 0.015%
-      takerFee: 35000, // 0.035%
+      marketIndex: 21, // SOLUSD
+      makerFee: 20000, // 0.02%
+      takerFee: 20000, // 0.02%
     },
   ];
 

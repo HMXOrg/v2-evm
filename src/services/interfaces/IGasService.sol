@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 interface IGasService {
   error GasService_NotEnoughCollateral();
+  error GasService_GasPremiumTooLarge();
 
   event LogSetParams(uint256 executionFeeInUsd, address executionFeeTreasury);
   event LogCollectExecutionFeeValue(address subAccount, uint256 marketIndex, uint256 executionFeeUsd);
@@ -16,6 +17,7 @@ interface IGasService {
   event LogSubsidizeExecutionFee(address subAccount, uint256 marketIndex, uint256 executionFeeUsd);
   event LogAdjustSubsidizedExecutionFeeValue(uint256 previousValue, uint256 newValue, int256 delta);
   event LogSetGasTokenAssetId(bytes32 gasTokenAssetId);
+  event LogSetGasPremiumBps(uint256 gasPremiumBps);
 
   function collectExecutionFeeFromCollateral(
     address _primaryAccount,
@@ -34,4 +36,6 @@ interface IGasService {
   function waviedExecutionFeeMinTradeSize() external view returns (uint256);
 
   function setGasTokenAssetId(bytes32 _gasTokenAssetId) external;
+
+  function setGasPremiumBps(uint256 _gasPremiumBps) external;
 }

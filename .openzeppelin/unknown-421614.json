@@ -12866,7 +12866,7 @@
             "label": "vaultStorage",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(VaultStorage)78116",
+            "type": "t_contract(VaultStorage)38646",
             "contract": "GasService",
             "src": "src/services/GasService.sol:21"
           },
@@ -12874,7 +12874,7 @@
             "label": "configStorage",
             "offset": 0,
             "slot": "152",
-            "type": "t_contract(ConfigStorage)75374",
+            "type": "t_contract(ConfigStorage)35904",
             "contract": "GasService",
             "src": "src/services/GasService.sol:22"
           },
@@ -12940,11 +12940,11 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(ConfigStorage)75374": {
+          "t_contract(ConfigStorage)35904": {
             "label": "contract ConfigStorage",
             "numberOfBytes": "20"
           },
-          "t_contract(VaultStorage)78116": {
+          "t_contract(VaultStorage)38646": {
             "label": "contract VaultStorage",
             "numberOfBytes": "20"
           },
@@ -15003,6 +15003,174 @@
           "t_uint64": {
             "label": "uint64",
             "numberOfBytes": "8"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "45a31df33a75850539abf6e4701316bc034b2ea8acf1ce0f2dd275d75b591571": {
+      "address": "0x93AAF7173809ECB0618e53423B283Ca480E8c416",
+      "txHash": "0x9a0679da01b888191c36e9573e8f959d1b1b101c31da89a112c96355a3b371ae",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "vaultStorage",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(VaultStorage)84353",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:21"
+          },
+          {
+            "label": "configStorage",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(ConfigStorage)81611",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:22"
+          },
+          {
+            "label": "executionFeeInUsd",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint256",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:23"
+          },
+          {
+            "label": "executionFeeTreasury",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_address",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:24"
+          },
+          {
+            "label": "subsidizedExecutionFeeValue",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint256",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:25"
+          },
+          {
+            "label": "waviedExecutionFeeMinTradeSize",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_uint256",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:26"
+          },
+          {
+            "label": "gasTokenAssetId",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_bytes32",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:27"
+          },
+          {
+            "label": "gasPremiumBps",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_uint256",
+            "contract": "GasService",
+            "src": "src/services/GasService.sol:28"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(ConfigStorage)81611": {
+            "label": "contract ConfigStorage",
+            "numberOfBytes": "20"
+          },
+          "t_contract(VaultStorage)84353": {
+            "label": "contract VaultStorage",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
           },
           "t_uint8": {
             "label": "uint8",

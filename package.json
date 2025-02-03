@@ -92,7 +92,7 @@
     "csvtojson": "^2.0.10",
     "dotenv": "^16.0.0",
     "ethers": "5.7",
-    "hardhat": "^2.9.1",
+    "hardhat": "^2.22.17",
     "hardhat-preprocessor": "^0.1.5",
     "lodash": "^4.17.21",
     "prettier": "^2.6.2",

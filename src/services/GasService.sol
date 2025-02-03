@@ -25,6 +25,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
   uint256 public subsidizedExecutionFeeValue; // The total value of gas fee that is subsidized by the platform in E30
   uint256 public waviedExecutionFeeMinTradeSize; // The minimum trade size (E30) that we will waive exeuction fee
   bytes32 public gasTokenAssetId;
+  uint256 public gasPremiumBps; // Example: `500` is 5% premium
 
   function initialize(
     address _vaultStorage,
@@ -84,7 +85,7 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     vars.len = vars.traderTokens.length;
     vars.oracle = OracleMiddleware(configStorage.oracle());
 
-    uint256 gasConsumed = _gasBefore - gasleft();
+    uint256 gasConsumed = ((_gasBefore - gasleft()) * (1e4 + gasPremiumBps)) / 1e4;
     (vars.tokenPrice, ) = vars.oracle.getLatestPrice(gasTokenAssetId, false);
     uint256 gasConsumedInUsd = (gasConsumed * tx.gasprice * vars.tokenPrice) / 1e18;
     gasConsumedInUsd = HMXLib.max(gasConsumedInUsd, executionFeeInUsd); // max between these two value to at least collect some execution fee
@@ -179,5 +180,12 @@ contract GasService is ReentrancyGuardUpgradeable, OwnableUpgradeable, IGasServi
     waviedExecutionFeeMinTradeSize = _waviedExecutionFeeMinTradeSize;
 
     emit LogSetWaviedExecutionFeeMinTradeSize(waviedExecutionFeeMinTradeSize);
+  }
+
+  function setGasPremiumBps(uint256 _gasPremiumBps) external onlyOwner {
+    if (_gasPremiumBps > 1e4) revert GasService_GasPremiumTooLarge();
+    gasPremiumBps = _gasPremiumBps;
+
+    emit LogSetGasPremiumBps(gasPremiumBps);
   }
 }

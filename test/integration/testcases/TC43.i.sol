@@ -837,6 +837,8 @@ contract TC43 is BaseIntTest_WithActions {
 
   function testCorrectness_TC43_intentHandler_subsidizeExecutionFee() external {
     gasService.setWaviedExecutionFeeMinTradeSize(0);
+    gasService.setGasPremiumBps(500); // 5% premium
+
     uint256 privateKey = uint256(keccak256(bytes("1")));
     BOB = vm.addr(privateKey);
 
@@ -927,6 +929,7 @@ contract TC43 is BaseIntTest_WithActions {
 
     // Test adjust subsidized execution fee
     configStorage.setServiceExecutor(address(gasService), address(this), true);
+    assertEq(gasService.subsidizedExecutionFeeValue(), 0.1e30);
     gasService.adjustSubsidizedExecutionFeeValue(-int256(gasService.subsidizedExecutionFeeValue()));
     assertEq(gasService.subsidizedExecutionFeeValue(), 0);
   }

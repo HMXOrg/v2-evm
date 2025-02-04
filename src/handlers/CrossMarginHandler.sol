@@ -200,6 +200,11 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _;
   }
 
+  modifier onlyOrderExecutorOrOwner() {
+    if (!orderExecutors[msg.sender] && msg.sender != owner()) revert ICrossMarginHandler_NotWhitelisted();
+    _;
+  }
+
   /**
    * Deposit Collateral
    */
@@ -563,7 +568,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOrderExecutorOrOwner {
     emit LogSetMinExecutionFee(minExecutionOrderFee, _newMinExecutionFee);
     minExecutionOrderFee = _newMinExecutionFee;
   }

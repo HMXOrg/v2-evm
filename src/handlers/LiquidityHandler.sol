@@ -137,6 +137,11 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     _;
   }
 
+  modifier onlyOrderExecutorOrOwner() {
+    if (!orderExecutors[msg.sender] && msg.sender != owner()) revert ILiquidityHandler_NotWhitelisted();
+    _;
+  }
+
   receive() external payable {
     if (msg.sender != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
       revert ILiquidityHandler_InvalidSender();
@@ -611,7 +616,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOrderExecutorOrOwner {
     emit LogSetMinExecutionFee(minExecutionOrderFee, _newMinExecutionFee);
     minExecutionOrderFee = _newMinExecutionFee;
   }

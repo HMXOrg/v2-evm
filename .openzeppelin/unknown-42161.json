@@ -21093,6 +21093,274 @@
           }
         }
       }
+    },
+    "c6e7936499509937d9a90fe2ae5c3dc172daffe8c4eb649f06219579c80bf8ea": {
+      "address": "0xF85F9fe870973214027B4ca5c978d8c5660d9473",
+      "txHash": "0x34630c486e6a9cc16b8955603846fd1ebb24f60ba7e064c7334fb062dabbd812",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "vaultStorage",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IVaultStorage)85352",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:32"
+          },
+          {
+            "label": "configStorage",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_contract(IConfigStorage)84763",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:33"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_contract(IERC20Upgradeable)3922",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:34"
+          },
+          {
+            "label": "gmxV2ExchangeRouter",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_contract(IGmxV2ExchangeRouter)47817",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:36"
+          },
+          {
+            "label": "gmxV2DepositVault",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_address",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:38"
+          },
+          {
+            "label": "gmxV2DepositHandler",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_address",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:39"
+          },
+          {
+            "label": "gmxV2WithdrawalVault",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_address",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:41"
+          },
+          {
+            "label": "gmxV2WithdrawalHandler",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_address",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:42"
+          },
+          {
+            "label": "pendingDeposit",
+            "offset": 0,
+            "slot": "109",
+            "type": "t_mapping(t_bytes32,t_struct(DepositParams)74527_storage)",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:44"
+          },
+          {
+            "label": "pendingWithdrawal",
+            "offset": 0,
+            "slot": "110",
+            "type": "t_mapping(t_bytes32,t_struct(WithdrawalParams)74538_storage)",
+            "contract": "RebalanceHLPv2Service",
+            "src": "src/services/RebalanceHLPv2Service.sol:45"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IConfigStorage)84763": {
+            "label": "contract IConfigStorage",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IERC20Upgradeable)3922": {
+            "label": "contract IERC20Upgradeable",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IGmxV2ExchangeRouter)47817": {
+            "label": "contract IGmxV2ExchangeRouter",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IVaultStorage)85352": {
+            "label": "contract IVaultStorage",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_bytes32,t_struct(DepositParams)74527_storage)": {
+            "label": "mapping(bytes32 => struct IRebalanceHLPv2Service.DepositParams)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(WithdrawalParams)74538_storage)": {
+            "label": "mapping(bytes32 => struct IRebalanceHLPv2Service.WithdrawalParams)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(DepositParams)74527_storage": {
+            "label": "struct IRebalanceHLPv2Service.DepositParams",
+            "members": [
+              {
+                "label": "market",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "longToken",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "longTokenAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "shortToken",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "shortTokenAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "minMarketTokens",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "gasLimit",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              }
+            ],
+            "numberOfBytes": "224"
+          },
+          "t_struct(WithdrawalParams)74538_storage": {
+            "label": "struct IRebalanceHLPv2Service.WithdrawalParams",
+            "members": [
+              {
+                "label": "market",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "minLongTokenAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "minShortTokenAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "gasLimit",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
     }
   }
 }

@@ -230,6 +230,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _;
   }
 
+  modifier onlyOrderExecutorOrOwner() {
+    if (!orderExecutors[msg.sender] && msg.sender != owner()) revert ILimitTradeHandler_NotWhitelisted();
+    _;
+  }
+
   modifier delegate(address _mainAccount) {
     if (delegations[_mainAccount] == msg.sender) {
       senderOverride = _mainAccount;
@@ -1142,7 +1147,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint64 _newMinExecutionFee) external nonReentrant onlyOwner {
+  function setMinExecutionFee(uint64 _newMinExecutionFee) external nonReentrant onlyOrderExecutorOrOwner {
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;

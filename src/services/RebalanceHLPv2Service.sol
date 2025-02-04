@@ -215,7 +215,7 @@ contract RebalanceHLPv2Service is
   /// @param _eventData The event data emitted by GMXv2
   function afterDepositExecution(
     bytes32 _key,
-    Deposit.Props memory deposit,
+    Deposit.Props memory /* deposit */,
     EventUtils.EventLogData memory _eventData
   ) external onlyGmxDepositHandler {
     // Check
@@ -254,8 +254,8 @@ contract RebalanceHLPv2Service is
   /// @param _key the key of the deposit
   function afterDepositCancellation(
     bytes32 _key,
-    Deposit.Props memory deposit,
-    EventUtils.EventLogData memory eventData
+    Deposit.Props memory /* deposit */,
+    EventUtils.EventLogData memory /* eventData */
   ) external onlyGmxDepositHandler {
     // Check
     DepositParams memory _depositParam = pendingDeposit[_key];
@@ -294,7 +294,7 @@ contract RebalanceHLPv2Service is
   /// @notice Called by GMXv2 after a withdrawal execution
   function afterWithdrawalExecution(
     bytes32 _key,
-    Withdrawal.Props memory withdrawal,
+    Withdrawal.Props memory /* withdrawal */,
     EventUtils.EventLogData memory _eventData
   ) external override onlyGmxWithdrawalHandler {
     // Check
@@ -329,8 +329,8 @@ contract RebalanceHLPv2Service is
   /// @notice Called by GMXv2 if a withdrawal was cancelled/reverted
   function afterWithdrawalCancellation(
     bytes32 _key,
-    Withdrawal.Props memory withdrawal,
-    EventUtils.EventLogData memory eventData
+    Withdrawal.Props memory /* withdrawal */,
+    EventUtils.EventLogData memory /* eventData */
   ) external override onlyGmxWithdrawalHandler {
     // Check
     WithdrawalParams memory _withdrawParam = pendingWithdrawal[_key];

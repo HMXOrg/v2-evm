@@ -137,6 +137,11 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     _;
   }
 
+  modifier onlyOrderExecutorOrOwner() {
+    if (!orderExecutors[msg.sender] && msg.sender != owner()) revert IExt01Handler_Unauthorized();
+    _;
+  }
+
   modifier delegate(address _mainAccount) {
     if (delegations[_mainAccount] == msg.sender) {
       _senderOverride = _mainAccount;
@@ -345,8 +350,15 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
         _cancelOrder(_switchCollateralOrder.primaryAccount, _switchCollateralOrder.subAccountId, _order.orderIndex);
       } else if (_order.orderType == 2) {
-        TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));
-        _cancelOrder(_transferCollateralOrder.primaryAccount, _transferCollateralOrder.fromSubAccountId, _order.orderIndex);
+        TransferCollateralOrder memory _transferCollateralOrder = abi.decode(
+          _order.rawOrder,
+          (TransferCollateralOrder)
+        );
+        _cancelOrder(
+          _transferCollateralOrder.primaryAccount,
+          _transferCollateralOrder.fromSubAccountId,
+          _order.orderIndex
+        );
       }
     }
   }
@@ -527,17 +539,16 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
     address _owner;
     if (_order.orderType == 1) {
-      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));  
+      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
       _owner = _switchCollateralOrder.primaryAccount;
     } else if (_order.orderType == 2) {
-      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));  
+      TransferCollateralOrder memory _transferCollateralOrder = abi.decode(_order.rawOrder, (TransferCollateralOrder));
       _owner = _transferCollateralOrder.primaryAccount;
     }
 
     bool _isExecutor = orderExecutors[_msgSender()];
     // validate if msg.sender is not owned the order or not executor, then revert
     if (_msgSender() != _owner && !_isExecutor) revert IExt01Handler_NotOrderOwner();
-
 
     _removeOrder(subAccount, _orderIndex);
 
@@ -546,12 +557,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       _transferOutETH(_order.executionFee, _owner);
     }
 
-    emit LogCancelOrder(
-      payable(_owner),
-      _order.orderIndex,
-      _order.orderType,
-      _subAccountId
-    );
+    emit LogCancelOrder(payable(_owner), _order.orderIndex, _order.orderType, _subAccountId);
 
     delete genericOrders[subAccount][_orderIndex];
   }
@@ -740,7 +746,10 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   /// @notice setMinExecutionFee
   /// @param _orderType Order type to set min execution fee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint24 _orderType, uint128 _newMinExecutionFee) external nonReentrant onlyOwner {
+  function setMinExecutionFee(
+    uint24 _orderType,
+    uint128 _newMinExecutionFee
+  ) external nonReentrant onlyOrderExecutorOrOwner {
     emit LogSetMinExecutionFee(_orderType, minExecutionOrderOf[_orderType], _newMinExecutionFee);
     minExecutionOrderOf[_orderType] = _newMinExecutionFee;
   }

@@ -37,7 +37,7 @@
     "sglpStakedAdapter": "",
     "middleware": "0x34338314236df25220b55F90F7E8Fc30B620D242",
     "ecoPythCalldataBuilder3": "0x0A4536BE713989a355f77fd46FD21E737C219F5c",
-    "unsafeEcoPythCalldataBuilder3": "0x50853Da9B307c3CEB2A4B861472D7dfd1289d33b",
+    "unsafeEcoPythCalldataBuilder3": "0xf7D13DA2feBCa9Fbe2980d0B45C7b28563C1C16E",
     "onChainPriceLens": "0x9C67046f42eFfbA03d58aA54cB9C75aFDa38146e",
     "calcPriceLens": "0xcDc77D7799E3BC1B5A1D55d6D973BfD337cF5A16",
     "priceAdapters": {

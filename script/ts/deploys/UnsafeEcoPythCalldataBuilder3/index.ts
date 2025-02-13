@@ -8,7 +8,7 @@ async function main() {
   console.log(`[deploys/EcoPythCalldataBuilder] Deploying UnsafeEcoPythCalldataBuilder3 Contract`);
   const UnsafeEcoPythCalldataBuilder3 = await ethers.getContractFactory("UnsafeEcoPythCalldataBuilder3", deployer);
   const unsafeEcoPythCalldataBuilder3 = await UnsafeEcoPythCalldataBuilder3.deploy(
-    config.oracles.ecoPyth2,
+    config.oracles.ecoPyth2!,
     config.oracles.onChainPriceLens,
     config.oracles.calcPriceLens
   );
